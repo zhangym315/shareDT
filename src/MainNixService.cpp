@@ -1,5 +1,6 @@
 #include "StartServer.h"
 #include "MainService.h"
+#include "ReadWriteFD.h"
 #include "Path.h"
 #include "Logger.h"
 #include "ThreadPool.h"
@@ -10,6 +11,9 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 CaptureProcessManager * CaptureProcessManager::_instance = 0;
 
@@ -70,17 +74,24 @@ static void HandleCommandSocket(int fd, char * buf)
         hcl.setWID();
 
     String capServer = CapServerHome::instance()->getHome();
-
     char ** argv = hcl.getArgv();
 
     LOGGER.info() << "New Capture Server Argument: " << hcl.toString();
+
+    String captureAlivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
+
+    mkfifo(captureAlivePath.c_str(), 0666);
 
     if(fork() == 0) {
         execv(argv[0], argv);
     }
 
-    String ret("Capture ID(CID) = ");
+    ReadWriteFD msg(captureAlivePath.c_str(), O_RDONLY);
+
+    String ret("Started Capture ID(CID) = ");
     ret.append(CapServerHome::instance()->getCid());
+    ret.append("\nStatus: ");
+    ret += msg.read();
 
     sk.send(ret.c_str());
 }
@@ -92,7 +103,7 @@ static void HandleCommandSocket(int fd, char * buf)
 MainServiceServer::MainServiceServer() : _valid(false), _backlog(10) // default 10 queued request
 {
     const String pipeFile = CapServerHome::instance()->getHome() +
-                            PATH_SEP_STR + FILEPIPE;
+                            PATH_SEP_STR + SOCKET_FILE;
     int rc;
     sockaddr_un server_sockaddr;
 
@@ -173,7 +184,7 @@ int MainServiceServer::getNewConnection()
 }
 
 int MainWindowsServices() {
-    const String pipeFile = CapServerHome::instance()->getHome() + PATH_SEP_STR + FILEPIPE;
+    const String pipeFile = CapServerHome::instance()->getHome() + PATH_SEP_STR + SOCKET_FILE;
     MainServiceServer mss;   // main service socket
     char buf[BUFSIZE];
     int clientSocket;
@@ -238,7 +249,7 @@ MainServiceClient::MainServiceClient() : _valid(false)
     const String clientSockFile = CapServerHome::instance()->getHome() +
                             PATH_SEP_STR + "CLIENT_" + std::to_string (std::rand ());
     const String serverSockFile = CapServerHome::instance()->getHome() +
-                            PATH_SEP_STR + FILEPIPE;
+                            PATH_SEP_STR + SOCKET_FILE;
     int rc;
     socklen_t len;
     struct sockaddr_un server_sockaddr;

@@ -159,6 +159,7 @@ bool StartCapture::setWorkingDirectory()
     // _wID passed as an argument
     String & cid = (_wID.length() > 0) ? _wID : setAndGetWID();
     wPath.append(cid);
+    _capturePath = wPath;
     CapServerHome::instance()->setHome(wPath, cid);
 
     if(!fs::exists(wPath) && !fs::create_directory(wPath)) {

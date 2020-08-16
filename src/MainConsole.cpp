@@ -11,7 +11,9 @@
 #include "MainService.h"
 #include "Logger.h"
 #include "Path.h"
+#include "ReadWriteFD.h"
 
+#include <fcntl.h>
 #ifdef __SHAREDT_WIN__
 #include <windows.h>
 #include <tchar.h>
@@ -161,20 +163,27 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 }
 
 /* main service fork/create new process as the capture server */
-static int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
+int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
+    String alivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
 
+    ReadWriteFD msg(alivePath.c_str(), O_WRONLY);
     /*
      * If RETURN_CODE_SUCCESS_SHO show window handler
      * return current process
      */
     if(ret == RETURN_CODE_SUCCESS_SHO)
-        return RETURN_CODE_SUCCESS_SHO;
-    else if (ret != RETURN_CODE_SUCCESS)
+    {
         return RETURN_CODE_SUCCESS;
+    } else if (ret != RETURN_CODE_SUCCESS)
+    {
+        msg.write("Failed to create Capture Server");
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
 
+    msg.write("Successfully created Capture Server");
     cap.startCaptureServer ();
 
     return RETURN_CODE_SUCCESS;

@@ -106,13 +106,13 @@ public:
     int     getArgc() { return _argc; }
 
     bool hasWid() { return _hasWid; }
+    const StartCapture & getSC() { return _sc; }
 
 private:
     HandleCommandLine();
     char ** _argv;
     int     _argc;
     bool    _hasWid;
-
     StartCapture _sc;
 };
 

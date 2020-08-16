@@ -41,6 +41,8 @@ class StartCapture {
     String & setAndGetWID();
     String & getWID() { return _wID; }
 
+    const String & getCapturePath() { return _capturePath; }
+
   private:
     void Usage();
     int parseArgs(const vector<String> & args);
@@ -72,6 +74,7 @@ class StartCapture {
     int              _monID;  /* for monitor capture, the id of monitor */
     bool             _daemon;
     String           _wID;  /* unique id */
+    String           _capturePath;
 
     /* rbf related */
     rfbScreenInfoPtr _rfbserver;
