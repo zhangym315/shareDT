@@ -10,7 +10,7 @@ class DaemonizeProcess {
     void daemonize();
 
 #ifndef __SHAREDT_WIN__
-    void daemonizeInit();
+    static void daemonizeInit();
 #endif
 
   private:

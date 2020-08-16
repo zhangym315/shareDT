@@ -319,8 +319,25 @@ static int startService (const char ** cmdArg, const struct cmdConf * conf)
 }
 #endif
 
+static void Usage()
+{
+    fprintf(stdout, "%s\n",
+        "Usage: ShareDTServer start\n"
+        "                     stop\n"
+        "                     restart\n"
+        "                     capture\n"
+        "                     show\n"
+        "                     nodaemon\n"
+        );
+}
+
 int main(int argc, char** argv)
 {
+    if(argc < 2) {
+        Usage();
+        return -1;
+    }
+
     static const struct {
         const char *name;
         int (*func)(const char **extra,
@@ -357,5 +374,6 @@ int main(int argc, char** argv)
         }
     }
 
-    return 0;
+    Usage();
+    return -1;
 }

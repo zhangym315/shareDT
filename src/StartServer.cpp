@@ -218,6 +218,10 @@ void StartCapture::initDaemon()
 {
     String captureLog = CapServerHome::instance()->getHome() + PATH_CAPTURE_LOG;
     LOGGER.setLogFile(captureLog.c_str());
+
+#ifndef __SHAREDT_WIN__
+    DaemonizeProcess::daemonizeInit();
+#endif
 }
 
 int StartCapture::initParsing(int argc, char * argv[])
@@ -270,6 +274,9 @@ int StartCapture::init(int argc, char *argv[]) {
     int ret = initParsing(argc, argv);
     if(ret != RETURN_CODE_SUCCESS && ret != RETURN_CODE_SUCCESS_SHO)
         return ret;
+
+    if(_daemon)
+        initDaemon();
 
     /* create ScreenProvider */
     if (_type == SP_PARTIAL) {
