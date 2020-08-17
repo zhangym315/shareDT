@@ -106,7 +106,7 @@ public:
     int     getArgc() { return _argc; }
 
     bool hasWid() { return _hasWid; }
-    const StartCapture & getSC() { return _sc; }
+    StartCapture & getSC() { return _sc; }
 
 private:
     HandleCommandLine();

@@ -4,6 +4,7 @@
 #include "Path.h"
 #include "Logger.h"
 #include "ThreadPool.h"
+#include "MainManagementProcess.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -11,12 +12,10 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 CaptureProcessManager * CaptureProcessManager::_instance = 0;
-
 
 /*
  * Fork new child process to run the command
@@ -32,6 +31,12 @@ static void invokeCommand(char * command)
 
     return ;
 }
+
+/*
+ * Global WID management
+ */
+WIDMAP _WM;
+std::mutex _WMmutex;
 
 void HandleCommandLine::setWID()
 {
@@ -68,30 +73,48 @@ static void HandleCommandSocket(int fd, char * buf)
 {
     Socket sk(fd);
     HandleCommandLine hcl(buf);
+    String wid;
 
     hcl.initParsing();
     if(!hcl.hasWid())
         hcl.setWID();
 
+    wid = hcl.getSC().getWID();
+
     String capServer = CapServerHome::instance()->getHome();
     char ** argv = hcl.getArgv();
-
-    LOGGER.info() << "New Capture Server Argument: " << hcl.toString();
-
-    String captureAlivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
-
-    mkfifo(captureAlivePath.c_str(), 0666);
-
-    if(fork() == 0) {
-        execv(argv[0], argv);
-    }
-
-    ReadWriteFD msg(captureAlivePath.c_str(), O_RDONLY);
-
-    String ret("Started Capture ID(CID) = ");
-    ret.append(CapServerHome::instance()->getCid());
+    String ret("Starting Capture ID(CID) = ");
+    ret.append(wid);
     ret.append("\nStatus: ");
-    ret += msg.read();
+
+    WIDMAP::iterator it = _WM.find(wid);
+    if(it == _WM.end() ||
+        it->second.status() != MainManagementProcess::STATUS::STARTED) {
+        LOGGER.info() << "Starting Capture Server Argument: " << hcl.toString();
+
+        String captureAlivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
+        mkfifo(captureAlivePath.c_str(), 0666);
+
+        if(fork() == 0) {
+            execv(argv[0], argv);
+        }
+
+        ReadWriteFD msg(captureAlivePath.c_str(), O_RDONLY);
+        ret += msg.read();
+        /* TODO needs to check if started successfully */
+
+        /* add it to global _WM */
+        if(it == _WM.end()) {
+            std::lock_guard<std::mutex> guard(_WMmutex);
+            _WM.insert(std::pair<String, MainManagementProcess>
+                          (wid, MainManagementProcess(captureAlivePath, MainManagementProcess::STATUS::STARTED)));
+        } else {
+            std::lock_guard<std::mutex> guard(_WMmutex);
+            it->second.updateStatus(MainManagementProcess::STATUS::STARTED);
+        }
+    } else {
+        ret += "Already started";
+    }
 
     sk.send(ret.c_str());
 }

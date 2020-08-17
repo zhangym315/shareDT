@@ -39,7 +39,7 @@ class StartCapture {
     void show();             /* show handler for all of windows */
 
     String & setAndGetWID();
-    String & getWID() { return _wID; }
+    const String & getWID() { return _wID; }
 
     const String & getCapturePath() { return _capturePath; }
 
