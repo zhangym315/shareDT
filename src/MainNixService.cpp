@@ -76,6 +76,17 @@ static void HandleCommandSocket(int fd, char * buf)
     String wid;
 
     hcl.initParsing();
+
+    /* start, stop, restart command */
+    if(hcl.getSC().getCType() == StartCapture::C_START ||
+       hcl.getSC().getCType() == StartCapture::C_STOP ||
+      hcl.getSC().getCType() == StartCapture::C_RESTART) {
+        if(!hcl.hasWid()) {
+            sk.send("command must has a valid \"--wid\" setting");
+            return ;
+        }
+    }
+
     if(!hcl.hasWid())
         hcl.setWID();
 

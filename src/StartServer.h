@@ -24,7 +24,8 @@
 class StartCapture {
   public:
     StartCapture() : _pid(-1), _hdler(0), _show(S_NONE),
-         _type(SP_NULL), _sp(NULL), _monID(0), _daemon(false){ }
+         _type(SP_NULL), _sp(NULL), _monID(0), _daemon(false),
+         _ctype(C_NONE) { }
 
     int init(int argc, char *argv[]) ;
     int init() { return init(0, NULL); }
@@ -33,6 +34,7 @@ class StartCapture {
     void startCaptureServer();
 
     enum SType { S_NONE, S_WIN_ALL, S_WIN_NAME, S_MONITOR };
+    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_RESTART, C_SHOW, C_NONE };
 
     bool setWorkingDirectory();
     void initDaemon();
@@ -42,6 +44,7 @@ class StartCapture {
     const String & getWID() { return _wID; }
 
     const String & getCapturePath() { return _capturePath; }
+    StartCapture::CType getCType();
 
   private:
     void Usage();
@@ -75,6 +78,7 @@ class StartCapture {
     bool             _daemon;
     String           _wID;  /* unique id */
     String           _capturePath;
+    CType            _ctype;  /* command type, newcaptre, start, stop ... */
 
     /* rbf related */
     rfbScreenInfoPtr _rfbserver;

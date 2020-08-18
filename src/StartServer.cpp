@@ -4,12 +4,6 @@
  * main function to start a server                       *
  *                                                       *
  *********************************************************/
-#include <iomanip>
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <ctime>
-
 #include "StringTools.h"
 #include "TypeDef.h"
 #include "WindowProcessor.h"
@@ -19,6 +13,12 @@
 #include "Daemon.h"
 #include "Logger.h"
 #include "Enum.h"
+#include "MainConsole.h"
+
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <ctime>
 
 #define SERVERNAME "SHAREDT SERVER"
 #define MAX_RAND_LENGTH 10
@@ -56,6 +56,11 @@ void StartCapture::Usage ()
     rfbUsage();
 }
 
+StartCapture::CType StartCapture::getCType()
+{
+    return _ctype;
+}
+
 /*
  * Parse argument
  * Return 0 for success
@@ -65,7 +70,18 @@ int StartCapture::parseArgs(const vector<String> & args)
 {
     /* parse argument that belongs to StartServer */
     for (vector<String>::const_iterator i = args.begin(); i != args.end(); ++i) {
-        if (*i == "--help") {
+        if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
+            _ctype = C_NEWCAPTURE;
+        } else if (*i == SHAREDT_SERVER_COMMAND_STOP) {
+            _ctype = C_STOP;
+        } else if (*i == SHAREDT_SERVER_COMMAND_START) {
+            _ctype = C_START;
+        } else if (*i == SHAREDT_SERVER_COMMAND_RESTART) {
+            _ctype = C_RESTART;
+        } else if (*i == SHAREDT_SERVER_COMMAND_show) {
+            _ctype = C_SHOW;
+        }
+        else if (*i == "--help") {
             Usage ();
             return RETURN_CODE_INVALID_ARG;
         } else if (*i == "--capture" || *i == "-c" || *i == "--cap") {
