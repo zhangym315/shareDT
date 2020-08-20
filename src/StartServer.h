@@ -28,8 +28,8 @@
 class ReadWriteFDThread : public ReadWriteFD, public Thread
 {
   public:
-    ReadWriteFDThread(const char * path) : ReadWriteFD(path) { }
-    ReadWriteFDThread(const char * path, int oflag) : ReadWriteFD(path, oflag) { }
+    ReadWriteFDThread(const char * path) : ReadWriteFD(path), Thread(false) { }
+    ReadWriteFDThread(const char * path, int oflag) : ReadWriteFD(path, oflag), Thread(false) { }
 
     void mainImp();
 

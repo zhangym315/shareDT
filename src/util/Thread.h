@@ -15,7 +15,7 @@ class Thread : public std::thread {
   public:
     Thread(bool isjoin) : _isJoin(isjoin), _isRunning(false) { }
     Thread() : Thread(true) { }
-    ~Thread() { }
+    ~Thread() { if(_t.joinable()) _t.join(); }
 
     /* To create a thread and run the mainImp function */
     virtual void go();

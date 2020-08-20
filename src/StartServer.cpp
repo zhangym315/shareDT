@@ -475,6 +475,11 @@ void StartCapture::startCaptureServer()
         return ;
     }
 
+    /* start new thread to get command from MMP(MainManagementProcess)  */
+    _listenMMP = new ReadWriteFDThread(_alivePath.c_str(), O_RDONLY);
+    _listenMMP->go();
+    _isServerRunning = true;
+
     /* init rfb server to listen on */
     rfbInitServer(_rfbserver);
 
@@ -486,11 +491,6 @@ void StartCapture::startCaptureServer()
     /* loop through events */
     rfbMarkRectAsModified(_rfbserver, 0, 0,
         _sp->getWidth(), _sp->getHeight());
-
-    /* start new thread to get command from MMP(MainManagementProcess)  */
-    _listenMMP = new ReadWriteFDThread(_alivePath.c_str(), O_RDONLY);
-    _listenMMP->go();
-    _isServerRunning = true;
 
     while (rfbIsActive(_rfbserver) && _isServerRunning) {
         std::this_thread::sleep_for(50ms);
@@ -526,5 +526,6 @@ void StartCapture::startCaptureServer()
         rfbMarkRectAsModified(_rfbserver, 0, 0,
             _sp->getWidth(), _sp->getWidth());
     }
+
     return;
 }

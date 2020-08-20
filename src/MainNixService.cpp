@@ -33,6 +33,16 @@ void HandleCommandLine::setWID()
     _argv[_argc++] = strdup(CapServerHome::instance()->getCid().c_str());
 }
 
+static void sig_child(int signo)
+{
+     pid_t        pid;
+     int        stat;
+
+     while ((pid = waitpid(-1, &stat, WNOHANG)) >0)
+            LOGGER.info("child process %d terminated.\n", pid);
+
+}
+
 /*
  * New request from MainServiceServer, usually it's
  * command request. Like:
@@ -220,6 +230,8 @@ int MainWindowsServices() {
     /* start to listening */
     if(mss.listening())
         return RETURN_CODE_SERVICE_ERROR;
+
+    signal(SIGCHLD,sig_child);
 
     while(true) {
         /* error on getting new client connection */
