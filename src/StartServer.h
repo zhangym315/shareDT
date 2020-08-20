@@ -2,12 +2,16 @@
 #ifndef __STARTSERVER_H__
 #define __STARTSERVER_H__
 
-#include <ScreenProvider.h>
-#include <iostream>
 #include "WindowsProvider.h"
 #include "SamplesProvider.h"
-#include <rfb/rfb.h>
+#include "ReadWriteFD.h"
+#include "Thread.h"
 #include "Path.h"
+#include "ScopedPrt.h"
+
+#include <ScreenProvider.h>
+#include <iostream>
+#include <rfb/rfb.h>
 
 #define DEFAULT_BOUNDS_LEFT   0
 #define DEFAULT_BOUNDS_TOP    0
@@ -20,6 +24,19 @@
 #define RETURN_CODE_INVALID_ARG -2
 #define RETURN_CODE_INTERNAL_ERROR -3
 #define RETURN_CODE_SERVICE_ERROR  -4
+
+class ReadWriteFDThread : public ReadWriteFD, public Thread
+{
+  public:
+    ReadWriteFDThread(const char * path) : ReadWriteFD(path) { }
+    ReadWriteFDThread(const char * path, int oflag) : ReadWriteFD(path, oflag) { }
+
+    void mainImp();
+
+  private:
+    ReadWriteFDThread();
+
+};
 
 class StartCapture {
   public:
@@ -43,7 +60,7 @@ class StartCapture {
     String & setAndGetWID();
     const String & getWID() { return _wID; }
 
-    const String & getCapturePath() { return _capturePath; }
+    const String & getAlivePath() { return _alivePath; }
     StartCapture::CType getCType();
 
   private:
@@ -51,9 +68,7 @@ class StartCapture {
     int parseArgs(const vector<String> & args);
     bool parseBounds();
     bool parseWindows();
-    bool parseMonitor();
     int  parseType();
-    void waitSP() { return; } /* ScreenProvider ready ? */
 
     /* capture instance */
     union Capture {
@@ -78,6 +93,10 @@ class StartCapture {
     bool             _daemon;
     String           _wID;  /* unique id */
     String           _capturePath;
+    String           _alivePath;
+
+    ScopedPtr<ReadWriteFDThread> _listenMMP;
+
     CType            _ctype;  /* command type, newcaptre, start, stop ... */
 
     /* rbf related */

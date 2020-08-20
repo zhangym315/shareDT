@@ -19,18 +19,38 @@
 #include <iostream>
 #include <string>
 #include <ctime>
+#include <fcntl.h>
 
 #define SERVERNAME "SHAREDT SERVER"
 #define MAX_RAND_LENGTH 10
 
+bool _isServerRunning = false;
+
 static const char *SPTypePrefix[] =
-    {
-        "ALLMONITOR"
-        , "MONITOR"
-        , "WINDOW"
-        , "PARTIAL"
-        , "NULL"
-    };
+{
+    "ALLMONITOR"
+    , "MONITOR"
+    , "WINDOW"
+    , "PARTIAL"
+    , "NULL"
+};
+
+void ReadWriteFDThread::mainImp()
+{
+    char * inputBuf;
+    LOGGER.info() << "Waiting request on: " << _path;
+
+    while(true) {
+        inputBuf = read();
+
+        LOGGER.info() << "requests: " << inputBuf;
+        if(!strcmp(inputBuf, "STOPPING")) {
+            _isServerRunning = false;
+            LOGGER.info() << "Stopping capture server";
+            break;
+        }
+    }
+}
 
 void StartCapture::Usage ()
 {
@@ -276,6 +296,7 @@ int StartCapture::initParsing(int argc, char * argv[])
         std::cerr << "Failed to create HomePath: " << CapServerHome::instance()->getHome() << std::endl;
         return RETURN_CODE_INTERNAL_ERROR;
     }
+    _alivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
 
     return RETURN_CODE_SUCCESS;
 }
@@ -289,8 +310,6 @@ int StartCapture::initParsing(int argc, char * argv[])
 int StartCapture::init(int argc, char *argv[]) {
 
     int ret = initParsing(argc, argv);
-    if(ret != RETURN_CODE_SUCCESS && ret != RETURN_CODE_SUCCESS_SHO)
-        return ret;
 
     if(_daemon)
         initDaemon();
@@ -467,8 +486,13 @@ void StartCapture::startCaptureServer()
     /* loop through events */
     rfbMarkRectAsModified(_rfbserver, 0, 0,
         _sp->getWidth(), _sp->getHeight());
-    
-    while (rfbIsActive(_rfbserver)) {
+
+    /* start new thread to get command from MMP(MainManagementProcess)  */
+    _listenMMP = new ReadWriteFDThread(_alivePath.c_str(), O_RDONLY);
+    _listenMMP->go();
+    _isServerRunning = true;
+
+    while (rfbIsActive(_rfbserver) && _isServerRunning) {
         std::this_thread::sleep_for(50ms);
         rfbProcessEvents(_rfbserver, 10000);
 

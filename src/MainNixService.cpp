@@ -18,21 +18,6 @@
 CaptureProcessManager * CaptureProcessManager::_instance = 0;
 
 /*
- * Fork new child process to run the command
- */
-static void invokeCommand(char * command)
-{
-
-    /* create new process to run the command */
-//    if ( fork() == 0 ) {
-//        execv( argv[0], argv);
-//        LOGGER.error() << "Failed to invoke command: " <<  command;
-//    }
-
-    return ;
-}
-
-/*
  * Global WID management
  */
 WIDMAP _WM;
@@ -49,7 +34,10 @@ void HandleCommandLine::setWID()
 }
 
 /*
- * New request from MainServiceServer
+ * New request from MainServiceServer, usually it's
+ * command request. Like:
+ * ShareDTServer start
+ * ShareDTServer capture -c win -h 1234 --daemon --wid WINDOW_1597564504_HID269_RND0278580287
  *
  * 1. New capture, construct the capture id(cid)
  *    a). Generate cid and fork a new process.
@@ -77,7 +65,7 @@ static void HandleCommandSocket(int fd, char * buf)
 
     hcl.initParsing();
 
-    /* start, stop, restart command */
+    /* first check start, stop, restart command */
     if(hcl.getSC().getCType() == StartCapture::C_START ||
        hcl.getSC().getCType() == StartCapture::C_STOP ||
       hcl.getSC().getCType() == StartCapture::C_RESTART) {
@@ -92,8 +80,6 @@ static void HandleCommandSocket(int fd, char * buf)
 
     wid = hcl.getSC().getWID();
 
-    String capServer = CapServerHome::instance()->getHome();
-    char ** argv = hcl.getArgv();
     String ret("Starting Capture ID(CID) = ");
     ret.append(wid);
     ret.append("\nStatus: ");
@@ -101,6 +87,9 @@ static void HandleCommandSocket(int fd, char * buf)
     WIDMAP::iterator it = _WM.find(wid);
     if(it == _WM.end() ||
         it->second.status() != MainManagementProcess::STATUS::STARTED) {
+        String capServer = CapServerHome::instance()->getHome();
+        char ** argv = hcl.getArgv();
+
         LOGGER.info() << "Starting Capture Server Argument: " << hcl.toString();
 
         String captureAlivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;

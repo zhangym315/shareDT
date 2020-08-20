@@ -27,6 +27,7 @@ class ReadWriteFD
     int  _fd;
     int  _flag;
     char _buf[MAX_BUF];
+  protected:
     char _path[MAX_PATH];
 };
 
