@@ -35,19 +35,24 @@ void HandleCommandLine::setWID()
 
 static void sig_child(int signo)
 {
-     pid_t        pid;
-     int        stat;
+     pid_t  pid;
+     int    stat;
 
+     (void) signo;
      while ((pid = waitpid(-1, &stat, WNOHANG)) >0)
-            LOGGER.info("child process %d terminated.\n", pid);
+            LOGGER.info("Child process %d terminated.\n", pid);
 
 }
 
 /*
+ * This is center of msg handling, it receives message from CLI command, and do the
+ * corresponding action, then send back status back to CLI command.
+ *
  * New request from MainServiceServer, usually it's
  * command request. Like:
  * ShareDTServer start
  * ShareDTServer capture -c win -h 1234 --daemon --wid WINDOW_1597564504_HID269_RND0278580287
+ * ShareDTserver stop --wid WINDOW_1597564504_HID269_RND0278580287
  *
  * 1. New capture, construct the capture id(cid)
  *    a). Generate cid and fork a new process.
@@ -73,30 +78,50 @@ static void HandleCommandSocket(int fd, char * buf)
     HandleCommandLine hcl(buf);
     String wid;
 
+    /* parsing input argument */
     hcl.initParsing();
+    wid = hcl.getSC().getWID();
+    WIDMAP::iterator it = _WM.find(wid);
+    StartCapture::CType commandType = hcl.getSC().getCType();
 
     /* first check start, stop, restart command */
-    if(hcl.getSC().getCType() == StartCapture::C_START ||
-       hcl.getSC().getCType() == StartCapture::C_STOP ||
-      hcl.getSC().getCType() == StartCapture::C_RESTART) {
+    if( commandType == StartCapture::C_STOP ) {
         if(!hcl.hasWid()) {
             sk.send("command must has a valid \"--wid\" setting");
             return ;
         }
+
+        if(it == _WM.end()) {
+            String msg("Can't find status for: ");
+            msg.append(wid);
+            sk.send(msg.c_str());
+            return;
+        }
+
+        LOGGER.info() << "Sending stopping to WID: " << wid;
+        it->second.send(CAPTURE_STOPPING);
+
+        std::lock_guard<std::mutex> guard(_WMmutex);
+        it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
+
+        /* send msg back to command line */
+        String msg("Capture Server Stopped: ");
+        msg.append(wid);
+        sk.send(msg.c_str());
+        return;
     }
 
+    /* reconstructing argv if specified by --wid */
     if(!hcl.hasWid())
         hcl.setWID();
-
-    wid = hcl.getSC().getWID();
 
     String ret("Starting Capture ID(CID) = ");
     ret.append(wid);
     ret.append("\nStatus: ");
 
-    WIDMAP::iterator it = _WM.find(wid);
-    if(it == _WM.end() ||
-        it->second.status() != MainManagementProcess::STATUS::STARTED) {
+    /* Starting capture server */
+    if( (commandType == StartCapture::C_START || commandType == StartCapture::C_NEWCAPTURE) &&
+        (it == _WM.end() || it->second.status() != MainManagementProcess::STATUS::STARTED) ) {
         String capServer = CapServerHome::instance()->getHome();
         char ** argv = hcl.getArgv();
 
@@ -105,12 +130,17 @@ static void HandleCommandSocket(int fd, char * buf)
         String captureAlivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
         mkfifo(captureAlivePath.c_str(), 0666);
 
-        if(fork() == 0) {
+        int childPid;
+        if((childPid=fork()) == 0) {
             execv(argv[0], argv);
         }
 
-        ReadWriteFD msg(captureAlivePath.c_str(), O_RDONLY);
-        ret += msg.read();
+        LOGGER.info() << "Child process for WID: " << wid << " started, PID: " << childPid;
+        {
+            ReadWriteFD msg(captureAlivePath.c_str(), O_RDONLY);
+            ret += msg.read();
+        }
+
         /* TODO needs to check if started successfully */
 
         /* add it to global _WM */
@@ -238,7 +268,7 @@ int MainWindowsServices() {
         if((clientSocket=mss.getNewConnection()) == -1)
             continue;
 
-        LOGGER.info("waiting to read from cmd ...");
+        LOGGER.info("Waiting to read from cmd ...");
 
         int bytes_rec = recv(clientSocket, buf, sizeof(buf), 0);
         if (bytes_rec < -1 || bytes_rec > BUFSIZE){
@@ -281,8 +311,6 @@ int MainWindowsServices() {
 MainServiceClient::MainServiceClient() : _valid(false)
 {
     std::srand ((unsigned int) std::time (NULL));
-    const String clientSockFile = CapServerHome::instance()->getHome() +
-                            PATH_SEP_STR + "CLIENT_" + std::to_string (std::rand ());
     const String serverSockFile = CapServerHome::instance()->getHome() +
                             PATH_SEP_STR + SOCKET_FILE;
     int rc;

@@ -116,6 +116,10 @@ static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
 
 static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
 {
+    if(!setMainProcessServiceHome(conf) ||
+       !checkMainServiceStarted())
+        return RETURN_CODE_INTERNAL_ERROR;
+
     if(conf->argc == 2)
     {
         printf ("Stopping shareDTServer\n");

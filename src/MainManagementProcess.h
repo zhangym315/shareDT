@@ -18,7 +18,7 @@ class MainManagementProcess
     MainManagementProcess(const String & alive, STATUS status);
     MainManagementProcess(const String & alive) : MainManagementProcess(alive, UNKNOWN) { }
 
-    void send(char * buf);
+    void send(const char * buf);
 
     STATUS status() { return _status; }
     void updateStatus(STATUS status);

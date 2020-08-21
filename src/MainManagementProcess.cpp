@@ -7,7 +7,7 @@ MainManagementProcess::MainManagementProcess(const String & alive, STATUS status
 {
 }
 
-void MainManagementProcess::send(char * buf)
+void MainManagementProcess::send(const char * buf)
 {
     _rw.write(buf);
 }

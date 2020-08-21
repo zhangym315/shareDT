@@ -196,16 +196,21 @@ String Timestamp::localtime()
     std::ostringstream stream;
     auto now = std::chrono::system_clock::now();
     time_t tt = std::chrono::system_clock::to_time_t(now);
+    auto seconds = std::chrono::time_point_cast<std::chrono::seconds>(now);
+    auto fraction = now - seconds;
+    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(fraction);
 
 #if defined(WIN32) || defined(_WIN32)
     struct tm tm;
     localtime_s(&tm, &tt);
-    stream << std::put_time(&tm, "%F %T");
+    stream << std::put_time(&tm, "%F %T.");
 #else
     char buffer[200] = {0};
     String timeString;
-    std::strftime(buffer, 200, "%F %T", std::localtime(&tt));
+    std::strftime(buffer, 200, "%F %T.", std::localtime(&tt));
     stream << buffer;
 #endif
+
+    stream << std::setfill('0') << std::setw(3) << milliseconds.count();
     return stream.str();
 }

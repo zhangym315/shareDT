@@ -44,7 +44,7 @@ void ReadWriteFDThread::mainImp()
         inputBuf = read();
 
         LOGGER.info() << "requests: " << inputBuf;
-        if(!strcmp(inputBuf, "STOPPING")) {
+        if(!strcmp(inputBuf, CAPTURE_STOPPING)) {
             _isServerRunning = false;
             LOGGER.info() << "Stopping capture server";
             break;

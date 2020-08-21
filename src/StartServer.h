@@ -25,6 +25,8 @@
 #define RETURN_CODE_INTERNAL_ERROR -3
 #define RETURN_CODE_SERVICE_ERROR  -4
 
+#define CAPTURE_STOPPING "STOPPING"
+
 class ReadWriteFDThread : public ReadWriteFD, public Thread
 {
   public:
