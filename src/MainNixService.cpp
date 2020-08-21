@@ -5,6 +5,7 @@
 #include "Logger.h"
 #include "ThreadPool.h"
 #include "MainManagementProcess.h"
+#include "Foreach.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -40,10 +41,27 @@ static void sig_child(int signo)
 
      (void) signo;
      while ((pid = waitpid(-1, &stat, WNOHANG)) >0)
-            LOGGER.info("Child process %d terminated.\n", pid);
+            LOGGER.info("Child process %d terminated.", pid);
 
 }
 
+static void stopAllSC()
+{
+    /* 1. stopping, send all of the singal */
+    FOREACH(WIDMAP, it, _WM) {
+        MainManagementProcess::STATUS statusType = it->second.status();
+
+        if(statusType == MainManagementProcess::STATUS::STARTED) {
+            LOGGER.info() << "Sending stopping to WID: " << it->first;
+            it->second.send(CAPTURE_STOPPING);
+
+            std::lock_guard<std::mutex> guard(_WMmutex);
+            it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
+            LOGGER.info() << "Stopped Capture Server WID: " << it->first;
+        }
+    }
+    return;
+}
 /*
  * This is center of msg handling, it receives message from CLI command, and do the
  * corresponding action, then send back status back to CLI command.
@@ -75,16 +93,18 @@ static void sig_child(int signo)
 static void HandleCommandSocket(int fd, char * buf)
 {
     Socket sk(fd);
-    HandleCommandLine hcl(buf);
     String wid;
+    StartCapture::CType commandType;
 
+    /* start handle particular --wid specified or start new capture server */
+    HandleCommandLine hcl(buf);
     /* parsing input argument */
     hcl.initParsing();
     wid = hcl.getSC().getWID();
     WIDMAP::iterator it = _WM.find(wid);
-    StartCapture::CType commandType = hcl.getSC().getCType();
+    commandType = hcl.getSC().getCType();
 
-    /* first check start, stop, restart command */
+    /* 2. first check stop specific wid */
     if( commandType == StartCapture::C_STOP ) {
         if(!hcl.hasWid()) {
             sk.send("command must has a valid \"--wid\" setting");
@@ -119,7 +139,7 @@ static void HandleCommandSocket(int fd, char * buf)
     ret.append(wid);
     ret.append("\nStatus: ");
 
-    /* Starting capture server */
+    /* 3. Starting capture server */
     if( (commandType == StartCapture::C_START || commandType == StartCapture::C_NEWCAPTURE) &&
         (it == _WM.end() || it->second.status() != MainManagementProcess::STATUS::STARTED) ) {
         String capServer = CapServerHome::instance()->getHome();
@@ -281,14 +301,16 @@ int MainWindowsServices() {
             LOGGER.info("ShareDTServer service DATA RECEIVED = %s, clientSocket=%d", buf, clientSocket);
         }
 
-        // first check if stop command
+        /* first check if stop command */
         if(!memcmp(buf, MAIN_SERVICE_STOPPING, sizeof(MAIN_SERVICE_STOPPING))){
             LOGGER.info() << "Stopping ShareDTServer Service" ;
+            stopAllSC();
             break;
         }
 
-        // send to thread pool to handle the request
+        /* send to thread pool to handle the request */
         tp.enqueue(HandleCommandSocket, clientSocket, buf);
+
     }
 
 
@@ -375,7 +397,7 @@ int MainServiceClient::rcvFrom(char * buf, size_t size)
     return rc;
 }
 
-int infoServiceToCapture(const char * execCmd)
+int infoServiceToAction(const char * execCmd)
 {
     MainServiceClient msc;
     char buf[BUFSIZE];

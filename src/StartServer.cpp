@@ -38,12 +38,12 @@ static const char *SPTypePrefix[] =
 void ReadWriteFDThread::mainImp()
 {
     char * inputBuf;
-    LOGGER.info() << "Waiting request on: " << _path;
+    LOGGER.info() << "Waiting request on: '" << _path << "'";
 
     while(true) {
         inputBuf = read();
 
-        LOGGER.info() << "requests: " << inputBuf;
+        LOGGER.info() << "Requests: '" << inputBuf << "' received on: '" << _path << "'";
         if(!strcmp(inputBuf, CAPTURE_STOPPING)) {
             _isServerRunning = false;
             LOGGER.info() << "Stopping capture server";

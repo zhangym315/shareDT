@@ -16,11 +16,11 @@
 
 int MainWindowsServices();
 #ifdef __SHAREDT_WIN__
-void infoServiceToCapture(const char * execCmd);
+void infoServiceToAction(const char * execCmd);
 #else
 #include "Sock.h"
 #include "Thread.h"
-int infoServiceToCapture(const char * execCmd);
+int infoServiceToAction(const char * execCmd);
 
 /*
  * Singleton instance

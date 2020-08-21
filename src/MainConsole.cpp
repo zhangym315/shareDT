@@ -47,11 +47,11 @@ static int mainInform(const char * command, const struct cmdConf * conf)
     commandPath.append(command);
 
     for (int i=2; i < conf->argc; i++) {
-            commandPath.append(" ");
-            commandPath.append(conf->argv[i]);
-        }
+        commandPath.append(" ");
+        commandPath.append(conf->argv[i]);
+    }
 
-    return infoServiceToCapture(commandPath.c_str());
+    return infoServiceToAction(commandPath.c_str());
 
 }
 
@@ -123,7 +123,7 @@ static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
     if(conf->argc == 2)
     {
         printf ("Stopping shareDTServer\n");
-        return infoServiceToCapture (MAIN_SERVICE_STOPPING);
+        return infoServiceToAction (MAIN_SERVICE_STOPPING);
     }
 
     printf("Stopping capture Server\n");
@@ -174,7 +174,7 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
         commandPath.append(" ");
         commandPath.append(conf->argv[i]);
     }
-    infoServiceToCapture(commandPath.c_str());
+    infoServiceToAction(commandPath.c_str());
 #else
     return mainInform(" newCapture", conf);
 
