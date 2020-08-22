@@ -43,7 +43,7 @@ void infoServiceToAction(const char * execCmd)
     DWORD  cbRead, cbToWrite, cbWritten, dwMode;
     LPTSTR lpszPipename = TEXT(SERVICE_PIPE_SERVER);
 
-// Try to open a named pipe; wait for it, if necessary.
+    /*  Try to open a named pipe; wait for it, if necessary. */
     while (1)
     {
         hPipe = CreateFile(
@@ -56,11 +56,11 @@ void infoServiceToAction(const char * execCmd)
                 0,              // default attributes
                 NULL);          // no template file
 
-        // Break if the pipe handle is valid.
+        /* Break if the pipe handle is valid. */
         if (hPipe != INVALID_HANDLE_VALUE)
             break;
 
-        // Exit if an error other than ERROR_PIPE_BUSY occurs.
+        /* Exit if an error other than ERROR_PIPE_BUSY occurs. */
         if (GetLastError() != ERROR_PIPE_BUSY)
         {
             printf("Could not open pipe to communicate to server. GLE=%d\n", GetLastError() );
@@ -75,7 +75,7 @@ void infoServiceToAction(const char * execCmd)
         }
     }
 
-// The pipe connected; change to message-read mode.
+    // The pipe connected; change to message-read mode.
     dwMode = PIPE_READMODE_MESSAGE;
     fSuccess = SetNamedPipeHandleState(
             hPipe,    // pipe handle
@@ -88,7 +88,7 @@ void infoServiceToAction(const char * execCmd)
         return ;
     }
 
-// Send a message to the pipe server.
+    // Send a message to the pipe server.
     cbToWrite = (lstrlen(lpvMessage)+1)*sizeof(TCHAR);
     printf("Starting capture server\n");
     fSuccess = WriteFile(
