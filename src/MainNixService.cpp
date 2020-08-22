@@ -45,9 +45,11 @@ static void sig_child(int signo)
 
 }
 
+/*
+ * Stopping all CaptureServer in _WM
+ */
 static void stopAllSC()
 {
-    /* 1. stopping, send all of the singal */
     FOREACH(WIDMAP, it, _WM) {
         MainManagementProcess::STATUS statusType = it->second.status();
 
@@ -104,7 +106,7 @@ static void HandleCommandSocket(int fd, char * buf)
     WIDMAP::iterator it = _WM.find(wid);
     commandType = hcl.getSC().getCType();
 
-    /* 2. first check stop specific wid */
+    /* 1. first check stop specific wid */
     if( commandType == StartCapture::C_STOP ) {
         if(!hcl.hasWid()) {
             sk.send("command must has a valid \"--wid\" setting");
@@ -139,7 +141,7 @@ static void HandleCommandSocket(int fd, char * buf)
     ret.append(wid);
     ret.append("\nStatus: ");
 
-    /* 3. Starting capture server */
+    /* 2. Starting capture server */
     if( (commandType == StartCapture::C_START || commandType == StartCapture::C_NEWCAPTURE) &&
         (it == _WM.end() || it->second.status() != MainManagementProcess::STATUS::STARTED) ) {
         String capServer = CapServerHome::instance()->getHome();
