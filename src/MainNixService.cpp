@@ -16,6 +16,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#ifdef __SHAREDT_LINUX__
+#include <sys/wait.h>
+#include <signal.h>
+#endif
+
 CaptureProcessManager * CaptureProcessManager::_instance = 0;
 
 /*
