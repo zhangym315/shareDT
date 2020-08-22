@@ -11,7 +11,9 @@
 #include "MainService.h"
 #include "Logger.h"
 #include "Path.h"
+#include "ReadWriteFD.h"
 
+#include <fcntl.h>
 #ifdef __SHAREDT_WIN__
 #include <windows.h>
 #include <tchar.h>
@@ -28,61 +30,103 @@ void WindowsMainServiceCallback(int argc, char ** argv)
 #include "Daemon.h"
 #endif
 
-static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
+static int mainInform(const char * command, const struct cmdConf * conf)
 {
-    printf("Starting shareDTServer\n");
-#ifdef __SHAREDT_WIN__
     /*
      * 1. set home directory
      * 2. check if main service has been started or not
      * 3. set main service file(log pid file)
      */
     if(!setMainProcessServiceHome(conf) ||
-       !checkMainServiceStarted() ||
-       !setMainServiceFile() )
+       !checkMainServiceStarted() )
         return RETURN_CODE_INTERNAL_ERROR;
 
-    SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
-    SC_HANDLE hSc;
+    String commandPath;
+    commandPath.append(ShareDTHome::instance()->getHome());
+    commandPath.append(MAIN_SERVER_EXEC);
+    commandPath.append(command);
 
-    hSc = OpenService(serviceControlManager, SHAREDT_SERVER_SVCNAME, SERVICE_ALL_ACCESS);
-    if (hSc == nullptr)
-    {
-        LOGGER.error() << "Failed to open service";
-        return RETURN_CODE_INTERNAL_ERROR;
-    } else if(!StartService(hSc, conf->argc, conf->argv))
-    {
-        LOGGER.error() << "Failed to start server service";
-        if (hSc != nullptr) CloseServiceHandle (hSc);
-        return RETURN_CODE_INTERNAL_ERROR;
+    for (int i=2; i < conf->argc; i++) {
+        commandPath.append(" ");
+        commandPath.append(conf->argv[i]);
     }
 
-    if (hSc != nullptr) CloseServiceHandle (hSc);
-    printf("shareDTServer Started\n");
-    return RETURN_CODE_SUCCESS;
+    return infoServiceToAction(commandPath.c_str());
+
+}
+
+static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
+{
+    if(conf->argc == 2)
+    {
+        printf ("Starting shareDTServer\n");
+#ifdef __SHAREDT_WIN__
+        /*
+         * 1. set home directory
+         * 2. check if main service has been started or not
+         * 3. set main service file(log pid file)
+         */
+        if(!setMainProcessServiceHome(conf) ||
+           !checkMainServiceStarted() ||
+           !setMainServiceFile() )
+            return RETURN_CODE_INTERNAL_ERROR;
+
+        SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
+        SC_HANDLE hSc;
+
+        hSc = OpenService(serviceControlManager, SHAREDT_SERVER_SVCNAME, SERVICE_ALL_ACCESS);
+        if (hSc == nullptr)
+        {
+            LOGGER.error() << "Failed to open service";
+            return RETURN_CODE_INTERNAL_ERROR;
+        } else if(!StartService(hSc, conf->argc, conf->argv))
+        {
+            LOGGER.error() << "Failed to start server service";
+            if (hSc != nullptr) CloseServiceHandle (hSc);
+            return RETURN_CODE_INTERNAL_ERROR;
+        }
+
+        if (hSc != nullptr) CloseServiceHandle (hSc);
+        printf("shareDTServer Started\n");
+        return RETURN_CODE_SUCCESS;
 #else
-    DaemonizeProcess::instance()->daemonize();
+        DaemonizeProcess::instance()->daemonize();
 
-    /*
-     * 1. set home directory
-     * 2. check if main service has been started or not
-     * 3. set main service file(log pid file)
-     */
-    if(!setMainProcessServiceHome(conf) ||
-       !checkMainServiceStarted() ||
-       !setMainServiceFile() )
-        return RETURN_CODE_INTERNAL_ERROR;
+        /*
+         * 1. set home directory
+         * 2. check if main service has been started or not
+         * 3. set main service file(log pid file)
+         */
+        if(!setMainProcessServiceHome(conf) ||
+           !checkMainServiceStarted() ||
+           !setMainServiceFile() )
+            return RETURN_CODE_INTERNAL_ERROR;
 
-    DaemonizeProcess::instance()->daemonizeInit();
-    LOGGER.info() << "Daemonized init finished, pid: " << getpid();
+        DaemonizeProcess::instance()->daemonizeInit();
+        LOGGER.info() << "Daemonized init finished, pid: " << getpid();
 
-    return MainWindowsServices();
+        return MainWindowsServices();
 #endif
+    } else {
+        printf ("Starting capture Server\n");
+        return mainInform(" start", conf);
+    }
+
 }
 
 static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
 {
-    printf("Stopping shareDTServer\n");
+    if(!setMainProcessServiceHome(conf) ||
+       !checkMainServiceStarted())
+        return RETURN_CODE_INTERNAL_ERROR;
+
+    if(conf->argc == 2)
+    {
+        printf ("Stopping shareDTServer\n");
+        return infoServiceToAction (MAIN_SERVICE_STOPPING);
+    }
+
+    printf("Stopping capture Server\n");
 #ifdef __SHAREDT_WIN__
     SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
     SC_HANDLE hSc;
@@ -103,16 +147,7 @@ static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
     if (hSc != nullptr) CloseServiceHandle (hSc);
     return RETURN_CODE_SUCCESS;
 #else
-    /*
-     * 1. set home directory
-     * 2. check if main service has been started or not
-     * 3. set main service file(log pid file)
-     */
-    if(!setMainProcessServiceHome(conf) ||
-       !checkMainServiceStarted() )
-        return RETURN_CODE_INTERNAL_ERROR;
-
-    return infoServiceToCapture(MAIN_SERVICE_STOPPING);
+    return mainInform(" stop", conf);
 #endif
 }
 
@@ -139,42 +174,36 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
         commandPath.append(" ");
         commandPath.append(conf->argv[i]);
     }
-    infoServiceToCapture(commandPath.c_str());
+    infoServiceToAction(commandPath.c_str());
 #else
-    String commandPath;
-    if(!setMainProcessServiceHome(conf) ||
-       !checkMainServiceStarted() )
-        return RETURN_CODE_INTERNAL_ERROR;
-
-    commandPath.append(ShareDTHome::instance()->getHome());
-    commandPath.append(MAIN_SERVER_EXEC);
-    commandPath.append(" newCapture");
-
-    for (int i=2; i < conf->argc; i++) {
-        commandPath.append(" ");
-        commandPath.append(conf->argv[i]);
-    }
-
-    return infoServiceToCapture(commandPath.c_str());
+    return mainInform(" newCapture", conf);
 
 #endif
 }
 
 /* main service fork/create new process as the capture server */
-static int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
+int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
 
+    ReadWriteFD msg(cap.getAlivePath().c_str(), O_WRONLY);
     /*
      * If RETURN_CODE_SUCCESS_SHO show window handler
      * return current process
      */
     if(ret == RETURN_CODE_SUCCESS_SHO)
-        return RETURN_CODE_SUCCESS_SHO;
-    else if (ret != RETURN_CODE_SUCCESS)
+    {
+        msg.write("");
         return RETURN_CODE_SUCCESS;
+    } else if (ret != RETURN_CODE_SUCCESS)
+    {
+        msg.write("Failed to create Capture Server");
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
 
+    LOGGER.info() << "Write to MainManagementProcess: successfully created capture Server";
+    msg.write("Successfully created Capture Server");
     cap.startCaptureServer ();
 
     return RETURN_CODE_SUCCESS;
@@ -319,8 +348,25 @@ static int startService (const char ** cmdArg, const struct cmdConf * conf)
 }
 #endif
 
+static void Usage()
+{
+    fprintf(stdout, "%s\n",
+        "Usage: ShareDTServer start\n"
+        "                     stop\n"
+        "                     restart\n"
+        "                     capture\n"
+        "                     show\n"
+        "                     nodaemon\n"
+        );
+}
+
 int main(int argc, char** argv)
 {
+    if(argc < 2) {
+        Usage();
+        return -1;
+    }
+
     static const struct {
         const char *name;
         int (*func)(const char **extra,
@@ -357,5 +403,6 @@ int main(int argc, char** argv)
         }
     }
 
-    return 0;
+    Usage();
+    return -1;
 }

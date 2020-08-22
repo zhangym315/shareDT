@@ -16,11 +16,11 @@
 
 int MainWindowsServices();
 #ifdef __SHAREDT_WIN__
-void infoServiceToCapture(const char * execCmd);
+void infoServiceToAction(const char * execCmd);
 #else
 #include "Sock.h"
 #include "Thread.h"
-int infoServiceToCapture(const char * execCmd);
+int infoServiceToAction(const char * execCmd);
 
 /*
  * Singleton instance
@@ -106,13 +106,13 @@ public:
     int     getArgc() { return _argc; }
 
     bool hasWid() { return _hasWid; }
+    StartCapture & getSC() { return _sc; }
 
 private:
     HandleCommandLine();
     char ** _argv;
     int     _argc;
     bool    _hasWid;
-
     StartCapture _sc;
 };
 

@@ -4,12 +4,6 @@
  * main function to start a server                       *
  *                                                       *
  *********************************************************/
-#include <iomanip>
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <ctime>
-
 #include "StringTools.h"
 #include "TypeDef.h"
 #include "WindowProcessor.h"
@@ -19,18 +13,44 @@
 #include "Daemon.h"
 #include "Logger.h"
 #include "Enum.h"
+#include "MainConsole.h"
+
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <ctime>
+#include <fcntl.h>
 
 #define SERVERNAME "SHAREDT SERVER"
 #define MAX_RAND_LENGTH 10
 
+bool _isServerRunning = false;
+
 static const char *SPTypePrefix[] =
-    {
-        "ALLMONITOR"
-        , "MONITOR"
-        , "WINDOW"
-        , "PARTIAL"
-        , "NULL"
-    };
+{
+    "ALLMONITOR"
+    , "MONITOR"
+    , "WINDOW"
+    , "PARTIAL"
+    , "NULL"
+};
+
+void ReadWriteFDThread::mainImp()
+{
+    char * inputBuf;
+    LOGGER.info() << "Waiting request on: '" << _path << "'";
+
+    while(true) {
+        inputBuf = read();
+
+        LOGGER.info() << "Requests: '" << inputBuf << "' received on: '" << _path << "'";
+        if(!strcmp(inputBuf, CAPTURE_STOPPING)) {
+            _isServerRunning = false;
+            LOGGER.info() << "Stopping capture server";
+            break;
+        }
+    }
+}
 
 void StartCapture::Usage ()
 {
@@ -56,6 +76,11 @@ void StartCapture::Usage ()
     rfbUsage();
 }
 
+StartCapture::CType StartCapture::getCType()
+{
+    return _ctype;
+}
+
 /*
  * Parse argument
  * Return 0 for success
@@ -65,7 +90,18 @@ int StartCapture::parseArgs(const vector<String> & args)
 {
     /* parse argument that belongs to StartServer */
     for (vector<String>::const_iterator i = args.begin(); i != args.end(); ++i) {
-        if (*i == "--help") {
+        if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
+            _ctype = C_NEWCAPTURE;
+        } else if (*i == SHAREDT_SERVER_COMMAND_STOP) {
+            _ctype = C_STOP;
+        } else if (*i == SHAREDT_SERVER_COMMAND_START) {
+            _ctype = C_START;
+        } else if (*i == SHAREDT_SERVER_COMMAND_RESTART) {
+            _ctype = C_RESTART;
+        } else if (*i == SHAREDT_SERVER_COMMAND_show) {
+            _ctype = C_SHOW;
+        }
+        else if (*i == "--help") {
             Usage ();
             return RETURN_CODE_INVALID_ARG;
         } else if (*i == "--capture" || *i == "-c" || *i == "--cap") {
@@ -159,6 +195,7 @@ bool StartCapture::setWorkingDirectory()
     // _wID passed as an argument
     String & cid = (_wID.length() > 0) ? _wID : setAndGetWID();
     wPath.append(cid);
+    _capturePath = wPath;
     CapServerHome::instance()->setHome(wPath, cid);
 
     if(!fs::exists(wPath) && !fs::create_directory(wPath)) {
@@ -218,6 +255,10 @@ void StartCapture::initDaemon()
 {
     String captureLog = CapServerHome::instance()->getHome() + PATH_CAPTURE_LOG;
     LOGGER.setLogFile(captureLog.c_str());
+
+#ifndef __SHAREDT_WIN__
+    DaemonizeProcess::daemonizeInit();
+#endif
 }
 
 int StartCapture::initParsing(int argc, char * argv[])
@@ -255,6 +296,7 @@ int StartCapture::initParsing(int argc, char * argv[])
         std::cerr << "Failed to create HomePath: " << CapServerHome::instance()->getHome() << std::endl;
         return RETURN_CODE_INTERNAL_ERROR;
     }
+    _alivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
 
     return RETURN_CODE_SUCCESS;
 }
@@ -268,8 +310,9 @@ int StartCapture::initParsing(int argc, char * argv[])
 int StartCapture::init(int argc, char *argv[]) {
 
     int ret = initParsing(argc, argv);
-    if(ret != RETURN_CODE_SUCCESS && ret != RETURN_CODE_SUCCESS_SHO)
-        return ret;
+
+    if(_daemon)
+        initDaemon();
 
     /* create ScreenProvider */
     if (_type == SP_PARTIAL) {
@@ -432,6 +475,11 @@ void StartCapture::startCaptureServer()
         return ;
     }
 
+    /* start new thread to get command from MMP(MainManagementProcess)  */
+    _listenMMP = new ReadWriteFDThread(_alivePath.c_str(), O_RDONLY);
+    _listenMMP->go();
+    _isServerRunning = true;
+
     /* init rfb server to listen on */
     rfbInitServer(_rfbserver);
 
@@ -443,8 +491,8 @@ void StartCapture::startCaptureServer()
     /* loop through events */
     rfbMarkRectAsModified(_rfbserver, 0, 0,
         _sp->getWidth(), _sp->getHeight());
-    
-    while (rfbIsActive(_rfbserver)) {
+
+    while (rfbIsActive(_rfbserver) && _isServerRunning) {
         std::this_thread::sleep_for(50ms);
         rfbProcessEvents(_rfbserver, 10000);
 
@@ -478,5 +526,6 @@ void StartCapture::startCaptureServer()
         rfbMarkRectAsModified(_rfbserver, 0, 0,
             _sp->getWidth(), _sp->getWidth());
     }
+
     return;
 }

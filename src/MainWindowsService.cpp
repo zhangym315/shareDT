@@ -34,7 +34,7 @@ int MainWindowsServices()
  * command line to inform service to create child
  * process to run the server procedure
  */
-void infoServiceToCapture(const char * execCmd)
+void infoServiceToAction(const char * execCmd)
 {
     HANDLE hPipe;
     const char *lpvMessage=TEXT(execCmd);

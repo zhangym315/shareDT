@@ -2,12 +2,16 @@
 #ifndef __STARTSERVER_H__
 #define __STARTSERVER_H__
 
-#include <ScreenProvider.h>
-#include <iostream>
 #include "WindowsProvider.h"
 #include "SamplesProvider.h"
-#include <rfb/rfb.h>
+#include "ReadWriteFD.h"
+#include "Thread.h"
 #include "Path.h"
+#include "ScopedPrt.h"
+
+#include <ScreenProvider.h>
+#include <iostream>
+#include <rfb/rfb.h>
 
 #define DEFAULT_BOUNDS_LEFT   0
 #define DEFAULT_BOUNDS_TOP    0
@@ -21,10 +25,26 @@
 #define RETURN_CODE_INTERNAL_ERROR -3
 #define RETURN_CODE_SERVICE_ERROR  -4
 
+#define CAPTURE_STOPPING "STOPPING"
+
+class ReadWriteFDThread : public ReadWriteFD, public Thread
+{
+  public:
+    ReadWriteFDThread(const char * path) : ReadWriteFD(path), Thread(false) { }
+    ReadWriteFDThread(const char * path, int oflag) : ReadWriteFD(path, oflag), Thread(false) { }
+
+    void mainImp();
+
+  private:
+    ReadWriteFDThread();
+
+};
+
 class StartCapture {
   public:
     StartCapture() : _pid(-1), _hdler(0), _show(S_NONE),
-         _type(SP_NULL), _sp(NULL), _monID(0), _daemon(false){ }
+         _type(SP_NULL), _sp(NULL), _monID(0), _daemon(false),
+         _ctype(C_NONE) { }
 
     int init(int argc, char *argv[]) ;
     int init() { return init(0, NULL); }
@@ -33,22 +53,24 @@ class StartCapture {
     void startCaptureServer();
 
     enum SType { S_NONE, S_WIN_ALL, S_WIN_NAME, S_MONITOR };
+    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_RESTART, C_SHOW, C_NONE };
 
     bool setWorkingDirectory();
     void initDaemon();
     void show();             /* show handler for all of windows */
 
     String & setAndGetWID();
-    String & getWID() { return _wID; }
+    const String & getWID() { return _wID; }
+
+    const String & getAlivePath() { return _alivePath; }
+    StartCapture::CType getCType();
 
   private:
     void Usage();
     int parseArgs(const vector<String> & args);
     bool parseBounds();
     bool parseWindows();
-    bool parseMonitor();
     int  parseType();
-    void waitSP() { return; } /* ScreenProvider ready ? */
 
     /* capture instance */
     union Capture {
@@ -72,6 +94,12 @@ class StartCapture {
     int              _monID;  /* for monitor capture, the id of monitor */
     bool             _daemon;
     String           _wID;  /* unique id */
+    String           _capturePath;
+    String           _alivePath;
+
+    ScopedPtr<ReadWriteFDThread> _listenMMP;
+
+    CType            _ctype;  /* command type, newcaptre, start, stop ... */
 
     /* rbf related */
     rfbScreenInfoPtr _rfbserver;

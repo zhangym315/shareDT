@@ -148,6 +148,7 @@ add_executable(${START_SERVER}
         ${SHAREDT_SRC}/MainService.cpp
         ${SHAREDT_SRC}/MainConsole.cpp
         ${SHAREDT_SRC}/WindowsProvider.cpp
+        ${SHAREDT_SRC}/MainManagementProcess.cpp
         ${SHAREDT_SRC}/util/StringTools.cpp
         ${SHAREDT_SRC}/util/Buffer.cpp
         ${SHAREDT_SRC}/util/Thread.cpp
@@ -155,6 +156,7 @@ add_executable(${START_SERVER}
         ${SHAREDT_SRC}/util/Logger.cpp
         ${SHAREDT_SRC}/util/Path.cpp
         ${SHAREDT_SRC}/util/Enum.cpp
+        ${SHAREDT_SRC}/util/ReadWriteFD.cpp
         ${SHAREDT_SRC}/util/Pid.c
         ${CAPTURE_SRC}
         )

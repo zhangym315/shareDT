@@ -117,5 +117,6 @@ void DaemonizeProcess::daemonizeInit()
 
     /* Write PID to lockfile */
     write(pid_fd, str, strlen(str));
+    close(pid_fd);
 }
 #endif

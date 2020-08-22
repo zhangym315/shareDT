@@ -26,16 +26,18 @@ namespace fs = std::filesystem;
 #  define PATH_SEP_STR		PATH_SEP_STR_UNIX
 #endif
 
-#define CAPTURE_LOG "shareDT.log"
-#define VNCSERV_LOG "vncserv.log"
-#define MAINSER_LOG "shareDT.log"
-#define FILEPID     "file.pid"
-#define FILEPIPE    "server.sf"
-#define MAINSERVER  "MAINSERVER"
+#define CAPTURE_LOG        "shareDT.log"
+#define VNCSERV_LOG        "vncserv.log"
+#define MAINSER_LOG        "shareDT.log"
+#define FILEPID            "file.pid"
+#define SOCKET_FILE        "server.sf"
+#define ALIVE_FILE         "alive.mng"
+#define MAINSERVER         "MAINSERVER"
 
 #define PATH_CAPTURE_LOG   PATH_SEP_STR CAPTURE_LOG
 #define PATH_VNCSERVER_LOG PATH_SEP_STR VNCSERV_LOG
 #define PATH_PID_FILE      PATH_SEP_STR FILEPID
+#define PATH_ALIVE_FILE    PATH_SEP_STR ALIVE_FILE
 
 #define VAR_RUN PATH_SEP_STR "var" PATH_SEP_STR "run" PATH_SEP_STR
 #define MAIN_SERVER_PATH VAR_RUN MAINSERVER  // $SHAREDTHOME/var/run/MAINSERVER
