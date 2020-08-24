@@ -15,12 +15,12 @@
 #define MAIN_SERVICE_CONTINUING   "MAIN_CONTINUING"
 
 int MainWindowsServices();
+int infoServiceToAction(const char * execCmd);
+
 #ifdef __SHAREDT_WIN__
-void infoServiceToAction(const char * execCmd);
 #else
 #include "Sock.h"
 #include "Thread.h"
-int infoServiceToAction(const char * execCmd);
 
 /*
  * Singleton instance

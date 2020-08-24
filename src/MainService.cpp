@@ -1,14 +1,16 @@
-#include <fstream>
-#include <iostream>
-#include <stdlib.h>
-
 #include "MainService.h"
 #include "Path.h"
 #include "Logger.h"
 #include "MainConsole.h"
+#include "CrossPlatform.h"
+
+#include <fstream>
+#include <iostream>
+#include <stdlib.h>
 
 #ifdef __SHAREDT_WIN__
 #include <windows.h>
+#include <process.h>
 #endif
 
 HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)

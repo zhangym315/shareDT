@@ -34,7 +34,7 @@ int MainWindowsServices()
  * command line to inform service to create child
  * process to run the server procedure
  */
-void infoServiceToAction(const char * execCmd)
+int infoServiceToAction(const char * execCmd)
 {
     HANDLE hPipe;
     const char *lpvMessage=TEXT(execCmd);
@@ -64,14 +64,14 @@ void infoServiceToAction(const char * execCmd)
         if (GetLastError() != ERROR_PIPE_BUSY)
         {
             printf("Could not open pipe to communicate to server. GLE=%d\n", GetLastError() );
-            return ;
+            return RETURN_CODE_SERVICE_ERROR;
         }
 
         // All pipe instances are busy, so wait for 20 seconds.
         if ( ! WaitNamedPipe(lpszPipename, 20000))
         {
             printf("Could not open pipe: 20 second wait timed out.");
-            return ;
+            return RETURN_CODE_SERVICE_ERROR;
         }
     }
 
@@ -85,7 +85,7 @@ void infoServiceToAction(const char * execCmd)
     if ( ! fSuccess)
     {
         printf("SetNamedPipeHandleState failed. GLE=%d\n", GetLastError());
-        return ;
+        return RETURN_CODE_SERVICE_ERROR;
     }
 
     // Send a message to the pipe server.
@@ -101,7 +101,7 @@ void infoServiceToAction(const char * execCmd)
     if ( ! fSuccess)
     {
         printf("Faield to WriteFile to service server. GLE=%d\n", GetLastError() );
-        return;
+        return RETURN_CODE_SERVICE_ERROR;
     }
 
     do
@@ -122,10 +122,10 @@ void infoServiceToAction(const char * execCmd)
     if ( ! fSuccess)
     {
         printf( TEXT("ReadFile from pipe failed. GLE=%d\n"), GetLastError() );
-        return;
+        return RETURN_CODE_SERVICE_ERROR;
     }
     CloseHandle(hPipe);
-    return;
+    return RETURN_CODE_SUCCESS;
 }
 
 VOID GetAnswerToRequest( LPTSTR pchRequest,

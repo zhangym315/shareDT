@@ -8,7 +8,8 @@ ReadWriteFD::ReadWriteFD(const char * path)
 
 ReadWriteFD::ReadWriteFD(const char * path, int oflag)
 {
-    _fd = ::open(path, oflag);
+
+    OS_OPEN(path, oflag);
     strcpy(_path, path);
     _flag = oflag;
 }
@@ -17,7 +18,8 @@ char * ReadWriteFD::read()
 {
     open(O_RDONLY);
     bzero(_buf, MAX_BUF);
-    ::read(_fd, _buf, MAX_BUF);
+    OS_READ(_fd, _buf, MAX_BUF);
+
     close();
     return _buf;
 }
@@ -25,7 +27,7 @@ char * ReadWriteFD::read()
 void ReadWriteFD::write(const char * buf)
 {
     open(O_WRONLY);
-    ::write(_fd, buf, strlen(buf)+1);
+    OS_WRITE(_fd, buf, strlen(buf)+1);
     close();
 }
 
@@ -36,11 +38,11 @@ void ReadWriteFD::open()
 
 void ReadWriteFD::open(int flag)
 {
-    _fd = ::open(_path, flag);
+    _fd = OS_OPEN(_path, flag);
     _flag = flag;
 }
 
 void ReadWriteFD::close()
 {
-    ::close(_fd);
+    OS_CLOSE(_fd);
 }

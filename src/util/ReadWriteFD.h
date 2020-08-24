@@ -3,8 +3,7 @@
 
 #include "Logger.h"
 #include "Path.h"
-
-#include <unistd.h>
+#include "CrossPlatform.h"
 
 #define MAX_BUF 512
 
@@ -20,7 +19,10 @@ class ReadWriteFD
   public:
     ReadWriteFD(const char * path);
     ReadWriteFD(const char * path, int oflag);
-    ~ReadWriteFD() { ::close(_fd); }
+    ~ReadWriteFD()
+    {
+        OS_CLOSE(_fd);
+    }
 
     char * read();
     void   write(const char * buf);
