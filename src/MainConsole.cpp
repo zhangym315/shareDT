@@ -213,7 +213,6 @@ static int mainShow (const char ** cmdArg, const struct cmdConf * conf)
 {
     StartCapture cap;
     cap.init(conf->argc, const_cast<char **>(conf->argv));
-    cap.show();
     return RETURN_CODE_SUCCESS;
 }
 

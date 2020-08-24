@@ -192,11 +192,11 @@ static void HandleCommandSocket(int fd, char * buf)
  */
 MainServiceServer::MainServiceServer() : _valid(false), _backlog(10) // default 10 queued request
 {
-    const String pipeFile = CapServerHome::instance()->getHome() +
-                            PATH_SEP_STR + SOCKET_FILE;
     int rc;
     sockaddr_un server_sockaddr;
 
+    _socketFile = CapServerHome::instance()->getHome() +
+                  PATH_SEP_STR + SOCKET_FILE;
     /**************************************/
     /* Create a UNIX domain stream socket */
     /**************************************/
@@ -216,9 +216,9 @@ MainServiceServer::MainServiceServer() : _valid(false), _backlog(10) // default 
     /***************************************/
     memset(&server_sockaddr, 0, sizeof(struct sockaddr_un));
     server_sockaddr.sun_family = AF_UNIX;
-    strcpy(server_sockaddr.sun_path, pipeFile.c_str());
+    strcpy(server_sockaddr.sun_path, _socketFile.c_str());
 
-    unlink(pipeFile.c_str());
+    unlink(_socketFile.c_str());
     rc = ::bind(_serverSock, (struct sockaddr *) &server_sockaddr,
                 SUN_LEN(&server_sockaddr));
     if (rc == -1){
@@ -239,6 +239,12 @@ MainServiceServer::~MainServiceServer()
             it!=_clientsSock.end(); it++) {
         close(*it);
     }
+}
+
+void MainServiceServer::removeSocketFile()
+{
+    std::remove(_socketFile.c_str());
+    LOGGER.info() << "Removed socket file: " << _socketFile;
 }
 
 /*********************************/
@@ -331,6 +337,7 @@ int MainWindowsServices() {
         LOGGER.info("Data sent to client to inform server is stopped");
     }
 
+    mss.removeSocketFile();
     LOGGER.info("ShareDTServer Service stopped");
 
     return 0;

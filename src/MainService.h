@@ -60,6 +60,7 @@ class MainServiceServer
 
     void setValid(bool valid) { _valid = valid; }
     bool getValid()  {return _valid; }
+    void removeSocketFile();
 
     int listening();
     int getNewConnection();
@@ -69,6 +70,7 @@ class MainServiceServer
     int _backlog;
     std::vector<int> _clientsSock;
     bool _valid;
+    String _socketFile;
 };
 
 class MainServiceClient

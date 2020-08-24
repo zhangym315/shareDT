@@ -45,6 +45,7 @@ class StartCapture {
     StartCapture() : _pid(-1), _hdler(0), _show(S_NONE),
          _type(SP_NULL), _sp(NULL), _monID(0), _daemon(false),
          _ctype(C_NONE) { }
+    ~StartCapture();
 
     int init(int argc, char *argv[]) ;
     int init() { return init(0, NULL); }
@@ -64,6 +65,7 @@ class StartCapture {
 
     const String & getAlivePath() { return _alivePath; }
     StartCapture::CType getCType();
+    void  removeAlivePath() const;
 
   private:
     void Usage();

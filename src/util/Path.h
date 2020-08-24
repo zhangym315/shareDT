@@ -74,11 +74,13 @@ class CapServerHome {
     void setHome(const String & path,const String & cid);
     const String & getHome();
     const String & getCid();
+    bool  isValid() const { return _valid; }
 
   private:
     CapServerHome();
     static CapServerHome * _instance;
     String _home;
     String _cid;
+    bool   _valid;
 };
 #endif //_PATH_H_

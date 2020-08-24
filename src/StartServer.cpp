@@ -81,6 +81,12 @@ StartCapture::CType StartCapture::getCType()
     return _ctype;
 }
 
+void StartCapture::removeAlivePath() const
+{
+    std::remove(_alivePath.c_str());
+    LOGGER.info() << "Removed listening file: " << _alivePath;
+}
+
 /*
  * Parse argument
  * Return 0 for success
@@ -276,7 +282,7 @@ int StartCapture::initParsing(int argc, char * argv[])
     if(parseArgs(args))
         return RETURN_CODE_INVALID_ARG;
 
-    if(_show != S_NONE) {
+    if(_show != S_NONE || _ctype == C_SHOW) {
         show();
         return RETURN_CODE_SUCCESS_SHO;
     }
@@ -301,6 +307,10 @@ int StartCapture::initParsing(int argc, char * argv[])
     return RETURN_CODE_SUCCESS;
 }
 
+StartCapture::~StartCapture()
+{
+}
+
 /*
  * Set parameter to StartCapture
  * Return code:
@@ -310,6 +320,9 @@ int StartCapture::initParsing(int argc, char * argv[])
 int StartCapture::init(int argc, char *argv[]) {
 
     int ret = initParsing(argc, argv);
+
+    if(ret != RETURN_CODE_SUCCESS)
+        return ret;
 
     if(_daemon)
         initDaemon();
@@ -412,7 +425,7 @@ bool StartCapture::parseWindows ()
 
 void StartCapture::show()
 {
-    if(_show == S_WIN_ALL || _show == S_WIN_NAME )
+    if(_show == S_WIN_ALL || _show == S_WIN_NAME || _ctype == C_SHOW)
     {
         /*
          * _pid : -1, show all
@@ -426,7 +439,8 @@ void StartCapture::show()
                       << "\tWindow name: " << win.getName() << std::endl;
         }
 
-    } else if (_show == S_MONITOR ) {
+    }
+    if (_show == S_MONITOR || _ctype == C_SHOW) {
         MonitorVectorProvider mvp(true);
         std::cout << "Monitor Lists:" << std::endl;
         for (CapMonitor mon : mvp.get())
@@ -527,5 +541,6 @@ void StartCapture::startCaptureServer()
             _sp->getWidth(), _sp->getWidth());
     }
 
+    removeAlivePath();
     return;
 }
