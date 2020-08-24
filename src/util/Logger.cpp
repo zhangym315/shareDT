@@ -123,20 +123,22 @@ void Logger::run()
     std::unique_lock<std::mutex> lock(_mutex);
 
     /* write out log event it is shutting down */
-    if(!_queue.empty())
-    {
-        if(_ofs.is_open() && (!_shutdown))
+    while(!_shutdown ||  !_queue.empty()) {
+        if(!_queue.empty())
         {
-            _ofs << _queue.front () << std::endl;
-            _ofs.flush();
+            if(_ofs.is_open() && (!_shutdown))
+            {
+                _ofs << _queue.front () << std::endl;
+                _ofs.flush();
+            }
+            else
+                std::cout << _queue.front() << std::endl;
+            _queue.pop();
         }
         else
-            std::cout << _queue.front() << std::endl;
-        _queue.pop();
-    }
-    else
-    {
-        _cond.wait(lock);
+        {
+            _cond.wait(lock);
+        }
     }
 }
 

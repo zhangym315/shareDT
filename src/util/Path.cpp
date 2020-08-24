@@ -173,7 +173,7 @@ bool ShareDTHome::isValid()  { return _valid; }
 
 CapServerHome* CapServerHome::_instance = 0;
 
-CapServerHome::CapServerHome() {
+CapServerHome::CapServerHome() : _valid(false) {
 }
 
 CapServerHome * CapServerHome::instance ()
@@ -184,9 +184,11 @@ CapServerHome * CapServerHome::instance ()
     return _instance;
 }
 
-void CapServerHome::setHome(const String &path, const String & cid) {
+void CapServerHome::setHome(const String &path, const String & cid)
+{
     _home = path;
     _cid  = cid;
+    _valid = true;
 }
 
 const String & CapServerHome::getHome() {
