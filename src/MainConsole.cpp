@@ -52,7 +52,6 @@ static int mainInform(const char * command, const struct cmdConf * conf)
     }
 
     return infoServiceToAction(commandPath.c_str());
-
 }
 
 static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
@@ -120,12 +119,6 @@ static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
        !checkMainServiceStarted())
         return RETURN_CODE_INTERNAL_ERROR;
 
-    if(conf->argc == 2)
-    {
-        printf ("Stopping shareDTServer\n");
-        return infoServiceToAction (MAIN_SERVICE_STOPPING);
-    }
-
     printf("Stopping capture Server\n");
 #ifdef __SHAREDT_WIN__
     SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
@@ -147,6 +140,12 @@ static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
     if (hSc != nullptr) CloseServiceHandle (hSc);
     return RETURN_CODE_SUCCESS;
 #else
+    if(conf->argc == 2)
+    {
+        printf ("Stopping shareDTServer\n");
+        return infoServiceToAction (MAIN_SERVICE_STOPPING);
+    }
+
     return mainInform(" stop", conf);
 #endif
 }

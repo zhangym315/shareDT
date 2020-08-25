@@ -1,12 +1,12 @@
-#include <windows.h>
-#include <strsafe.h>
-#include <string.h>
-#include <stdio.h>
-
 #include "MainService.h"
 #include "MainConsole.h"
 #include "TypeDef.h"
 #include "Logger.h"
+
+#include <windows.h>
+#include <strsafe.h>
+#include <string.h>
+#include <stdio.h>
 
 SERVICE_STATUS ServiceStatus;
 SERVICE_STATUS_HANDLE hStatus;
@@ -158,8 +158,10 @@ VOID GetAnswerToRequest( LPTSTR pchRequest,
                         &pi )           // Pointer to PROCESS_INFORMATION structure
             )
     {
-        printf( "CreateProcess failed (%d).\n", GetLastError() );
+        LOGGER.error( "CreateProcess failed (%d).\n", GetLastError() );
         return;
+    } else {
+        LOGGER.error() << "CreateProcess successfully";
     }
 
     // Check the outgoing message to make sure it's not too long for the buffer.
