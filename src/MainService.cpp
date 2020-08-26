@@ -5,6 +5,7 @@
 #include "CrossPlatform.h"
 #include "MainManagementProcess.h"
 #include "Foreach.h"
+#include "Sock.h"
 
 #include <fstream>
 #include <iostream>
@@ -70,11 +71,13 @@ static void stopAllSC()
  * If new capture server reqeust is received
  *
  */
+#ifdef __SHAREDT_WIN__
+void HandleCommandSocket(HANDLE fd, char * buf)
+#else
 void HandleCommandSocket(int fd, char * buf)
-{
-#ifndef __SHAREDT_WIN__
-    Socket sk(fd);
 #endif
+{
+    SocketFD sk(fd);
     String wid;
     StartCapture::CType commandType;
 
@@ -89,18 +92,14 @@ void HandleCommandSocket(int fd, char * buf)
     /* 1. first check stop specific wid */
     if( commandType == StartCapture::C_STOP ) {
         if(!hcl.hasWid()) {
-#ifndef __SHAREDT_WIN__
             sk.send("command must has a valid \"--wid\" setting");
-#endif
             return ;
         }
 
         if(it == _WM.end()) {
             String msg("Can't find status for: ");
             msg.append(wid);
-#ifndef __SHAREDT_WIN__
             sk.send(msg.c_str());
-#endif
             return;
         }
 
@@ -113,9 +112,9 @@ void HandleCommandSocket(int fd, char * buf)
         /* send msg back to command line */
         String msg("Capture Server Stopped: ");
         msg.append(wid);
-#ifndef __SHAREDT_WIN__
+
         sk.send(msg.c_str());
-#endif
+
         return;
     }
 
@@ -163,9 +162,7 @@ void HandleCommandSocket(int fd, char * buf)
     } else {
         ret += "Already started";
     }
-#ifndef __SHAREDT_WIN__
     sk.send(ret.c_str());
-#endif
 }
 HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)
 {

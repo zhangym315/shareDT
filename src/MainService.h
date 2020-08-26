@@ -16,7 +16,12 @@
 
 int MainWindowsServices();
 int infoServiceToAction(const char * execCmd);
+
+#ifdef __SHAREDT_WIN__
+void HandleCommandSocket(HANDLE fd, char * buf);
+#else
 void HandleCommandSocket(int fd, char * buf);
+#endif
 
 #ifdef __SHAREDT_WIN__
 #else

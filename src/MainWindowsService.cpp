@@ -217,7 +217,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
     }
 
 //    GetAnswerToRequest(pchRequest, pchReply, &cbReplyBytes);
-    HandleCommandSocket((int)hPipe, pchRequest);
+    HandleCommandSocket(hPipe, pchRequest);
 
     /* reply back to command line */
     fSuccess = WriteFile( hPipe, pchReply, cbReplyBytes, &cbWritten, NULL);
