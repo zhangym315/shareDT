@@ -186,7 +186,7 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
 
-    ReadWriteFD msg(cap.getAlivePath().c_str(), O_WRONLY);
+    ReadWriteFD msg(cap.getAlivePath().c_str(), O_WRONLY|O_CREAT);
     /*
      * If RETURN_CODE_SUCCESS_SHO show window handler
      * return current process

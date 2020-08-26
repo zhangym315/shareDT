@@ -16,6 +16,7 @@
 
 int MainWindowsServices();
 int infoServiceToAction(const char * execCmd);
+void HandleCommandSocket(int fd, char * buf);
 
 #ifdef __SHAREDT_WIN__
 #else
@@ -89,7 +90,6 @@ class MainServiceClient
     int  _clientSock;
     bool _valid;
 };
-
 #endif
 
 class HandleCommandLine

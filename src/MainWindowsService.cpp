@@ -175,11 +175,9 @@ VOID GetAnswerToRequest( LPTSTR pchRequest,
     *pchBytes = (lstrlen(pchReply)+1)*sizeof(TCHAR);
 }
 
-// This routine is a thread processing function to read from and reply to a client
-// via the open pipe connection passed from the main loop. Note this allows
-// the main loop to continue executing, potentially creating more threads of
-// of this procedure to run concurrently, depending on the number of incoming
-// client connections.
+/*
+ * Read message from command line and pass it to HandleCommandSocket
+ */
 DWORD WINAPI InstanceThread(LPVOID lpvParam)
 {
     HANDLE hHeap      = GetProcessHeap();
@@ -192,83 +190,42 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 
     // Do some extra error checking since the app will keep running even if this
     // thread fails.
-    if (lpvParam == NULL)
+    if (lpvParam == NULL || pchRequest == NULL ||
+            pchReply == NULL )
     {
         LOGGER.error() << "ERROR - Pipe Server Failure:";
-        LOGGER.error() << "   InstanceThread got an unexpected NULL value in lpvParam.";
+        LOGGER.error() << "   InstanceThread got an unexpected NULL value in lpvParam/pchRequest/pchReply.";
         LOGGER.error() << "   InstanceThread exitting.";
         if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
-        if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
-        return (DWORD)-1;
-    }
-    if (pchRequest == NULL)
-    {
-        LOGGER.error() << "ERROR - Pipe Server Failure:";
-        LOGGER.error() << "   InstanceThread got an unexpected NULL heap allocation.";
-        LOGGER.error() << "   InstanceThread exitting.";
-        if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
-        return (DWORD)-1;
-    }
-    if (pchReply == NULL)
-    {
-        LOGGER.error() << "ERROR - Pipe Server Failure:";
-        LOGGER.error() << "   InstanceThread got an unexpected NULL heap allocation.";
-        LOGGER.error() << "   InstanceThread exitting.";
         if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
         return (DWORD)-1;
     }
 
-    // Print verbose messages. In production code, this should be for debugging only.
     LOGGER.info() << "Pipe Connection Thread created, receiving and processing messages.";
-
-    // The thread's parameter is a handle to a pipe object instance.
-
     hPipe = (HANDLE) lpvParam;
-    // Loop until done reading
-    while (1)
+
+    /* read command line info */
+    fSuccess = ReadFile(hPipe, pchRequest, BUFSIZE*sizeof(TCHAR), &cbBytesRead, NULL);
+
+    if (!fSuccess || cbBytesRead == 0)
     {
-        // Read client requests from the pipe. This simplistic code only allows messages
-        // up to BUFSIZE characters in length.
-        fSuccess = ReadFile(
-                hPipe,        // handle to pipe
-                pchRequest,    // buffer to receive data
-                BUFSIZE*sizeof(TCHAR), // size of buffer
-                &cbBytesRead, // number of bytes read
-                NULL);        // not overlapped I/O
-
-        if (!fSuccess || cbBytesRead == 0)
-        {
-            if (GetLastError() == ERROR_BROKEN_PIPE)
-            {
-                LOGGER.info() <<"Pipe Connection Thread: client disconnected.";
-            }
-            else
-            {
-                LOGGER.error() <<"Pipe Connection Thread ReadFile failed, GLE=" << GetLastError();
-            }
-            break;
-        }
-
-        // Process the incoming message.
-        GetAnswerToRequest(pchRequest, pchReply, &cbReplyBytes);
-
-        // Write the reply to the pipe.
-        fSuccess = WriteFile(
-                hPipe,        // handle to pipe
-                pchReply,     // buffer to write from
-                cbReplyBytes, // number of bytes to write
-                &cbWritten,   // number of bytes written
-                NULL);        // not overlapped I/O
-        if (!fSuccess || cbReplyBytes != cbWritten)
-        {
-            LOGGER.error() <<"Pipe Connection Thread WriteFile failed, GLE=" <<  GetLastError();
-            break;
-        }
+        LOGGER.error() <<"Pipe Connection Thread ReadFile failed, GLE=" << GetLastError();
+        WriteFile( hPipe, "Failed to create process file", cbReplyBytes, &cbWritten, NULL);
+        if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
+        if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
+        return -1;
     }
 
-    // Flush the pipe to allow the client to read the pipe's contents
-    // before disconnecting. Then disconnect the pipe, and close the
-    // handle to this pipe instance.
+//    GetAnswerToRequest(pchRequest, pchReply, &cbReplyBytes);
+    HandleCommandSocket((int)hPipe, pchRequest);
+
+    /* reply back to command line */
+    fSuccess = WriteFile( hPipe, pchReply, cbReplyBytes, &cbWritten, NULL);
+    if (!fSuccess || cbReplyBytes != cbWritten)
+    {
+        LOGGER.error() <<"Pipe Connection Thread WriteFile failed, GLE=" <<  GetLastError();
+    }
+
     FlushFileBuffers(hPipe);
     DisconnectNamedPipe(hPipe);
     CloseHandle(hPipe);
