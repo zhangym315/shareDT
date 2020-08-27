@@ -77,6 +77,12 @@ VOID GetAnswerToRequest( LPTSTR pchRequest,
     *pchBytes = (lstrlen(pchReply)+1)*sizeof(TCHAR);
 }
 
+typedef struct FdBuffer {
+    FdBuffer(HANDLE * h, char * b) : handle(h), buf(b) { }
+    HANDLE * handle;
+    char   * buf;
+} FdBuffer;
+
 /*
  * Read message from command line and pass it to HandleCommandSocket
  */
@@ -86,9 +92,10 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
     TCHAR* pchRequest = (TCHAR*)HeapAlloc(hHeap, 0, BUFSIZE*sizeof(TCHAR));
     TCHAR* pchReply   = (TCHAR*)HeapAlloc(hHeap, 0, BUFSIZE*sizeof(TCHAR));
 
+    FdBuffer * p = (FdBuffer * ) lpvParam;
     DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
     BOOL fSuccess = FALSE;
-    HANDLE hPipe  = NULL;
+    HANDLE hPipe  = *(p->handle);
 
     if (lpvParam == NULL || pchRequest == NULL ||
             pchReply == NULL )
@@ -101,7 +108,6 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
     }
 
     LOGGER.info() << "Pipe Connection Thread created, receiving and processing messages.";
-    hPipe = (HANDLE) lpvParam;
 
     /* read command line info */
     fSuccess = ReadFile(hPipe, pchRequest, BUFSIZE*sizeof(TCHAR), &cbBytesRead, NULL);
@@ -136,7 +142,6 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
     return 1;
 }
 
-
 void ServiceMain(int argc, char** argv)
 {
     LOGGER.info() << "shareDTServer service is starting" ;
@@ -159,6 +164,7 @@ void ServiceMain(int argc, char** argv)
     ServiceStatus.dwCurrentState = SERVICE_RUNNING;
     SetServiceStatus (hStatus, &ServiceStatus);
 
+    /* ok, started the windows service */
     LOGGER.info() << "shareDTServer service Started";
 
     /*
@@ -168,9 +174,11 @@ void ServiceMain(int argc, char** argv)
     HANDLE hPipe = INVALID_HANDLE_VALUE, hThread;
     DWORD  dwThreadId = 0;
     int    maxFailed = 0;
+    int    receivedBytes;
+    char   buf[BUFSIZE];
+    bool   rc;
 
-    while (ServiceStatus.dwCurrentState ==
-           SERVICE_RUNNING)
+    while (ServiceStatus.dwCurrentState == SERVICE_RUNNING)
     {
         hPipe = CreateNamedPipe(lpszPipename.c_str(), PIPE_ACCESS_DUPLEX,
                 PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
@@ -191,12 +199,29 @@ void ServiceMain(int argc, char** argv)
         /* new connection from command line */
         if (ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED))
         {
+            /* read command line info */
+            rc = ReadFile(hPipe, buf, BUFSIZE, reinterpret_cast<LPDWORD>(&receivedBytes), NULL);
+            if (!rc || receivedBytes == 0)
+            {
+                LOGGER.error() <<"Pipe Connection Thread ReadFile failed, GLE=" << GetLastError();
+                continue;
+            }
+            buf[receivedBytes] = '\0';
+            LOGGER.info("ShareDTServer service DATA RECEIVED = %s, clientSocket=%d", buf, hPipe);
+
+            /* check if it is stopping command */
+            if(!memcmp(buf, MAIN_SERVICE_STOPPING, sizeof(MAIN_SERVICE_STOPPING))){
+                LOGGER.info() << "Stopping ShareDTServer Service" ;
+                break;
+            }
+
+            FdBuffer fb(&hPipe, buf);
             LOGGER.info() << "Client connected, creating a processing thread.";
-            hThread = CreateThread(NULL, 0, InstanceThread, (LPVOID) hPipe, 0, &dwThreadId);
+            hThread = CreateThread(NULL, 0, InstanceThread, (LPVOID) &fb, 0, &dwThreadId);
             if (hThread == NULL)
             {
-                LOGGER.error () << "CreateThread failed, GLE=" <<  GetLastError();
-                return ;
+                LOGGER.error () << "CreateThread failed to run, GLE=" <<  GetLastError() << " clientSocket:" << hPipe;
+                continue;
             }
             else CloseHandle(hThread);
         }
