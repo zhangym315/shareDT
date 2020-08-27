@@ -9,7 +9,11 @@ class SocketFD
 {
   public:
 #ifdef __SHAREDT_WIN__
-    SocketFD(HANDLE fd) : _fd(fd) { }
+    SocketFD(HANDLE fd) : _fd(fd)
+    {
+        DWORD dwMode = PIPE_READMODE_MESSAGE;
+        SetNamedPipeHandleState(_fd, &dwMode, NULL, NULL);
+    }
 #else
     SocketFD(int fd) : _fd (fd) { }
 #endif

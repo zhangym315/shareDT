@@ -21,9 +21,9 @@ int SocketFD::send(const char * buf)
 {
     int rc;
 #ifdef __SHAREDT_WIN__
-    rc = WriteFile( _fd, buf, strlen(buf), NULL, NULL);
+    rc = WriteFile( _fd, buf, strlen(buf)+1, NULL, NULL);
 #else
-    rc = ::send(_fd, buf, strlen(buf), 0);
+    rc = ::send(_fd, buf, strlen(buf)+1, 0);
     if (rc < -1) {
     }
 #endif

@@ -122,6 +122,8 @@ void HandleCommandSocket(int fd, char * buf)
     if(!hcl.hasWid())
         hcl.setWID();
 
+    sk.send("command received");
+
     String ret("Starting Capture ID(CID) = ");
     ret.append(wid);
     ret.append("\nStatus: ");
@@ -133,7 +135,6 @@ void HandleCommandSocket(int fd, char * buf)
         char ** argv = hcl.getArgv();
 
         LOGGER.info() << "Starting Capture Server Argument: " << hcl.toString();
-
         String captureAlivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
         int childPid;
 #ifndef __SHAREDT_WIN__
@@ -141,12 +142,18 @@ void HandleCommandSocket(int fd, char * buf)
         if((childPid=fork()) == 0) {
             execv(argv[0], argv);
         }
+#else
+        CreateNamedPipe(captureAlivePath.c_str(), PIPE_ACCESS_DUPLEX,
+                        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                        PIPE_UNLIMITED_INSTANCES, BUFSIZE, BUFSIZE, 0, NULL);
 #endif
-        LOGGER.info() << "Child process for WID: " << wid << " started, PID: " << childPid;
+        LOGGER.info() << "Linecount: " << __LINE__ << "HandleCommandSocket startWID: " << hcl.getSC().getWID() << " captureAlivePath: " << captureAlivePath;
         {
             ReadWriteFD msg(captureAlivePath.c_str(), O_RDONLY);
             ret += msg.read();
         }
+        LOGGER.info() << "Child process for WID: " << wid << " started, PID: " << childPid;
+        return;
 
         /* TODO needs to check if started successfully */
 

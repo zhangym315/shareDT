@@ -119,7 +119,7 @@ static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
        !checkMainServiceStarted())
         return RETURN_CODE_INTERNAL_ERROR;
 
-    printf("Stopping capture Server\n");
+    fprintf(stdout, "Stopping capture Server\n");
 #ifdef __SHAREDT_WIN__
     SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
     SC_HANDLE hSc;
@@ -138,6 +138,7 @@ static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
         }
     }
     if (hSc != nullptr) CloseServiceHandle (hSc);
+    fprintf(stdout, "Capture Service stopped.\n");
     return RETURN_CODE_SUCCESS;
 #else
     if(conf->argc == 2)
@@ -264,21 +265,11 @@ static int installService (const char ** cmdArg, const struct cmdConf * conf)
     runningServicePath.insert(0, "\"");
     runningServicePath.insert(runningServicePath.length(), "\"");
     runningServicePath.append(" service");
-    // Create the service
-    schService = CreateService(
-            schSCManager,              // SCM database
-            SHAREDT_SERVER_SVCNAME,    // name of service
-            SHAREDT_SERVER_SVCNAME,    // service name to display
-            SERVICE_ALL_ACCESS,        // desired access
-            SERVICE_WIN32_OWN_PROCESS, // service type
-            SERVICE_DEMAND_START,      // start type
-            SERVICE_ERROR_NORMAL,      // error control type
-            runningServicePath.c_str(),// path to service's binary
-            NULL,                      // no load ordering group
-            NULL,                      // no tag identifier
-            NULL,                      // no dependencies
-            NULL,                      // LocalSystem account
-            NULL);                     // no password
+
+    schService = CreateService(schSCManager, SHAREDT_SERVER_SVCNAME,
+                SHAREDT_SERVER_SVCNAME, SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
+                SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, runningServicePath.c_str(),
+                NULL, NULL, NULL, NULL, NULL);
     if (schService == NULL)
     {
         printf("CreateService failed (%d)\n", GetLastError());
@@ -310,12 +301,7 @@ static int uninstallService (const char ** cmdArg, const struct cmdConf * conf)
         return RETURN_CODE_SERVICE_ERROR;
     }
 
-    // Get a handle to the service.
-    schService = OpenServiceA(
-            schSCManager,           // SCM database
-            SHAREDT_SERVER_SVCNAME, // name of service
-            DELETE);                // need delete access
-
+    schService = OpenServiceA( schSCManager, SHAREDT_SERVER_SVCNAME, DELETE);
     if (schService == NULL)
     {
         printf("OpenService failed (%d)\n", GetLastError());
@@ -323,7 +309,6 @@ static int uninstallService (const char ** cmdArg, const struct cmdConf * conf)
         return RETURN_CODE_SERVICE_ERROR;
     }
 
-    // Delete the service.
     if (! DeleteService(schService) )
     {
         printf("DeleteService failed (%d)\n", GetLastError());

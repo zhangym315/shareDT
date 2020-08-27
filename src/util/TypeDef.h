@@ -3,6 +3,8 @@
 
 #include <thread>
 
+#define BUFSIZE 5120
+
 #ifdef _WIN32
 typedef int pid_t;
 #endif

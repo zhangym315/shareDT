@@ -11,7 +11,7 @@
 #define OS_OPEN _open
 #define OS_READ _read
 #define OS_WRITE _write
-#define OS_CLOSE _close
+#define OS_CLOSE CloseHandle
 #else
 #include <unistd.h>
 #define OS_OPEN ::open
