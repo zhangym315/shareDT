@@ -20,6 +20,9 @@
 class ReadWriteFD
 {
   public:
+#ifdef __SHAREDT_WIN__
+    ReadWriteFD(HANDLE h) : _fd(h) { }
+#endif
     ReadWriteFD(const char * path);
     ReadWriteFD(const char * path, int oflag);
     ~ReadWriteFD()

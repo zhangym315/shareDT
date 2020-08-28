@@ -88,55 +88,21 @@ typedef struct FdBuffer {
  */
 DWORD WINAPI InstanceThread(LPVOID lpvParam)
 {
-    HANDLE hHeap      = GetProcessHeap();
-    TCHAR* pchRequest = (TCHAR*)HeapAlloc(hHeap, 0, BUFSIZE*sizeof(TCHAR));
-    TCHAR* pchReply   = (TCHAR*)HeapAlloc(hHeap, 0, BUFSIZE*sizeof(TCHAR));
-
-    FdBuffer * p = (FdBuffer * ) lpvParam;
-    DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
-    BOOL fSuccess = FALSE;
-    HANDLE hPipe  = *(p->handle);
-
-    if (lpvParam == NULL || pchRequest == NULL ||
-            pchReply == NULL )
+    if (lpvParam == NULL )
     {
         LOGGER.error() << "ERROR - Pipe Server Failure: InstanceThread got an unexpected NULL" <<
-                        " value in lpvParam/pchRequest/pchReply. InstanceThread exitting.";
-        if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
-        if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
+                       " value in lpvParam. InstanceThread exitting.";
         return (DWORD)-1;
     }
 
-    LOGGER.info() << "Pipe Connection Thread created, receiving and processing messages.";
+    FdBuffer * p = (FdBuffer * ) lpvParam;
+    HANDLE hPipe  = *(p->handle);
 
-    /* read command line info */
-    fSuccess = ReadFile(hPipe, pchRequest, BUFSIZE*sizeof(TCHAR), &cbBytesRead, NULL);
-
-    if (!fSuccess || cbBytesRead == 0)
-    {
-        LOGGER.error() <<"Pipe Connection Thread ReadFile failed, GLE=" << GetLastError();
-        WriteFile( hPipe, "Failed to create process file", cbReplyBytes, &cbWritten, NULL);
-        if (pchReply != NULL) HeapFree(hHeap, 0, pchReply);
-        if (pchRequest != NULL) HeapFree(hHeap, 0, pchRequest);
-        return -1;
-    }
-
-//    GetAnswerToRequest(pchRequest, pchReply, &cbReplyBytes);
-    HandleCommandSocket(hPipe, pchRequest);
-
-    /* reply back to command line */
-    fSuccess = WriteFile( hPipe, pchReply, cbReplyBytes, &cbWritten, NULL);
-    if (!fSuccess || cbReplyBytes != cbWritten)
-    {
-        LOGGER.error() <<"Pipe Connection Thread WriteFile failed, GLE=" <<  GetLastError();
-    }
+    HandleCommandSocket(hPipe, p->buf);
 
     FlushFileBuffers(hPipe);
     DisconnectNamedPipe(hPipe);
     CloseHandle(hPipe);
-
-    HeapFree(hHeap, 0, pchRequest);
-    HeapFree(hHeap, 0, pchReply);
 
     LOGGER.info() <<"Pipe Connection Thread exiting.";
     return 1;
@@ -144,7 +110,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 
 void ServiceMain(int argc, char** argv)
 {
-    LOGGER.info() << "shareDTServer service is starting" ;
+    LOGGER.info() << "ShareDTServer service is starting" ;
 
     ServiceStatus.dwServiceType = SERVICE_WIN32;
     ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
@@ -165,7 +131,7 @@ void ServiceMain(int argc, char** argv)
     SetServiceStatus (hStatus, &ServiceStatus);
 
     /* ok, started the windows service */
-    LOGGER.info() << "shareDTServer service Started";
+    LOGGER.info() << "ShareDTServer service Started";
 
     /*
      * do the main service work
@@ -194,7 +160,7 @@ void ServiceMain(int argc, char** argv)
             continue ;
         }
         if(maxFailed) maxFailed = 0;
-        LOGGER.info() << "Pipe Server: Main thread awaiting client connection on";
+        LOGGER.info() << "Pipe Server: Main thread awaiting client connection on: " << lpszPipename;
 
         /* new connection from command line */
         if (ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED))
@@ -220,7 +186,7 @@ void ServiceMain(int argc, char** argv)
             hThread = CreateThread(NULL, 0, InstanceThread, (LPVOID) &fb, 0, &dwThreadId);
             if (hThread == NULL)
             {
-                LOGGER.error () << "CreateThread failed to run, GLE=" <<  GetLastError() << " clientSocket:" << hPipe;
+                LOGGER.error () << "CreateThread failed to run, GLE=" <<  GetLastError() << " clientSocket:" << (int)hPipe;
                 continue;
             }
             else CloseHandle(hThread);
@@ -241,14 +207,14 @@ void ControlHandler(DWORD request)
     switch(request)
     {
         case SERVICE_CONTROL_STOP:
-            LOGGER.info() << "shareDTServer service stopped";
+            LOGGER.info() << "ShareDTServer service stopped";
             ServiceStatus.dwWin32ExitCode = 0;
             ServiceStatus.dwCurrentState = SERVICE_STOPPED;
             SetServiceStatus (hStatus, &ServiceStatus);
             return;
 
         case SERVICE_CONTROL_SHUTDOWN:
-            LOGGER.info() << "shareDTServer service stopped";
+            LOGGER.info() << "ShareDTServer service stopped";
             ServiceStatus.dwWin32ExitCode = 0;
             ServiceStatus.dwCurrentState = SERVICE_STOPPED;
             SetServiceStatus (hStatus, &ServiceStatus);

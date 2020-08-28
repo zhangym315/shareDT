@@ -6,28 +6,30 @@
 
 ReadWriteFD::ReadWriteFD(const char * path)
 {
-#ifdef __SHAREDT_WIN__
-    _fd = CreateNamedPipe(path, PIPE_ACCESS_DUPLEX,
-                    PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-                    PIPE_UNLIMITED_INSTANCES, BUFSIZE, BUFSIZE, 0, NULL);
-
-#else
     ReadWriteFD(path, 0666);
-#endif
 }
 
 ReadWriteFD::ReadWriteFD(const char * path, int oflag)
 {
 #ifndef __SHAREDT_WIN__
     OS_OPEN(path, oflag);
-    strcpy(_path, path);
     _flag = oflag;
+#else
+    _fd = CreateNamedPipe(path, PIPE_ACCESS_DUPLEX,
+                           PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                           PIPE_UNLIMITED_INSTANCES, BUFSIZE, BUFSIZE, 0, NULL);
 #endif
+    strcpy(_path, path);
 }
 
 char * ReadWriteFD::read()
 {
 #ifdef __SHAREDT_WIN__
+    while(true) {
+        LPDWORD lpTotalBytesAvail;
+        PeekNamedPipe(_fd, NULL, NULL, NULL, lpTotalBytesAvail, NULL);
+        if(reinterpret_cast<int>(lpTotalBytesAvail) > 0) break;
+    }
     ReadFile(_fd, _buf, BUFSIZE, NULL, NULL);
 #else
     open(O_RDONLY);

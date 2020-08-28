@@ -122,8 +122,6 @@ void HandleCommandSocket(int fd, char * buf)
     if(!hcl.hasWid())
         hcl.setWID();
 
-    sk.send("command received");
-
     String ret("Starting Capture ID(CID) = ");
     ret.append(wid);
     ret.append("\nStatus: ");
@@ -143,17 +141,45 @@ void HandleCommandSocket(int fd, char * buf)
             execv(argv[0], argv);
         }
 #else
-        CreateNamedPipe(captureAlivePath.c_str(), PIPE_ACCESS_DUPLEX,
+        HANDLE hPipe = CreateNamedPipe(captureAlivePath.c_str(), PIPE_ACCESS_DUPLEX,
                         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
                         PIPE_UNLIMITED_INSTANCES, BUFSIZE, BUFSIZE, 0, NULL);
-#endif
-        LOGGER.info() << "Linecount: " << __LINE__ << "HandleCommandSocket startWID: " << hcl.getSC().getWID() << " captureAlivePath: " << captureAlivePath;
+        STARTUPINFO si;
+        PROCESS_INFORMATION pi;
+
+        ZeroMemory( &si, sizeof(si) );
+        si.cb = sizeof(si);
+        ZeroMemory( &pi, sizeof(pi) );
+
+        // Start the child process.
+        if(!CreateProcess( NULL,   // No module name (use command line)
+                           (LPTSTR)hcl.toString().c_str(),     // Command line
+                            NULL,           // Process handle not inheritable
+                            NULL,           // Thread handle not inheritable
+                            true,           // Set handle inheritance to FALSE
+                            0,              // No creation flags
+                            NULL,           // Use parent's environment block
+                            NULL,           // Use parent's starting directory
+                            &si,            // Pointer to STARTUPINFO structure
+                            &pi )           // Pointer to PROCESS_INFORMATION structure
+                )
         {
+            sk.send("Failed to create child capture process");
+            return;
+        }
+        CloseHandle(pi.hThread);
+        childPid = (int) pi.hProcess;
+#endif
+        {
+#ifdef __SHAREDT_WIN__
+            ReadWriteFD msg(hPipe);
+#else
             ReadWriteFD msg(captureAlivePath.c_str(), O_RDONLY);
+#endif
             ret += msg.read();
         }
-        LOGGER.info() << "Child process for WID: " << wid << " started, PID: " << childPid;
-        return;
+        LOGGER.info() << "Child process for WID: " << wid <<
+                        " started, PID: " << childPid << " command: " << hcl.toString();
 
         /* TODO needs to check if started successfully */
 
@@ -267,7 +293,7 @@ bool setMainServiceFile()
     // set service log
     String pathLog = CapServerHome::instance()->getHome() + PATH_SEP_STR + String(MAINSER_LOG);
     LOGGER.setLogFile(pathLog.c_str());
-    LOGGER.info() << "main service log set to: " << pathLog ;
+    LOGGER.info() << "Main service log set to: " << pathLog ;
 
 #ifdef __SHAREDT_WIN__
     String pathPid = CapServerHome::instance()->getHome() + PATH_SEP_STR + String(PATH_PID_FILE);

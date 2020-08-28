@@ -66,9 +66,11 @@ static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
          * 3. set main service file(log pid file)
          */
         if(!setMainProcessServiceHome(conf) ||
-           !checkMainServiceStarted() ||
-           !setMainServiceFile() )
+           !checkMainServiceStarted() )
+        {
+            LOGGER.error() << "Failed to check process service home";
             return RETURN_CODE_INTERNAL_ERROR;
+        }
 
         SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
         SC_HANDLE hSc;
