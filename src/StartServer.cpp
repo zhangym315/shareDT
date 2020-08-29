@@ -506,6 +506,7 @@ void StartCapture::startCaptureServer()
     rfbMarkRectAsModified(_rfbserver, 0, 0,
         _sp->getWidth(), _sp->getHeight());
 
+    LOGGER.info() << "Started startCaptureServer" ;
     while (rfbIsActive(_rfbserver) && _isServerRunning) {
         std::this_thread::sleep_for(50ms);
         rfbProcessEvents(_rfbserver, 10000);

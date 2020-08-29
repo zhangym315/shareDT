@@ -26,9 +26,11 @@ char * ReadWriteFD::read()
 {
 #ifdef __SHAREDT_WIN__
     while(true) {
-        LPDWORD lpTotalBytesAvail;
-        PeekNamedPipe(_fd, NULL, NULL, NULL, lpTotalBytesAvail, NULL);
-        if(reinterpret_cast<int>(lpTotalBytesAvail) > 0) break;
+        Sleep(1000);
+        DWORD total = 0;
+        if(PeekNamedPipe(_fd, NULL, 0, NULL, &total, NULL))
+            continue;
+        if(total > 0) break;
     }
     ReadFile(_fd, _buf, BUFSIZE, NULL, NULL);
 #else
