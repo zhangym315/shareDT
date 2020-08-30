@@ -80,7 +80,6 @@ void HandleCommandSocket(int fd, char * buf)
     SocketFD sk(fd);
     String wid;
     StartCapture::CType commandType;
-
     /* start handle particular --wid specified or start new capture server */
     HandleCommandLine hcl(buf);
     /* parsing input argument */
@@ -165,8 +164,10 @@ void HandleCommandSocket(int fd, char * buf)
                 )
         {
             sk.send("Failed to create child capture process");
+            LOGGER.info() << "Failed to create child capture process";
             return;
         }
+        LOGGER.info() << "Successuflly create child process" ;
         CloseHandle(pi.hThread);
         childPid = (int) pi.hProcess;
 #endif

@@ -158,7 +158,11 @@ static int mainRestart (const char ** cmdArg, const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 }
 
-/* new capture from command */
+/*
+ * New capture request from command
+ * This function doesn't not start capture server straightforwardly
+ * Instead, if notify MainService to start new process as Capture Server
+ */
 static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
 #ifdef __SHAREDT_WIN__
@@ -188,6 +192,8 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
+
+    LOGGER.info("mainNewCapture: %s\n", cap.getAlivePath().c_str());
 
     ReadWriteFD msg(cap.getAlivePath().c_str(), O_WRONLY|O_CREAT);
     /*
@@ -357,17 +363,17 @@ int main(int argc, char** argv)
         int (*func)(const char **extra,
                      const struct cmdConf *cconf);
     } cmdHandlers[] = {
-            { "start" ,     &mainStart   },     /* start service      */
-            { "stop"  ,     &mainStop    },     /* stop  service      */
-            { "restart",    &mainRestart },     /* restart service    */
-            { "capture",    &mainCapture },     /* capture command    */
-            { "newCapture", &mainNewCapture },  /* new capture process */
-            { "show",       &mainShow    },     /* command show win   */
-            { "nodaemon",   &noDaemon    }      /* command show win   */
+            { "start" ,     &mainStart   },     /* start service         */
+            { "stop"  ,     &mainStop    },     /* stop  service         */
+            { "restart",    &mainRestart },     /* restart service       */
+            { "capture",    &mainCapture },     /* capture command       */
+            { "newCapture", &mainNewCapture },  /* new capture process   */
+            { "show",       &mainShow    },     /* command show win      */
+            { "nodaemon",   &noDaemon    }      /* run in no daemon mode */
 #ifdef  __SHAREDT_WIN__
-           ,{ "install",    &installService },  /* install service    */
-            { "service",    &startService },    /* from scm service   */
-            { "uninstall",  &uninstallService } /* uninstall service  */
+           ,{ "install",    &installService },  /* install service       */
+            { "service",    &startService },    /* from scm service      */
+            { "uninstall",  &uninstallService } /* uninstall service     */
 #endif
     };
     unsigned cmd_count = 0;

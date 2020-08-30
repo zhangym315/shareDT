@@ -30,53 +30,6 @@ int MainWindowsServices()
     return 0;
 }
 
-VOID GetAnswerToRequest( LPTSTR pchRequest,
-                         LPTSTR pchReply,
-                         LPDWORD pchBytes )
-// This routine is a simple function to print the client request to the console
-// and populate the reply buffer with a default data string. This is where you
-// would put the actual client request processing code that runs in the context
-// of an instance thread. Keep in mind the main thread will continue to wait for
-// and receive other client connections while the instance thread is working.
-{
-    LOGGER.info() << "Client Request String: " << String(pchRequest);
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-
-    ZeroMemory( &si, sizeof(si) );
-    si.cb = sizeof(si);
-    ZeroMemory( &pi, sizeof(pi) );
-
-    // Start the child process.
-    if( !CreateProcess( NULL,   // No module name (use command line)
-                        pchRequest,     // Command line
-                        NULL,           // Process handle not inheritable
-                        NULL,           // Thread handle not inheritable
-                        FALSE,          // Set handle inheritance to FALSE
-                        0,              // No creation flags
-                        NULL,           // Use parent's environment block
-                        NULL,           // Use parent's starting directory
-                        &si,            // Pointer to STARTUPINFO structure
-                        &pi )           // Pointer to PROCESS_INFORMATION structure
-            )
-    {
-        LOGGER.error( "CreateProcess failed (%d).\n", GetLastError() );
-        return;
-    } else {
-        LOGGER.error() << "CreateProcess successfully";
-    }
-
-    // Check the outgoing message to make sure it's not too long for the buffer.
-    if (FAILED(StringCchCopy( pchReply, BUFSIZE, TEXT("default answer from server") )))
-    {
-        *pchBytes = 0;
-        pchReply[0] = 0;
-        LOGGER.error() << "StringCchCopy failed, no outgoing message.";
-        return;
-    }
-    *pchBytes = (lstrlen(pchReply)+1)*sizeof(TCHAR);
-}
-
 typedef struct FdBuffer {
     FdBuffer(HANDLE * h, char * b) : handle(h), buf(b) { }
     HANDLE * handle;
@@ -88,6 +41,7 @@ typedef struct FdBuffer {
  */
 DWORD WINAPI InstanceThread(LPVOID lpvParam)
 {
+    LOGGER.info() << "InstanceThread stared" ;
     if (lpvParam == NULL )
     {
         LOGGER.error() << "ERROR - Pipe Server Failure: InstanceThread got an unexpected NULL" <<
@@ -98,6 +52,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
     FdBuffer * p = (FdBuffer * ) lpvParam;
     HANDLE hPipe  = *(p->handle);
 
+    LOGGER.info() << "HandleCommandSocket before stared" ;
     HandleCommandSocket(hPipe, p->buf);
 
     FlushFileBuffers(hPipe);
