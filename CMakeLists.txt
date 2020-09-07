@@ -98,7 +98,6 @@ elseif(APPLE)
         ${CMAKE_SOURCE_DIR}/src/capture/ios/NSFrame.mm
         ${CMAKE_SOURCE_DIR}/src/capture/ios/CGWindowsFrame.cpp
         ${CMAKE_SOURCE_DIR}/src/MainNixService.cpp
-        ${SHAREDT_SRC}/util/Sock.cpp
     )
     set(${PROJECT_NAME}_PLATFORM_LIBS
         ${CMAKE_THREAD_LIBS_INIT}
@@ -127,6 +126,7 @@ else()
         ${CMAKE_SOURCE_DIR}/src/capture/linux/XFrameProcessor.cpp
         ${CMAKE_SOURCE_DIR}/src/MainNixService.cpp
         ${SHAREDT_SRC}/util/Sock.cpp)
+            )
 
     set(${PROJECT_NAME}_PLATFORM_LIBS
         ${X11_LIBRARIES}
@@ -157,6 +157,7 @@ add_executable(${START_SERVER}
         ${SHAREDT_SRC}/util/Path.cpp
         ${SHAREDT_SRC}/util/Enum.cpp
         ${SHAREDT_SRC}/util/ReadWriteFD.cpp
+        ${SHAREDT_SRC}/util/Sock.cpp
         ${SHAREDT_SRC}/util/Pid.c
         ${CAPTURE_SRC}
         )

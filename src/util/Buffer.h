@@ -51,7 +51,7 @@ class FrameBuffer {
      * received order is B, G, R, A
      * Convert to R, G, B, A
      */
-    void ConvertBGRA2RGBA(unsigned char * dst, int size) {
+    void ConvertBGRA2RGBA(unsigned char * dst, size_t size) {
         struct ImageBGRA * data = (struct ImageBGRA * ) dst;
         unsigned char tmp;
         int rowStart;

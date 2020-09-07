@@ -27,6 +27,10 @@ export CMAKE_MODULE_PATH=${SHAREDT_SRC}/contrib/qt515/static-build/bin
 export PATH=${SHAREDT_SRC}/contrib/qt515/static-build/bin
 ```
 
+* Intallation
+```
+-DCMAKE_INSTALL_PREFIX=C:\shareDT-install
+```
 ## CMD
 ```
 git clone https://github.com/zhangym315/shareDT.git
@@ -45,4 +49,5 @@ SET _ROOT=C:\shareDT\contrib\qt515
 SET PATH=%PATH%;C:\MinGW\bin;C:\MinGW\msys\1.0\bin;%_ROOT%\qtbase\bin;%_ROOT%\gnuwin32\bin
 REM SET PATH=%_ROOT%\qtrepotools\bin;%PATH%
 SET PATH=C:\win_flex_bison-latest\bin\Debug;%PATH%
+set CL=/MP
 ```
