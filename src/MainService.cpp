@@ -62,7 +62,7 @@ String HandleCommandLine::toString(int offset)
 
 bool setMainProcessServiceHome(const struct cmdConf * conf)
 {
-    // get the main server running path
+    /* get the main service running */
 #ifdef __SHAREDT_WIN__
     TCHAR szPath[MAX_PATH];
     if( !GetModuleFileNameA( NULL, szPath, MAX_PATH ) )
@@ -77,7 +77,6 @@ bool setMainProcessServiceHome(const struct cmdConf * conf)
 
     CapServerHome::instance()->setHome(ShareDTHome::instance()->getHome()+String(MAIN_SERVER_PATH), MAINSERVER);
 
-    // create home working directory
     const String & path = CapServerHome::instance()->getHome();
     if(!fs::exists(path) && !fs::create_directory(path)) {
         std::cerr << "Failed to create working directory: " << path << std::endl;
@@ -94,7 +93,6 @@ bool checkMainServiceStarted()
 
 bool setMainServiceFile()
 {
-    // set service log
     String pathLog = CapServerHome::instance()->getHome() + PATH_SEP_STR + String(MAINSER_LOG);
     LOGGER.setLogFile(pathLog.c_str());
     LOGGER.info() << "main service log set to: " << pathLog ;

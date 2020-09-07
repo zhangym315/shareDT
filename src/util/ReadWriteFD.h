@@ -4,8 +4,9 @@
 #include "Logger.h"
 #include "Path.h"
 
+#ifndef __SHAREDT_WIN__
 #include <unistd.h>
-
+#endif
 #define MAX_BUF 512
 
 /*
@@ -20,7 +21,9 @@ class ReadWriteFD
   public:
     ReadWriteFD(const char * path);
     ReadWriteFD(const char * path, int oflag);
-    ~ReadWriteFD() { ::close(_fd); }
+    ~ReadWriteFD() {
+        //::close(_fd);
+    }
 
     char * read();
     void   write(const char * buf);

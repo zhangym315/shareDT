@@ -78,6 +78,7 @@ if(WIN32)
         ${CMAKE_SOURCE_DIR}/src/capture/win/GDIWindowProcessor.cpp
         ${CMAKE_SOURCE_DIR}/src/capture/win/GDIWindowProcessor.cpp
         ${CMAKE_SOURCE_DIR}/src/MainWindowsService.cpp
+        ${CMAKE_SOURCE_DIR}/src/util/WindowsProcess.cpp
         )
 elseif(APPLE)
     add_definitions(-D__SHAREDT_IOS__)
@@ -125,8 +126,7 @@ else()
         ${CMAKE_SOURCE_DIR}/src/capture/linux/XGetMonitors.cpp
         ${CMAKE_SOURCE_DIR}/src/capture/linux/XFrameProcessor.cpp
         ${CMAKE_SOURCE_DIR}/src/MainNixService.cpp
-        ${SHAREDT_SRC}/util/Sock.cpp
-    )
+        ${SHAREDT_SRC}/util/Sock.cpp)
 
     set(${PROJECT_NAME}_PLATFORM_LIBS
         ${X11_LIBRARIES}
