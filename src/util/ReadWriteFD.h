@@ -3,10 +3,12 @@
 
 #include "Logger.h"
 #include "Path.h"
+#include "CrossPlatform.h"
+#include "TypeDef.h"
 
-#include <unistd.h>
-
-#define MAX_BUF 512
+#ifdef __SHAREDT_WIN__
+#include <windows.h>
+#endif
 
 /*
  * This is class supposed to read and write to pipe between
@@ -18,9 +20,15 @@
 class ReadWriteFD
 {
   public:
+#ifdef __SHAREDT_WIN__
+    ReadWriteFD(HANDLE h) : _fd(h) { }
+#endif
     ReadWriteFD(const char * path);
     ReadWriteFD(const char * path, int oflag);
-    ~ReadWriteFD() { ::close(_fd); }
+    ~ReadWriteFD()
+    {
+        OS_CLOSE(_fd);
+    }
 
     char * read();
     void   write(const char * buf);
@@ -31,9 +39,13 @@ class ReadWriteFD
 
   private:
     ReadWriteFD();
+#ifdef __SHAREDT_WIN__
+    HANDLE _fd;
+#else
     int  _fd;
+#endif
     int  _flag;
-    char _buf[MAX_BUF];
+    char _buf[BUFSIZE];
   protected:
     char _path[MAX_PATH];
 };

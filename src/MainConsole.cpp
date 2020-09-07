@@ -52,7 +52,6 @@ static int mainInform(const char * command, const struct cmdConf * conf)
     }
 
     return infoServiceToAction(commandPath.c_str());
-
 }
 
 static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
@@ -67,9 +66,11 @@ static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
          * 3. set main service file(log pid file)
          */
         if(!setMainProcessServiceHome(conf) ||
-           !checkMainServiceStarted() ||
-           !setMainServiceFile() )
+           !checkMainServiceStarted() )
+        {
+            LOGGER.error() << "Failed to check process service home";
             return RETURN_CODE_INTERNAL_ERROR;
+        }
 
         SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
         SC_HANDLE hSc;
@@ -120,13 +121,7 @@ static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
        !checkMainServiceStarted())
         return RETURN_CODE_INTERNAL_ERROR;
 
-    if(conf->argc == 2)
-    {
-        printf ("Stopping shareDTServer\n");
-        return infoServiceToAction (MAIN_SERVICE_STOPPING);
-    }
-
-    printf("Stopping capture Server\n");
+    fprintf(stdout, "Stopping capture Server\n");
 #ifdef __SHAREDT_WIN__
     SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
     SC_HANDLE hSc;
@@ -145,8 +140,15 @@ static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
         }
     }
     if (hSc != nullptr) CloseServiceHandle (hSc);
+    fprintf(stdout, "Capture Service stopped.\n");
     return RETURN_CODE_SUCCESS;
 #else
+    if(conf->argc == 2)
+    {
+        printf ("Stopping shareDTServer\n");
+        return infoServiceToAction (MAIN_SERVICE_STOPPING);
+    }
+
     return mainInform(" stop", conf);
 #endif
 }
@@ -156,7 +158,11 @@ static int mainRestart (const char ** cmdArg, const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 }
 
-/* new capture from command */
+/*
+ * New capture request from command
+ * This function doesn't not start capture server straightforwardly
+ * Instead, if notify MainService to start new process as Capture Server
+ */
 static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
 #ifdef __SHAREDT_WIN__
@@ -187,7 +193,9 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
 
-    ReadWriteFD msg(cap.getAlivePath().c_str(), O_WRONLY);
+    LOGGER.info("mainNewCapture: %s\n", cap.getAlivePath().c_str());
+
+    ReadWriteFD msg(cap.getAlivePath().c_str(), O_WRONLY|O_CREAT);
     /*
      * If RETURN_CODE_SUCCESS_SHO show window handler
      * return current process
@@ -265,21 +273,11 @@ static int installService (const char ** cmdArg, const struct cmdConf * conf)
     runningServicePath.insert(0, "\"");
     runningServicePath.insert(runningServicePath.length(), "\"");
     runningServicePath.append(" service");
-    // Create the service
-    schService = CreateService(
-            schSCManager,              // SCM database
-            SHAREDT_SERVER_SVCNAME,    // name of service
-            SHAREDT_SERVER_SVCNAME,    // service name to display
-            SERVICE_ALL_ACCESS,        // desired access
-            SERVICE_WIN32_OWN_PROCESS, // service type
-            SERVICE_DEMAND_START,      // start type
-            SERVICE_ERROR_NORMAL,      // error control type
-            runningServicePath.c_str(),// path to service's binary
-            NULL,                      // no load ordering group
-            NULL,                      // no tag identifier
-            NULL,                      // no dependencies
-            NULL,                      // LocalSystem account
-            NULL);                     // no password
+
+    schService = CreateService(schSCManager, SHAREDT_SERVER_SVCNAME,
+                SHAREDT_SERVER_SVCNAME, SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
+                SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, runningServicePath.c_str(),
+                NULL, NULL, NULL, NULL, NULL);
     if (schService == NULL)
     {
         printf("CreateService failed (%d)\n", GetLastError());
@@ -311,12 +309,7 @@ static int uninstallService (const char ** cmdArg, const struct cmdConf * conf)
         return RETURN_CODE_SERVICE_ERROR;
     }
 
-    // Get a handle to the service.
-    schService = OpenServiceA(
-            schSCManager,           // SCM database
-            SHAREDT_SERVER_SVCNAME, // name of service
-            DELETE);                // need delete access
-
+    schService = OpenServiceA( schSCManager, SHAREDT_SERVER_SVCNAME, DELETE);
     if (schService == NULL)
     {
         printf("OpenService failed (%d)\n", GetLastError());
@@ -324,7 +317,6 @@ static int uninstallService (const char ** cmdArg, const struct cmdConf * conf)
         return RETURN_CODE_SERVICE_ERROR;
     }
 
-    // Delete the service.
     if (! DeleteService(schService) )
     {
         printf("DeleteService failed (%d)\n", GetLastError());
@@ -371,17 +363,17 @@ int main(int argc, char** argv)
         int (*func)(const char **extra,
                      const struct cmdConf *cconf);
     } cmdHandlers[] = {
-            { "start" ,     &mainStart   },     /* start service      */
-            { "stop"  ,     &mainStop    },     /* stop  service      */
-            { "restart",    &mainRestart },     /* restart service    */
-            { "capture",    &mainCapture },     /* capture command    */
-            { "newCapture", &mainNewCapture },  /* new capture process */
-            { "show",       &mainShow    },     /* command show win   */
-            { "nodaemon",   &noDaemon    }      /* command show win   */
+            { "start" ,     &mainStart   },     /* start service         */
+            { "stop"  ,     &mainStop    },     /* stop  service         */
+            { "restart",    &mainRestart },     /* restart service       */
+            { "capture",    &mainCapture },     /* capture command       */
+            { "newCapture", &mainNewCapture },  /* new capture process   */
+            { "show",       &mainShow    },     /* command show win      */
+            { "nodaemon",   &noDaemon    }      /* run in no daemon mode */
 #ifdef  __SHAREDT_WIN__
-           ,{ "install",    &installService },  /* install service    */
-            { "service",    &startService },    /* from scm service   */
-            { "uninstall",  &uninstallService } /* uninstall service  */
+           ,{ "install",    &installService },  /* install service       */
+            { "service",    &startService },    /* from scm service      */
+            { "uninstall",  &uninstallService } /* uninstall service     */
 #endif
     };
     unsigned cmd_count = 0;

@@ -15,12 +15,18 @@
 #define MAIN_SERVICE_CONTINUING   "MAIN_CONTINUING"
 
 int MainWindowsServices();
+int infoServiceToAction(const char * execCmd);
+
 #ifdef __SHAREDT_WIN__
-void infoServiceToAction(const char * execCmd);
+void HandleCommandSocket(HANDLE fd, char * buf);
+#else
+void HandleCommandSocket(int fd, char * buf);
+#endif
+
+#ifdef __SHAREDT_WIN__
 #else
 #include "Sock.h"
 #include "Thread.h"
-int infoServiceToAction(const char * execCmd);
 
 /*
  * Singleton instance
@@ -89,7 +95,6 @@ class MainServiceClient
     int  _clientSock;
     bool _valid;
 };
-
 #endif
 
 class HandleCommandLine

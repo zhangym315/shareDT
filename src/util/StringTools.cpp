@@ -1,9 +1,12 @@
 #include "StringTools.h"
 
+#ifdef __SHAREDT_WIN__
+#endif
+
 bool isNumber(const String & s)
 {
     return !s.empty() && std::find_if(s.begin(),
-        s.end(), [](unsigned char c) { return !std::isdigit(c); }) == s.end();
+        s.end(), [](unsigned char c) { return !::isdigit(c); }) == s.end();
 }
 
 String getString(char * x)

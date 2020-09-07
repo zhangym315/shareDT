@@ -29,7 +29,7 @@ class WindowsProviderChecker : public Thread
         }
         else _winCount = 0;
     }
-    int getCount() {
+    size_t getCount() {
         return _winCount;
     }
 
@@ -37,7 +37,7 @@ class WindowsProviderChecker : public Thread
     bool _running;
     Pid  _monPid;
     shared_ptr<Windows> _monWin;
-    int  _winCount;        /* current window number monitored */
+    size_t  _winCount;        /* current window number monitored */
 
 };
 

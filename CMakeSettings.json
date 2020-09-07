@@ -10,7 +10,12 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
-      "variables": []
+      "variables": [],
+      "environments": [
+        {
+          "Qt5Widgets_DIR" : "/shareDT/contrib/qt515/static-build/lib/cmake/Qt5Widgets"
+        }
+      ]
     },
     {
       "name": "x64-Release",
@@ -22,7 +27,12 @@
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "msvc_x64_x64" ],
-      "variables": []
+      "variables": [],
+      "environments": [
+        {
+          "Qt5Widgets_DIR": "/shareDT/contrib/qt515/static-build/lib/cmake/Qt5Widgets"
+        }
+      ]
     }
   ]
 }
