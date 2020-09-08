@@ -2,15 +2,20 @@
 #define SHAREDT_WINDOWSPROCESS_H
 #include <windows.h>
 #include <vector>
-#include <string>
+#include "StringTools.h"
 
 class UserSession
 {
   public:
-    UserSession();
+    UserSession(const String & user);
+    bool GetSessionDomain(String & domain);
+    bool GetSessionUserName(DWORD sid, String & username);
+    DWORD getSid() { return _sessionId; }
 
   private:
-    DWORD _sessionId;
+    void FindSessionIds();
+    String  _user;
+    DWORD   _sessionId;
 };
 
 #endif //SHAREDT_WINDOWSPROCESS_H

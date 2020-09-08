@@ -13,8 +13,13 @@
 #include <fcntl.h>
 
 #ifdef __SHAREDT_WIN__
+#include "WindowsProcess.h"
+
 #include <windows.h>
 #include <process.h>
+#include <WtsApi32.h>
+
+//#include <Userenv.h>
 #endif
 
 /*
@@ -87,6 +92,7 @@ void HandleCommandSocket(int fd, char * buf)
     wid = hcl.getSC().getWID();
     WIDMAP::iterator it = _WM.find(wid);
     commandType = hcl.getSC().getCType();
+    String user = hcl.getSC().getUserName();
 
     /* 1. first check stop specific wid */
     if( commandType == StartCapture::C_STOP ) {
@@ -140,6 +146,7 @@ void HandleCommandSocket(int fd, char * buf)
             execv(argv[0], argv);
         }
 #else
+        UserSession usrSession(user);
         HANDLE hPipe = CreateNamedPipe(captureAlivePath.c_str(), PIPE_ACCESS_DUPLEX,
                         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
                         PIPE_UNLIMITED_INSTANCES, BUFSIZE, BUFSIZE, 0, NULL);
@@ -150,8 +157,15 @@ void HandleCommandSocket(int fd, char * buf)
         si.cb = sizeof(si);
         ZeroMemory( &pi, sizeof(pi) );
 
-        // Start the child process.
-        if(!CreateProcess( NULL,   // No module name (use command line)
+        HANDLE hToken;
+        if (!WTSQueryUserToken (usrSession.getSid(), &hToken))
+        {
+            LOGGER.error() << "Error on WTSQueryUserToken";
+            return;
+        }
+
+        if(!CreateProcessAsUserA ( hToken,
+                            NULL,   // No module name (use command line)
                            (LPTSTR)hcl.toString().c_str(),     // Command line
                             NULL,           // Process handle not inheritable
                             NULL,           // Thread handle not inheritable

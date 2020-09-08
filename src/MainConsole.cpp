@@ -18,6 +18,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <strsafe.h>
+#include <Lmcons.h>
 
 void WindowsMainServiceCallback(int argc, char ** argv)
 {
@@ -88,7 +89,7 @@ static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
         }
 
         if (hSc != nullptr) CloseServiceHandle (hSc);
-        printf("shareDTServer Started\n");
+        printf("ShareDTServer Started\n");
         return RETURN_CODE_SUCCESS;
 #else
         DaemonizeProcess::instance()->daemonize();
@@ -180,6 +181,15 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
         commandPath.append(" ");
         commandPath.append(conf->argv[i]);
     }
+
+    // append user name
+    char username[UNLEN+1];
+    DWORD username_len = UNLEN+1;
+    GetUserName(username, &username_len);
+    commandPath.append(" --username \"");
+    commandPath.append(username);
+    commandPath.append("\"");
+
     infoServiceToAction(commandPath.c_str());
 #else
     return mainInform(" newCapture", conf);
