@@ -7,16 +7,17 @@
 
 #pragma comment(lib, "WtsApi32.lib")
 
-typedef std::basic_string<TCHAR> tstring;
-
-void UserSession::FindSessionIds()
+void UserSession::FindAndSetSessionIds()
 {
     WTS_SESSION_INFO *pSI = NULL;
     DWORD dwSICount;
 
     BOOL bRes = WTSEnumerateSessions(WTS_CURRENT_SERVER_HANDLE, 0, 1, &pSI, &dwSICount);
     if (bRes == 0)
+    {
+        LOGGER.error() << "Failed to enumerating sessions" ;
         return ;
+    }
 
     String usrSession;
     for (unsigned int i = 0; i < dwSICount; ++i)
@@ -39,9 +40,10 @@ bool UserSession::GetSessionUserName(DWORD sid, String & username)
 
     BOOL bRes = WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE,
                            sid, WTSUserName, &pBuffer, &dwBufferLen);
-
-    if (bRes == FALSE)
+    if (bRes == FALSE) {
+        LOGGER.error() << "Failed to query session information for user name";
         return false;
+    }
 
     username = pBuffer;
     WTSFreeMemory(pBuffer);
@@ -57,7 +59,10 @@ bool UserSession::GetSessionDomain(String & domain)
     BOOL bRes = WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE,
                             _sessionId, WTSDomainName, &pBuffer, &dwBufferLen);
     if (bRes == FALSE)
+    {
+        LOGGER.error() << "Failed to query session information for domain" ;
         return false;
+    }
 
     domain = pBuffer;
     WTSFreeMemory(pBuffer);
@@ -67,7 +72,16 @@ bool UserSession::GetSessionDomain(String & domain)
 
 UserSession::UserSession(const String & user) : _user(user) , _sessionId(0)
 {
-    LOGGER.info() << "UserSession user: " << user;
-    FindSessionIds();
+    LOGGER.debug() << "UserSession for user: " << user;
+    FindAndSetSessionIds();
+    FindAndSetTokens();
 }
 
+void UserSession::FindAndSetTokens()
+{
+    if (!WTSQueryUserToken (_sessionId, &_hToken))
+    {
+        LOGGER.error() << "Error on querying token for user: " << _user;
+        return;
+    }
+}

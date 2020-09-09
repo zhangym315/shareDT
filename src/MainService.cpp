@@ -17,7 +17,6 @@
 
 #include <windows.h>
 #include <process.h>
-#include <WtsApi32.h>
 
 //#include <Userenv.h>
 #endif
@@ -138,44 +137,39 @@ void HandleCommandSocket(int fd, char * buf)
         char ** argv = hcl.getArgv();
 
         LOGGER.info() << "Starting Capture Server Argument: " << hcl.toString();
-        String captureAlivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
         int childPid;
 #ifndef __SHAREDT_WIN__
+        String captureAlivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
         mkfifo(captureAlivePath.c_str(), 0666);
         if((childPid=fork()) == 0) {
             execv(argv[0], argv);
         }
 #else
+        String captureAlivePath(SERVICE_PIPE_SERVER);
+        captureAlivePath.append("\\");
+        captureAlivePath.append(CapServerHome::instance()->getCid());
         UserSession usrSession(user);
         HANDLE hPipe = CreateNamedPipe(captureAlivePath.c_str(), PIPE_ACCESS_DUPLEX,
                         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
                         PIPE_UNLIMITED_INSTANCES, BUFSIZE, BUFSIZE, 0, NULL);
         STARTUPINFO si;
         PROCESS_INFORMATION pi;
-
         ZeroMemory( &si, sizeof(si) );
         si.cb = sizeof(si);
         ZeroMemory( &pi, sizeof(pi) );
 
-        HANDLE hToken;
-        if (!WTSQueryUserToken (usrSession.getSid(), &hToken))
-        {
-            LOGGER.error() << "Error on WTSQueryUserToken";
-            return;
-        }
-
-        if(!CreateProcessAsUserA ( hToken,
-                            NULL,   // No module name (use command line)
+        if(!CreateProcessAsUserA ( usrSession.getToken(),
+                            NULL,    // module name (use command line)
                            (LPTSTR)hcl.toString().c_str(),     // Command line
-                            NULL,           // Process handle not inheritable
-                            NULL,           // Thread handle not inheritable
-                            true,           // Set handle inheritance to FALSE
-                            0,              // No creation flags
-                            NULL,           // Use parent's environment block
-                            NULL,           // Use parent's starting directory
-                            &si,            // Pointer to STARTUPINFO structure
-                            &pi )           // Pointer to PROCESS_INFORMATION structure
-                )
+                            NULL,    // Process handle not inheritable
+                            NULL,    // Thread handle not inheritable
+                            true,    // Set handle inheritance to FALSE
+                            0,       // No creation flags
+                            NULL,    // Use parent's environment block
+                            NULL,    // Use parent's starting directory
+                            &si,     // Pointer to STARTUPINFO structure
+                            &pi )    // Pointer to PROCESS_INFORMATION structure
+                        )
         {
             sk.send("Failed to create child capture process");
             LOGGER.info() << "Failed to create child capture process";
@@ -184,6 +178,12 @@ void HandleCommandSocket(int fd, char * buf)
         LOGGER.info() << "Successuflly create child process" ;
         CloseHandle(pi.hThread);
         childPid = (int) pi.hProcess;
+
+        /* new connection from command line */
+        if (ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED))
+        {
+            LOGGER.info() << "New connection on alive: " << captureAlivePath;
+        }
 #endif
         {
 #ifdef __SHAREDT_WIN__
@@ -212,6 +212,7 @@ void HandleCommandSocket(int fd, char * buf)
     }
     sk.send(ret.c_str());
 }
+
 HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)
 {
     char ** argv = (char **) malloc (sizeof(char * ) * MAX_ARG);

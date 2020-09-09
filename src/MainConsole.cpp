@@ -202,10 +202,14 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
+Sleep(1000);
 
-    LOGGER.info("mainNewCapture: %s\n", cap.getAlivePath().c_str());
+    String captureAlivePath(SERVICE_PIPE_SERVER);
+    captureAlivePath.append("\\");
+    captureAlivePath.append(CapServerHome::instance()->getCid());
 
-    ReadWriteFD msg(cap.getAlivePath().c_str(), O_WRONLY|O_CREAT);
+    LOGGER.info("mainNewCapture: %s\n", captureAlivePath.c_str());
+    ReadWriteFD msg(captureAlivePath.c_str(), O_WRONLY|O_CREAT);
     /*
      * If RETURN_CODE_SUCCESS_SHO show window handler
      * return current process
