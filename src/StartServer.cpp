@@ -69,7 +69,7 @@ void StartCapture::Usage ()
     std::cerr << "-i or --id ID                For monitor capture, capture the specific monitor id" << std::endl;
     std::cerr << "-p or --process pid          For window capture (-capture win), capture the specific process id's window" << std::endl;
     std::cerr << "                             This option can overwrite -n/-name" << std::endl;
-    std::cerr << "--daemon                     Running not in daemon" << std::endl;
+    std::cerr << "--daemon                     Running in daemon mode" << std::endl;
     std::cerr << "\n";
     std::cerr << "\n";
     std::cerr << "The following options related with rfb" << std::endl;
@@ -506,6 +506,7 @@ void StartCapture::startCaptureServer()
     rfbMarkRectAsModified(_rfbserver, 0, 0,
         _sp->getWidth(), _sp->getHeight());
 
+    LOGGER.info() << "Started startCaptureServer" ;
     while (rfbIsActive(_rfbserver) && _isServerRunning) {
         std::this_thread::sleep_for(50ms);
         rfbProcessEvents(_rfbserver, 10000);
