@@ -2,8 +2,11 @@
 #define _SOCK_H_
 
 #ifdef __SHAREDT_WIN__
-#include <windows.h>
+#include <WinSock2.h>
+#include <Windows.h>
 #endif
+
+#include "StringTools.h"
 
 class SocketFD
 {
@@ -11,10 +14,6 @@ class SocketFD
 #ifdef __SHAREDT_WIN__
     SocketFD(HANDLE fd) : _fd(fd)
     {
-/*
-        DWORD dwMode = PIPE_READMODE_MESSAGE;
-        SetNamedPipeHandleState(_fd, &dwMode, NULL, NULL);
-*/
     }
 #else
     SocketFD(int fd) : _fd (fd) { }
@@ -32,6 +31,59 @@ class SocketFD
     int _fd;
 #endif
     bool _isServer;
+};
+
+enum TypeSocket {BlockingSocket, NonBlockingSocket};
+
+class Socket {
+  public:
+    virtual ~Socket();
+    Socket(const Socket&);
+    Socket& operator=(Socket&);
+
+    String ReceiveLine();
+    String ReceiveBytes();
+
+    void   Close();
+
+    void   SendLine (String);
+    void   SendBytes(const String&);
+
+  protected:
+    friend class SocketServer;
+    friend class SocketSelect;
+
+    Socket(SOCKET s);
+    Socket();
+
+    SOCKET s_;
+    int* refCounter_;
+
+  private:
+    static void Start();
+    static void End();
+    static int  nofSockets_;
+};
+
+class SocketClient : public Socket {
+public:
+    SocketClient(const String& host, int port);
+};
+
+class SocketServer : public Socket {
+public:
+    SocketServer(int port, int connections, TypeSocket type=BlockingSocket);
+
+    Socket* Accept();
+};
+
+class SocketSelect {
+public:
+    SocketSelect(Socket const * const s1, Socket const * const s2=NULL, TypeSocket type=BlockingSocket);
+    bool Readable(Socket const * const s);
+
+private:
+    fd_set fds_;
 };
 
 #endif //_SOCK_H_

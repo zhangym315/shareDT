@@ -197,35 +197,49 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 #endif
 }
 
+#include "Sock.h"
 /* main service fork/create new process as the capture server */
 int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
 Sleep(1000);
-
     String captureAlivePath(SERVICE_PIPE_SERVER);
     captureAlivePath.append("\\");
     captureAlivePath.append(CapServerHome::instance()->getCid());
 
     LOGGER.info("mainNewCapture: %s\n", captureAlivePath.c_str());
-    ReadWriteFD msg(captureAlivePath.c_str(), O_WRONLY|O_CREAT);
+#ifdef __SHAREDT_WIN__
+    LPTSTR lpszPipename = TEXT((char*)captureAlivePath.c_str());
+/*    HANDLE hPipe = CreateFile(lpszPipename, GENERIC_READ |  GENERIC_WRITE,
+                                0, NULL, OPEN_EXISTING, 0, NULL);
+    if (hPipe == INVALID_HANDLE_VALUE)
+    {
+        LOGGER.error("Could not open pipe to communicate to server, exiting. GLE=%d\n", GetLastError() );
+        Sleep(50000);
+        return RETURN_CODE_SERVICE_ERROR;
+    }
+    ReadWriteFD msg(hPipe);*/
+#endif
+    SocketClient s("127.0.0.1", 5000);
+
     /*
      * If RETURN_CODE_SUCCESS_SHO show window handler
      * return current process
      */
     if(ret == RETURN_CODE_SUCCESS_SHO)
     {
-        msg.write("");
+        ///msg.write("");
         return RETURN_CODE_SUCCESS;
     } else if (ret != RETURN_CODE_SUCCESS)
     {
-        msg.write("Failed to create Capture Server");
+      //  msg.write("Failed to create Capture Server");
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
     LOGGER.info() << "Write to MainManagementProcess: successfully created capture Server";
-    msg.write("Successfully created Capture Server");
+    //msg.write("Successfully created Capture Server");
+    s.SendLine("Successfully created Capture Server");
     cap.startCaptureServer ();
 
     return RETURN_CODE_SUCCESS;

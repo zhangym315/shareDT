@@ -148,6 +148,8 @@ void HandleCommandSocket(int fd, char * buf)
         String captureAlivePath(SERVICE_PIPE_SERVER);
         captureAlivePath.append("\\");
         captureAlivePath.append(CapServerHome::instance()->getCid());
+
+        SocketServer sc(5000, 2);
         UserSession usrSession(user);
         HANDLE hPipe = CreateNamedPipe(captureAlivePath.c_str(), PIPE_ACCESS_DUPLEX,
                         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
@@ -175,15 +177,21 @@ void HandleCommandSocket(int fd, char * buf)
             LOGGER.info() << "Failed to create child capture process";
             return;
         }
-        LOGGER.info() << "Successuflly create child process" ;
+        LOGGER.info() << "Successuflly create child process, communicating pipe: " << captureAlivePath ;
         CloseHandle(pi.hThread);
         childPid = (int) pi.hProcess;
+
+        LOGGER.info() << "Before connecting NamedPipe from capture server";
+        Socket* s=sc.Accept();
+        String answer = s->ReceiveLine();
+        delete s;
 
         /* new connection from command line */
         if (ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED))
         {
             LOGGER.info() << "New connection on alive: " << captureAlivePath;
         }
+        LOGGER.info() << "After  connecting NamedPipe from capture server";
 #endif
         {
 #ifdef __SHAREDT_WIN__
@@ -191,7 +199,9 @@ void HandleCommandSocket(int fd, char * buf)
 #else
             ReadWriteFD msg(captureAlivePath.c_str(), O_RDONLY);
 #endif
-            ret += msg.read();
+//            ret += msg.read();
+ret.append(answer);
+
         }
         LOGGER.info() << "Child process for WID: " << wid <<
                         " started, PID: " << childPid << " command: " << hcl.toString();
