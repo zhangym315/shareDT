@@ -13,8 +13,12 @@
 #include <fcntl.h>
 
 #ifdef __SHAREDT_WIN__
+#include "WindowsProcess.h"
+
 #include <windows.h>
 #include <process.h>
+
+//#include <Userenv.h>
 #endif
 
 /*
@@ -87,6 +91,7 @@ void HandleCommandSocket(int fd, char * buf)
     wid = hcl.getSC().getWID();
     WIDMAP::iterator it = _WM.find(wid);
     commandType = hcl.getSC().getCType();
+    String user = hcl.getSC().getUserName();
 
     /* 1. first check stop specific wid */
     if( commandType == StartCapture::C_STOP ) {
@@ -132,44 +137,62 @@ void HandleCommandSocket(int fd, char * buf)
         char ** argv = hcl.getArgv();
 
         LOGGER.info() << "Starting Capture Server Argument: " << hcl.toString();
-        String captureAlivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
         int childPid;
 #ifndef __SHAREDT_WIN__
+        String captureAlivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
         mkfifo(captureAlivePath.c_str(), 0666);
         if((childPid=fork()) == 0) {
             execv(argv[0], argv);
         }
 #else
+        String captureAlivePath(SERVICE_PIPE_SERVER);
+        captureAlivePath.append("\\");
+        captureAlivePath.append(CapServerHome::instance()->getCid());
+
+        SocketServer sc(SHAREDT_INTERNAL_PORT_START, 2);
+        LOGGER.info() << "Start on port: " << sc.getPort();
+        UserSession usrSession(user);
         HANDLE hPipe = CreateNamedPipe(captureAlivePath.c_str(), PIPE_ACCESS_DUPLEX,
                         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
                         PIPE_UNLIMITED_INSTANCES, BUFSIZE, BUFSIZE, 0, NULL);
         STARTUPINFO si;
         PROCESS_INFORMATION pi;
-
         ZeroMemory( &si, sizeof(si) );
         si.cb = sizeof(si);
         ZeroMemory( &pi, sizeof(pi) );
 
-        // Start the child process.
-        if(!CreateProcess( NULL,   // No module name (use command line)
+        if(!CreateProcessAsUserA ( usrSession.getToken(),
+                            NULL,    // module name (use command line)
                            (LPTSTR)hcl.toString().c_str(),     // Command line
-                            NULL,           // Process handle not inheritable
-                            NULL,           // Thread handle not inheritable
-                            true,           // Set handle inheritance to FALSE
-                            0,              // No creation flags
-                            NULL,           // Use parent's environment block
-                            NULL,           // Use parent's starting directory
-                            &si,            // Pointer to STARTUPINFO structure
-                            &pi )           // Pointer to PROCESS_INFORMATION structure
-                )
+                            NULL,    // Process handle not inheritable
+                            NULL,    // Thread handle not inheritable
+                            true,    // Set handle inheritance to FALSE
+                            0,       // No creation flags
+                            NULL,    // Use parent's environment block
+                            NULL,    // Use parent's starting directory
+                            &si,     // Pointer to STARTUPINFO structure
+                            &pi )    // Pointer to PROCESS_INFORMATION structure
+                        )
         {
             sk.send("Failed to create child capture process");
             LOGGER.info() << "Failed to create child capture process";
             return;
         }
-        LOGGER.info() << "Successuflly create child process" ;
+        LOGGER.info() << "Successuflly create child process, communicating pipe: " << captureAlivePath ;
         CloseHandle(pi.hThread);
         childPid = (int) pi.hProcess;
+
+        LOGGER.info() << "Before connecting NamedPipe from capture server";
+        Socket* s=sc.Accept();
+        String answer = s->ReceiveLine();
+        delete s;
+
+        /* new connection from command line */
+        if (ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED))
+        {
+            LOGGER.info() << "New connection on alive: " << captureAlivePath;
+        }
+        LOGGER.info() << "After  connecting NamedPipe from capture server";
 #endif
         {
 #ifdef __SHAREDT_WIN__
@@ -177,7 +200,9 @@ void HandleCommandSocket(int fd, char * buf)
 #else
             ReadWriteFD msg(captureAlivePath.c_str(), O_RDONLY);
 #endif
-            ret += msg.read();
+//            ret += msg.read();
+ret.append(answer);
+
         }
         LOGGER.info() << "Child process for WID: " << wid <<
                         " started, PID: " << childPid << " command: " << hcl.toString();
@@ -198,6 +223,7 @@ void HandleCommandSocket(int fd, char * buf)
     }
     sk.send(ret.c_str());
 }
+
 HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)
 {
     char ** argv = (char **) malloc (sizeof(char * ) * MAX_ARG);
@@ -259,7 +285,7 @@ void HandleCommandLine::setWID()
 
 bool setMainProcessServiceHome(const struct cmdConf * conf)
 {
-    // get the main server running path
+    /* get the main service running */
 #ifdef __SHAREDT_WIN__
     TCHAR szPath[MAX_PATH];
     if( !GetModuleFileNameA( NULL, szPath, MAX_PATH ) )
@@ -274,7 +300,6 @@ bool setMainProcessServiceHome(const struct cmdConf * conf)
 
     CapServerHome::instance()->setHome(ShareDTHome::instance()->getHome()+String(MAIN_SERVER_PATH), MAINSERVER);
 
-    // create home working directory
     const String & path = CapServerHome::instance()->getHome();
     if(!fs::exists(path) && !fs::create_directory(path)) {
         std::cerr << "Failed to create working directory: " << path << std::endl;
@@ -291,7 +316,6 @@ bool checkMainServiceStarted()
 
 bool setMainServiceFile()
 {
-    // set service log
     String pathLog = CapServerHome::instance()->getHome() + PATH_SEP_STR + String(MAINSER_LOG);
     LOGGER.setLogFile(pathLog.c_str());
     LOGGER.info() << "Main service log set to: " << pathLog ;

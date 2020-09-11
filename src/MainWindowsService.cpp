@@ -12,8 +12,6 @@
 SERVICE_STATUS ServiceStatus;
 SERVICE_STATUS_HANDLE hStatus;
 
-#define SERVICE_PIPE_SERVER "\\\\.\\pipe\\SamplePipe\\pipeServer"
-
 void ServiceMain(int argc, char** argv);
 void ControlHandler(DWORD request);
 
@@ -30,11 +28,11 @@ int MainWindowsServices()
     return 0;
 }
 
-typedef struct FdBuffer {
-    FdBuffer(HANDLE * h, char * b) : handle(h), buf(b) { }
-    HANDLE * handle;
+struct FdBuffer {
+    FdBuffer(HANDLE  h, char * b) : handle(h), buf(b) { }
+    HANDLE  handle;
     char   * buf;
-} FdBuffer;
+};
 
 /*
  * Read message from command line and pass it to HandleCommandSocket
@@ -50,9 +48,9 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
     }
 
     FdBuffer * p = (FdBuffer * ) lpvParam;
-    HANDLE hPipe  = *(p->handle);
+    HANDLE hPipe  = (HANDLE)(p->handle);
 
-    LOGGER.info() << "HandleCommandSocket before stared" ;
+    LOGGER.info() << "HandleCommandSocket is invoked to process command line" ;
     HandleCommandSocket(hPipe, p->buf);
 
     FlushFileBuffers(hPipe);
@@ -136,7 +134,7 @@ void ServiceMain(int argc, char** argv)
                 break;
             }
 
-            FdBuffer fb(&hPipe, buf);
+            FdBuffer fb(hPipe, buf);
             LOGGER.info() << "Client connected, creating a processing thread.";
             hThread = CreateThread(NULL, 0, InstanceThread, (LPVOID) &fb, 0, &dwThreadId);
             if (hThread == NULL)

@@ -67,6 +67,7 @@ class StartCapture {
     StartCapture::CType getCType();
     void  removeAlivePath() const;
 
+    String & getUserName() { return _user; }
   private:
     void Usage();
     int parseArgs(const vector<String> & args);
@@ -88,14 +89,15 @@ class StartCapture {
     } _cap;
 
     SPType           _type;
-    ScreenProvider * _sp;   /* screen provider */
-    String           _name; /* captured named  */
-    Pid              _pid;  /* for window capture, the process id we want to capture */
-    size_t           _hdler;  /* for window captre, the handler id we want to capture */
+    ScreenProvider * _sp;     /* screen provider */
+    String           _name;   /* captured named  */
+    Pid              _pid;    /* for window capture, the process id we want to capture */
+    size_t           _hdler;  /* for window capture, the handler id we want to capture */
     SType            _show;
     int              _monID;  /* for monitor capture, the id of monitor */
     bool             _daemon;
-    String           _wID;  /* unique id */
+    String           _wID;    /* unique id */
+    String           _user;
     String           _capturePath;
     String           _alivePath;
 

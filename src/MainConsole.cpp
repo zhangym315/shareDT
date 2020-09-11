@@ -18,6 +18,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <strsafe.h>
+#include <Lmcons.h>
 
 void WindowsMainServiceCallback(int argc, char ** argv)
 {
@@ -88,7 +89,7 @@ static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
         }
 
         if (hSc != nullptr) CloseServiceHandle (hSc);
-        printf("shareDTServer Started\n");
+        printf("ShareDTServer Started\n");
         return RETURN_CODE_SUCCESS;
 #else
         DaemonizeProcess::instance()->daemonize();
@@ -180,6 +181,15 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
         commandPath.append(" ");
         commandPath.append(conf->argv[i]);
     }
+
+    // append user name
+    char username[UNLEN+1];
+    DWORD username_len = UNLEN+1;
+    GetUserName(username, &username_len);
+    commandPath.append(" --username \"");
+    commandPath.append(username);
+    commandPath.append("\"");
+
     infoServiceToAction(commandPath.c_str());
 #else
     return mainInform(" newCapture", conf);
@@ -187,31 +197,37 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 #endif
 }
 
+#include "Sock.h"
 /* main service fork/create new process as the capture server */
 int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
 
-    LOGGER.info("mainNewCapture: %s\n", cap.getAlivePath().c_str());
+    String captureAlivePath(SERVICE_PIPE_SERVER);
+    captureAlivePath.append("\\");
+    captureAlivePath.append(CapServerHome::instance()->getCid());
 
-    ReadWriteFD msg(cap.getAlivePath().c_str(), O_WRONLY|O_CREAT);
+    LOGGER.info("mainNewCapture: %s\n", captureAlivePath.c_str());
+    SocketClient s(LOCALHOST, SHAREDT_INTERNAL_PORT_START);
+
     /*
      * If RETURN_CODE_SUCCESS_SHO show window handler
      * return current process
      */
     if(ret == RETURN_CODE_SUCCESS_SHO)
     {
-        msg.write("");
+        ///msg.write("");
         return RETURN_CODE_SUCCESS;
     } else if (ret != RETURN_CODE_SUCCESS)
     {
-        msg.write("Failed to create Capture Server");
+      //  msg.write("Failed to create Capture Server");
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
     LOGGER.info() << "Write to MainManagementProcess: successfully created capture Server";
-    msg.write("Successfully created Capture Server");
+    //msg.write("Successfully created Capture Server");
+    s.SendLine("Successfully created Capture Server");
     cap.startCaptureServer ();
 
     return RETURN_CODE_SUCCESS;

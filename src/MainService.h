@@ -7,6 +7,8 @@
 
 #include "StartServer.h"
 
+#define SERVICE_PIPE_SERVER "\\\\.\\pipe\\SamplePipe\\pipeServer"
+
 #define BUFSIZE 5120
 #define MAX_ARG 128
 
