@@ -8,6 +8,9 @@
 
 #include "StringTools.h"
 
+#define LOCALHOST "127.0.0.1"
+#define SHAREDT_INTERNAL_PORT_START 31400
+
 class SocketFD
 {
   public:
@@ -66,15 +69,18 @@ class Socket {
 };
 
 class SocketClient : public Socket {
-public:
+  public:
     SocketClient(const String& host, int port);
 };
 
 class SocketServer : public Socket {
-public:
+  public:
     SocketServer(int port, int connections, TypeSocket type=BlockingSocket);
-
     Socket* Accept();
+    int  getPort() { return _port; }
+
+  private:
+    int _port;
 };
 
 class SocketSelect {

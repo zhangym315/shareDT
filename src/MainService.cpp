@@ -149,7 +149,8 @@ void HandleCommandSocket(int fd, char * buf)
         captureAlivePath.append("\\");
         captureAlivePath.append(CapServerHome::instance()->getCid());
 
-        SocketServer sc(5000, 2);
+        SocketServer sc(SHAREDT_INTERNAL_PORT_START, 2);
+        LOGGER.info() << "Start on port: " << sc.getPort();
         UserSession usrSession(user);
         HANDLE hPipe = CreateNamedPipe(captureAlivePath.c_str(), PIPE_ACCESS_DUPLEX,
                         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,

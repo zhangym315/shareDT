@@ -203,25 +203,13 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
-Sleep(1000);
+
     String captureAlivePath(SERVICE_PIPE_SERVER);
     captureAlivePath.append("\\");
     captureAlivePath.append(CapServerHome::instance()->getCid());
 
     LOGGER.info("mainNewCapture: %s\n", captureAlivePath.c_str());
-#ifdef __SHAREDT_WIN__
-    LPTSTR lpszPipename = TEXT((char*)captureAlivePath.c_str());
-/*    HANDLE hPipe = CreateFile(lpszPipename, GENERIC_READ |  GENERIC_WRITE,
-                                0, NULL, OPEN_EXISTING, 0, NULL);
-    if (hPipe == INVALID_HANDLE_VALUE)
-    {
-        LOGGER.error("Could not open pipe to communicate to server, exiting. GLE=%d\n", GetLastError() );
-        Sleep(50000);
-        return RETURN_CODE_SERVICE_ERROR;
-    }
-    ReadWriteFD msg(hPipe);*/
-#endif
-    SocketClient s("127.0.0.1", 5000);
+    SocketClient s(LOCALHOST, SHAREDT_INTERNAL_PORT_START);
 
     /*
      * If RETURN_CODE_SUCCESS_SHO show window handler

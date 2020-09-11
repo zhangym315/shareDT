@@ -47,39 +47,48 @@ using namespace std;
 
 int Socket::nofSockets_= 0;
 
-void Socket::Start() {
-    if (!nofSockets_) {
+void Socket::Start()
+{
+    if (!nofSockets_)
+    {
         WSADATA info;
-        if (WSAStartup(MAKEWORD(2,0), &info)) {
+        if (WSAStartup(MAKEWORD(2,0), &info))
+        {
             throw "Could not start WSA";
         }
     }
     ++nofSockets_;
 }
 
-void Socket::End() {
+void Socket::End()
+{
     WSACleanup();
 }
 
-Socket::Socket() : s_(0) {
+Socket::Socket() : s_(0)
+{
     Start();
     // UDP: use SOCK_DGRAM instead of SOCK_STREAM
     s_ = socket(AF_INET,SOCK_STREAM,0);
 
-    if (s_ == INVALID_SOCKET) {
+    if (s_ == INVALID_SOCKET)
+    {
         throw "INVALID_SOCKET";
     }
 
     refCounter_ = new int(1);
 }
 
-Socket::Socket(SOCKET s) : s_(s) {
+Socket::Socket(SOCKET s) : s_(s)
+{
     Start();
     refCounter_ = new int(1);
 };
 
-Socket::~Socket() {
-    if (! --(*refCounter_)) {
+Socket::~Socket()
+{
+    if (! --(*refCounter_))
+    {
         Close();
         delete refCounter_;
     }
@@ -88,7 +97,8 @@ Socket::~Socket() {
     if (!nofSockets_) End();
 }
 
-Socket::Socket(const Socket& o) {
+Socket::Socket(const Socket& o)
+{
     refCounter_=o.refCounter_;
     (*refCounter_)++;
     s_         =o.s_;
@@ -96,7 +106,8 @@ Socket::Socket(const Socket& o) {
     nofSockets_++;
 }
 
-Socket& Socket::operator=(Socket& o) {
+Socket& Socket::operator=(Socket& o)
+{
     (*o.refCounter_)++;
 
     refCounter_=o.refCounter_;
@@ -107,11 +118,13 @@ Socket& Socket::operator=(Socket& o) {
     return *this;
 }
 
-void Socket::Close() {
+void Socket::Close()
+{
     closesocket(s_);
 }
 
-String Socket::ReceiveBytes() {
+String Socket::ReceiveBytes()
+{
     String ret;
     char buf[1024];
 
@@ -137,7 +150,8 @@ String Socket::ReceiveBytes() {
     return ret;
 }
 
-String Socket::ReceiveLine() {
+String Socket::ReceiveLine()
+{
     String ret;
     while (1) {
         char r;
@@ -163,22 +177,21 @@ String Socket::ReceiveLine() {
     }
 }
 
-void Socket::SendLine(String s) {
+void Socket::SendLine(String s)
+{
     s += '\n';
     send(s_,s.c_str(),s.length(),0);
 }
 
-void Socket::SendBytes(const String& s) {
+void Socket::SendBytes(const String& s)
+{
     send(s_,s.c_str(),s.length(),0);
 }
 
-SocketServer::SocketServer(int port, int connections, TypeSocket type) {
+SocketServer::SocketServer(int port, int connections, TypeSocket type)
+{
     sockaddr_in sa;
 
-    memset(&sa, 0, sizeof(sa));
-
-    sa.sin_family = PF_INET;
-    sa.sin_port = htons(port);
     s_ = socket(AF_INET, SOCK_STREAM, 0);
     if (s_ == INVALID_SOCKET) {
         throw "INVALID_SOCKET";
@@ -189,16 +202,32 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type) {
         ioctlsocket(s_, FIONBIO, &arg);
     }
 
-    /* bind the socket to the internet address */
-    if (::bind(s_, (sockaddr *)&sa, sizeof(sockaddr_in)) == SOCKET_ERROR) {
-        closesocket(s_);
-        throw "INVALID_SOCKET";
+    memset(&sa, 0, sizeof(sa));
+    sa.sin_family = PF_INET;
+    sa.sin_port = htons(port);
+
+    int bindRet = ::bind(s_, (sockaddr *)&sa, sizeof(sockaddr_in));
+    int retry = 0;
+    while(bindRet &&  WSAGetLastError() == WSAEADDRINUSE &&
+            (retry++) < 200)
+    {
+        LOGGER.warn() << "Port has been used, retry another one for internal communication: " << port;
+        Sleep(500);
+        sa.sin_port = htons(++port);;
+        bindRet = ::bind(s_, (sockaddr *)&sa, sizeof(sockaddr_in));
     }
 
+    if (bindRet == SOCKET_ERROR) {
+        closesocket(s_);
+        throw("INVALID_SOCKET");
+    }
+
+    _port = port;
     listen(s_, connections);
 }
 
-Socket* SocketServer::Accept() {
+Socket* SocketServer::Accept()
+{
     SOCKET new_sock = accept(s_, 0, 0);
     if (new_sock == INVALID_SOCKET) {
         int rc = WSAGetLastError();
@@ -214,7 +243,8 @@ Socket* SocketServer::Accept() {
     return r;
 }
 
-SocketClient::SocketClient(const String& host, int port) : Socket() {
+SocketClient::SocketClient(const String& host, int port) : Socket()
+{
     String error;
 
     hostent *he;
@@ -235,7 +265,8 @@ SocketClient::SocketClient(const String& host, int port) : Socket() {
     }
 }
 
-SocketSelect::SocketSelect(Socket const * const s1, Socket const * const s2, TypeSocket type) {
+SocketSelect::SocketSelect(Socket const * const s1, Socket const * const s2, TypeSocket type)
+{
     FD_ZERO(&fds_);
     FD_SET(const_cast<Socket*>(s1)->s_,&fds_);
     if(s2) {
@@ -258,7 +289,8 @@ SocketSelect::SocketSelect(Socket const * const s1, Socket const * const s2, Typ
         throw "Error in select";
 }
 
-bool SocketSelect::Readable(Socket const* const s) {
+bool SocketSelect::Readable(Socket const* const s)
+{
     if (FD_ISSET(s->s_,&fds_)) return true;
     return false;
 }
