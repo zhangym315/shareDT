@@ -226,6 +226,7 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
     }
 
     LOGGER.info() << "Write to MainManagementProcess: successfully created capture Server";
+    LOGGER.info() << "CapServerHome::instance()->getHome(): " << CapServerHome::instance()->getHome();
     //msg.write("Successfully created Capture Server");
     s.SendLine("Successfully created Capture Server");
     cap.startCaptureServer ();
