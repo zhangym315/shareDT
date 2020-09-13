@@ -33,6 +33,10 @@ namespace fs = std::filesystem;
 #define SOCKET_FILE        "server.sf"
 #define ALIVE_FILE         "alive.mng"
 #define MAINSERVER         "MAINSERVER"
+#define CAPTURE_SERVER_START    "start"
+#define CAPTURE_SERVER_STARTED  "started"
+#define CAPTURE_SERVER_STOP     "stop"
+#define CAPTURE_SERVER_STOPPED  "stopped"
 
 #define PATH_CAPTURE_LOG   PATH_SEP_STR CAPTURE_LOG
 #define PATH_VNCSERVER_LOG PATH_SEP_STR VNCSERV_LOG
@@ -82,5 +86,19 @@ class CapServerHome {
     String _home;
     String _cid;
     bool   _valid;
+};
+
+class Path
+{
+  public:
+    Path(String path) : _ffs(path, std::fstream::in | std::fstream::out | std::fstream::app) { }
+    ~Path() { _ffs.close(); }
+    void write(String & data);
+    void write(int data);
+    int  readLineAsInt();
+    String readLine();
+
+  private:
+    std::fstream _ffs;
 };
 #endif //_PATH_H_

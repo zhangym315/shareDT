@@ -39,7 +39,6 @@ struct FdBuffer {
  */
 DWORD WINAPI InstanceThread(LPVOID lpvParam)
 {
-    LOGGER.info() << "InstanceThread stared" ;
     if (lpvParam == NULL )
     {
         LOGGER.error() << "ERROR - Pipe Server Failure: InstanceThread got an unexpected NULL" <<
@@ -50,14 +49,14 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
     FdBuffer * p = (FdBuffer * ) lpvParam;
     HANDLE hPipe  = (HANDLE)(p->handle);
 
-    LOGGER.info() << "HandleCommandSocket is invoked to process command line" ;
+    LOGGER.info() <<"Started new thread for processing CMD=\"" << p->buf << "\"";
     HandleCommandSocket(hPipe, p->buf);
 
     FlushFileBuffers(hPipe);
     DisconnectNamedPipe(hPipe);
     CloseHandle(hPipe);
 
-    LOGGER.info() <<"Pipe Connection Thread exiting.";
+    LOGGER.info() <<"Thread exiting for processing CMD:\"" << p->buf << "\"";
     return 1;
 }
 
@@ -126,7 +125,7 @@ void ServiceMain(int argc, char** argv)
                 continue;
             }
             buf[receivedBytes] = '\0';
-            LOGGER.info("ShareDTServer service DATA RECEIVED = %s, clientSocket=%d", buf, hPipe);
+            LOGGER.info("ShareDTServer service DATA RECEIVED CMD=\"%s\", clientSocket=%d", buf, hPipe);
 
             /* check if it is stopping command */
             if(!memcmp(buf, MAIN_SERVICE_STOPPING, sizeof(MAIN_SERVICE_STOPPING))){

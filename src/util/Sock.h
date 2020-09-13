@@ -71,6 +71,7 @@ class Socket {
 class SocketClient : public Socket {
   public:
     SocketClient(const String& host, int port);
+    void write(char * bytes) { SendBytes(bytes); }
 };
 
 class SocketServer : public Socket {
