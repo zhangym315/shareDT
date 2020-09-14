@@ -19,6 +19,8 @@
 #include <process.h>
 
 //#include <Userenv.h>
+#else
+#include <sys/stat.h>
 #endif
 
 /*
@@ -30,7 +32,7 @@ std::mutex _WMmutex;
 /*
  * Stopping all CaptureServer in _WM
  */
-static void stopAllSC()
+void stopAllSC()
 {
     FOREACH(WIDMAP, it, _WM) {
         MainManagementProcess::STATUS statusType = it->second.status();

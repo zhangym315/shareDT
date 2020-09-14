@@ -4,6 +4,10 @@
 #ifdef __SHAREDT_WIN__
 #include <WinSock2.h>
 #include <Windows.h>
+#else
+#define SOCKET int
+#define INVALID_SOCKET -1
+#define closesocket close
 #endif
 
 #include "StringTools.h"

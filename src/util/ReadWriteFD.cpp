@@ -35,8 +35,8 @@ char * ReadWriteFD::read()
     ReadFile(_fd, _buf, BUFSIZE, NULL, NULL);
 #else
     open(O_RDONLY);
-    bzero(_buf, MAX_BUF);
-    OS_READ(_fd, _buf, MAX_BUF);
+    bzero(_buf, BUFSIZE);
+    OS_READ(_fd, _buf, BUFSIZE);
 
     close();
 #endif

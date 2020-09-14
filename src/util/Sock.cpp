@@ -1,9 +1,16 @@
-#ifdef __SHAREDT_WIN__
 #include "Sock.h"
 #include "Logger.h"
+#ifdef __SHAREDT_WIN__
 #else
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <netdb.h>
+#include <sys/select.h>
 #endif
 
 void SocketFD::close()
@@ -49,6 +56,7 @@ int Socket::nofSockets_= 0;
 
 void Socket::Start()
 {
+#ifdef __SHAREDT_WIN__
     if (!nofSockets_)
     {
         WSADATA info;
@@ -58,11 +66,14 @@ void Socket::Start()
         }
     }
     ++nofSockets_;
+#endif
 }
 
 void Socket::End()
 {
+#ifdef __SHAREDT_WIN__
     WSACleanup();
+#endif
 }
 
 Socket::Socket() : s_(0)
@@ -174,7 +185,11 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type)
 
     if(type==NonBlockingSocket) {
         u_long arg = 1;
+#ifdef __SHAREDT_WIN__
         ioctlsocket(s_, FIONBIO, &arg);
+#else
+        ioctl(s_, O_NONBLOCK, &arg);
+#endif
     }
 
     memset(&sa, 0, sizeof(sa));
@@ -183,16 +198,29 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type)
 
     int bindRet = ::bind(s_, (sockaddr *)&sa, sizeof(sockaddr_in));
     int retry = 0;
-    while(bindRet &&  WSAGetLastError() == WSAEADDRINUSE &&
+    while(bindRet &&
+#ifdef __SHAREDT_WIN__
+    WSAGetLastError() == WSAEADDRINUSE &&
+#endif
             (retry++) < 200)
     {
         LOGGER.warn() << "Port has been used, retry another one for internal communication: " << port;
+
+#ifdef __SHAREDT_WIN__
         Sleep(500);
+#else
+        sleep(1);
+#endif
         sa.sin_port = htons(++port);;
         bindRet = ::bind(s_, (sockaddr *)&sa, sizeof(sockaddr_in));
     }
 
-    if (bindRet == SOCKET_ERROR) {
+#ifdef __SHAREDT_WIN__
+    if (bindRet == SOCKET_ERROR)
+#else
+    if (bindRet == -1)
+#endif
+    {
         closesocket(s_);
         throw("INVALID_SOCKET");
     }
@@ -203,13 +231,16 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type)
 
 Socket* SocketServer::Accept()
 {
-    SOCKET new_sock = accept(s_, 0, 0);
+    SOCKET new_sock = ::accept(s_, 0, 0);
     if (new_sock == INVALID_SOCKET) {
+#ifdef __SHAREDT_WIN__
         int rc = WSAGetLastError();
         if(rc==WSAEWOULDBLOCK) {
             return 0; // non-blocking call, no request pending
         }
-        else {
+        else
+#endif
+        {
             throw "Invalid Socket";
         }
     }
@@ -235,7 +266,11 @@ SocketClient::SocketClient(const String& host, int port) : Socket()
     memset(&(addr.sin_zero), 0, 8);
 
     if (::connect(s_, (sockaddr *) &addr, sizeof(sockaddr))) {
+#ifdef __SHAREDT_WIN__
         error = strerror(WSAGetLastError());
+#else
+        error = "connect error";
+#endif
         throw error;
     }
 }
@@ -248,11 +283,16 @@ SocketSelect::SocketSelect(Socket const * const s1, Socket const * const s2, Typ
         FD_SET(const_cast<Socket*>(s2)->s_,&fds_);
     }
 
+#ifdef __SHAREDT_WIN__
     TIMEVAL tval;
+    TIMEVAL *ptval;
+#else
+    timeval tval;
+    timeval *ptval;
+#endif
     tval.tv_sec  = 0;
     tval.tv_usec = 1;
 
-    TIMEVAL *ptval;
     if(type==NonBlockingSocket) {
         ptval = &tval;
     }
@@ -260,7 +300,12 @@ SocketSelect::SocketSelect(Socket const * const s1, Socket const * const s2, Typ
         ptval = 0;
     }
 
-    if (select (0, &fds_, (fd_set*) 0, (fd_set*) 0, ptval) == SOCKET_ERROR)
+    if (select (0, &fds_, (fd_set*) 0, (fd_set*) 0, ptval)
+#ifdef __SHAREDT_WIN__
+        == SOCKET_ERROR)
+#else
+        == -1)
+#endif
         throw "Error in select";
 }
 
