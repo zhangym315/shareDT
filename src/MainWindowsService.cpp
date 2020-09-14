@@ -29,8 +29,8 @@ int MainWindowsServices()
 }
 
 struct FdBuffer {
-    FdBuffer(HANDLE  h, char * b) : handle(h), buf(b) { }
-    HANDLE  handle;
+    FdBuffer(Socket * s, char * b) : fd(s), buf(b) { }
+    Socket * fd;
     char   * buf;
 };
 
@@ -39,25 +39,22 @@ struct FdBuffer {
  */
 DWORD WINAPI InstanceThread(LPVOID lpvParam)
 {
-    LOGGER.info() << "InstanceThread stared" ;
     if (lpvParam == NULL )
     {
-        LOGGER.error() << "ERROR - Pipe Server Failure: InstanceThread got an unexpected NULL" <<
+        LOGGER.error() << "InstanceThread got an unexpected NULL" <<
                        " value in lpvParam. InstanceThread exitting.";
         return (DWORD)-1;
     }
 
     FdBuffer * p = (FdBuffer * ) lpvParam;
-    HANDLE hPipe  = (HANDLE)(p->handle);
+    Socket   * s  = (Socket  *) (p->fd);
 
-    LOGGER.info() << "HandleCommandSocket is invoked to process command line" ;
-    HandleCommandSocket(hPipe, p->buf);
+    LOGGER.info() <<"Started new thread for processing CMD=\"" << p->buf << "\"";
+    HandleCommandSocket(s, p->buf);
 
-    FlushFileBuffers(hPipe);
-    DisconnectNamedPipe(hPipe);
-    CloseHandle(hPipe);
+    delete s;
+    LOGGER.info() <<"Thread exiting for processing CMD:\"" << p->buf << "\"";
 
-    LOGGER.info() <<"Pipe Connection Thread exiting.";
     return 1;
 }
 
@@ -97,57 +94,42 @@ void ServiceMain(int argc, char** argv)
     char   buf[BUFSIZE];
     bool   rc;
 
+    /* Main service port */
+    SocketServer ss(SHAREDT_INTERNAL_PORT_START, 10);
+    LOGGER.info() << "MainService started on port=" << ss.getPort() ;
+    String alive = ShareDTHome::instance()->getHome() + String(MAIN_SERVER_PATH) + String(PATH_ALIVE_FILE);
+    {
+        if(fs::exists(alive) && !fs::remove(alive)){
+            String error = "Failed to remove the file: " + alive;
+            return;
+        }
+        Path aliveWriter(alive);
+        aliveWriter.write(ss.getPort());
+    }
+
     while (ServiceStatus.dwCurrentState == SERVICE_RUNNING)
     {
-        hPipe = CreateNamedPipe(lpszPipename.c_str(), PIPE_ACCESS_DUPLEX,
-                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-                PIPE_UNLIMITED_INSTANCES, BUFSIZE, BUFSIZE, 0, NULL);
-        if (hPipe == INVALID_HANDLE_VALUE)
+        Socket* s=ss.Accept();
+        String received = s->ReceiveBytes();
+        LOGGER.info("ShareDTServer service DATA RECEIVED CMD=\"%s\", clientSocket=%d", received.c_str(), ss.getSocket());
+
+        /* check if it is stopping command */
+        if(!memcmp(received.c_str(), MAIN_SERVICE_STOPPING, sizeof(MAIN_SERVICE_STOPPING))){
+            LOGGER.info() << "Stopping ShareDTServer Service" ;
+            break;
+        }
+
+        strcpy_s(buf, received.c_str());
+        FdBuffer fb(s, buf);
+        LOGGER.info() << "Client connected, creating a processing thread.";
+        hThread = CreateThread(NULL, 0, InstanceThread, (LPVOID) &fb, 0, &dwThreadId);
+        if (hThread == NULL)
         {
-            if(maxFailed++ > 10) {
-                LOGGER.error() << "Reached to max failed time on CreateNamedPipe, main service stopped";
-                Sleep(500);
-                break;
-            }
-            LOGGER.error() << "CreateNamedPipe failed, GLE=" << GetLastError();
-            continue ;
+            LOGGER.error () << "CreateThread failed to run, GLE=" <<  GetLastError() << " clientSocket=" << ss.getSocket();
+            delete s;
+            continue;
         }
-        if(maxFailed) maxFailed = 0;
-        LOGGER.info() << "Pipe Server: Main thread awaiting client connection on: " << lpszPipename;
-
-        /* new connection from command line */
-        if (ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED))
-        {
-            /* read command line info */
-            rc = ReadFile(hPipe, buf, BUFSIZE, reinterpret_cast<LPDWORD>(&receivedBytes), NULL);
-            if (!rc || receivedBytes == 0)
-            {
-                LOGGER.error() <<"Pipe Connection Thread ReadFile failed, GLE=" << GetLastError();
-                continue;
-            }
-            buf[receivedBytes] = '\0';
-            LOGGER.info("ShareDTServer service DATA RECEIVED = %s, clientSocket=%d", buf, hPipe);
-
-            /* check if it is stopping command */
-            if(!memcmp(buf, MAIN_SERVICE_STOPPING, sizeof(MAIN_SERVICE_STOPPING))){
-                LOGGER.info() << "Stopping ShareDTServer Service" ;
-                break;
-            }
-
-            FdBuffer fb(hPipe, buf);
-            LOGGER.info() << "Client connected, creating a processing thread.";
-            hThread = CreateThread(NULL, 0, InstanceThread, (LPVOID) &fb, 0, &dwThreadId);
-            if (hThread == NULL)
-            {
-                LOGGER.error () << "CreateThread failed to run, GLE=" <<  GetLastError() << " clientSocket:" << (int)hPipe;
-                continue;
-            }
-            else CloseHandle(hThread);
-        }
-        else {
-            LOGGER.error() << "Can not connect to client, close the pipe" ;
-            CloseHandle(hPipe);
-        }
+        else CloseHandle(hThread);
     }
 
     ServiceStatus.dwCurrentState = SERVICE_STOPPED;
@@ -189,34 +171,17 @@ void ControlHandler(DWORD request)
  */
 int infoServiceToAction(const char * execCmd)
 {
-    HANDLE hPipe;
-    TCHAR  chBuf[BUFSIZE];
-    LPTSTR lpszPipename = TEXT(SERVICE_PIPE_SERVER);
+    String alive = ShareDTHome::instance()->getHome() + String(MAIN_SERVER_PATH) + String(PATH_ALIVE_FILE);
+    Path aliveReader(alive);
+    int port = aliveReader.readLineAsInt();
+    SocketClient sc(LOCALHOST, port);
 
-    hPipe = CreateFile(lpszPipename, GENERIC_READ |  GENERIC_WRITE,
-                       0, NULL, OPEN_EXISTING, 0, NULL);
-    if (hPipe == INVALID_HANDLE_VALUE)
-    {
-        printf("Could not open pipe to communicate to server. GLE=%d\n", GetLastError() );
-        return RETURN_CODE_SERVICE_ERROR;
-    }
-
-    SocketFD fd(hPipe);
     printf("Starting capture server\n");
 
-    if(!fd.send(execCmd))
-    {
-        printf("Faield to WriteFile to service server. GLE=%d\n", GetLastError() );
-        return RETURN_CODE_SERVICE_ERROR;
-    }
+    sc.SendBytes(execCmd);
 
-    if (!fd.recv(chBuf, BUFSIZE))
-    {
-        printf( TEXT("ReadFile from pipe failed. GLE=%d\n"), GetLastError() );
-        return RETURN_CODE_SERVICE_ERROR;
-    }
+    String receive = sc.ReceiveBytes();
+    printf( TEXT("%s\n"), receive.c_str() );
 
-    printf( TEXT("%s\n"), chBuf );
-    CloseHandle(hPipe);
     return RETURN_CODE_SUCCESS;
 }

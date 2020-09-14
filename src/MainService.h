@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "StartServer.h"
+#include "Sock.h"
 
 #define SERVICE_PIPE_SERVER "\\\\.\\pipe\\SamplePipe\\pipeServer"
 
@@ -20,7 +21,7 @@ int MainWindowsServices();
 int infoServiceToAction(const char * execCmd);
 
 #ifdef __SHAREDT_WIN__
-void HandleCommandSocket(HANDLE fd, char * buf);
+void HandleCommandSocket(Socket * sk, char * buf);
 #else
 void HandleCommandSocket(int fd, char * buf);
 #endif

@@ -197,3 +197,20 @@ const String & CapServerHome::getHome() {
 const String & CapServerHome::getCid() {
     return _cid;
 }
+
+void Path::write(String &data)
+{
+    _ffs << data;
+}
+
+void Path::write(int data)
+{
+    _ffs << std::to_string(data);
+}
+
+int Path::readLineAsInt()
+{
+    char buffer[1024];
+    _ffs.read (buffer,1024);
+    return std::stoi(buffer);
+}

@@ -72,7 +72,6 @@ bool UserSession::GetSessionDomain(String & domain)
 
 UserSession::UserSession(const String & user) : _user(user) , _sessionId(0)
 {
-    LOGGER.debug() << "UserSession for user: " << user;
     FindAndSetSessionIds();
     FindAndSetTokens();
 }

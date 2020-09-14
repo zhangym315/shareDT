@@ -76,12 +76,14 @@ static void stopAllSC()
  *
  */
 #ifdef __SHAREDT_WIN__
-void HandleCommandSocket(HANDLE fd, char * buf)
+void HandleCommandSocket(Socket * sk, char * buf)
 #else
 void HandleCommandSocket(int fd, char * buf)
 #endif
 {
+#ifndef  __SHAREDT_WIN__
     SocketFD sk(fd);
+#endif
     String wid;
     StartCapture::CType commandType;
     /* start handle particular --wid specified or start new capture server */
@@ -92,18 +94,27 @@ void HandleCommandSocket(int fd, char * buf)
     WIDMAP::iterator it = _WM.find(wid);
     commandType = hcl.getSC().getCType();
     String user = hcl.getSC().getUserName();
+    const String & capServerHome = hcl.getSC().getCapServerPath();
 
     /* 1. first check stop specific wid */
     if( commandType == StartCapture::C_STOP ) {
         if(!hcl.hasWid()) {
+#ifndef  __SHAREDT_WIN__
             sk.send("command must has a valid \"--wid\" setting");
+#else
+            sk->send("command must has a valid \"--wid\" setting");
+#endif
             return ;
         }
 
         if(it == _WM.end()) {
             String msg("Can't find status for: ");
             msg.append(wid);
+#ifndef  __SHAREDT_WIN__
             sk.send(msg.c_str());
+#else
+            sk->send(msg.c_str());
+#endif
             return;
         }
 
@@ -117,7 +128,11 @@ void HandleCommandSocket(int fd, char * buf)
         String msg("Capture Server Stopped: ");
         msg.append(wid);
 
+#ifndef  __SHAREDT_WIN__
         sk.send(msg.c_str());
+#else
+        sk->send(msg.c_str());
+#endif
 
         return;
     }
@@ -130,82 +145,89 @@ void HandleCommandSocket(int fd, char * buf)
     ret.append(wid);
     ret.append("\nStatus: ");
 
-    /* 2. Starting capture server */
+    /* 2. Starting capture server
+     * 2.1 First make sure there is no "start" and "started" file under it.
+     */
     if( (commandType == StartCapture::C_START || commandType == StartCapture::C_NEWCAPTURE) &&
         (it == _WM.end() || it->second.status() != MainManagementProcess::STATUS::STARTED) ) {
-        String capServer = CapServerHome::instance()->getHome();
-        char ** argv = hcl.getArgv();
+        String start = capServerHome + String(CAPTURE_SERVER_START);
+        String started = capServerHome + String(CAPTURE_SERVER_STARTED);
+        String alive = capServerHome + PATH_ALIVE_FILE;
+
+        if(fs::exists(start) && !fs::remove(start)){
+            LOGGER.error() << "Failed to remove the file: " << start;
+        }
+
+        if(fs::exists(started) && !fs::remove(started)){
+            LOGGER.error() << "Failed to remove the file: " << started;
+        }
 
         LOGGER.info() << "Starting Capture Server Argument: " << hcl.toString();
         int childPid;
+
+
 #ifndef __SHAREDT_WIN__
-        String captureAlivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
-        mkfifo(captureAlivePath.c_str(), 0666);
+        /* Non-windows, communicate the child process through pipe */
+        char ** argv = hcl.getArgv();
+        mkfifo(alive.c_str(), 0666);
         if((childPid=fork()) == 0) {
             execv(argv[0], argv);
         }
+        ReadWriteFD msg(alive.c_str(), O_RDONLY);
+        String answer = msg.read();
 #else
-        String captureAlivePath(SERVICE_PIPE_SERVER);
-        captureAlivePath.append("\\");
-        captureAlivePath.append(CapServerHome::instance()->getCid());
-
+        /* windows, communicate the child process through port */
         SocketServer sc(SHAREDT_INTERNAL_PORT_START, 2);
-        LOGGER.info() << "Start on port: " << sc.getPort();
+        LOGGER.info() << "Start on port=" << sc.getPort() <<
+                    " for communication with CaptureServer=" << hcl.getSC().getWID();
+        {
+            if(fs::exists(alive) && !fs::remove(alive)){
+                String error = "Failed to remove the file: " + alive;
+                LOGGER.error() << error;
+                sk->send(error.c_str());
+                return;
+            }
+            Path aliveWriter(alive);
+            aliveWriter.write(sc.getPort());
+        }
+
+        /* create process as the user requested */
+        LOGGER.info() << "Retrieving user session token for user=" << user;
         UserSession usrSession(user);
-        HANDLE hPipe = CreateNamedPipe(captureAlivePath.c_str(), PIPE_ACCESS_DUPLEX,
-                        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-                        PIPE_UNLIMITED_INSTANCES, BUFSIZE, BUFSIZE, 0, NULL);
         STARTUPINFO si;
         PROCESS_INFORMATION pi;
         ZeroMemory( &si, sizeof(si) );
         si.cb = sizeof(si);
         ZeroMemory( &pi, sizeof(pi) );
-
         if(!CreateProcessAsUserA ( usrSession.getToken(),
-                            NULL,    // module name (use command line)
-                           (LPTSTR)hcl.toString().c_str(),     // Command line
-                            NULL,    // Process handle not inheritable
-                            NULL,    // Thread handle not inheritable
-                            true,    // Set handle inheritance to FALSE
-                            0,       // No creation flags
-                            NULL,    // Use parent's environment block
-                            NULL,    // Use parent's starting directory
-                            &si,     // Pointer to STARTUPINFO structure
-                            &pi )    // Pointer to PROCESS_INFORMATION structure
-                        )
+                                NULL,    // module name (use command line)
+                               (LPTSTR)hcl.toString().c_str(),     // Command line
+                                NULL,    // Process handle not inheritable
+                                NULL,    // Thread handle not inheritable
+                                true,    // Set handle inheritance to FALSE
+                                0,       // No creation flags
+                                NULL,    // Use parent's environment block
+                                NULL,    // Use parent's starting directory
+                                &si,     // Pointer to STARTUPINFO structure
+                                &pi )    // Pointer to PROCESS_INFORMATION structure
+                            )
         {
-            sk.send("Failed to create child capture process");
+            sk->send("Failed to create child capture process");
             LOGGER.info() << "Failed to create child capture process";
             return;
         }
-        LOGGER.info() << "Successuflly create child process, communicating pipe: " << captureAlivePath ;
+        LOGGER.info() << "Successuflly create child process, communicating port: " << sc.getPort();
         CloseHandle(pi.hThread);
         childPid = (int) pi.hProcess;
 
-        LOGGER.info() << "Before connecting NamedPipe from capture server";
         Socket* s=sc.Accept();
-        String answer = s->ReceiveLine();
+        String answer = s->ReceiveBytes();
         delete s;
-
-        /* new connection from command line */
-        if (ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED))
-        {
-            LOGGER.info() << "New connection on alive: " << captureAlivePath;
-        }
-        LOGGER.info() << "After  connecting NamedPipe from capture server";
 #endif
-        {
-#ifdef __SHAREDT_WIN__
-            ReadWriteFD msg(hPipe);
-#else
-            ReadWriteFD msg(captureAlivePath.c_str(), O_RDONLY);
-#endif
-//            ret += msg.read();
-ret.append(answer);
+        ret.append(answer);
 
-        }
-        LOGGER.info() << "Child process for WID: " << wid <<
-                        " started, PID: " << childPid << " command: " << hcl.toString();
+        LOGGER.info() << "Child process for WID=" << wid <<
+                        " started, PID=" << childPid << " CMD=" << hcl.toString();
 
         /* TODO needs to check if started successfully */
 
@@ -213,7 +235,7 @@ ret.append(answer);
         if(it == _WM.end()) {
             std::lock_guard<std::mutex> guard(_WMmutex);
             _WM.insert(std::pair<String, MainManagementProcess>
-                               (wid, MainManagementProcess(captureAlivePath, MainManagementProcess::STATUS::STARTED)));
+                       (wid, MainManagementProcess(alive, MainManagementProcess::STATUS::STARTED)));
         } else {
             std::lock_guard<std::mutex> guard(_WMmutex);
             it->second.updateStatus(MainManagementProcess::STATUS::STARTED);
@@ -221,7 +243,12 @@ ret.append(answer);
     } else {
         ret += "Already started";
     }
+#ifndef  __SHAREDT_WIN__
     sk.send(ret.c_str());
+#else
+    sk->send(ret.c_str());
+#endif
+
 }
 
 HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)

@@ -19,14 +19,6 @@
 #include <tchar.h>
 #include <strsafe.h>
 #include <Lmcons.h>
-
-void WindowsMainServiceCallback(int argc, char ** argv)
-{
-    StartCapture cap;
-    cap.init(argc, argv);
-    cap.startCaptureServer ();
-    return;
-}
 #else
 #include "Daemon.h"
 #endif
@@ -174,6 +166,12 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
+    if(!setMainProcessServiceHome(conf))
+    {
+        LOGGER.error () << "Failed to get MainService Home path" ;
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
+
     commandPath.append(szPath);
     commandPath.append(" newCapture");
 
@@ -204,12 +202,12 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
 
-    String captureAlivePath(SERVICE_PIPE_SERVER);
-    captureAlivePath.append("\\");
-    captureAlivePath.append(CapServerHome::instance()->getCid());
-
-    LOGGER.info("mainNewCapture: %s\n", captureAlivePath.c_str());
-    SocketClient s(LOCALHOST, SHAREDT_INTERNAL_PORT_START);
+#ifdef __SHAREDT_WIN__
+    Path alivePath(cap.getAlivePath());
+    SocketClient msg(LOCALHOST, alivePath.readLineAsInt());
+#else
+    ReadWriteFD msg(cap.getAlivePath().c_str(), O_WRONLY);
+#endif
 
     /*
      * If RETURN_CODE_SUCCESS_SHO show window handler
@@ -217,17 +215,16 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
      */
     if(ret == RETURN_CODE_SUCCESS_SHO)
     {
-        ///msg.write("");
+        msg.write("");
         return RETURN_CODE_SUCCESS;
     } else if (ret != RETURN_CODE_SUCCESS)
     {
-      //  msg.write("Failed to create Capture Server");
+        msg.write("Failed to create Capture Server");
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
     LOGGER.info() << "Write to MainManagementProcess: successfully created capture Server";
-    //msg.write("Successfully created Capture Server");
-    s.SendLine("Successfully created Capture Server");
+    msg.write("Successfully created Capture Server");
     cap.startCaptureServer ();
 
     return RETURN_CODE_SUCCESS;
