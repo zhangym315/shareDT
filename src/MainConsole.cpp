@@ -166,6 +166,12 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
+    if(!setMainProcessServiceHome(conf))
+    {
+        LOGGER.error () << "Failed to get MainService Home path" ;
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
+
     commandPath.append(szPath);
     commandPath.append(" newCapture");
 

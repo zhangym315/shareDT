@@ -184,7 +184,7 @@ int StartCapture::parseArgs(const vector<String> & args)
         } else if (*i == "--username") {
             if((i+1) != args.end())
 //                _user = *(++i);
-                _user = "Yiming Zhang";
+                _user = "zhang";
         }
         else {
         }

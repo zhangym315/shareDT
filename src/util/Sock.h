@@ -51,6 +51,8 @@ class Socket {
 
     void   SendLine (String);
     void   SendBytes(const String&);
+    void   send(const char * buf) { SendBytes(String(buf)); }
+    int    getSocket() { return s_; }
 
   protected:
     friend class SocketServer;
@@ -71,7 +73,7 @@ class Socket {
 class SocketClient : public Socket {
   public:
     SocketClient(const String& host, int port);
-    void write(char * bytes) { SendBytes(bytes); }
+    void write(const char * bytes) { SendBytes(bytes); }
 };
 
 class SocketServer : public Socket {

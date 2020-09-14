@@ -125,28 +125,11 @@ void Socket::Close()
 
 String Socket::ReceiveBytes()
 {
-    String ret;
-    char buf[1024];
-
-    while (1) {
-        u_long arg = 0;
-        if (ioctlsocket(s_, FIONREAD, &arg) != 0)
-            break;
-
-        if (arg == 0)
-            break;
-
-        if (arg > 1024) arg = 1024;
-
-        int rv = recv (s_, buf, arg, 0);
-        if (rv <= 0) break;
-
-        String t;
-
-        t.assign (buf, rv);
-        ret += t;
+    char ret[BUFSIZE];
+    if(recv(s_, ret, BUFSIZE, 0) == -1)
+    {
+            return "";
     }
-
     return ret;
 }
 
@@ -157,19 +140,11 @@ String Socket::ReceiveLine()
         char r;
 
         switch(recv(s_, &r, 1, 0)) {
-            case 0: // not connected anymore;
-                // ... but last line sent
-                // might not end in \n,
-                // so return ret anyway.
+            case 0:
                 return ret;
             case -1:
                 return "";
-//      if (errno == EAGAIN) {
-//        return ret;
-//      } else {
-//      // not connected anymore
-//      return "";
-//      }
+
         }
 
         ret += r;
@@ -180,12 +155,12 @@ String Socket::ReceiveLine()
 void Socket::SendLine(String s)
 {
     s += '\n';
-    send(s_,s.c_str(),s.length(),0);
+    ::send(s_,s.c_str(),s.length(),0);
 }
 
 void Socket::SendBytes(const String& s)
 {
-    send(s_,s.c_str(),s.length(),0);
+    ::send(s_,s.c_str(),s.length(),0);
 }
 
 SocketServer::SocketServer(int port, int connections, TypeSocket type)

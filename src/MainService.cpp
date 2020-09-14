@@ -76,12 +76,14 @@ static void stopAllSC()
  *
  */
 #ifdef __SHAREDT_WIN__
-void HandleCommandSocket(HANDLE fd, char * buf)
+void HandleCommandSocket(Socket * sk, char * buf)
 #else
 void HandleCommandSocket(int fd, char * buf)
 #endif
 {
+#ifndef  __SHAREDT_WIN__
     SocketFD sk(fd);
+#endif
     String wid;
     StartCapture::CType commandType;
     /* start handle particular --wid specified or start new capture server */
@@ -97,14 +99,22 @@ void HandleCommandSocket(int fd, char * buf)
     /* 1. first check stop specific wid */
     if( commandType == StartCapture::C_STOP ) {
         if(!hcl.hasWid()) {
+#ifndef  __SHAREDT_WIN__
             sk.send("command must has a valid \"--wid\" setting");
+#else
+            sk->send("command must has a valid \"--wid\" setting");
+#endif
             return ;
         }
 
         if(it == _WM.end()) {
             String msg("Can't find status for: ");
             msg.append(wid);
+#ifndef  __SHAREDT_WIN__
             sk.send(msg.c_str());
+#else
+            sk->send(msg.c_str());
+#endif
             return;
         }
 
@@ -118,7 +128,11 @@ void HandleCommandSocket(int fd, char * buf)
         String msg("Capture Server Stopped: ");
         msg.append(wid);
 
+#ifndef  __SHAREDT_WIN__
         sk.send(msg.c_str());
+#else
+        sk->send(msg.c_str());
+#endif
 
         return;
     }
@@ -170,7 +184,7 @@ void HandleCommandSocket(int fd, char * buf)
             if(fs::exists(alive) && !fs::remove(alive)){
                 String error = "Failed to remove the file: " + alive;
                 LOGGER.error() << error;
-                sk.send(error.c_str());
+                sk->send(error.c_str());
                 return;
             }
             Path aliveWriter(alive);
@@ -198,7 +212,7 @@ void HandleCommandSocket(int fd, char * buf)
                                 &pi )    // Pointer to PROCESS_INFORMATION structure
                             )
         {
-            sk.send("Failed to create child capture process");
+            sk->send("Failed to create child capture process");
             LOGGER.info() << "Failed to create child capture process";
             return;
         }
@@ -229,7 +243,12 @@ void HandleCommandSocket(int fd, char * buf)
     } else {
         ret += "Already started";
     }
+#ifndef  __SHAREDT_WIN__
     sk.send(ret.c_str());
+#else
+    sk->send(ret.c_str());
+#endif
+
 }
 
 HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)
