@@ -1,7 +1,7 @@
 #include "Sock.h"
 #include "Logger.h"
-#ifdef __SHAREDT_WIN__
-#else
+
+#ifndef __SHAREDT_WIN__
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -13,7 +13,9 @@
 #include <sys/select.h>
 #endif
 
-void SocketFD::close()
+using namespace std;
+
+void SocketFD::close() const
 {
 #ifdef __SHAREDT_WIN__
     CloseHandle(_fd);
@@ -22,7 +24,7 @@ void SocketFD::close()
 #endif
 }
 
-int SocketFD::send(const char * buf)
+int SocketFD::send(const char * buf) const
 {
     int rc;
 #ifdef __SHAREDT_WIN__
@@ -35,7 +37,7 @@ int SocketFD::send(const char * buf)
     return rc;
 }
 
-int SocketFD::recv(char * buf, size_t size)
+int SocketFD::recv(char * buf, size_t size) const
 {
     int rc;
 #ifdef __SHAREDT_WIN__
@@ -50,14 +52,12 @@ int SocketFD::recv(char * buf, size_t size)
     return rc;
 }
 
-using namespace std;
-
-int Socket::nofSockets_= 0;
+int Socket::_nofSockets= 0;
 
 void Socket::Start()
 {
 #ifdef __SHAREDT_WIN__
-    if (!nofSockets_)
+    if (!_nofSockets)
     {
         WSADATA info;
         if (WSAStartup(MAKEWORD(2,0), &info))
@@ -65,7 +65,7 @@ void Socket::Start()
             throw "Could not start WSA";
         }
     }
-    ++nofSockets_;
+    ++_nofSockets;
 #endif
 }
 
@@ -76,81 +76,85 @@ void Socket::End()
 #endif
 }
 
-Socket::Socket() : s_(0)
+Socket::Socket() : _s(0)
 {
     Start();
     // UDP: use SOCK_DGRAM instead of SOCK_STREAM
-    s_ = socket(AF_INET,SOCK_STREAM,0);
+    _s = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (s_ == INVALID_SOCKET)
+    if (_s == INVALID_SOCKET)
     {
         throw "INVALID_SOCKET";
     }
 
-    refCounter_ = new int(1);
+    _refCounter = new int(1);
 }
 
-Socket::Socket(SOCKET s) : s_(s)
+Socket::Socket(SOCKET s) : _s(s)
 {
     Start();
-    refCounter_ = new int(1);
+    _refCounter = new int(1);
 };
 
 Socket::~Socket()
 {
-    if (! --(*refCounter_))
+    if (! --(*_refCounter))
     {
         Close();
-        delete refCounter_;
+        delete _refCounter;
     }
 
-    --nofSockets_;
-    if (!nofSockets_) End();
+    --_nofSockets;
+    if (!_nofSockets) End();
 }
 
 Socket::Socket(const Socket& o)
 {
-    refCounter_=o.refCounter_;
-    (*refCounter_)++;
-    s_         =o.s_;
+    _refCounter=o._refCounter;
+    (*_refCounter)++;
+    _s         =o._s;
 
-    nofSockets_++;
+    _nofSockets++;
 }
 
 Socket& Socket::operator=(Socket& o)
 {
-    (*o.refCounter_)++;
+    (*o._refCounter)++;
 
-    refCounter_=o.refCounter_;
-    s_         =o.s_;
+    _refCounter=o._refCounter;
+    _s         =o._s;
 
-    nofSockets_++;
+    _nofSockets++;
 
     return *this;
 }
 
-void Socket::Close()
+void Socket::Close() const
 {
-    closesocket(s_);
+#ifdef __SHAREDT_WIN__
+    closesocket(_s);
+#else
+    close(_s);
+#endif
 }
 
-String Socket::ReceiveBytes()
+String Socket::ReceiveBytes() const
 {
     char ret[BUFSIZE];
-    if(recv(s_, ret, BUFSIZE, 0) == -1)
+    if(recv(_s, ret, BUFSIZE, 0) == -1)
     {
             return "";
     }
     return ret;
 }
 
-String Socket::ReceiveLine()
+String Socket::ReceiveLine() const
 {
     String ret;
     while (1) {
         char r;
 
-        switch(recv(s_, &r, 1, 0)) {
+        switch(recv(_s, &r, 1, 0)) {
             case 0:
                 return ret;
             case -1:
@@ -163,32 +167,32 @@ String Socket::ReceiveLine()
     }
 }
 
-void Socket::SendLine(String s)
+void Socket::SendLine(String s) const
 {
     s += '\n';
-    ::send(s_,s.c_str(),s.length(),0);
+    ::send(_s,s.c_str(),s.length(),0);
 }
 
-void Socket::SendBytes(const String& s)
+void Socket::SendBytes(const String& s) const
 {
-    ::send(s_,s.c_str(),s.length(),0);
+    ::send(_s,s.c_str(),s.length(),0);
 }
 
 SocketServer::SocketServer(int port, int connections, TypeSocket type)
 {
-    sockaddr_in sa;
+    sockaddr_in sa{};
 
-    s_ = socket(AF_INET, SOCK_STREAM, 0);
-    if (s_ == INVALID_SOCKET) {
+    _s = socket(AF_INET, SOCK_STREAM, 0);
+    if (_s == INVALID_SOCKET) {
         throw "INVALID_SOCKET";
     }
 
     if(type==NonBlockingSocket) {
         u_long arg = 1;
 #ifdef __SHAREDT_WIN__
-        ioctlsocket(s_, FIONBIO, &arg);
+        ioctlsocket(_s, FIONBIO, &arg);
 #else
-        ioctl(s_, O_NONBLOCK, &arg);
+        ioctl(_s, O_NONBLOCK, &arg);
 #endif
     }
 
@@ -196,7 +200,7 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type)
     sa.sin_family = PF_INET;
     sa.sin_port = htons(port);
 
-    int bindRet = ::bind(s_, (sockaddr *)&sa, sizeof(sockaddr_in));
+    int bindRet = ::bind(_s, (sockaddr *)&sa, sizeof(sockaddr_in));
     int retry = 0;
     while(bindRet &&
 #ifdef __SHAREDT_WIN__
@@ -206,13 +210,9 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type)
     {
         LOGGER.warn() << "Port has been used, retry another one for internal communication: " << port;
 
-#ifdef __SHAREDT_WIN__
-        Sleep(500);
-#else
-        sleep(1);
-#endif
+        std::this_thread::sleep_for(500ms);
         sa.sin_port = htons(++port);;
-        bindRet = ::bind(s_, (sockaddr *)&sa, sizeof(sockaddr_in));
+        bindRet = ::bind(_s, (sockaddr *)&sa, sizeof(sockaddr_in));
     }
 
 #ifdef __SHAREDT_WIN__
@@ -221,17 +221,21 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type)
     if (bindRet == -1)
 #endif
     {
-        closesocket(s_);
+#ifdef __SHAREDT_WIN__
+        closesocket(_s);
+#else
+        close(_s);
+#endif
         throw("INVALID_SOCKET");
     }
 
     _port = port;
-    listen(s_, connections);
+    listen(_s, connections);
 }
 
 Socket* SocketServer::Accept()
 {
-    SOCKET new_sock = ::accept(s_, 0, 0);
+    SOCKET new_sock = ::accept(_s, 0, 0);
     if (new_sock == INVALID_SOCKET) {
 #ifdef __SHAREDT_WIN__
         int rc = WSAGetLastError();
@@ -259,13 +263,13 @@ SocketClient::SocketClient(const String& host, int port) : Socket()
         throw error;
     }
 
-    sockaddr_in addr;
+    sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     addr.sin_addr = *((in_addr *)he->h_addr);
     memset(&(addr.sin_zero), 0, 8);
 
-    if (::connect(s_, (sockaddr *) &addr, sizeof(sockaddr))) {
+    if (::connect(_s, (sockaddr *) &addr, sizeof(sockaddr))) {
 #ifdef __SHAREDT_WIN__
         error = strerror(WSAGetLastError());
 #else
@@ -278,9 +282,9 @@ SocketClient::SocketClient(const String& host, int port) : Socket()
 SocketSelect::SocketSelect(Socket const * const s1, Socket const * const s2, TypeSocket type)
 {
     FD_ZERO(&fds_);
-    FD_SET(const_cast<Socket*>(s1)->s_,&fds_);
+    FD_SET(const_cast<Socket*>(s1)->_s,&fds_);
     if(s2) {
-        FD_SET(const_cast<Socket*>(s2)->s_,&fds_);
+        FD_SET(const_cast<Socket*>(s2)->_s,&fds_);
     }
 
 #ifdef __SHAREDT_WIN__
@@ -311,6 +315,6 @@ SocketSelect::SocketSelect(Socket const * const s1, Socket const * const s2, Typ
 
 bool SocketSelect::Readable(Socket const* const s)
 {
-    if (FD_ISSET(s->s_,&fds_)) return true;
+    if (FD_ISSET(s->_s,&fds_)) return true;
     return false;
 }

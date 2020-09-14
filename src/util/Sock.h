@@ -7,7 +7,6 @@
 #else
 #define SOCKET int
 #define INVALID_SOCKET -1
-#define closesocket close
 #endif
 
 #include "StringTools.h"
@@ -15,23 +14,23 @@
 #define LOCALHOST "127.0.0.1"
 #define SHAREDT_INTERNAL_PORT_START 31400
 
+enum TypeSocket {BlockingSocket, NonBlockingSocket};
+
 class SocketFD
 {
   public:
 #ifdef __SHAREDT_WIN__
-    SocketFD(HANDLE fd) : _fd(fd)
-    {
-    }
+    SocketFD(HANDLE fd) : _fd(fd) { }
 #else
     SocketFD(int fd) : _fd (fd) { }
 #endif
 
-    void close();
-    int send(const char * buf);
-    int recv(char * buf, size_t size);
+    void close() const;
+    int send(const char * buf) const;
+    int recv(char * buf, size_t size) const;
 
   private:
-    SocketFD() { } // not allowed default constructor
+    SocketFD() { }
 #ifdef __SHAREDT_WIN__
     HANDLE _fd;
 #else
@@ -40,23 +39,21 @@ class SocketFD
     bool _isServer;
 };
 
-enum TypeSocket {BlockingSocket, NonBlockingSocket};
-
 class Socket {
   public:
     virtual ~Socket();
     Socket(const Socket&);
     Socket& operator=(Socket&);
 
-    String ReceiveLine();
-    String ReceiveBytes();
+    String ReceiveLine() const;
+    String ReceiveBytes() const;
 
-    void   Close();
+    void   Close() const;
 
-    void   SendLine (String);
-    void   SendBytes(const String&);
+    void   SendLine (String) const;
+    void   SendBytes(const String&) const;
     void   send(const char * buf) { SendBytes(String(buf)); }
-    int    getSocket() { return s_; }
+    int    getSocket() { return _s; }
 
   protected:
     friend class SocketServer;
@@ -65,13 +62,13 @@ class Socket {
     Socket(SOCKET s);
     Socket();
 
-    SOCKET s_;
-    int* refCounter_;
+    SOCKET _s;
+    int* _refCounter;
 
   private:
     static void Start();
     static void End();
-    static int  nofSockets_;
+    static int  _nofSockets;
 };
 
 class SocketClient : public Socket {
@@ -91,11 +88,11 @@ class SocketServer : public Socket {
 };
 
 class SocketSelect {
-public:
+  public:
     SocketSelect(Socket const * const s1, Socket const * const s2=NULL, TypeSocket type=BlockingSocket);
     bool Readable(Socket const * const s);
 
-private:
+  private:
     fd_set fds_;
 };
 

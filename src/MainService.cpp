@@ -14,11 +14,8 @@
 
 #ifdef __SHAREDT_WIN__
 #include "WindowsProcess.h"
-
 #include <windows.h>
 #include <process.h>
-
-//#include <Userenv.h>
 #else
 #include <sys/stat.h>
 #endif
