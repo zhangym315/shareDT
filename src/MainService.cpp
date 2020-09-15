@@ -316,7 +316,7 @@ bool setMainProcessServiceHome(const struct cmdConf * conf)
     TCHAR szPath[MAX_PATH];
     if( !GetModuleFileNameA( NULL, szPath, MAX_PATH ) )
     {
-        printf("Cannot get module file name\n");
+        fprintf(stderr, "Cannot get module file name\n");
         return false;
     }
     ShareDTHome::instance()->set(szPath);

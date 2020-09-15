@@ -51,7 +51,7 @@ static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
 {
     if(conf->argc == 2)
     {
-        printf ("Starting shareDTServer\n");
+        fprintf(stdout, "Starting shareDTServer\n");
 #ifdef __SHAREDT_WIN__
         /*
          * 1. set home directory
@@ -81,7 +81,7 @@ static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
         }
 
         if (hSc != nullptr) CloseServiceHandle (hSc);
-        printf("ShareDTServer Started\n");
+        fprintf(stdout, "ShareDTServer Started\n");
         return RETURN_CODE_SUCCESS;
 #else
         DaemonizeProcess::instance()->daemonize();
@@ -102,7 +102,7 @@ static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
         return MainWindowsServices();
 #endif
     } else {
-        printf ("Starting capture Server\n");
+        fprintf(stdout, "Starting capture Server\n");
         return mainInform(" start", conf);
     }
 
@@ -138,7 +138,7 @@ static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
 #else
     if(conf->argc == 2)
     {
-        printf ("Stopping shareDTServer\n");
+        fprintf(stdout, "Stopping shareDTServer\n");
         return infoServiceToAction (MAIN_SERVICE_STOPPING);
     }
 
@@ -267,7 +267,7 @@ static int installService (const char ** cmdArg, const struct cmdConf * conf)
 
     if( !GetModuleFileNameA( NULL, szPath, MAX_PATH ) )
     {
-        printf("Cannot install service (%d)\n", GetLastError());
+        fprintf(stderr, "Cannot install service (%d)\n", GetLastError());
         return RETURN_CODE_SERVICE_ERROR;
     }
 
@@ -278,7 +278,7 @@ static int installService (const char ** cmdArg, const struct cmdConf * conf)
             SC_MANAGER_ALL_ACCESS);  // full access rights
     if (NULL == schSCManager)
     {
-        printf("OpenSCManager failed (%d)\n", GetLastError());
+        fprintf(stderr, "OpenSCManager failed (%d)\n", GetLastError());
         return RETURN_CODE_SERVICE_ERROR;
     }
 
@@ -293,11 +293,11 @@ static int installService (const char ** cmdArg, const struct cmdConf * conf)
                 NULL, NULL, NULL, NULL, NULL);
     if (schService == NULL)
     {
-        printf("CreateService failed (%d)\n", GetLastError());
+        fprintf(stderr, "CreateService failed (%d)\n", GetLastError());
         CloseServiceHandle(schSCManager);
         return RETURN_CODE_SERVICE_ERROR;
     }
-    else printf("Service installed successfully\n");
+    else fprintf(stdout, "Service installed successfully\n");
 
     CloseServiceHandle(schService);
     CloseServiceHandle(schSCManager);
@@ -318,23 +318,23 @@ static int uninstallService (const char ** cmdArg, const struct cmdConf * conf)
             SC_MANAGER_ALL_ACCESS);  // full access rights
     if (NULL == schSCManager)
     {
-        printf("OpenSCManager failed (%d)\n", GetLastError());
+        fprintf(stderr, "OpenSCManager failed (%d)\n", GetLastError());
         return RETURN_CODE_SERVICE_ERROR;
     }
 
     schService = OpenServiceA( schSCManager, SHAREDT_SERVER_SVCNAME, DELETE);
     if (schService == NULL)
     {
-        printf("OpenService failed (%d)\n", GetLastError());
+        fprintf(stderr, "OpenService failed (%d)\n", GetLastError());
         CloseServiceHandle(schSCManager);
         return RETURN_CODE_SERVICE_ERROR;
     }
 
     if (! DeleteService(schService) )
     {
-        printf("DeleteService failed (%d)\n", GetLastError());
+        fprintf(stderr, ("DeleteService failed (%d)\n", GetLastError());
     }
-    else printf("Service deleted successfully\n");
+    else fprintf(stdout, "Service deleted successfully\n");
 
     CloseServiceHandle(schService);
     CloseServiceHandle(schSCManager);
@@ -403,10 +403,11 @@ int main(int argc, char** argv)
         if (chars_equal(cmdHandlers[i].name, cmd[1])) {
             int ret = cmdHandlers[i].func(cmd + 1, &cconf);
             fflush(stdout);
+            if(cmd) free(cmd);
             return ret;
         }
     }
-
+    if(cmd) free(cmd);
     Usage();
     return -1;
 }

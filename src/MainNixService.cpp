@@ -57,10 +57,10 @@ MainServiceServer::MainServiceServer() : _valid(false), _backlog(10) // default 
     /***************************************/
     /* Set up the UNIX sockaddr structure  */
     /* by using AF_UNIX for the family and */
-    /* giving it a filepath to bind to.    */
+    /* giving it a filepath to bind to.     */
     /*                                     */
-    /* Unlink the file so the bind will    */
-    /* succeed, then bind to that file.    */
+    /* Unlink the file so the bind will     */
+    /* succeed, then bind to that file.     */
     /***************************************/
     memset(&server_sockaddr, 0, sizeof(struct sockaddr_un));
     server_sockaddr.sun_family = AF_UNIX;
@@ -198,7 +198,6 @@ MainServiceClient::MainServiceClient() : _valid(false)
     const String serverSockFile = CapServerHome::instance()->getHome() +
                             PATH_SEP_STR + SOCKET_FILE;
     int rc;
-    socklen_t len;
     struct sockaddr_un server_sockaddr;
     struct sockaddr_un client_sockaddr;
 
