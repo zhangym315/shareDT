@@ -332,7 +332,7 @@ static int uninstallService (const char ** cmdArg, const struct cmdConf * conf)
 
     if (! DeleteService(schService) )
     {
-        fprintf(stderr, ("DeleteService failed (%d)\n", GetLastError());
+        fprintf(stderr, "DeleteService failed (%d)\n", GetLastError());
     }
     else fprintf(stdout, "Service deleted successfully\n");
 
