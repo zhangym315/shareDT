@@ -14,11 +14,10 @@
 
 #ifdef __SHAREDT_WIN__
 #include "WindowsProcess.h"
-
 #include <windows.h>
 #include <process.h>
-
-//#include <Userenv.h>
+#else
+#include <sys/stat.h>
 #endif
 
 /*
@@ -30,7 +29,7 @@ std::mutex _WMmutex;
 /*
  * Stopping all CaptureServer in _WM
  */
-static void stopAllSC()
+void stopAllSC()
 {
     FOREACH(WIDMAP, it, _WM) {
         MainManagementProcess::STATUS statusType = it->second.status();
@@ -317,7 +316,7 @@ bool setMainProcessServiceHome(const struct cmdConf * conf)
     TCHAR szPath[MAX_PATH];
     if( !GetModuleFileNameA( NULL, szPath, MAX_PATH ) )
     {
-        printf("Cannot get module file name\n");
+        fprintf(stderr, "Cannot get module file name\n");
         return false;
     }
     ShareDTHome::instance()->set(szPath);
