@@ -87,6 +87,10 @@ void StartCapture::removeAlivePath() const
     LOGGER.info() << "Removed listening file: " << _alivePath;
 }
 
+/*
+ * Strip quote, retrieve values and set to "value"
+ * Count of paremeters that going forward is returned
+ */
 static int getValueWithQuote(vector<String>::const_iterator start,
                               vector<String>::const_iterator end,
                               String & value)
@@ -94,20 +98,27 @@ static int getValueWithQuote(vector<String>::const_iterator start,
     const String & tmp = *(++start);
     int i = 1;
 
-    if(tmp.front() == '"' || tmp.front() == '\'')
+    if(tmp.front() == '"')
     {
-        value = tmp.substr(1);
-        while ((start + 1) != end)
+        if(tmp.back() == '"')
         {
-            i++;
-            const String & tmp1 = *(++start);
-            value.append(" ");
-            if(tmp1.back() == '"' || tmp.front() == '\'')
+            /* skip the first and last quote character */
+            value = tmp.substr(1, tmp.length()-2);
+        } else
+        {
+            value = tmp.substr(1);
+            while ((start + 1) != end)
             {
-                value.append(tmp1.substr(0, tmp1.length()-1));
-                break;
+                i++;
+                const String & tmp1 = *(++start);
+                value.append(" ");
+                if(tmp1.back() == '"')
+                {
+                    value.append(tmp1.substr(0, tmp1.length()-2));
+                    break;
+                }
+                value.append(tmp1);
             }
-            value.append(tmp1);
         }
     } else
     {
