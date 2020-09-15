@@ -151,7 +151,8 @@ int MainWindowsServices() {
 
         LOGGER.info("Waiting to read from cmd ...");
 
-        int bytes_rec = recv(clientSocket, buf, sizeof(buf), 0);
+        bzero(buf, BUFSIZE);
+        int bytes_rec = recv(clientSocket, buf, BUFSIZE, 0);
         if (bytes_rec < -1 || bytes_rec > BUFSIZE){
             LOGGER.info("RECV ERROR from client: %d", bytes_rec);
             close(clientSocket);

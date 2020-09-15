@@ -12,6 +12,7 @@
 #include "Logger.h"
 #include "Path.h"
 #include "ReadWriteFD.h"
+#include "Sock.h"
 
 #include <fcntl.h>
 #ifdef __SHAREDT_WIN__
@@ -182,7 +183,8 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 
     // append user name
     char username[UNLEN+1];
-    DWORD username_len = UNLEN+1;
+    bzero(username, UNLEN+1);
+    DWORD username_len = UNLEN;
     GetUserName(username, &username_len);
     commandPath.append(" --username \"");
     commandPath.append(username);
@@ -195,7 +197,6 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 #endif
 }
 
-#include "Sock.h"
 /* main service fork/create new process as the capture server */
 int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 {

@@ -87,6 +87,36 @@ void StartCapture::removeAlivePath() const
     LOGGER.info() << "Removed listening file: " << _alivePath;
 }
 
+static int getValueWithQuote(vector<String>::const_iterator start,
+                              vector<String>::const_iterator end,
+                              String & value)
+{
+    const String & tmp = *(++start);
+    int i = 1;
+
+    if(tmp.front() == '"' || tmp.front() == '\'')
+    {
+        value = tmp.substr(1);
+        while ((start + 1) != end)
+        {
+            i++;
+            const String & tmp1 = *(++start);
+            value.append(" ");
+            if(tmp1.back() == '"' || tmp.front() == '\'')
+            {
+                value.append(tmp1.substr(0, tmp1.length()-1));
+                break;
+            }
+            value.append(tmp1);
+        }
+    } else
+    {
+        value = tmp;
+    }
+
+    return i;
+}
+
 /*
  * Parse argument
  * Return 0 for success
@@ -183,8 +213,9 @@ int StartCapture::parseArgs(const vector<String> & args)
                 _wID = *(++i);
         } else if (*i == "--username") {
             if((i+1) != args.end())
-//                _user = *(++i);
-                _user = "Yiming Zhang";
+            {
+                i += getValueWithQuote(i, args.end(), _user);
+            }
         }
         else {
         }

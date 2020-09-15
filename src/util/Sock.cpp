@@ -208,7 +208,7 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type)
 #endif
             (retry++) < 200)
     {
-        LOGGER.warn() << "Port has been used, retry another one for internal communication: " << port;
+        LOGGER.warn() << "Port("<< port << ") has been used, retry another one for internal communication: " << port+1;
 
         std::this_thread::sleep_for(500ms);
         sa.sin_port = htons(++port);;

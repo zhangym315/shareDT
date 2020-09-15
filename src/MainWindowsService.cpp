@@ -87,12 +87,9 @@ void ServiceMain(int argc, char** argv)
      * do the main service work
      */
     String  lpszPipename = SERVICE_PIPE_SERVER;
-    HANDLE hPipe = INVALID_HANDLE_VALUE, hThread;
-    DWORD  dwThreadId = 0;
-    int    maxFailed = 0;
-    int    receivedBytes;
-    char   buf[BUFSIZE];
-    bool   rc;
+    HANDLE  hThread;
+    DWORD   dwThreadId = 0;
+    char    buf[BUFSIZE];
 
     /* Main service port */
     SocketServer ss(SHAREDT_INTERNAL_PORT_START, 10);

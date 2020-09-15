@@ -53,7 +53,7 @@ class Socket {
     void   SendLine (String) const;
     void   SendBytes(const String&) const;
     void   send(const char * buf) { SendBytes(String(buf)); }
-    int    getSocket() { return _s; }
+    SOCKET getSocket() { return _s; }
 
   protected:
     friend class SocketServer;
