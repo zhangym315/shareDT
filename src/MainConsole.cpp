@@ -103,7 +103,7 @@ static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
         return MainWindowsServices();
 #endif
     } else {
-        fprintf(stdout, "Starting capture Server\n");
+        fprintf(stdout, "Starting Capture Server\n");
         return mainInform(" start", conf);
     }
 
