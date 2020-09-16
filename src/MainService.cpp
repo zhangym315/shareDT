@@ -136,9 +136,8 @@ void HandleCommandSocket(int fd, char * buf)
         return;
     }
 
-    /* reconstructing argv if specified by --wid */
-    if(!hcl.hasWid())
-        hcl.setWID();
+    if(!hcl.hasWid())   hcl.setWID();
+    if(!hcl.isDaemon()) hcl.setDaemon();
 
     String ret("Starting Capture ID(CID) = ");
     ret.append(wid);
@@ -307,6 +306,15 @@ void HandleCommandLine::setWID()
 
     _argv[_argc++] = strdup("--wid");
     _argv[_argc++] = strdup(CapServerHome::instance()->getCid().c_str());
+}
+
+void HandleCommandLine::setDaemon()
+{
+    // needs additional two arguments
+    if(_argc > MAX_ARG-2)
+        return;
+
+    _argv[_argc++] = strdup("--daemon");
 }
 
 bool setMainProcessServiceHome(const struct cmdConf * conf)

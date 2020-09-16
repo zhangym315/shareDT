@@ -21,6 +21,10 @@
 #include <ctime>
 #include <fcntl.h>
 
+#ifdef __SHAREDT_WIN__
+#include <direct.h>
+#endif
+
 #define SERVERNAME "SHAREDT SERVER"
 #define MAX_RAND_LENGTH 10
 
@@ -103,7 +107,7 @@ static int getValueWithQuote(vector<String>::const_iterator start,
         if(tmp.back() == '"')
         {
             /* skip the first and last quote character */
-            value = tmp.substr(1, tmp.length()-2);
+            value = tmp.substr(1, tmp.length()-1);
         } else
         {
             value = tmp.substr(1);
@@ -114,7 +118,7 @@ static int getValueWithQuote(vector<String>::const_iterator start,
                 value.append(" ");
                 if(tmp1.back() == '"')
                 {
-                    value.append(tmp1.substr(0, tmp1.length()-2));
+                    value.append(tmp1.substr(0, tmp1.length()-1));
                     break;
                 }
                 value.append(tmp1);
@@ -308,8 +312,24 @@ void StartCapture::initDaemon()
     String captureLog = CapServerHome::instance()->getHome() + PATH_CAPTURE_LOG;
     LOGGER.setLogFile(captureLog.c_str());
 
+    LOGGER.info() << "Set CaptureServer log to file=" << captureLog;
+    LOGGER.info() << "Starting CaptureServer" ;
+
 #ifndef __SHAREDT_WIN__
     DaemonizeProcess::daemonizeInit();
+#else
+    /* Change the working directory  */
+    const char * cwd = CapServerHome::instance()->getHome().c_str();
+    _chdir(cwd);
+
+    char capVncLog[MAX_PATH];
+    memset(capVncLog, 0, MAX_PATH);
+    strcat(capVncLog, cwd);
+    strcat(capVncLog, PATH_VNCSERVER_LOG);
+
+    freopen(capVncLog, "a", stdout);
+    freopen(capVncLog, "a", stderr);
+
 #endif
 }
 
@@ -552,7 +572,7 @@ void StartCapture::startCaptureServer()
     rfbMarkRectAsModified(_rfbserver, 0, 0,
         _sp->getWidth(), _sp->getHeight());
 
-    LOGGER.info() << "Started startCaptureServer" ;
+    LOGGER.info() << "Started CaptureServer" ;
     while (rfbIsActive(_rfbserver) && _isServerRunning) {
         std::this_thread::sleep_for(50ms);
         rfbProcessEvents(_rfbserver, 10000);
