@@ -190,7 +190,6 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
     commandPath.append(username);
     commandPath.append("\"");
 
-    std::cout << "command send: \"" << commandPath << "\"" << std::endl;
     infoServiceToAction(commandPath.c_str());
 #else
     return mainInform(" newCapture", conf);
