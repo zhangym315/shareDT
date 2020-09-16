@@ -141,10 +141,12 @@ void Socket::Close() const
 String Socket::ReceiveBytes() const
 {
     char ret[BUFSIZE];
-    if(recv(_s, ret, BUFSIZE, 0) == -1)
+    int  reclen;
+    if((reclen=recv(_s, ret, BUFSIZE, 0)) == -1)
     {
             return "";
     }
+    ret[reclen] = '\0';
     return ret;
 }
 
@@ -154,7 +156,8 @@ String Socket::ReceiveLine() const
     while (1) {
         char r;
 
-        switch(recv(_s, &r, 1, 0)) {
+        switch(recv(_s, &r, 1, 0))
+        {
             case 0:
                 return ret;
             case -1:
@@ -208,7 +211,7 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type)
 #endif
             (retry++) < 200)
     {
-        LOGGER.warn() << "Port has been used, retry another one for internal communication: " << port;
+        LOGGER.warn() << "Port("<< port << ") has been used, retry another one for internal communication: " << port+1;
 
         std::this_thread::sleep_for(500ms);
         sa.sin_port = htons(++port);;
