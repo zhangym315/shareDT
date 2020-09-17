@@ -318,8 +318,8 @@ void HandleCommandLine::setWID()
 
 void HandleCommandLine::setDaemon()
 {
-    // needs additional two arguments
-    if(_argc > MAX_ARG-2)
+    // needs additional one arguments
+    if(_argc > MAX_ARG-1)
         return;
 
     _argv[_argc++] = strdup("--daemon");
