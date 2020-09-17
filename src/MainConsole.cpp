@@ -115,8 +115,14 @@ static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
        !checkMainServiceStarted())
         return RETURN_CODE_INTERNAL_ERROR;
 
-    fprintf(stdout, "Stopping capture Server\n");
+    if(conf->argc > 2)
+    {
+        fprintf(stdout, "Stopping Capture Server\n");
+        return mainInform(" stop", conf);
+    }
+
 #ifdef __SHAREDT_WIN__
+    fprintf(stdout, "Stopping ShareDTServer\n");
     SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
     SC_HANDLE hSc;
     SERVICE_STATUS ServiceStatus;
@@ -134,16 +140,11 @@ static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
         }
     }
     if (hSc != nullptr) CloseServiceHandle (hSc);
-    fprintf(stdout, "Capture Service stopped.\n");
+    fprintf(stdout, "ShareDTServer stopped.\n");
     return RETURN_CODE_SUCCESS;
 #else
-    if(conf->argc == 2)
-    {
-        fprintf(stdout, "Stopping shareDTServer\n");
-        return infoServiceToAction (MAIN_SERVICE_STOPPING);
-    }
-
-    return mainInform(" stop", conf);
+    fprintf(stdout, "Stopping ShareDTServer\n");
+    return infoServiceToAction (MAIN_SERVICE_STOPPING);
 #endif
 }
 
