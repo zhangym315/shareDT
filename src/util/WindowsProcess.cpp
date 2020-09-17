@@ -7,7 +7,7 @@
 
 #pragma comment(lib, "WtsApi32.lib")
 
-void UserSession::FindAndSetSessionIds()
+bool UserSession::FindAndSetSessionIds()
 {
     WTS_SESSION_INFO *pSI = NULL;
     DWORD dwSICount;
@@ -15,8 +15,9 @@ void UserSession::FindAndSetSessionIds()
     BOOL bRes = WTSEnumerateSessions(WTS_CURRENT_SERVER_HANDLE, 0, 1, &pSI, &dwSICount);
     if (bRes == 0)
     {
-        LOGGER.error() << "Failed to enumerating sessions" ;
-        return ;
+        _reason = "Failed to enumerating sessions.";
+        LOGGER.error() << _reason;
+        return false;
     }
 
     String usrSession;
@@ -31,6 +32,7 @@ void UserSession::FindAndSetSessionIds()
     }
 
     WTSFreeMemory(pSI);
+    return true;
 }
 
 bool UserSession::GetSessionUserName(DWORD sid, String & username)
@@ -72,15 +74,16 @@ bool UserSession::GetSessionDomain(String & domain)
 
 UserSession::UserSession(const String & user) : _user(user) , _sessionId(0)
 {
-    FindAndSetSessionIds();
-    FindAndSetTokens();
+    if(FindAndSetSessionIds())
+        FindAndSetTokens();
 }
 
 void UserSession::FindAndSetTokens()
 {
     if (!WTSQueryUserToken (_sessionId, &_hToken))
     {
-        LOGGER.error() << "Error on querying token for user: " << _user;
+        _reason = "Error on querying token for user: " + _user;
+        LOGGER.error() << _reason;
         return;
     }
 }

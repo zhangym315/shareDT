@@ -21,6 +21,10 @@
 #include <ctime>
 #include <fcntl.h>
 
+#ifdef __SHAREDT_WIN__
+#include <direct.h>
+#endif
+
 #define SERVERNAME "SHAREDT SERVER"
 #define MAX_RAND_LENGTH 10
 
@@ -114,10 +118,12 @@ static int getValueWithQuote(vector<String>::const_iterator start,
                 value.append(" ");
                 if(tmp1.back() == '"')
                 {
-                    value.append(tmp1.substr(0, tmp1.length()-2));
+                    value.append(tmp1.substr(0, tmp1.length()-1));
                     break;
+                } else
+                {
+                    value.append(tmp1);
                 }
-                value.append(tmp1);
             }
         }
     } else
@@ -308,8 +314,24 @@ void StartCapture::initDaemon()
     String captureLog = CapServerHome::instance()->getHome() + PATH_CAPTURE_LOG;
     LOGGER.setLogFile(captureLog.c_str());
 
+    LOGGER.info() << "Set CaptureServer log to file=" << captureLog;
+    LOGGER.info() << "Starting CaptureServer" ;
+
 #ifndef __SHAREDT_WIN__
     DaemonizeProcess::daemonizeInit();
+#else
+    /* Change the working directory  */
+    const char * cwd = CapServerHome::instance()->getHome().c_str();
+    _chdir(cwd);
+
+    char capVncLog[MAX_PATH];
+    memset(capVncLog, 0, MAX_PATH);
+    strcat(capVncLog, cwd);
+    strcat(capVncLog, PATH_VNCSERVER_LOG);
+
+    freopen(capVncLog, "a", stdout);
+    freopen(capVncLog, "a", stderr);
+
 #endif
 }
 
@@ -363,7 +385,8 @@ StartCapture::~StartCapture()
  *  RETURN_CODE_SUCCESS: set successfully, needs to continue
  *  Others: Can exit program
  */
-int StartCapture::init(int argc, char *argv[]) {
+int StartCapture::init(int argc, char *argv[])
+{
 
     int ret = initParsing(argc, argv);
 
@@ -461,7 +484,8 @@ bool StartCapture::parseWindows ()
     if(_hdler) return true;
 
     /* if process id is valid, set the windows list */
-    if (_pid != -1) {
+    if (_pid != -1)
+    {
     } else if (!toInt(_name, handler))
         return false;
     else _hdler = handler;
@@ -486,7 +510,9 @@ void StartCapture::show()
         }
 
     }
-    if (_show == S_MONITOR || _ctype == C_SHOW) {
+
+    if (_show == S_MONITOR || _ctype == C_SHOW)
+    {
         MonitorVectorProvider mvp(true);
         std::cout << "Monitor Lists:" << std::endl;
         for (CapMonitor mon : mvp.get())
@@ -506,11 +532,13 @@ void StartCapture::show()
     return;
 }
 
-int StartCapture::getVNCClientCount(struct _rfbClientRec* head) {
+int StartCapture::getVNCClientCount(struct _rfbClientRec* head)
+{
     int ret = 0 ;
     struct _rfbClientRec * ptr = head;
 
-    while (ptr && ptr->next != head) {
+    while (ptr && ptr->next != head)
+    {
         ret ++;
         ptr = ptr->next;
     }
@@ -552,8 +580,9 @@ void StartCapture::startCaptureServer()
     rfbMarkRectAsModified(_rfbserver, 0, 0,
         _sp->getWidth(), _sp->getHeight());
 
-    LOGGER.info() << "Started startCaptureServer" ;
-    while (rfbIsActive(_rfbserver) && _isServerRunning) {
+    LOGGER.info() << "Started CaptureServer" ;
+    while (rfbIsActive(_rfbserver) && _isServerRunning)
+    {
         std::this_thread::sleep_for(50ms);
         rfbProcessEvents(_rfbserver, 10000);
 

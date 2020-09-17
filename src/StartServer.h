@@ -69,6 +69,8 @@ class StartCapture {
 
     const String & getUserName() const { return _user; }
     const String & getCapServerPath() const { return _capturePath; }
+
+    bool isDaemon() const { return _daemon; }
   private:
     void Usage();
     int parseArgs(const vector<String> & args);

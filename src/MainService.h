@@ -119,6 +119,8 @@ public:
     bool hasWid() { return _hasWid; }
     StartCapture & getSC() { return _sc; }
 
+    bool isDaemon() { return _sc.isDaemon(); }
+    void setDaemon() ;
 private:
     HandleCommandLine();
     char ** _argv;

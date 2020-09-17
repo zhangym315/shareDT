@@ -47,7 +47,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
     }
 
     FdBuffer * p = (FdBuffer * ) lpvParam;
-    Socket   * s  = (Socket  *) (p->fd);
+    Socket   * s = (Socket  *) (p->fd);
 
     LOGGER.info() <<"Started new thread for processing CMD=\"" << p->buf << "\"";
     HandleCommandSocket(s, p->buf);

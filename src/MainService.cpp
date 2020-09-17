@@ -136,9 +136,8 @@ void HandleCommandSocket(int fd, char * buf)
         return;
     }
 
-    /* reconstructing argv if specified by --wid */
-    if(!hcl.hasWid())
-        hcl.setWID();
+    if(!hcl.hasWid())   hcl.setWID();
+    if(!hcl.isDaemon()) hcl.setDaemon();
 
     String ret("Starting Capture ID(CID) = ");
     ret.append(wid);
@@ -183,7 +182,8 @@ void HandleCommandSocket(int fd, char * buf)
             if(fs::exists(alive) && !fs::remove(alive)){
                 String error = "Failed to remove the file: " + alive;
                 LOGGER.error() << error;
-                sk->send(error.c_str());
+                ret.append(error);
+                sk->send(ret.c_str());
                 return;
             }
             Path aliveWriter(alive);
@@ -192,7 +192,15 @@ void HandleCommandSocket(int fd, char * buf)
 
         /* create process as the user requested */
         LOGGER.info() << "Retrieving user session token for user=" << user;
+
         UserSession usrSession(user);
+        if(!usrSession.isValid())
+        {
+            ret.append(usrSession.getReason());
+            sk->send(ret.c_str());
+            return;
+        }
+
         STARTUPINFO si;
         PROCESS_INFORMATION pi;
         ZeroMemory( &si, sizeof(si) );
@@ -204,7 +212,7 @@ void HandleCommandSocket(int fd, char * buf)
                                 NULL,    // Process handle not inheritable
                                 NULL,    // Thread handle not inheritable
                                 true,    // Set handle inheritance to FALSE
-                                0,       // No creation flags
+                                CREATE_NO_WINDOW, // no console window
                                 NULL,    // Use parent's environment block
                                 NULL,    // Use parent's starting directory
                                 &si,     // Pointer to STARTUPINFO structure
@@ -247,7 +255,6 @@ void HandleCommandSocket(int fd, char * buf)
 #else
     sk->send(ret.c_str());
 #endif
-
 }
 
 HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)
@@ -307,6 +314,15 @@ void HandleCommandLine::setWID()
 
     _argv[_argc++] = strdup("--wid");
     _argv[_argc++] = strdup(CapServerHome::instance()->getCid().c_str());
+}
+
+void HandleCommandLine::setDaemon()
+{
+    // needs additional one arguments
+    if(_argc > MAX_ARG-1)
+        return;
+
+    _argv[_argc++] = strdup("--daemon");
 }
 
 bool setMainProcessServiceHome(const struct cmdConf * conf)
