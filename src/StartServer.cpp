@@ -107,7 +107,7 @@ static int getValueWithQuote(vector<String>::const_iterator start,
         if(tmp.back() == '"')
         {
             /* skip the first and last quote character */
-            value = tmp.substr(1, tmp.length()-1);
+            value = tmp.substr(1, tmp.length()-2);
         } else
         {
             value = tmp.substr(1);
@@ -118,7 +118,7 @@ static int getValueWithQuote(vector<String>::const_iterator start,
                 value.append(" ");
                 if(tmp1.back() == '"')
                 {
-                    value.append(tmp1.substr(0, tmp1.length()-1));
+                    value.append(tmp1.substr(0, tmp1.length()-2));
                     break;
                 }
                 value.append(tmp1);
@@ -383,7 +383,8 @@ StartCapture::~StartCapture()
  *  RETURN_CODE_SUCCESS: set successfully, needs to continue
  *  Others: Can exit program
  */
-int StartCapture::init(int argc, char *argv[]) {
+int StartCapture::init(int argc, char *argv[])
+{
 
     int ret = initParsing(argc, argv);
 
@@ -481,7 +482,8 @@ bool StartCapture::parseWindows ()
     if(_hdler) return true;
 
     /* if process id is valid, set the windows list */
-    if (_pid != -1) {
+    if (_pid != -1)
+    {
     } else if (!toInt(_name, handler))
         return false;
     else _hdler = handler;
@@ -506,7 +508,9 @@ void StartCapture::show()
         }
 
     }
-    if (_show == S_MONITOR || _ctype == C_SHOW) {
+
+    if (_show == S_MONITOR || _ctype == C_SHOW)
+    {
         MonitorVectorProvider mvp(true);
         std::cout << "Monitor Lists:" << std::endl;
         for (CapMonitor mon : mvp.get())
@@ -526,11 +530,13 @@ void StartCapture::show()
     return;
 }
 
-int StartCapture::getVNCClientCount(struct _rfbClientRec* head) {
+int StartCapture::getVNCClientCount(struct _rfbClientRec* head)
+{
     int ret = 0 ;
     struct _rfbClientRec * ptr = head;
 
-    while (ptr && ptr->next != head) {
+    while (ptr && ptr->next != head)
+    {
         ret ++;
         ptr = ptr->next;
     }
@@ -573,7 +579,8 @@ void StartCapture::startCaptureServer()
         _sp->getWidth(), _sp->getHeight());
 
     LOGGER.info() << "Started CaptureServer" ;
-    while (rfbIsActive(_rfbserver) && _isServerRunning) {
+    while (rfbIsActive(_rfbserver) && _isServerRunning)
+    {
         std::this_thread::sleep_for(50ms);
         rfbProcessEvents(_rfbserver, 10000);
 

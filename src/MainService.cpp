@@ -182,7 +182,8 @@ void HandleCommandSocket(int fd, char * buf)
             if(fs::exists(alive) && !fs::remove(alive)){
                 String error = "Failed to remove the file: " + alive;
                 LOGGER.error() << error;
-                sk->send(error.c_str());
+                ret.append(error);
+                sk->send(ret.c_str());
                 return;
             }
             Path aliveWriter(alive);
@@ -191,7 +192,15 @@ void HandleCommandSocket(int fd, char * buf)
 
         /* create process as the user requested */
         LOGGER.info() << "Retrieving user session token for user=" << user;
+
         UserSession usrSession(user);
+        if(!usrSession.isValid())
+        {
+            ret.append(usrSession.getReason());
+            sk->send(ret.c_str());
+            return;
+        }
+
         STARTUPINFO si;
         PROCESS_INFORMATION pi;
         ZeroMemory( &si, sizeof(si) );
@@ -246,7 +255,6 @@ void HandleCommandSocket(int fd, char * buf)
 #else
     sk->send(ret.c_str());
 #endif
-
 }
 
 HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)

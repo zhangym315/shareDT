@@ -13,14 +13,16 @@ class UserSession
     DWORD getSid()      { return _sessionId; }
     HANDLE getToken()   { return _hToken; }
     bool  isValid()     { return _sessionId != 0; }
+    const String & getReason() const { return _reason; }
 
   private:
-    void FindAndSetSessionIds();
+    bool FindAndSetSessionIds();
     void FindAndSetTokens();
 
     String  _user;
     DWORD   _sessionId;
     HANDLE  _hToken;
+    String  _reason;
 };
 
 #endif //SHAREDT_WINDOWSPROCESS_H
