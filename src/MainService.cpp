@@ -212,7 +212,7 @@ void HandleCommandSocket(int fd, char * buf)
                                 NULL,    // Process handle not inheritable
                                 NULL,    // Thread handle not inheritable
                                 true,    // Set handle inheritance to FALSE
-                                CREATE_NO_WINDOW,       // No creation flags
+                                CREATE_NO_WINDOW, // no console window
                                 NULL,    // Use parent's environment block
                                 NULL,    // Use parent's starting directory
                                 &si,     // Pointer to STARTUPINFO structure
