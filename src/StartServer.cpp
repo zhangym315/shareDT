@@ -118,10 +118,12 @@ static int getValueWithQuote(vector<String>::const_iterator start,
                 value.append(" ");
                 if(tmp1.back() == '"')
                 {
-                    value.append(tmp1.substr(0, tmp1.length()-2));
+                    value.append(tmp1.substr(0, tmp1.length()-1));
                     break;
+                } else
+                {
+                    value.append(tmp1);
                 }
-                value.append(tmp1);
             }
         }
     } else
