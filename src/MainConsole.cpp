@@ -200,10 +200,6 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 /* main service fork/create new process as the capture server */
 int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
-#ifdef __SHAREDT_WIN__
-    FreeConsole();
-#endif
-
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
 
