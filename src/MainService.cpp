@@ -25,16 +25,20 @@
  */
 WIDMAP _WM;
 std::mutex _WMmutex;
+static unsigned int startPort = 1;
 
 /*
  * Stopping all CaptureServer in _WM
  */
 void stopAllSC()
 {
-    FOREACH(WIDMAP, it, _WM) {
+    LOGGER.info() << "Stoping all Capture Server";
+    FOREACH(WIDMAP, it, _WM)
+    {
         MainManagementProcess::STATUS statusType = it->second.status();
 
-        if(statusType == MainManagementProcess::STATUS::STARTED) {
+        if(statusType == MainManagementProcess::STATUS::STARTED)
+        {
             LOGGER.info() << "Sending stopping to WID: " << it->first;
             it->second.stop();
 
@@ -209,7 +213,7 @@ void HandleCommandSocket(int fd, char * buf)
         String answer = msg.read();
 #else
         /* windows, communicate the child process through port */
-        SocketServer sc(SHAREDT_INTERNAL_PORT_START, 2);
+        SocketServer sc(SHAREDT_INTERNAL_PORT_START + startPort++, 2);
         LOGGER.info() << "Start on port=" << sc.getPort() <<
                     " for communication with CaptureServer=" << hcl.getSC().getWID();
         {

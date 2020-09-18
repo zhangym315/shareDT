@@ -110,12 +110,6 @@ void ServiceMain(int argc, char** argv)
         String received = s->ReceiveBytes();
         LOGGER.info("ShareDTServer service DATA RECEIVED CMD=\"%s\", clientSocket=%d", received.c_str(), ss.getSocket());
 
-        /* check if it is stopping command */
-        if(!memcmp(received.c_str(), MAIN_SERVICE_STOPPING, sizeof(MAIN_SERVICE_STOPPING))){
-            LOGGER.info() << "Stopping ShareDTServer Service" ;
-            break;
-        }
-
         strcpy_s(buf, received.c_str());
         FdBuffer fb(s, buf);
         LOGGER.info() << "Client connected, creating a processing thread.";
@@ -136,6 +130,8 @@ void ServiceMain(int argc, char** argv)
 
 void ControlHandler(DWORD request)
 {
+    stopAllSC();
+
     switch(request)
     {
         case SERVICE_CONTROL_STOP:

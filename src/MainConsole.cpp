@@ -123,6 +123,7 @@ static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
 
 #ifdef __SHAREDT_WIN__
     fprintf(stdout, "Stopping ShareDTServer\n");
+
     SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
     SC_HANDLE hSc;
     SERVICE_STATUS ServiceStatus;
