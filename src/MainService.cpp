@@ -25,18 +25,22 @@
  */
 WIDMAP _WM;
 std::mutex _WMmutex;
+static unsigned int startPort = 1;
 
 /*
  * Stopping all CaptureServer in _WM
  */
 void stopAllSC()
 {
-    FOREACH(WIDMAP, it, _WM) {
+    LOGGER.info() << "Stoping all Capture Server";
+    FOREACH(WIDMAP, it, _WM)
+    {
         MainManagementProcess::STATUS statusType = it->second.status();
 
-        if(statusType == MainManagementProcess::STATUS::STARTED) {
+        if(statusType == MainManagementProcess::STATUS::STARTED)
+        {
             LOGGER.info() << "Sending stopping to WID: " << it->first;
-            it->second.send(CAPTURE_STOPPING);
+            it->second.stop();
 
             std::lock_guard<std::mutex> guard(_WMmutex);
             it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
@@ -118,8 +122,42 @@ void HandleCommandSocket(int fd, char * buf)
         }
 
         LOGGER.info() << "Sending stopping to WID: " << wid;
+#ifndef  __SHAREDT_WIN__
         it->second.send(CAPTURE_STOPPING);
+#else
+        String stop    = capServerHome + PATH_SEP_STR + CAPTURE_SERVER_STOP;
+        String stopped = capServerHome + PATH_SEP_STR + CAPTURE_SERVER_STOPPED;
 
+        if(fs::exists(stop) && !fs::remove(stop)){
+            LOGGER.error() << "Failed to remove the stop file: " << stop;
+        }
+        if(fs::exists(stopped) && !fs::remove(stopped)){
+            LOGGER.error() << "Failed to remove the stopped file: " << stopped;
+        }
+
+        std::ofstream ofs(stop.c_str());
+        ofs << "stop";
+        ofs.close();
+
+        int i;
+        /* wait for 20s for CaptureServer to stop */
+        for (i = 0 ; i < 20; i++)
+        {
+            if(fs::exists(stopped))
+                break;
+            Sleep(1000);
+        }
+
+        /* failed to know the CaptureServer */
+        if(i == 20)
+        {
+            LOGGER.error() << "Waited 20s for CaptureServer to stop, but no responds for wid=" << wid;
+            String msg("Capture Server Unknown Status: ");
+            msg.append(wid);
+            sk->send(msg.c_str());
+            return;
+        }
+#endif
         std::lock_guard<std::mutex> guard(_WMmutex);
         it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
 
@@ -175,7 +213,7 @@ void HandleCommandSocket(int fd, char * buf)
         String answer = msg.read();
 #else
         /* windows, communicate the child process through port */
-        SocketServer sc(SHAREDT_INTERNAL_PORT_START, 2);
+        SocketServer sc(SHAREDT_INTERNAL_PORT_START + startPort++, 2);
         LOGGER.info() << "Start on port=" << sc.getPort() <<
                     " for communication with CaptureServer=" << hcl.getSC().getWID();
         {
@@ -242,7 +280,7 @@ void HandleCommandSocket(int fd, char * buf)
         if(it == _WM.end()) {
             std::lock_guard<std::mutex> guard(_WMmutex);
             _WM.insert(std::pair<String, MainManagementProcess>
-                       (wid, MainManagementProcess(alive, MainManagementProcess::STATUS::STARTED)));
+                       (wid, MainManagementProcess(alive, capServerHome, MainManagementProcess::STATUS::STARTED)));
         } else {
             std::lock_guard<std::mutex> guard(_WMmutex);
             it->second.updateStatus(MainManagementProcess::STATUS::STARTED);

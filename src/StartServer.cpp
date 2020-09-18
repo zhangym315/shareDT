@@ -44,7 +44,8 @@ void ReadWriteFDThread::mainImp()
     char * inputBuf;
     LOGGER.info() << "Waiting request on: '" << _path << "'";
 
-    while(true) {
+    while(true)
+    {
         inputBuf = read();
 
         LOGGER.info() << "Requests: '" << inputBuf << "' received on: '" << _path << "'";
@@ -54,6 +55,25 @@ void ReadWriteFDThread::mainImp()
             break;
         }
     }
+}
+
+void CommandChecker::mainImp()
+{
+    String stop    = _path + PATH_SEP_STR + CAPTURE_SERVER_STOP;
+    String stopped = _path + PATH_SEP_STR + CAPTURE_SERVER_STOPPED;
+
+    while(!fs::exists(stop))
+    {
+        std::this_thread::sleep_for(1s);
+    }
+
+    fs::remove(stop);
+    std::ofstream ofs(stopped.c_str());
+    ofs << "stopped";
+    ofs.close();
+
+    LOGGER.info() << "Stopping CaptureServer request recieved";
+    _isServerRunning = false;
 }
 
 void StartCapture::Usage ()
@@ -564,9 +584,14 @@ void StartCapture::startCaptureServer()
     }
 
     /* start new thread to get command from MMP(MainManagementProcess)  */
+    _isServerRunning = true;
+#ifndef __SHAREDT_WIN__
     _listenMMP = new ReadWriteFDThread(_alivePath.c_str(), O_RDONLY);
     _listenMMP->go();
-    _isServerRunning = true;
+#else
+    CommandChecker cc(CapServerHome::instance()->getHome());
+    cc.go();
+#endif
 
     /* init rfb server to listen on */
     rfbInitServer(_rfbserver);

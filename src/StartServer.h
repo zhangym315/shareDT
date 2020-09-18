@@ -40,6 +40,19 @@ class ReadWriteFDThread : public ReadWriteFD, public Thread
 
 };
 
+class CommandChecker : public Thread
+{
+  public:
+    CommandChecker(String path) : Thread(false), _path(path) { }
+
+    void mainImp();
+
+  private:
+    CommandChecker();
+    String  _path;
+
+};
+
 class StartCapture {
   public:
     StartCapture() : _pid(-1), _hdler(0), _show(S_NONE),
