@@ -406,11 +406,9 @@ int main(int argc, char** argv)
         if (chars_equal(cmdHandlers[i].name, cmd[1])) {
             int ret = cmdHandlers[i].func(cmd + 1, &cconf);
             fflush(stdout);
-            if(cmd) free(cmd);
             return ret;
         }
     }
-    if(cmd) free(cmd);
     Usage();
     return -1;
 }
