@@ -15,16 +15,18 @@ class MainManagementProcess
 {
   public:
     enum STATUS {STARTED, STOPPED, PENDING, UNKNOWN};
-    MainManagementProcess(const String & alive, STATUS status);
-    MainManagementProcess(const String & alive) : MainManagementProcess(alive, UNKNOWN) { }
+    MainManagementProcess(const String & alive, const String & home, STATUS status);
+    MainManagementProcess(const String & alive, const String & home) : MainManagementProcess(alive, home, UNKNOWN) { }
 
     void send(const char * buf);
 
     STATUS status() { return _status; }
     void updateStatus(STATUS status);
+    void stop();
   private:
     STATUS _status;
     String _alivePath;
+    String _home;
     ReadWriteFD _rw;
 };
 

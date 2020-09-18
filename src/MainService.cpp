@@ -36,7 +36,7 @@ void stopAllSC()
 
         if(statusType == MainManagementProcess::STATUS::STARTED) {
             LOGGER.info() << "Sending stopping to WID: " << it->first;
-            it->second.send(CAPTURE_STOPPING);
+            it->second.stop();
 
             std::lock_guard<std::mutex> guard(_WMmutex);
             it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
@@ -276,7 +276,7 @@ void HandleCommandSocket(int fd, char * buf)
         if(it == _WM.end()) {
             std::lock_guard<std::mutex> guard(_WMmutex);
             _WM.insert(std::pair<String, MainManagementProcess>
-                       (wid, MainManagementProcess(alive, MainManagementProcess::STATUS::STARTED)));
+                       (wid, MainManagementProcess(alive, capServerHome, MainManagementProcess::STATUS::STARTED)));
         } else {
             std::lock_guard<std::mutex> guard(_WMmutex);
             it->second.updateStatus(MainManagementProcess::STATUS::STARTED);
