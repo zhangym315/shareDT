@@ -166,6 +166,7 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
     TCHAR szPath[MAX_PATH];
     if( !GetModuleFileNameA( NULL, szPath, MAX_PATH ) )
     {
+        fprintf(stderr, "Failed to get path of current running command\n");
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
@@ -259,6 +260,29 @@ static int noDaemon (const char ** cmdArg, const struct cmdConf * conf)
     cap.startCaptureServer ();
 
     return RETURN_CODE_SUCCESS;
+}
+
+static int status (const char ** cmdArg, const struct cmdConf * conf)
+{
+    String commandPath;
+    TCHAR szPath[MAX_PATH];
+
+    if( !GetModuleFileNameA( NULL, szPath, MAX_PATH ) )
+    {
+        fprintf(stderr, "Failed to get path of current running command\n");
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
+
+    if(!setMainProcessServiceHome(conf))
+    {
+        LOGGER.error () << "Failed to get MainService Home path" ;
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
+
+    commandPath.append(szPath);
+    commandPath.append(" status");
+
+    infoServiceToAction(commandPath.c_str());
 }
 
 #ifdef __SHAREDT_WIN__
@@ -364,6 +388,7 @@ static void Usage()
         "                     capture\n"
         "                     show\n"
         "                     nodaemon\n"
+        "                     status\n"
         );
 }
 
@@ -385,7 +410,8 @@ int main(int argc, char** argv)
             { "capture",    &mainCapture },     /* capture command       */
             { "newCapture", &mainNewCapture },  /* new capture process   */
             { "show",       &mainShow    },     /* command show win      */
-            { "nodaemon",   &noDaemon    }      /* run in no daemon mode */
+            { "nodaemon",   &noDaemon    },     /* run in no daemon mode */
+            { "status",     &status      }      /* run in no daemon mode */
 #ifdef  __SHAREDT_WIN__
            ,{ "install",    &installService },  /* install service       */
             { "service",    &startService },    /* from scm service      */
