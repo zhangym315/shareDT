@@ -193,6 +193,7 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
     commandPath.append(username);
     commandPath.append("\"");
 
+    fprintf(stdout, "Starting Capture Server\n");
     infoServiceToAction(commandPath.c_str());
 #else
     return mainInform(" newCapture", conf);
@@ -281,6 +282,8 @@ static int status (const char ** cmdArg, const struct cmdConf * conf)
 
     commandPath.append(szPath);
     commandPath.append(" status");
+
+    fprintf(stdout, "Capture Server status:\n");
 
     infoServiceToAction(commandPath.c_str());
 }

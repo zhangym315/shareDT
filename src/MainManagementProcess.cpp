@@ -3,8 +3,10 @@
 
 #include <fcntl.h>
 
-MainManagementProcess::MainManagementProcess(const String & alive, const String & home, STATUS status) :
-    _alivePath(alive),  _status(status), _rw(alive.c_str(), O_WRONLY), _home(home)
+MainManagementProcess::MainManagementProcess(const String & alive, const String & home,
+                                             STATUS status) :
+                _alivePath(alive),  _status(status),
+                _rw(alive.c_str(), O_WRONLY), _home(home)
 {
 }
 
