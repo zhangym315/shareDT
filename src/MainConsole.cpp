@@ -229,7 +229,9 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
     }
 
     LOGGER.info() << "Write to MainManagementProcess: successfully created capture Server";
-    msg.write("Successfully created Capture Server");
+    String result("Successfully created Capture Server on port: ");
+    result.append(std::to_string(cap.getPort()));
+    msg.write(result.c_str());
     cap.startCaptureServer ();
 
     return RETURN_CODE_SUCCESS;

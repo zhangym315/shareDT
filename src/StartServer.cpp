@@ -166,7 +166,10 @@ int StartCapture::parseArgs(const vector<String> & args)
         if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
             _ctype = C_NEWCAPTURE;
         } else if (*i == SHAREDT_SERVER_COMMAND_STOP) {
-            _ctype = C_STOP;
+            if((i+1) != args.end() && *(i+1) == "all")
+                _ctype = C_STOP_ALL_SC;
+            else
+                _ctype = C_STOP;
         } else if (*i == SHAREDT_SERVER_COMMAND_START) {
             _ctype = C_START;
         } else if (*i == SHAREDT_SERVER_COMMAND_RESTART) {
@@ -254,6 +257,11 @@ int StartCapture::parseArgs(const vector<String> & args)
             if((i+1) != args.end())
             {
                 i += getValueWithQuote(i, args.end(), _user);
+            }
+        } else if (*i == "-rfbport") {
+            if((i+1) != args.end())
+            {
+                _vncPort = std::atoi((++i)->c_str());
             }
         }
         else {

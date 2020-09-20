@@ -26,6 +26,7 @@
 WIDMAP _WIDManager;
 std::mutex _WIDManagerMutex;
 static unsigned int startPort = 1;
+static unsigned int _incrse   = 0;
 
 /*
  * Stopping all CaptureServer in _WIDManager
@@ -66,7 +67,7 @@ static void stopSpecificCaptureServer(
     WIDMAP::iterator it = _WIDManager.find(wid);
 
     if(!hcl.hasWid()) {
-        sk->send("command must has a valid \"--wid\" setting");
+        sk->send("Command must has a valid \"--wid\" setting");
         return ;
     }
 
@@ -142,14 +143,16 @@ static void statusAllSC (
 
     FOREACH_CONST( WIDMAP, it, _WIDManager)
     {
-        ret.append("WID: " + it->first);
+        ret.append("Capture Server on port: ");
+        ret.append(std::to_string(it->second.getPort()));
         ret.append("\t Status: ");
         if(it->second.status() == MainManagementProcess::STATUS::STOPPED)
-            ret.append("Stopped\n");
+            ret.append("Stopped");
         else if(it->second.status() == MainManagementProcess::STATUS::PENDING)
-            ret.append("Pending\n");
+            ret.append("Pending");
         else
-            ret.append("Started\n");
+            ret.append("Started");
+        ret.append("\t WID: " + it->first + "\n");
     }
 
     sk->send(ret.c_str());
@@ -216,6 +219,12 @@ void HandleCommandSocket(int fd, char * buf)
     {
         return stopSpecificCaptureServer(sk, hcl);
     }
+    if( commandType == StartCapture::C_STOP_ALL_SC)
+    {
+        stopAllSC();
+        sk->send("All Capture Server are stopped.");
+        return;
+    }
 
     if(!hcl.hasWid())   hcl.setWID();
     if(!hcl.isDaemon()) hcl.setDaemon();
@@ -233,6 +242,7 @@ void HandleCommandSocket(int fd, char * buf)
         String start = capServerHome + String(CAPTURE_SERVER_START);
         String started = capServerHome + String(CAPTURE_SERVER_STARTED);
         String alive = capServerHome + PATH_ALIVE_FILE;
+        int    capServerPort = VNCSERVER_PORT_START + _incrse;
 
         if(fs::exists(start) && !fs::remove(start)){
             LOGGER.error() << "Failed to remove the file: " << start;
@@ -242,7 +252,8 @@ void HandleCommandSocket(int fd, char * buf)
             LOGGER.error() << "Failed to remove the file: " << started;
         }
 
-        LOGGER.info() << "Starting Capture Server Argument: " << hcl.toString();
+        hcl.setVNCPort(capServerPort);
+        LOGGER.info() << "Starting Capture Server on port: " << capServerPort << " with Argument: " << hcl.toString();
         int childPid;
 
 
@@ -315,17 +326,24 @@ void HandleCommandSocket(int fd, char * buf)
 #endif
         ret.append(answer);
 
+        int success = false;
+        /* increase the dest port if successfully create Capture Server */
+        if(answer.find("Successfully created") != String::npos)
+        {
+            _incrse++;
+            success = true;
+        }
+
         LOGGER.info() << "Child process for WID=" << wid <<
                         " started, PID=" << childPid << " CMD=" << hcl.toString();
 
-        /* TODO needs to check if started successfully */
-
-        /* add it to global _WIDManager */
-        if(it == _WIDManager.end()) {
+        /* add it to global _WIDManager, skip the failed one */
+        if(it == _WIDManager.end() && success) {
             std::lock_guard<std::mutex> guard(_WIDManagerMutex);
             _WIDManager.insert(std::pair<String, MainManagementProcess>
-                       (wid, MainManagementProcess(alive, capServerHome, MainManagementProcess::STATUS::STARTED)));
-        } else {
+                       (wid, MainManagementProcess(alive, capServerHome, capServerPort,
+                                                   MainManagementProcess::STATUS::STARTED)));
+        } else if (success) {
             std::lock_guard<std::mutex> guard(_WIDManagerMutex);
             it->second.updateStatus(MainManagementProcess::STATUS::STARTED);
         }
@@ -396,6 +414,16 @@ void HandleCommandLine::setWID()
 
     _argv[_argc++] = strdup("--wid");
     _argv[_argc++] = strdup(CapServerHome::instance()->getCid().c_str());
+}
+
+void HandleCommandLine::setVNCPort(int port)
+{
+    // needs additional two arguments
+    if(_argc > MAX_ARG-2)
+        return;
+
+    _argv[_argc++] = strdup("-rfbport");
+    _argv[_argc++] = strdup(std::to_string(port).c_str());
 }
 
 void HandleCommandLine::setDaemon()
