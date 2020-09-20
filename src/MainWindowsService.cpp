@@ -169,8 +169,6 @@ int infoServiceToAction(const char * execCmd)
     int port = aliveReader.readLineAsInt();
     SocketClient sc(LOCALHOST, port);
 
-    fprintf(stdout, "Starting Capture Server\n");
-
     sc.SendBytes(execCmd);
 
     String receive = sc.ReceiveBytes();

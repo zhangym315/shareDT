@@ -67,7 +67,7 @@ class StartCapture {
     void startCaptureServer();
 
     enum SType { S_NONE, S_WIN_ALL, S_WIN_NAME, S_MONITOR };
-    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_RESTART, C_SHOW, C_NONE };
+    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_RESTART, C_SHOW, C_STATUS, C_NONE };
 
     bool setWorkingDirectory();
     void initDaemon();

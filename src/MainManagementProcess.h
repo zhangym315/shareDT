@@ -9,18 +9,17 @@
 class MainManagementProcess;
 typedef std::map<String, MainManagementProcess> WIDMAP;
 
-static const char * status[5] = {"started", "stopped", "pending", "UNKNOWN", NULL};
-
 class MainManagementProcess
 {
   public:
     enum STATUS {STARTED, STOPPED, PENDING, UNKNOWN};
     MainManagementProcess(const String & alive, const String & home, STATUS status);
-    MainManagementProcess(const String & alive, const String & home) : MainManagementProcess(alive, home, UNKNOWN) { }
+    MainManagementProcess(const String & alive, const String & home ) :
+                            MainManagementProcess(alive, home, UNKNOWN) { }
 
     void send(const char * buf);
 
-    STATUS status() { return _status; }
+    STATUS status() const { return _status; }
     void updateStatus(STATUS status);
     void stop();
   private:

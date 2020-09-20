@@ -171,8 +171,10 @@ int StartCapture::parseArgs(const vector<String> & args)
             _ctype = C_START;
         } else if (*i == SHAREDT_SERVER_COMMAND_RESTART) {
             _ctype = C_RESTART;
-        } else if (*i == SHAREDT_SERVER_COMMAND_show) {
+        } else if (*i == SHAREDT_SERVER_COMMAND_SHOW) {
             _ctype = C_SHOW;
+        } else if (*i == SHAREDT_SERVER_COMMAND_STATUS) {
+            _ctype = C_STATUS;
         }
         else if (*i == "--help") {
             Usage ();

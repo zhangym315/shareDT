@@ -7,10 +7,8 @@
 #include "Foreach.h"
 #include "Sock.h"
 
-#include <fstream>
 #include <iostream>
 #include <stdlib.h>
-#include <fcntl.h>
 
 #ifdef __SHAREDT_WIN__
 #include "WindowsProcess.h"
@@ -18,22 +16,24 @@
 #include <process.h>
 #else
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <fstream>
 #endif
 
 /*
  * Global WID management
  */
-WIDMAP _WM;
-std::mutex _WMmutex;
+WIDMAP _WIDManager;
+std::mutex _WIDManagerMutex;
 static unsigned int startPort = 1;
 
 /*
- * Stopping all CaptureServer in _WM
+ * Stopping all CaptureServer in _WIDManager
  */
 void stopAllSC()
 {
     LOGGER.info() << "Stoping all Capture Server";
-    FOREACH(WIDMAP, it, _WM)
+    FOREACH(WIDMAP, it, _WIDManager)
     {
         MainManagementProcess::STATUS statusType = it->second.status();
 
@@ -42,12 +42,117 @@ void stopAllSC()
             LOGGER.info() << "Sending stopping to WID: " << it->first;
             it->second.stop();
 
-            std::lock_guard<std::mutex> guard(_WMmutex);
+            std::lock_guard<std::mutex> guard(_WIDManagerMutex);
             it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
             LOGGER.info() << "Stopped Capture Server WID: " << it->first;
         }
     }
     return;
+}
+
+static void stopSpecificCaptureServer(
+#ifdef __SHAREDT_WIN__
+        Socket * sk,
+#else
+        SocketFD & sk,
+#endif
+        HandleCommandLine & hcl )
+{
+    String wid;
+
+    /* parsing input argument */
+    hcl.initParsing();
+    wid = hcl.getSC().getWID();
+    WIDMAP::iterator it = _WIDManager.find(wid);
+
+    if(!hcl.hasWid()) {
+        sk->send("command must has a valid \"--wid\" setting");
+        return ;
+    }
+
+    if(it == _WIDManager.end()) {
+        String msg("Can't find status for: ");
+        msg.append(wid);
+        sk->send(msg.c_str());
+        return;
+    }
+
+    LOGGER.info() << "Sending stopping to WID: " << wid;
+#ifndef  __SHAREDT_WIN__
+    it->second.send(CAPTURE_STOPPING);
+#else
+
+    const String & capServerHome = hcl.getSC().getCapServerPath();
+    String stop    = capServerHome + PATH_SEP_STR + CAPTURE_SERVER_STOP;
+    String stopped = capServerHome + PATH_SEP_STR + CAPTURE_SERVER_STOPPED;
+
+    if(fs::exists(stop) && !fs::remove(stop)){
+        LOGGER.error() << "Failed to remove the stop file: " << stop;
+    }
+    if(fs::exists(stopped) && !fs::remove(stopped)){
+        LOGGER.error() << "Failed to remove the stopped file: " << stopped;
+    }
+
+    std::ofstream ofs(stop.c_str());
+    ofs << "stop";
+    ofs.close();
+
+    int i;
+    /* wait for 20s for CaptureServer to stop */
+    for (i = 0 ; i < 20; i++)
+    {
+        if(fs::exists(stopped))
+            break;
+        Sleep(1000);
+    }
+
+    /* failed to know the CaptureServer */
+    if(i == 20)
+    {
+        LOGGER.error() << "Waited 20s for CaptureServer to stop, but no responds for wid=" << wid;
+        String msg("Capture Server Unknown Status: ");
+        msg.append(wid);
+        sk->send(msg.c_str());
+        return;
+    }
+#endif
+    std::lock_guard<std::mutex> guard(_WIDManagerMutex);
+    it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
+
+    /* send msg back to command line */
+    String msg("Capture Server Stopped: ");
+    msg.append(wid);
+
+    sk->send(msg.c_str());
+}
+
+static void statusAllSC (
+#ifdef __SHAREDT_WIN__
+        Socket * sk,
+#else
+        SocketFD & sk,
+#endif
+        HandleCommandLine & hcl )
+{
+    String ret;
+    if(_WIDManager.empty()) {
+        sk->send("No Capture Server found.\n");
+        return;
+    }
+
+    FOREACH_CONST( WIDMAP, it, _WIDManager)
+    {
+        ret.append("WID: " + it->first);
+        ret.append("\t Status: ");
+        if(it->second.status() == MainManagementProcess::STATUS::STOPPED)
+            ret.append("Stopped\n");
+        else if(it->second.status() == MainManagementProcess::STATUS::PENDING)
+            ret.append("Pending\n");
+        else
+            ret.append("Started\n");
+    }
+
+    sk->send(ret.c_str());
 }
 
 /*
@@ -91,87 +196,25 @@ void HandleCommandSocket(int fd, char * buf)
     StartCapture::CType commandType;
     /* start handle particular --wid specified or start new capture server */
     HandleCommandLine hcl(buf);
+
     /* parsing input argument */
     hcl.initParsing();
     wid = hcl.getSC().getWID();
-    WIDMAP::iterator it = _WM.find(wid);
+    WIDMAP::iterator it = _WIDManager.find(wid);
     commandType = hcl.getSC().getCType();
     String user = hcl.getSC().getUserName();
     const String & capServerHome = hcl.getSC().getCapServerPath();
 
+    /* 0. check if status command */
+    if( commandType == StartCapture::C_STATUS )
+    {
+        return statusAllSC(sk, hcl);
+    }
+
     /* 1. first check stop specific wid */
-    if( commandType == StartCapture::C_STOP ) {
-        if(!hcl.hasWid()) {
-#ifndef  __SHAREDT_WIN__
-            sk.send("command must has a valid \"--wid\" setting");
-#else
-            sk->send("command must has a valid \"--wid\" setting");
-#endif
-            return ;
-        }
-
-        if(it == _WM.end()) {
-            String msg("Can't find status for: ");
-            msg.append(wid);
-#ifndef  __SHAREDT_WIN__
-            sk.send(msg.c_str());
-#else
-            sk->send(msg.c_str());
-#endif
-            return;
-        }
-
-        LOGGER.info() << "Sending stopping to WID: " << wid;
-#ifndef  __SHAREDT_WIN__
-        it->second.send(CAPTURE_STOPPING);
-#else
-        String stop    = capServerHome + PATH_SEP_STR + CAPTURE_SERVER_STOP;
-        String stopped = capServerHome + PATH_SEP_STR + CAPTURE_SERVER_STOPPED;
-
-        if(fs::exists(stop) && !fs::remove(stop)){
-            LOGGER.error() << "Failed to remove the stop file: " << stop;
-        }
-        if(fs::exists(stopped) && !fs::remove(stopped)){
-            LOGGER.error() << "Failed to remove the stopped file: " << stopped;
-        }
-
-        std::ofstream ofs(stop.c_str());
-        ofs << "stop";
-        ofs.close();
-
-        int i;
-        /* wait for 20s for CaptureServer to stop */
-        for (i = 0 ; i < 20; i++)
-        {
-            if(fs::exists(stopped))
-                break;
-            Sleep(1000);
-        }
-
-        /* failed to know the CaptureServer */
-        if(i == 20)
-        {
-            LOGGER.error() << "Waited 20s for CaptureServer to stop, but no responds for wid=" << wid;
-            String msg("Capture Server Unknown Status: ");
-            msg.append(wid);
-            sk->send(msg.c_str());
-            return;
-        }
-#endif
-        std::lock_guard<std::mutex> guard(_WMmutex);
-        it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
-
-        /* send msg back to command line */
-        String msg("Capture Server Stopped: ");
-        msg.append(wid);
-
-#ifndef  __SHAREDT_WIN__
-        sk.send(msg.c_str());
-#else
-        sk->send(msg.c_str());
-#endif
-
-        return;
+    if( commandType == StartCapture::C_STOP )
+    {
+        return stopSpecificCaptureServer(sk, hcl);
     }
 
     if(!hcl.hasWid())   hcl.setWID();
@@ -181,11 +224,12 @@ void HandleCommandSocket(int fd, char * buf)
     ret.append(wid);
     ret.append("\nStatus: ");
 
-    /* 2. Starting capture server
+    /*
+     * 2. Starting capture server
      * 2.1 First make sure there is no "start" and "started" file under it.
      */
     if( (commandType == StartCapture::C_START || commandType == StartCapture::C_NEWCAPTURE) &&
-        (it == _WM.end() || it->second.status() != MainManagementProcess::STATUS::STARTED) ) {
+        (it == _WIDManager.end() || it->second.status() != MainManagementProcess::STATUS::STARTED) ) {
         String start = capServerHome + String(CAPTURE_SERVER_START);
         String started = capServerHome + String(CAPTURE_SERVER_STARTED);
         String alive = capServerHome + PATH_ALIVE_FILE;
@@ -276,13 +320,13 @@ void HandleCommandSocket(int fd, char * buf)
 
         /* TODO needs to check if started successfully */
 
-        /* add it to global _WM */
-        if(it == _WM.end()) {
-            std::lock_guard<std::mutex> guard(_WMmutex);
-            _WM.insert(std::pair<String, MainManagementProcess>
+        /* add it to global _WIDManager */
+        if(it == _WIDManager.end()) {
+            std::lock_guard<std::mutex> guard(_WIDManagerMutex);
+            _WIDManager.insert(std::pair<String, MainManagementProcess>
                        (wid, MainManagementProcess(alive, capServerHome, MainManagementProcess::STATUS::STARTED)));
         } else {
-            std::lock_guard<std::mutex> guard(_WMmutex);
+            std::lock_guard<std::mutex> guard(_WIDManagerMutex);
             it->second.updateStatus(MainManagementProcess::STATUS::STARTED);
         }
     } else {
