@@ -55,7 +55,7 @@ static void stopSpecificCaptureServer(
 #ifdef __SHAREDT_WIN__
         Socket * sk,
 #else
-        SocketFD & sk,
+        SocketFD * sk,
 #endif
         HandleCommandLine & hcl )
 {
@@ -131,7 +131,7 @@ static void statusAllSC (
 #ifdef __SHAREDT_WIN__
         Socket * sk,
 #else
-        SocketFD & sk,
+        SocketFD * sk,
 #endif
         HandleCommandLine & hcl )
 {
@@ -193,7 +193,9 @@ void HandleCommandSocket(int fd, char * buf)
 #endif
 {
 #ifndef  __SHAREDT_WIN__
-    SocketFD sk(fd);
+    /* for the seek of compatible of windows usage */
+    SocketFD newFd(fd);
+    SocketFD * sk = &newFd;
 #endif
     String wid;
     StartCapture::CType commandType;
@@ -350,11 +352,8 @@ void HandleCommandSocket(int fd, char * buf)
     } else {
         ret += "Already started";
     }
-#ifndef  __SHAREDT_WIN__
-    sk.send(ret.c_str());
-#else
+
     sk->send(ret.c_str());
-#endif
 }
 
 HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)

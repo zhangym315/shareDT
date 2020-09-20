@@ -197,7 +197,6 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
     infoServiceToAction(commandPath.c_str());
 #else
     return mainInform(" newCapture", conf);
-
 #endif
 }
 
@@ -267,6 +266,7 @@ static int noDaemon (const char ** cmdArg, const struct cmdConf * conf)
 
 static int status (const char ** cmdArg, const struct cmdConf * conf)
 {
+#ifdef __SHAREDT_WIN__
     String commandPath;
     TCHAR szPath[MAX_PATH];
 
@@ -288,6 +288,11 @@ static int status (const char ** cmdArg, const struct cmdConf * conf)
     fprintf(stdout, "Capture Server status:\n");
 
     infoServiceToAction(commandPath.c_str());
+
+#else
+    fprintf(stdout, "Capture Server status:\n");
+    return mainInform(" status", conf);
+#endif
 }
 
 #ifdef __SHAREDT_WIN__
