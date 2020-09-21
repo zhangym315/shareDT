@@ -85,8 +85,9 @@ static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
         fprintf(stdout, "ShareDTServer Started\n");
         return RETURN_CODE_SUCCESS;
 #else
-        DaemonizeProcess::instance()->daemonize();
+        fprintf(stdout, "ShareDTServer Started\n");
 
+        DaemonizeProcess::instance()->daemonize();
         /*
          * 1. set home directory
          * 2. check if main service has been started or not
