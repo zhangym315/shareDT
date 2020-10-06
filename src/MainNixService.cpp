@@ -176,7 +176,8 @@ int MainWindowsServices() {
     }
 
 
-    int rc = send(clientSocket, buf, strlen(buf), 0);
+    String stopMsg("ShareDTServer Stopped");
+    int rc = send(clientSocket, stopMsg.c_str(), stopMsg.length(), 0);
     if (rc == -1) {
         LOGGER.error("SEND ERROR ");
         close(clientSocket);

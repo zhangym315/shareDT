@@ -4,8 +4,8 @@
 #include <fcntl.h>
 
 MainManagementProcess::MainManagementProcess(const String & alive, const String & home,
-                                             STATUS status) :
-                _alivePath(alive),  _status(status),
+                                             int port, STATUS status) :
+                _alivePath(alive),  _status(status), _vncport(port),
                 _rw(alive.c_str(), O_WRONLY), _home(home)
 {
 }

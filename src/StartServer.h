@@ -67,7 +67,7 @@ class StartCapture {
     void startCaptureServer();
 
     enum SType { S_NONE, S_WIN_ALL, S_WIN_NAME, S_MONITOR };
-    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_RESTART, C_SHOW, C_STATUS, C_NONE };
+    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_STOP_ALL_SC, C_RESTART, C_SHOW, C_STATUS, C_NONE };
 
     bool setWorkingDirectory();
     void initDaemon();
@@ -84,6 +84,7 @@ class StartCapture {
     const String & getCapServerPath() const { return _capturePath; }
 
     bool isDaemon() const { return _daemon; }
+    int  getPort()  const { return _vncPort; }
   private:
     void Usage();
     int parseArgs(const vector<String> & args);
@@ -120,6 +121,7 @@ class StartCapture {
     ScopedPtr<ReadWriteFDThread> _listenMMP;
 
     CType            _ctype;  /* command type, newcaptre, start, stop ... */
+    int              _vncPort;
 
     /* rbf related */
     rfbScreenInfoPtr _rfbserver;

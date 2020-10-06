@@ -121,6 +121,7 @@ public:
 
     bool isDaemon() { return _sc.isDaemon(); }
     void setDaemon() ;
+    void setVNCPort(int port) ;
 private:
     HandleCommandLine();
     char ** _argv;

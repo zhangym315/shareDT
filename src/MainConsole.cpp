@@ -85,8 +85,9 @@ static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
         fprintf(stdout, "ShareDTServer Started\n");
         return RETURN_CODE_SUCCESS;
 #else
-        DaemonizeProcess::instance()->daemonize();
+        fprintf(stdout, "ShareDTServer Started\n");
 
+        DaemonizeProcess::instance()->daemonize();
         /*
          * 1. set home directory
          * 2. check if main service has been started or not
@@ -197,7 +198,6 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
     infoServiceToAction(commandPath.c_str());
 #else
     return mainInform(" newCapture", conf);
-
 #endif
 }
 
@@ -229,7 +229,9 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
     }
 
     LOGGER.info() << "Write to MainManagementProcess: successfully created capture Server";
-    msg.write("Successfully created Capture Server");
+    String result("Successfully created Capture Server on port: ");
+    result.append(std::to_string(cap.getPort()));
+    msg.write(result.c_str());
     cap.startCaptureServer ();
 
     return RETURN_CODE_SUCCESS;
@@ -265,6 +267,7 @@ static int noDaemon (const char ** cmdArg, const struct cmdConf * conf)
 
 static int status (const char ** cmdArg, const struct cmdConf * conf)
 {
+#ifdef __SHAREDT_WIN__
     String commandPath;
     TCHAR szPath[MAX_PATH];
 
@@ -286,6 +289,11 @@ static int status (const char ** cmdArg, const struct cmdConf * conf)
     fprintf(stdout, "Capture Server status:\n");
 
     infoServiceToAction(commandPath.c_str());
+
+#else
+    fprintf(stdout, "Capture Server status:\n");
+    return mainInform(" status", conf);
+#endif
 }
 
 #ifdef __SHAREDT_WIN__

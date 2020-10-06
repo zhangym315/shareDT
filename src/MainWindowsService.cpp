@@ -48,12 +48,13 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 
     FdBuffer * p = (FdBuffer * ) lpvParam;
     Socket   * s = (Socket  *) (p->fd);
+    String command(p->buf);
 
-    LOGGER.info() <<"Started new thread for processing CMD=\"" << p->buf << "\"";
+    LOGGER.info() <<"Started new thread for processing CMD=\"" << command << "\"";
     HandleCommandSocket(s, p->buf);
 
     delete s;
-    LOGGER.info() <<"Thread exiting for processing CMD:\"" << p->buf << "\"";
+    LOGGER.info() <<"Thread exiting for processing CMD:\"" << command << "\"";
 
     return 1;
 }
