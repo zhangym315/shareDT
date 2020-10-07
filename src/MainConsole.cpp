@@ -207,12 +207,8 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
 
-#ifdef __SHAREDT_WIN__
-    Path alivePath(cap.getAlivePath());
+    Path alivePath(cap.getAlivePath(), std::fstream::in);
     SocketClient msg(LOCALHOST, alivePath.readLineAsInt());
-#else
-    ReadWriteFD msg(cap.getAlivePath().c_str(), O_WRONLY);
-#endif
 
     /*
      * If RETURN_CODE_SUCCESS_SHO show window handler
@@ -231,7 +227,11 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
     LOGGER.info() << "Write to MainManagementProcess: successfully created capture Server";
     String result("Successfully created Capture Server on port: ");
     result.append(std::to_string(cap.getPort()));
+
+LOGGER.info() << "results write to: " << result << " on port:" << msg.getSocket();
+
     msg.write(result.c_str());
+
     cap.startCaptureServer ();
 
     return RETURN_CODE_SUCCESS;

@@ -142,7 +142,7 @@ String Socket::ReceiveBytes() const
 {
     char ret[BUFSIZE];
     int  reclen;
-    if((reclen=recv(_s, ret, BUFSIZE, 0)) == -1)
+    if((reclen=::recv(_s, ret, BUFSIZE, 0)) == -1)
     {
             return "";
     }
