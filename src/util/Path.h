@@ -92,7 +92,7 @@ class Path
 {
   public:
     Path(String path) : _ffs(path, std::fstream::in | std::fstream::out | std::fstream::app) { }
-    Path(String path, int mode) : _ffs(path, mode) { }
+    Path(String path, std::ios_base::openmode mode) : _ffs(path, mode) { }
     ~Path() { _ffs.close(); }
     void write(String & data);
     void write(int data);
