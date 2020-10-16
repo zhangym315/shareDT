@@ -154,6 +154,7 @@ int MainWindowsServices() {
         LOGGER.info("ShareDTServer service DATA RECEIVED CMD=\"%s\", "
                         " clientSocket=%d", received.c_str(), s->getSocket());
 
+
         bzero(buf, BUFSIZE);
         strcpy(buf, received.c_str());
 

@@ -25,8 +25,7 @@
  */
 WIDMAP _WIDManager;
 std::mutex _WIDManagerMutex;
-static unsigned int startPort = 1;
-static unsigned int _incrse   = 0;
+static unsigned int _incrse   = 0;   // vnc server start port
 
 /*
  * Stopping all CaptureServer in _WIDManager
@@ -238,20 +237,12 @@ void HandleCommandSocket(Socket * sk, char * buf)
         LOGGER.info() << "Starting Capture Server on port: " << capServerPort << " with Argument: " << hcl.toString();
         int childPid;
 
-        /* communicate the child process through port */
-        SocketServer sc(SHAREDT_INTERNAL_PORT_START + startPort++, 2);
-        LOGGER.info() << "Start on port=" << sc.getPort() <<
-                      " for communication with CaptureServer=" << hcl.getSC().getWID();
-        {
-            if(fs::exists(alive) && !fs::remove(alive)){
-                String error = "Failed to remove the file: " + alive;
-                LOGGER.error() << error;
-                ret.append(error);
-                sk->send(ret.c_str());
-                return;
-            }
-            Path aliveWriter(alive);
-            aliveWriter.write(sc.getPort());
+        if(fs::exists(alive) && !fs::remove(alive)){
+            String error = "Failed to remove the file: " + alive;
+            LOGGER.error() << error;
+            ret.append(error);
+            sk->send(ret.c_str());
+            return;
         }
 #ifndef __SHAREDT_WIN__
         char ** argv = hcl.getArgv();
@@ -293,27 +284,36 @@ void HandleCommandSocket(Socket * sk, char * buf)
             LOGGER.info() << "Failed to create child capture process";
             return;
         }
-        LOGGER.info() << "Successuflly create child process, communicating port: " << sc.getPort();
         CloseHandle(pi.hThread);
         childPid = (int) pi.hProcess;
 #endif
 
-        LOGGER.info() << "Child process for WID=" << wid <<
-                  " started, PID=" << childPid << " CMD=" << hcl.toString();
+        LOGGER.info() << "Successuflly create child process for WID=" << wid <<
+                      " started, PID=" << childPid << " CMD=" << hcl.toString();
 
-        Socket* s=sc.Accept();
-LOGGER.info() << "after accept" ;
-        String answer = s->ReceiveBytes();
-LOGGER.info() << "after received" ;
-        delete s;
+        String answer;
+
+        if(Path::checkAndWait(alive, 10)) {
+            sk->send("Have waited for 10 seconds, but no responds from CaptureServer process.");
+            return;
+        }
+
+        Path alivePath(alive, std::fstream::in);
+        answer = alivePath.readAll();
 
         ret.append(answer);
+        sk->send(ret.c_str());
+        LOGGER.info() << "Sent to sorcket: " << sk->getSocket() << " message: " << ret ;
+
+        /*
+         * increase the vnc server port even failed
+         */
+        _incrse++;
 
         int success = false;
         /* increase the dest port if successfully create Capture Server */
         if(answer.find("Successfully created") != String::npos)
         {
-            _incrse++;
             success = true;
         }
 
@@ -329,10 +329,9 @@ LOGGER.info() << "after received" ;
         }
     } else {
         ret += "Already started";
+        sk->send(ret.c_str());
     }
 
-    LOGGER.info() << "ret send to: " << ret << " socket: " << sk->getSocket();
-    sk->send(ret.c_str());
 }
 
 HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)

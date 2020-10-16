@@ -88,16 +88,20 @@ class CapServerHome {
     bool   _valid;
 };
 
+static const String EMPTY_STRING = "EMPTY_STRING";
+
 class Path
 {
   public:
     Path(String path) : _ffs(path, std::fstream::in | std::fstream::out | std::fstream::app) { }
     Path(String path, std::ios_base::openmode mode) : _ffs(path, mode) { }
     ~Path() { _ffs.close(); }
-    void write(String & data);
+    void write(const String & data);
     void write(int data);
+    void write(char * data);
     int  readLineAsInt();
-    String readLine();
+    String readAll();
+    static bool checkAndWait(String & path, int seconds);
 
   private:
     std::fstream _ffs;
