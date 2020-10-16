@@ -98,7 +98,7 @@ void ServiceMain(int argc, char** argv)
     String alive = ShareDTHome::instance()->getHome() + String(MAIN_SERVER_PATH) + String(PATH_ALIVE_FILE);
     {
         if(fs::exists(alive) && !fs::remove(alive)){
-            String error = "Failed to remove the file: " + alive;
+            LOGGER.error() << "Failed to remove the file: " << alive;
             return;
         }
         Path aliveWriter(alive);
@@ -159,21 +159,3 @@ void ControlHandler(DWORD request)
     return;
 }
 
-/*
- * Command line to inform service to create child
- * process to run the server procedure
- */
-int infoServiceToAction(const char * execCmd)
-{
-    String alive = ShareDTHome::instance()->getHome() + String(MAIN_SERVER_PATH) + String(PATH_ALIVE_FILE);
-    Path aliveReader(alive);
-    int port = aliveReader.readLineAsInt();
-    SocketClient sc(LOCALHOST, port);
-
-    sc.SendBytes(execCmd);
-
-    String receive = sc.ReceiveBytes();
-    fprintf(stdout, TEXT("%s\n"), receive.c_str() );
-
-    return RETURN_CODE_SUCCESS;
-}

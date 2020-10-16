@@ -85,6 +85,7 @@ class StartCapture {
 
     bool isDaemon() const { return _daemon; }
     int  getPort()  const { return _vncPort; }
+
   private:
     void Usage();
     int parseArgs(const vector<String> & args);

@@ -595,13 +595,9 @@ void StartCapture::startCaptureServer()
 
     /* start new thread to get command from MMP(MainManagementProcess)  */
     _isServerRunning = true;
-#ifndef __SHAREDT_WIN__
-    _listenMMP = new ReadWriteFDThread(_alivePath.c_str(), O_RDONLY);
-    _listenMMP->go();
-#else
+
     CommandChecker cc(CapServerHome::instance()->getHome());
     cc.go();
-#endif
 
     /* init rfb server to listen on */
     rfbInitServer(_rfbserver);

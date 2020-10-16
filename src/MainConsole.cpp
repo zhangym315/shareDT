@@ -157,7 +157,7 @@ static int mainRestart (const char ** cmdArg, const struct cmdConf * conf)
 
 /*
  * New capture request from command
- * This function doesn't not start capture server straightforwardly
+ * This function doesn't start capture server straightforwardly
  * Instead, if notify MainService to start new process as Capture Server
  */
 static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
@@ -202,36 +202,35 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 }
 
 /* main service fork/create new process as the capture server */
-int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
+int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)\
 {
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
+    Path alivePath(cap.getAlivePath(), std::fstream::out);
 
-#ifdef __SHAREDT_WIN__
-    Path alivePath(cap.getAlivePath());
-    SocketClient msg(LOCALHOST, alivePath.readLineAsInt());
-#else
-    ReadWriteFD msg(cap.getAlivePath().c_str(), O_WRONLY);
-#endif
-
+    LOGGER.info() << "Capture Server init finished with ret: " << ret;
     /*
      * If RETURN_CODE_SUCCESS_SHO show window handler
      * return current process
      */
     if(ret == RETURN_CODE_SUCCESS_SHO)
     {
-        msg.write("");
+        alivePath.write(EMPTY_STRING);
         return RETURN_CODE_SUCCESS;
     } else if (ret != RETURN_CODE_SUCCESS)
     {
-        msg.write("Failed to create Capture Server");
+        String failed = "Failed to start Capture Server.";
+        alivePath.write(failed);
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
     LOGGER.info() << "Write to MainManagementProcess: successfully created capture Server";
     String result("Successfully created Capture Server on port: ");
     result.append(std::to_string(cap.getPort()));
-    msg.write(result.c_str());
+
+    alivePath.write(result);
+    LOGGER.info() << "Write result(" << result << ") to file: " << cap.getAlivePath();
+
     cap.startCaptureServer ();
 
     return RETURN_CODE_SUCCESS;

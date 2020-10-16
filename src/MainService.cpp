@@ -25,8 +25,7 @@
  */
 WIDMAP _WIDManager;
 std::mutex _WIDManagerMutex;
-static unsigned int startPort = 1;
-static unsigned int _incrse   = 0;
+static unsigned int _incrse   = 0;   // vnc server start port
 
 /*
  * Stopping all CaptureServer in _WIDManager
@@ -52,11 +51,7 @@ void stopAllSC()
 }
 
 static void stopSpecificCaptureServer(
-#ifdef __SHAREDT_WIN__
         Socket * sk,
-#else
-        SocketFD * sk,
-#endif
         HandleCommandLine & hcl )
 {
     String wid;
@@ -79,9 +74,6 @@ static void stopSpecificCaptureServer(
     }
 
     LOGGER.info() << "Sending stopping to WID: " << wid;
-#ifndef  __SHAREDT_WIN__
-    it->second.send(CAPTURE_STOPPING);
-#else
 
     const String & capServerHome = hcl.getSC().getCapServerPath();
     String stop    = capServerHome + PATH_SEP_STR + CAPTURE_SERVER_STOP;
@@ -104,8 +96,12 @@ static void stopSpecificCaptureServer(
     {
         if(fs::exists(stopped))
             break;
-        Sleep(1000);
+        this_thread::sleep_for(1s);
     }
+
+    /* mark the server as stopped even we don't understand the status */
+    std::lock_guard<std::mutex> guard(_WIDManagerMutex);
+    it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
 
     /* failed to know the CaptureServer */
     if(i == 20)
@@ -116,9 +112,6 @@ static void stopSpecificCaptureServer(
         sk->send(msg.c_str());
         return;
     }
-#endif
-    std::lock_guard<std::mutex> guard(_WIDManagerMutex);
-    it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
 
     /* send msg back to command line */
     String msg("Capture Server Stopped: ");
@@ -128,11 +121,7 @@ static void stopSpecificCaptureServer(
 }
 
 static void statusAllSC (
-#ifdef __SHAREDT_WIN__
         Socket * sk,
-#else
-        SocketFD * sk,
-#endif
         HandleCommandLine & hcl )
 {
     String ret;
@@ -186,17 +175,8 @@ static void statusAllSC (
  * If new capture server reqeust is received
  *
  */
-#ifdef __SHAREDT_WIN__
 void HandleCommandSocket(Socket * sk, char * buf)
-#else
-void HandleCommandSocket(int fd, char * buf)
-#endif
 {
-#ifndef  __SHAREDT_WIN__
-    /* for the seek of compatible of windows usage */
-    SocketFD newFd(fd);
-    SocketFD * sk = &newFd;
-#endif
     String wid;
     StartCapture::CType commandType;
     /* start handle particular --wid specified or start new capture server */
@@ -258,33 +238,20 @@ void HandleCommandSocket(int fd, char * buf)
         LOGGER.info() << "Starting Capture Server on port: " << capServerPort << " with Argument: " << hcl.toString();
         int childPid;
 
-
+        if(fs::exists(alive) && !fs::remove(alive)){
+            String error = "Failed to remove the file: " + alive;
+            LOGGER.error() << error;
+            ret.append(error);
+            sk->send(ret.c_str());
+            return;
+        }
 #ifndef __SHAREDT_WIN__
-        /* Non-windows, communicate the child process through pipe */
         char ** argv = hcl.getArgv();
-        mkfifo(alive.c_str(), 0666);
         if((childPid=fork()) == 0) {
             execv(argv[0], argv);
         }
-        ReadWriteFD msg(alive.c_str(), O_RDONLY);
-        String answer = msg.read();
-#else
-        /* windows, communicate the child process through port */
-        SocketServer sc(SHAREDT_INTERNAL_PORT_START + startPort++, 2);
-        LOGGER.info() << "Start on port=" << sc.getPort() <<
-                    " for communication with CaptureServer=" << hcl.getSC().getWID();
-        {
-            if(fs::exists(alive) && !fs::remove(alive)){
-                String error = "Failed to remove the file: " + alive;
-                LOGGER.error() << error;
-                ret.append(error);
-                sk->send(ret.c_str());
-                return;
-            }
-            Path aliveWriter(alive);
-            aliveWriter.write(sc.getPort());
-        }
 
+#else
         /* create process as the user requested */
         LOGGER.info() << "Retrieving user session token for user=" << user;
 
@@ -318,26 +285,38 @@ void HandleCommandSocket(int fd, char * buf)
             LOGGER.info() << "Failed to create child capture process";
             return;
         }
-        LOGGER.info() << "Successuflly create child process, communicating port: " << sc.getPort();
         CloseHandle(pi.hThread);
         childPid = (int) pi.hProcess;
-
-        Socket* s=sc.Accept();
-        String answer = s->ReceiveBytes();
-        delete s;
 #endif
+
+        LOGGER.info() << "Successuflly create child process for WID=" << wid <<
+                      " started, PID=" << childPid << " CMD=" << hcl.toString();
+
+        String answer;
+
+        if(Path::checkAndWait(alive, 10)) {
+            sk->send("Have waited for 10 seconds, but no responds from CaptureServer process.");
+            return;
+        }
+
+        Path alivePath(alive, std::fstream::in);
+        answer = alivePath.readAll();
+
         ret.append(answer);
+        sk->send(ret.c_str());
+        LOGGER.info() << "Sent to sorcket: " << sk->getSocket() << " message: " << ret ;
+
+        /*
+         * increase the vnc server port even failed
+         */
+        _incrse++;
 
         int success = false;
         /* increase the dest port if successfully create Capture Server */
         if(answer.find("Successfully created") != String::npos)
         {
-            _incrse++;
             success = true;
         }
-
-        LOGGER.info() << "Child process for WID=" << wid <<
-                        " started, PID=" << childPid << " CMD=" << hcl.toString();
 
         /* add it to global _WIDManager, skip the failed one */
         if(it == _WIDManager.end() && success) {
@@ -351,9 +330,9 @@ void HandleCommandSocket(int fd, char * buf)
         }
     } else {
         ret += "Already started";
+        sk->send(ret.c_str());
     }
 
-    sk->send(ret.c_str());
 }
 
 HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)
@@ -488,4 +467,23 @@ bool setMainServiceFile()
     // Linux/MacOS will set the pid file later after fork
 #endif
     return true;
+}
+
+/*
+ * Command line to inform service to create child
+ * process to run the server procedure
+ */
+int infoServiceToAction(const char * execCmd)
+{
+    String alive = ShareDTHome::instance()->getHome() + String(MAIN_SERVER_PATH) + String(PATH_ALIVE_FILE);
+    Path aliveReader(alive, std::fstream::in);
+    int port = aliveReader.readLineAsInt();
+    SocketClient sc(LOCALHOST, port);
+
+    sc.SendBytes(execCmd);
+
+    String receive = sc.ReceiveBytes();
+    fprintf(stdout, ("%s\n"), receive.c_str() );
+
+    return RETURN_CODE_SUCCESS;
 }

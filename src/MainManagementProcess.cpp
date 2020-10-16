@@ -22,9 +22,6 @@ void MainManagementProcess::updateStatus(STATUS status)
 
 void MainManagementProcess::stop()
 {
-#ifndef __SHAREDT_WIN__
-    send(CAPTURE_STOPPING);
-#else
     String stop    = _home + PATH_SEP_STR + CAPTURE_SERVER_STOP;
     String stopped = _home + PATH_SEP_STR + CAPTURE_SERVER_STOPPED;
 
@@ -45,7 +42,7 @@ void MainManagementProcess::stop()
     {
         if(fs::exists(stopped))
             break;
-        Sleep(1000);
+        this_thread::sleep_for(1s);
     }
 
     /* failed to know the CaptureServer */
@@ -54,6 +51,4 @@ void MainManagementProcess::stop()
         LOGGER.error() << "Waited 20s for CaptureServer to stop, but no responds for wid=" << _home;
         return;
     }
-
-#endif
 }

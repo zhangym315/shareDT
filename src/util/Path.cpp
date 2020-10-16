@@ -1,7 +1,9 @@
-#include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/stat.h>
+#include <thread>
+#include <chrono>
 #include "Path.h"
 #include "Logger.h"
 
@@ -198,14 +200,22 @@ const String & CapServerHome::getCid() {
     return _cid;
 }
 
-void Path::write(String &data)
+void Path::write(const String &data)
 {
     _ffs << data;
+    _ffs.flush();
+}
+
+void Path::write(char * data)
+{
+    _ffs << data;
+    _ffs.flush();
 }
 
 void Path::write(int data)
 {
     _ffs << std::to_string(data);
+    _ffs.flush();
 }
 
 int Path::readLineAsInt()
@@ -213,4 +223,24 @@ int Path::readLineAsInt()
     char buffer[1024];
     _ffs.read (buffer,1024);
     return std::stoi(buffer);
+}
+
+String Path::readAll ()
+{
+    std::stringstream ret;
+    ret << _ffs.rdbuf();
+    return ret.str();
+}
+
+bool Path::checkAndWait(String & path, int waitSeconds)
+{
+    using namespace std;
+    int count = waitSeconds * 2;
+    while(!fs::exists(path) && waitSeconds < count)
+    {
+        waitSeconds++;
+        this_thread::sleep_for(500ms);
+    }
+
+    return (waitSeconds == count);
 }

@@ -129,65 +129,48 @@ int MainServiceServer::getNewConnection()
 
 int MainWindowsServices() {
     const String pipeFile = CapServerHome::instance()->getHome() + PATH_SEP_STR + SOCKET_FILE;
-    MainServiceServer mss;   // main service socket
     char buf[BUFSIZE];
     int clientSocket;
     ThreadPool tp(2);
 
-    /* something error during init server socket */
-    if(!mss.getValid())
-        return RETURN_CODE_SERVICE_ERROR;
-
-    /* start to listening */
-    if(mss.listening())
-        return RETURN_CODE_SERVICE_ERROR;
-
     signal(SIGCHLD,sig_child);
 
-    while(true) {
-        /* error on getting new client connection */
-        if((clientSocket=mss.getNewConnection()) == -1)
-            continue;
+    /* Main service port */
+    SocketServer ss(SHAREDT_INTERNAL_PORT_START, 10);
+    LOGGER.info() << "MainService started on port=" << ss.getPort() ;
+    String alive = ShareDTHome::instance()->getHome() + String(MAIN_SERVER_PATH) + String(PATH_ALIVE_FILE);
+    {
+        if(fs::exists(alive) && !fs::remove(alive)){
+            LOGGER.error() << "Failed to remove the file: " << alive;
+            return RETURN_CODE_SERVICE_ERROR;
+        }
+        Path aliveWriter(alive);
+        aliveWriter.write(ss.getPort());
+    }
 
-        LOGGER.info("Waiting to read from cmd ...");
+    while(true) {
+        Socket* s=ss.Accept();
+        String received = s->ReceiveBytes();
+        LOGGER.info("ShareDTServer service DATA RECEIVED CMD=\"%s\", "
+                        " clientSocket=%d", received.c_str(), s->getSocket());
+
 
         bzero(buf, BUFSIZE);
-        int bytes_rec = recv(clientSocket, buf, BUFSIZE, 0);
-        if (bytes_rec < -1 || bytes_rec > BUFSIZE){
-            LOGGER.info("RECV ERROR from client: %d", bytes_rec);
-            close(clientSocket);
-            continue;
-        }
-        else {
-            buf[bytes_rec] = '\0';
-            LOGGER.info("ShareDTServer service DATA RECEIVED = %s, clientSocket=%d", buf, clientSocket);
-        }
+        strcpy(buf, received.c_str());
 
         /* first check if stop command */
         if(!memcmp(buf, MAIN_SERVICE_STOPPING, sizeof(MAIN_SERVICE_STOPPING))){
-            LOGGER.info() << "Stopping ShareDTServer Service" ;
             stopAllSC();
+            s->send("ShareDTServer Stopped");
             break;
         }
 
+        LOGGER.info() << "Client connected, creating a processing thread.";
+
         /* send to thread pool to handle the request */
-        tp.enqueue(HandleCommandSocket, clientSocket, buf);
-
+        tp.enqueue(HandleCommandSocket, s, buf);
     }
 
-
-    String stopMsg("ShareDTServer Stopped");
-    int rc = send(clientSocket, stopMsg.c_str(), stopMsg.length(), 0);
-    if (rc == -1) {
-        LOGGER.error("SEND ERROR ");
-        close(clientSocket);
-        return RETURN_CODE_SERVICE_ERROR;
-    }
-    else {
-        LOGGER.info("Data sent to client to inform server is stopped");
-    }
-
-    mss.removeSocketFile();
     LOGGER.info("ShareDTServer Service stopped");
 
     return 0;
@@ -258,22 +241,4 @@ int MainServiceClient::rcvFrom(char * buf, size_t size)
     }
     buf[rc] = '\0';
     return rc;
-}
-
-int infoServiceToAction(const char * execCmd)
-{
-    MainServiceClient msc;
-    char buf[BUFSIZE];
-    if(!msc.getValid())
-        return RETURN_CODE_SERVICE_ERROR;
-
-    if(msc.sentTo(execCmd) < 0)
-        return RETURN_CODE_SERVICE_ERROR;
-
-    if(msc.rcvFrom(buf, BUFSIZE) < 0)
-        return RETURN_CODE_SERVICE_ERROR;
-
-    LOGGER.noPre("%s", buf);
-    return EXIT_SUCCESS;
-
 }
