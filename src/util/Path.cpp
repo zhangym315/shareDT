@@ -1,13 +1,11 @@
-#include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <thread>
 #include <chrono>
 #include "Path.h"
 #include "Logger.h"
-
-using namespace std;
 
 #ifdef __SHAREDT_WIN__
 #include <direct.h>
@@ -236,6 +234,7 @@ String Path::readAll ()
 
 bool Path::checkAndWait(String & path, int waitSeconds)
 {
+    using namespace std;
     int count = waitSeconds * 2;
     while(!fs::exists(path) && waitSeconds < count)
     {

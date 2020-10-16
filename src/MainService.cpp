@@ -99,6 +99,10 @@ static void stopSpecificCaptureServer(
         this_thread::sleep_for(1s);
     }
 
+    /* mark the server as stopped even we don't understand the status */
+    std::lock_guard<std::mutex> guard(_WIDManagerMutex);
+    it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
+
     /* failed to know the CaptureServer */
     if(i == 20)
     {
@@ -108,9 +112,6 @@ static void stopSpecificCaptureServer(
         sk->send(msg.c_str());
         return;
     }
-
-    std::lock_guard<std::mutex> guard(_WIDManagerMutex);
-    it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
 
     /* send msg back to command line */
     String msg("Capture Server Stopped: ");
