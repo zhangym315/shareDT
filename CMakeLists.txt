@@ -14,6 +14,7 @@ set(CMAKE_AUTOMOC ON)
 # Instruct CMake to run uic automatically when needed.
 set(CMAKE_AUTOUIC ON)
 # This will find the Qt5 files. You will need a QT5_DIR env variable
+set(ENV{Qt5Widgets_DIR} "${CMAKE_SOURCE_DIR}/contrib/qt515/static-build/lib/cmake/Qt5Widgets")
 find_package(Qt5Widgets REQUIRED) # Equivalent of QT += widgets
 
 set(SERVERGUI_SOURCES
@@ -34,7 +35,8 @@ target_link_libraries(${SERVERGUI_TARGET} Qt5::Widgets)
 #set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -Wdeprecated-declarations ")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wunused-variable")
 
-# lib 
+# lib
+set(WITH_ZLIB ON)
 add_subdirectory(${CMAKE_SOURCE_DIR}/contrib/libvnc)
 
 # include Lib
