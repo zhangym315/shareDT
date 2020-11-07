@@ -566,12 +566,10 @@ if(ENABLE_SHARED)
   add_subdirectory(sharedlib)
 endif()
 
-if(ENABLE_STATIC)
-  add_library(jpeg-static STATIC ${JPEG_SOURCES} $<TARGET_OBJECTS:simd>
-    ${SIMD_OBJS})
-  if(NOT MSVC)
-    set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
-  endif()
+add_library(jpeg-static STATIC ${JPEG_SOURCES} $<TARGET_OBJECTS:simd>
+${SIMD_OBJS})
+if(NOT MSVC)
+set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
 endif()
 
 if(WITH_TURBOJPEG)

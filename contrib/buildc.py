@@ -13,8 +13,10 @@ except:
 
 build64=None
 def execute_qt(k):
-    os.mkdir('./libjpeg-turbo-2.0.5/build/')
-    os.chdir('./libjpeg-turbo-2.0.5/build/')
+    path = './libjpeg-turbo-2.0.5/build/'
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    os.chdir(path)
     ret=os.system('cmake ../')
     if ret != 0:
         sys.exit(1)
@@ -23,7 +25,9 @@ def execute_qt(k):
     if ret != 0:
         sys.exit(1)
 
-    os.mkdir('../../zlib/build/')
+    path = '../../zlib/build/'
+    if not os.path.isdir(path):
+        os.mkdir('../../zlib/build/')
     os.chdir('../../zlib/build/')
     ret=os.system('cmake ../')
     if ret != 0:
