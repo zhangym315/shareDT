@@ -23,6 +23,16 @@ def execute_qt(k):
     if ret != 0:
         sys.exit(1)
 
+    os.mkdir('../../zlib/build/')
+    os.chdir('../../zlib/build/')
+    ret=os.system('cmake ../')
+    if ret != 0:
+        sys.exit(1)
+
+    ret=os.system('cmake --build .')
+    if ret != 0:
+        sys.exit(1)
+
 
 def normalize_kernel(k):
     if k.lower() == "solaris" or k.lower() == "sun":
