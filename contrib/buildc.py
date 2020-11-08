@@ -12,16 +12,16 @@ except:
     import py24subprocess as subprocess
 
 build64=None
-def execute_qt(k):
+def execute(k):
     path = './libjpeg-turbo-2.0.5/build/'
     if not os.path.isdir(path):
         os.mkdir(path)
     os.chdir(path)
-    ret=os.system('cmake ../')
+    ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=./install/ ../')
     if ret != 0:
         sys.exit(1)
 
-    ret=os.system('cmake --build .')
+    ret=os.system('cmake --build . --target install')
     if ret != 0:
         sys.exit(1)
 
@@ -29,11 +29,11 @@ def execute_qt(k):
     if not os.path.isdir(path):
         os.mkdir('../../zlib/build/')
     os.chdir('../../zlib/build/')
-    ret=os.system('cmake ../')
+    ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=./install/ ../')
     if ret != 0:
         sys.exit(1)
 
-    ret=os.system('cmake --build .')
+    ret=os.system('cmake --build . --target install')
     if ret != 0:
         sys.exit(1)
 
@@ -78,12 +78,12 @@ else:
     kernel = normalize_kernel(backtick("uname -s"))
 
 if kernel == "Linux":
-    execute_qt(kernel)
+    execute(kernel)
 elif kernel == "Darwin":
-    execute_qt(kernel)
+    execute(kernel)
     print ("darwin")
 elif kernel == "windows":
-    execute_qt(kernel)
+    execute(kernel)
     print ("windows")
 
 
