@@ -22,6 +22,7 @@
 #define _XOPEN_SOURCE 500
 #endif
 
+#include <stdio.h>
 #include <rfb/rfbclient.h>
 #include <errno.h>
 
@@ -443,7 +444,7 @@ ReadVeNCryptSecurityType(rfbClient* client, uint32_t *result)
     uint8_t loop=0;
     uint8_t flag=0;
     uint32_t tAuth[256], t;
-    char buf1[500],buf2[10];
+    char buf1[500],buf2[20];
     uint32_t authScheme;
 
     if (!ReadFromRFBServer(client, (char *)&count, 1)) return FALSE;
@@ -494,7 +495,7 @@ ReadVeNCryptSecurityType(rfbClient* client, uint32_t *result)
         for (loop=0;loop<count;loop++)
         {
             if (strlen(buf1)>=sizeof(buf1)-1) break;
-            snprintf(buf2, sizeof(buf2), (loop>0 ? ", %d" : "%d"), (int)tAuth[loop]);
+            sprintf(buf2, buf2, (loop>0 ? ", %d" : "%d"), (int)tAuth[loop]);
             strncat(buf1, buf2, sizeof(buf1)-strlen(buf1)-1);
         }
         rfbClientLog("Unknown VeNCrypt authentication scheme from VNC server: %s\n",

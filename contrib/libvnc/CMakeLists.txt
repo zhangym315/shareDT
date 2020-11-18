@@ -26,7 +26,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Mo
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/libvncserver ${CMAKE_CURRENT_SOURCE_DIR}/common /usr/local/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}
+                    ${CMAKE_CURRENT_BINARY_DIR}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/libvncserver
+                    ${CMAKE_CURRENT_SOURCE_DIR}/common
+                    /usr/local/include)
 
 # all the build configuration switches
 option(LIBVNCSERVER_INSTALL "Generate installation target" ON)
@@ -48,11 +52,14 @@ option(WITH_IPv6 "Enable IPv6 Support" ON)
 option(WITH_WEBSOCKETS "Build with websockets support" ON)
 option(WITH_SASL "Build with SASL support" ON)
 
+############ Self defined libs Started
+set(ZLIB_DIR ${CMAKE_SOURCE_CONTRIB})
+find_package(ZLIB REQUIRED NO_MODULE)
 
+set(OpenSSL_DIR ${CMAKE_SOURCE_CONTRIB})
+find_package(OpenSSL REQUIRED NO_MODULE)
 
-if(WITH_ZLIB)
-  find_package(ZLIB)
-endif(WITH_ZLIB)
+############ Self defined libs Ended
 
 if(WITH_LZO)
   find_package(LZO)
@@ -120,12 +127,6 @@ endif(WITH_THREADS)
 if(WITH_GNUTLS)
   find_package(GnuTLS)
 endif(WITH_GNUTLS)
-
-
-if(WITH_OPENSSL)
-  find_package(OpenSSL)
-endif(WITH_OPENSSL)
-
 
 if(WITH_SYSTEMD AND NOT ANDROID)
   find_package(PkgConfig)
@@ -214,9 +215,7 @@ if(PNG_FOUND)
 else()
   unset(PNG_LIBRARIES) # would otherwise contain -NOTFOUND, confusing target_link_libraries()
 endif(PNG_FOUND)
-if(NOT OPENSSL_FOUND)
-    unset(OPENSSL_LIBRARIES) # would otherwise contain -NOTFOUND, confusing target_link_libraries()
-endif()
+
 if(SYSTEMD_FOUND)
   add_definitions(-DLIBVNCSERVER_WITH_SYSTEMD)
   include_directories(${SYSTEMD_INCLUDE_DIRS})

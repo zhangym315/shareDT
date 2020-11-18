@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # set START_SERVER
 set(START_SERVER ShareDTServer)
+set(CMAKE_SOURCE_CONTRIB ${CMAKE_SOURCE_DIR}/contrib)
 
 # QMake specific
 # Instruct CMake to run moc automatically when needed.
