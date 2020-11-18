@@ -53,49 +53,47 @@ option(WITH_WEBSOCKETS "Build with websockets support" ON)
 option(WITH_SASL "Build with SASL support" ON)
 
 ############ Self defined libs Started
+#zlib
 set(ZLIB_DIR ${CMAKE_SOURCE_CONTRIB})
 find_package(ZLIB REQUIRED NO_MODULE)
 
+#OpenSSL
 set(OpenSSL_DIR ${CMAKE_SOURCE_CONTRIB})
 find_package(OpenSSL REQUIRED NO_MODULE)
 
-############ Self defined libs Ended
+#JPEG
+set(JPEG_DIR ${CMAKE_SOURCE_CONTRIB})
+find_package(JPEG REQUIRED NO_MODULE)
 
-if(WITH_LZO)
-  find_package(LZO)
-endif()
-
-if(WITH_JPEG)
-  find_package(JPEG)
-  if(JPEG_FOUND)
+if(JPEG_FOUND )
     # Check whether the version of libjpeg we found was libjpeg-turbo and print a
     # warning if not.
     set(CMAKE_REQUIRED_LIBRARIES ${JPEG_LIBRARIES})
     if(JPEG_INCLUDE_DIRS) # this was not present in 3.4
-      set(CMAKE_REQUIRED_INCLUDES ${JPEG_INCLUDE_DIRS})
+        set(CMAKE_REQUIRED_INCLUDES ${JPEG_INCLUDE_DIRS})
     else()
-      set(CMAKE_REQUIRED_INCLUDES ${JPEG_INCLUDE_DIR})
+        set(CMAKE_REQUIRED_INCLUDES ${JPEG_INCLUDE_DIR})
     endif()
 
     set(JPEG_TEST_SOURCE "\n
-    #include <stdio.h>\n
-    #include <jpeglib.h>\n
-    int main(void) {\n
-      struct jpeg_compress_struct cinfo;\n
-      struct jpeg_error_mgr jerr;\n
-      cinfo.err=jpeg_std_error(&jerr);\n
-      jpeg_create_compress(&cinfo);\n
-      cinfo.input_components = 3;\n
-      jpeg_set_defaults(&cinfo);\n
-      cinfo.in_color_space = JCS_EXT_RGB;\n
-      jpeg_default_colorspace(&cinfo);\n
-      return 0;\n
-    }")
+#include <stdio.h>\n
+#include <jpeglib.h>\n
+int main(void) {\n
+  struct jpeg_compress_struct cinfo;\n
+  struct jpeg_error_mgr jerr;\n
+  cinfo.err=jpeg_std_error(&jerr);\n
+  jpeg_create_compress(&cinfo);\n
+  cinfo.input_components = 3;\n
+  jpeg_set_defaults(&cinfo);\n
+  cinfo.in_color_space = JCS_EXT_RGB;\n
+  jpeg_default_colorspace(&cinfo);\n
+  return 0;\n
+}")
 
     if(CMAKE_CROSSCOMPILING)
-      check_c_source_compiles("${JPEG_TEST_SOURCE}" FOUND_LIBJPEG_TURBO)
+        check_c_source_compiles("${JPEG_TEST_SOURCE}" FOUND_LIBJPEG_TURBO)
     else()
-      check_c_source_runs("${JPEG_TEST_SOURCE}" FOUND_LIBJPEG_TURBO)
+        check_c_source_runs("${JPEG_TEST_SOURCE}" FOUND_LIBJPEG_TURBO)
     endif()
 
     set(CMAKE_REQUIRED_LIBRARIES)
@@ -103,10 +101,16 @@ if(WITH_JPEG)
     set(CMAKE_REQUIRED_DEFINITIONS)
 
     if(NOT FOUND_LIBJPEG_TURBO)
-      message(WARNING "*** The libjpeg library you are building against is not libjpeg-turbo.  Performance will be reduced.  You can obtain libjpeg-turbo from:  https://sourceforge.net/projects/libjpeg-turbo/files/ ***")
+        message(WARNING "*** The libjpeg library you are building against is not libjpeg-turbo.  Performance will be reduced.  You can obtain libjpeg-turbo from:  https://sourceforge.net/projects/libjpeg-turbo/files/ ***")
     endif()
-  endif(JPEG_FOUND)
-endif(WITH_JPEG)
+endif(JPEG_FOUND)
+
+############ Self defined libs Ended
+
+if(WITH_LZO)
+  find_package(LZO)
+endif()
+
 
 
 if(WITH_PNG)
