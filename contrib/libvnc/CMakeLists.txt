@@ -64,7 +64,6 @@ find_package(OpenSSL REQUIRED NO_MODULE)
 #JPEG
 set(JPEG_DIR ${CMAKE_SOURCE_CONTRIB})
 find_package(JPEG REQUIRED NO_MODULE)
-
 if(JPEG_FOUND )
     # Check whether the version of libjpeg we found was libjpeg-turbo and print a
     # warning if not.
@@ -105,23 +104,20 @@ int main(void) {\n
     endif()
 endif(JPEG_FOUND)
 
+#LZO
+set(LZO_DIR ${CMAKE_SOURCE_CONTRIB})
+find_package(LZO REQUIRED NO_MODULE)
+
+#SDL2
+set(SDL2_DIR ${CMAKE_SOURCE_CONTRIB})
+find_package(SDL2 REQUIRED NO_MODULE)
+
 ############ Self defined libs Ended
-
-if(WITH_LZO)
-  find_package(LZO)
-endif()
-
 
 
 if(WITH_PNG)
   find_package(PNG)
 endif(WITH_PNG)
-
-
-if(WITH_SDL)
-  find_package(SDL2)
-endif(WITH_SDL)
-
 
 if(WITH_THREADS)
   find_package(Threads)
