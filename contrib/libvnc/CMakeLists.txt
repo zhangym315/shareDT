@@ -113,7 +113,8 @@ set(SDL2_DIR ${CMAKE_SOURCE_CONTRIB})
 find_package(SDL2 REQUIRED NO_MODULE)
 
 ############ Self defined libs Ended
-
+find_library(COREAUDIO_LIB CoreAudio REQUIRED)
+message(WARNING "COREAUDIO_LIB: ${COREAUDIO_LIB}")
 
 if(WITH_PNG)
   find_package(PNG)
@@ -534,10 +535,10 @@ set(LIBVNCCLIENT_EXAMPLES
 
 if(SDL2_FOUND)
   include_directories(${SDL2_INCLUDE_DIR})
-  set(LIBVNCCLIENT_EXAMPLES
-    ${LIBVNCCLIENT_EXAMPLES}
-    SDLvncviewer
-  )
+#  set(LIBVNCCLIENT_EXAMPLES
+#    ${LIBVNCCLIENT_EXAMPLES}
+#    SDLvncviewer
+#  )
 endif(SDL2_FOUND)
 
 if(FFMPEG_FOUND)
@@ -559,7 +560,7 @@ foreach(e ${LIBVNCCLIENT_EXAMPLES})
   add_executable(client_examples_${e} ${LIBVNCCLIEXAMPLE_DIR}/${e}.c ${LIBVNCCLIEXAMPLE_DIR}/${${e}_EXTRA_SOURCES} )
   set_target_properties(client_examples_${e} PROPERTIES OUTPUT_NAME ${e})
   set_target_properties(client_examples_${e} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/client_examples)
-  target_link_libraries(client_examples_${e} vncclient ${CMAKE_THREAD_LIBS_INIT} ${SDL2_LIBRARY} ${FFMPEG_LIBRARIES})
+  target_link_libraries(client_examples_${e} vncclient ${CMAKE_THREAD_LIBS_INIT} ${SDL2_LIBRARY} ${FFMPEG_LIBRARIES} ${COREAUDIO_LIB})
 endforeach(e ${LIBVNCCLIENT_EXAMPLES})
 
 #
