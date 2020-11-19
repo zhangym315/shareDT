@@ -117,11 +117,11 @@ find_package(SDL2 REQUIRED NO_MODULE)
 set(FFMPEG_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
 find_package(FFMPEG REQUIRED COMPONENTS avformat avcodec avutil swscale)
 
-############ Self defined libs Ended
+#PNG
+set(PNG_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
+find_package(PNG REQUIRED NO_MODULE)
 
-if(WITH_PNG)
-  find_package(PNG)
-endif(WITH_PNG)
+############ Self defined libs Ended
 
 if(WITH_THREADS)
   find_package(Threads)
@@ -471,8 +471,8 @@ target_link_libraries(vncserver
                       ${ZLIB_LIBRARIES}
                       ${LZO_LIBRARIES}
                       ${JPEG_LIBRARIES}
-		      ${PNG_LIBRARIES}
-		      ${CRYPTO_LIBRARIES}
+        		      ${PNG_LIBRARIES}
+		              ${CRYPTO_LIBRARIES}
                       ${GNUTLS_LIBRARIES}
                       ${OPENSSL_LIBRARIES}
 )

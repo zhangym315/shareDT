@@ -38,7 +38,7 @@ target_link_libraries(${SERVERGUI_TARGET} Qt5::Widgets)
 
 # lib
 set(WITH_ZLIB ON)
-add_subdirectory(${CMAKE_SOURCE_DIR}/contrib/libvnc)
+add_subdirectory(${CMAKE_SOURCE_DIR}/libvnc)
 
 # include Lib
 set(LIBVNC_INCLUDE ${CMAKE_SOURCE_DIR}/contrib/libvnc ${CMAKE_SOURCE_DIR}/contrib/libvnc/libvncserver ${CMAKE_SOURCE_DIR}/contrib/libvnc/common)
