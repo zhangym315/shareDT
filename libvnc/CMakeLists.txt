@@ -101,7 +101,7 @@ int main(void) {\n
     set(CMAKE_REQUIRED_DEFINITIONS)
 
     if(NOT FOUND_LIBJPEG_TURBO)
-        message(WARNING "*** The libjpeg library you are building against is not libjpeg-turbo.  Performance will be reduced.  You can obtain libjpeg-turbo from:  https://sourceforge.net/projects/libjpeg-turbo/files/ ***")
+#        message(WARNING "*** The libjpeg library you are building against is not libjpeg-turbo.  Performance will be reduced.  You can obtain libjpeg-turbo from:  https://sourceforge.net/projects/libjpeg-turbo/files/ ***")
     endif()
 endif(JPEG_FOUND)
 
@@ -462,7 +462,7 @@ target_link_libraries(vncclient
                       ${ZLIB_LIBRARIES}
                       ${LZO_LIBRARIES}
                       ${JPEG_LIBRARIES}
-		      ${CRYPTO_LIBRARIES}
+                      ${CRYPTO_LIBRARIES}
                       ${GNUTLS_LIBRARIES}
                       ${OPENSSL_LIBRARIES}
 )
