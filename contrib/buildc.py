@@ -13,7 +13,23 @@ except:
 
 build64=None
 def execute(k):
-    path = './libjpeg-turbo-2.0.5/build/'
+    # ffmpeg
+    path = './ffmpeg/'
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    os.chdir(path)
+    ret=os.system('./configure --prefix=`pwd`/install/')
+    if ret != 0:
+        sys.exit(1)
+    ret=os.system('make -j 10')
+    if ret != 0:
+        sys.exit(1)
+    ret=os.system('make install')
+    if ret != 0:
+        sys.exit(1)
+
+    # LZO
+    path = '../lzo-2.10/build/'
     if not os.path.isdir(path):
         os.mkdir(path)
     os.chdir(path)
@@ -25,6 +41,34 @@ def execute(k):
     if ret != 0:
         sys.exit(1)
 
+    # SDL2
+    path = '../SDL2-2.0.12/build/'
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    os.chdir(path)
+    ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=./install/ ../')
+    if ret != 0:
+        sys.exit(1)
+
+    ret=os.system('cmake --build . --target install')
+    if ret != 0:
+        sys.exit(1)
+    sys.exit(0)
+
+    # LIBJPEG
+    path = '../../libjpeg-turbo-2.0.5/build/'
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    os.chdir(path)
+    ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=./install/ ../')
+    if ret != 0:
+        sys.exit(1)
+
+    ret=os.system('cmake --build . --target install')
+    if ret != 0:
+        sys.exit(1)
+
+    # ZLIB
     path = '../../zlib/build/'
     if not os.path.isdir(path):
         os.mkdir('../../zlib/build/')
@@ -32,7 +76,6 @@ def execute(k):
     ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=./install/ ../')
     if ret != 0:
         sys.exit(1)
-
     ret=os.system('cmake --build . --target install')
     if ret != 0:
         sys.exit(1)
