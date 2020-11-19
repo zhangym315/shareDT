@@ -54,15 +54,16 @@ option(WITH_SASL "Build with SASL support" ON)
 
 ############ Self defined libs Started
 #zlib
-set(ZLIB_DIR ${CMAKE_SOURCE_CONTRIB})
+set(CMAKE_SOURCE_CONTRIB_CMAKE ${CMAKE_SOURCE_CONTRIB}/cmake/)
+set(ZLIB_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
 find_package(ZLIB REQUIRED NO_MODULE)
 
 #OpenSSL
-set(OpenSSL_DIR ${CMAKE_SOURCE_CONTRIB})
+set(OpenSSL_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
 find_package(OpenSSL REQUIRED NO_MODULE)
 
 #JPEG
-set(JPEG_DIR ${CMAKE_SOURCE_CONTRIB})
+set(JPEG_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
 find_package(JPEG REQUIRED NO_MODULE)
 if(JPEG_FOUND )
     # Check whether the version of libjpeg we found was libjpeg-turbo and print a
@@ -105,16 +106,18 @@ int main(void) {\n
 endif(JPEG_FOUND)
 
 #LZO
-set(LZO_DIR ${CMAKE_SOURCE_CONTRIB})
+set(LZO_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
 find_package(LZO REQUIRED NO_MODULE)
 
 #SDL2
-set(SDL2_DIR ${CMAKE_SOURCE_CONTRIB})
+set(SDL2_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
 find_package(SDL2 REQUIRED NO_MODULE)
 
+#FFMPEG
+set(FFMPEG_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
+find_package(FFMPEG REQUIRED COMPONENTS avformat avcodec avutil swscale)
+
 ############ Self defined libs Ended
-find_library(COREAUDIO_LIB CoreAudio REQUIRED)
-message(WARNING "COREAUDIO_LIB: ${COREAUDIO_LIB}")
 
 if(WITH_PNG)
   find_package(PNG)
@@ -138,10 +141,6 @@ endif(WITH_SYSTEMD AND NOT ANDROID)
 if(WITH_GCRYPT)
   find_library(LIBGCRYPT_LIBRARIES gcrypt)
 endif(WITH_GCRYPT)
-
-if(WITH_FFMPEG)
-  find_package(FFMPEG 3.1.0 COMPONENTS avformat avcodec avutil swscale)
-endif(WITH_FFMPEG)
 
 
 check_include_file("endian.h"      LIBVNCSERVER_HAVE_ENDIAN_H)
@@ -541,12 +540,12 @@ if(SDL2_FOUND)
 #  )
 endif(SDL2_FOUND)
 
-if(FFMPEG_FOUND)
-  set(LIBVNCCLIENT_EXAMPLES
-    ${LIBVNCCLIENT_EXAMPLES}
-    vnc2mpg
-  )
-endif(FFMPEG_FOUND)
+#if(FFMPEG_FOUND)
+#  set(LIBVNCCLIENT_EXAMPLES
+#    ${LIBVNCCLIENT_EXAMPLES}
+#    vnc2mpg
+#  )
+#endif(FFMPEG_FOUND)
 
 
 foreach(e ${LIBVNCSERVER_EXAMPLES})
