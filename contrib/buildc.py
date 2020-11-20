@@ -4,7 +4,6 @@
 
 import sys
 import os
-import tarfile
 
 try:
     import subprocess
@@ -12,74 +11,39 @@ except:
     import py24subprocess as subprocess
 
 build64=None
-def execute(k):
-    # ffmpeg
-    path = './ffmpeg/'
-    if not os.path.isdir(path):
-        os.mkdir(path)
-    os.chdir(path)
-    ret=os.system('./configure --prefix=`pwd`/install/')
-    if ret != 0:
-        sys.exit(1)
-    ret=os.system('make -j 10')
-    if ret != 0:
-        sys.exit(1)
-    ret=os.system('make install')
-    if ret != 0:
-        sys.exit(1)
+PWD=os.getcwd() + "/"
+INS="/build/install/"
+BLD="/build/"
 
-    # LZO
-    path = '../lzo-2.10/build/'
-    if not os.path.isdir(path):
-        os.mkdir(path)
-    os.chdir(path)
-    ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=./install/ ../')
-    if ret != 0:
-        sys.exit(1)
+def buildAndInstall(kernel, component):
+    if component[1] == "CMAKE" :
+        pathINS = PWD + component[0] + INS
+        pathBLD = PWD + component[0] + BLD
+        if not os.path.isdir(pathBLD):
+            os.makedirs(pathBLD)
+        os.chdir(pathBLD)
+        ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../')
+        if ret != 0:
+            sys.exit(1)
 
-    ret=os.system('cmake --build . --target install')
-    if ret != 0:
-        sys.exit(1)
-
-    # SDL2
-    path = '../SDL2-2.0.12/build/'
-    if not os.path.isdir(path):
-        os.mkdir(path)
-    os.chdir(path)
-    ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=./install/ ../')
-    if ret != 0:
-        sys.exit(1)
-
-    ret=os.system('cmake --build . --target install')
-    if ret != 0:
-        sys.exit(1)
-    sys.exit(0)
-
-    # LIBJPEG
-    path = '../../libjpeg-turbo-2.0.5/build/'
-    if not os.path.isdir(path):
-        os.mkdir(path)
-    os.chdir(path)
-    ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=./install/ ../')
-    if ret != 0:
-        sys.exit(1)
-
-    ret=os.system('cmake --build . --target install')
-    if ret != 0:
-        sys.exit(1)
-
-    # ZLIB
-    path = '../../zlib/build/'
-    if not os.path.isdir(path):
-        os.mkdir('../../zlib/build/')
-    os.chdir('../../zlib/build/')
-    ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=./install/ ../')
-    if ret != 0:
-        sys.exit(1)
-    ret=os.system('cmake --build . --target install')
-    if ret != 0:
-        sys.exit(1)
-
+        ret=os.system('cmake --build . --target install')
+        if ret != 0:
+            sys.exit(1)
+    else:
+        pathINS = PWD + component[0] + INS
+        pathBLD = PWD + component[0]
+        if not os.path.isdir(pathINS):
+            os.makedirs(pathINS)
+        os.chdir(pathBLD)
+        ret=os.system( './' + component[1] + ' --prefix=' + pathINS)
+        if ret != 0:
+            sys.exit(1)
+        ret=os.system('make -j 10')
+        if ret != 0:
+            sys.exit(1)
+        ret=os.system('make install')
+        if ret != 0:
+            sys.exit(1)
 
 def normalize_kernel(k):
     if k.lower() == "solaris" or k.lower() == "sun":
@@ -120,14 +84,11 @@ else:
         return v.rstrip('\n')
     kernel = normalize_kernel(backtick("uname -s"))
 
-if kernel == "Linux":
-    execute(kernel)
-elif kernel == "Darwin":
-    execute(kernel)
-    print ("darwin")
-elif kernel == "windows":
-    execute(kernel)
-    print ("windows")
+    components = [["SDL2-2.0.12", "CMAKE"], ["libjpeg-turbo-2.0.5", "CMAKE"], ["openssl", "Configure"],\
+                 ["libpng", "CMAKE"], ["ffmpeg", "configure"], ["lzo-2.10", "CMAKE"], ["zlib", "CMAKE"]]
+
+    for component in components :
+        buildAndInstall(kernel, component)
 
 
 
