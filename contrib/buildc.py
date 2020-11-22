@@ -85,7 +85,7 @@ else:
     kernel = normalize_kernel(backtick("uname -s"))
 
     components = [["SDL2-2.0.12", "CMAKE"], ["libjpeg-turbo-2.0.5", "CMAKE"], ["openssl", "Configure"],\
-                 ["libpng", "CMAKE"], ["ffmpeg", "configure"], ["lzo-2.10", "CMAKE"], ["zlib", "CMAKE"]]
+                 ["libpng-1.6.37", "CMAKE"], ["ffmpeg", "configure"], ["lzo-2.10", "CMAKE"], ["zlib", "CMAKE"]]
 
     for component in components :
         buildAndInstall(kernel, component)

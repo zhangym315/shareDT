@@ -1,5 +1,5 @@
 
-set(PNG_INSTALL ${CMAKE_SOURCE_CONTRIB}/libpng/build/install/)
+set(PNG_INSTALL ${CMAKE_SOURCE_CONTRIB}/libpng-1.6.37/build/install/)
 set(PNG_INCLUDE_DIR ${PNG_INSTALL}/include/)
 set(PNG_LIBRARIES ${PNG_INSTALL}/lib/libpng.a)
 
