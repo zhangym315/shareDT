@@ -84,11 +84,11 @@ else:
         return v.rstrip('\n')
     kernel = normalize_kernel(backtick("uname -s"))
 
-    components = [["SDL2-2.0.12", "CMAKE"], ["libjpeg-turbo-2.0.5", "CMAKE"], ["openssl", "Configure"],\
-                 ["libpng-1.6.37", "CMAKE"], ["ffmpeg", "configure"], ["lzo-2.10", "CMAKE"], ["zlib", "CMAKE"]]
+components = [["SDL2-2.0.12", "CMAKE"], ["libjpeg-turbo-2.0.5", "CMAKE"], ["zlib", "CMAKE"],\
+             ["libpng-1.6.37", "CMAKE"], ["lzo-2.10", "CMAKE"], ["openssl", "Configure"], ["ffmpeg", "configure"]]
 
-    for component in components :
-        buildAndInstall(kernel, component)
+for component in components :
+    buildAndInstall(kernel, component)
 
 
 
