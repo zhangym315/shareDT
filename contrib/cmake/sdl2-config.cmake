@@ -1,0 +1,8 @@
+
+set(SDL2_INSTALL ${CMAKE_SOURCE_CONTRIB}/SDL2-2.0.12/build/install/)
+set(SDL2_INCLUDE_DIR ${SDL2_INSTALL}/include/SDL2)
+set(SDL2_LIBRARIES ${SDL2_INSTALL}/lib/libSDL2.a ${SDL2_INSTALL}/lib/libSDL2main.a)
+set(SDL2_LIBRARY ${SDL2_INSTALL}/lib/libSDL2.a ${SDL2_INSTALL}/lib/libSDL2main.a)
+
+message(STATUS "Found SDL2 at ${SDL2_INSTALL}")
+set(SDL2_FOUND TRUE)
