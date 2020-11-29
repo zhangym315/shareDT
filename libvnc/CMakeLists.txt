@@ -495,7 +495,7 @@ set(LIBVNCSERVER_EXAMPLES
     rotate
     simple
     simple15
-    storepasswd
+#    storepasswd
     vncev
   )
     
