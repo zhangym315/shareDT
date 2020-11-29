@@ -490,7 +490,7 @@ set(LIBVNCSERVER_EXAMPLES
     fontsel
     pnmshow
     pnmshow24
-    regiontest
+#    regiontest
     repeater
     rotate
     simple

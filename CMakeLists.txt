@@ -15,8 +15,8 @@ set(CMAKE_AUTOMOC ON)
 # Instruct CMake to run uic automatically when needed.
 set(CMAKE_AUTOUIC ON)
 # This will find the Qt5 files. You will need a QT5_DIR env variable
-set(ENV{Qt5Widgets_DIR} "${CMAKE_SOURCE_DIR}/contrib/qt515/static-build/lib/cmake/Qt5Widgets")
-find_package(Qt5Widgets REQUIRED) # Equivalent of QT += widgets
+set(Qt5Widgets_DIR "${CMAKE_SOURCE_DIR}/contrib/qt515/static-build/lib/cmake/Qt5Widgets")
+find_package(Qt5Widgets REQUIRED NO_MODULE)
 
 set(SERVERGUI_SOURCES
         src/sgui/main.cpp
@@ -41,7 +41,7 @@ set(WITH_ZLIB ON)
 add_subdirectory(${CMAKE_SOURCE_DIR}/libvnc)
 
 # include Lib
-set(LIBVNC_INCLUDE ${CMAKE_SOURCE_DIR}/contrib/libvnc ${CMAKE_SOURCE_DIR}/contrib/libvnc/libvncserver ${CMAKE_SOURCE_DIR}/contrib/libvnc/common)
+set(LIBVNC_INCLUDE ${CMAKE_SOURCE_DIR}/libvnc ${CMAKE_SOURCE_DIR}/libvnc/libvncserver ${CMAKE_SOURCE_DIR}/libvnc/common)
 
 # add exec file name
 add_definitions(-DSTART_SERVER_EXEC="${START_SERVER}")
@@ -50,10 +50,8 @@ add_definitions(-DSTART_SERVER_EXEC="${START_SERVER}")
 # ${CMAKE_CURRENT_BINARY_DIR}/libvnc/ for the generated rfbconfig.h
 include_directories (
     /usr/local/include/
-    ${CMAKE_BINARY_DIR}/contrib/libvnc/
-    ${CMAKE_SOURCE_DIR}/contrib/libvnc/
-    ${CMAKE_SOURCE_DIR}/contrib/libvnc/libvncserver/
-    ${CMAKE_SOURCE_DIR}/contrib/libvnc/common/
+    ${LIBVNC_INCLUDE}
+    ${CMAKE_BINARY_DIR}/libvnc/
     ${CMAKE_SOURCE_DIR}/src/
     ${CMAKE_SOURCE_DIR}/src/capture/
     ${CMAKE_SOURCE_DIR}/src/util/
@@ -137,9 +135,9 @@ else()
         ${X11_XTest_LIB}
         ${X11_Xinerama_LIB}
         ${CMAKE_THREAD_LIBS_INIT}
+        -ldl
     )
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DwxUSE_THREADS=1 -DLINK_LEXERS -DNO_CXX11_REGEX -DSCI_LEXER -DWXBUILDING
-        -DWX_PRECOMP -D_LIB -D_UNICODE -D__WXGTK2__ -D__WXGTK__ -D__WX__ -DwxUSE_BASE=1 -DwxUSE_GUI=1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DwxUSE_THREADS=1 -DLINK_LEXERS -DNO_CXX11_REGEX -DSCI_LEXER -DWXBUILDING -DWX_PRECOMP -D_LIB -D_UNICODE -D__WXGTK2__ -D__WXGTK__ -D__WX__ -DwxUSE_BASE=1 -DwxUSE_GUI=1")
 endif()
 
 include_directories(
