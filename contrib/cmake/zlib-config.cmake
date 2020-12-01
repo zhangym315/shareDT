@@ -5,7 +5,7 @@ if(WIN32)
     set(ZLIB_LIBRARIES ${ZLIB_INSTALL}/lib/zlibstaticd.lib)
     set(ZLIB_LIBRARY ${ZLIB_LIBRARIES})
 else()
-    set(ZLIB_LIBRARIES ${ZLIB_INSTALL})
+    set(ZLIB_LIBRARIES ${ZLIB_INSTALL}/lib/libz.a)
     set(ZLIB_LIBRARY ${ZLIB_LIBRARIES})
 endif()
 
