@@ -15,7 +15,28 @@ PWD=os.getcwd() + "/"
 INS="/build/install/"
 BLD="/build/"
 
+def buildWindowsOpenssl():
+    pathINS = PWD + component[0] + INS
+    pathBLD = PWD + component[0]
+    if not os.path.isdir(pathBLD):
+        os.makedirs(pathBLD)
+    os.chdir(pathBLD)
+    print("change to:" + pathBLD)
+    ret=os.system('perl Configure VC-WIN64A no-asm --release --prefix=' + pathINS + ' --openssldir=' + pathINS)
+    if ret != 0:
+        sys.exit(1)
+    ret=os.system('nmake')
+    if ret != 0:
+        sys.exit(1)
+    ret=os.system('nmake install')
+    if ret != 0:
+        sys.exit(1)
+
 def buildAndInstall(kernel, component):
+    if kernel == "windows" and component[0] == "openssl":
+        buildWindowsOpenssl()
+        return
+
     if component[1] == "CMAKE" :
         pathINS = PWD + component[0] + INS
         pathBLD = PWD + component[0] + BLD
@@ -85,8 +106,7 @@ else:
     kernel = normalize_kernel(backtick("uname -s"))
 
 components = [["SDL2-2.0.12", "CMAKE"], ["libjpeg-turbo-2.0.5", "CMAKE"], ["zlib", "CMAKE"],\
-             ["libpng-1.6.37", "CMAKE"], ["lzo-2.10", "CMAKE"], ["openssl", "Configure"], ["ffmpeg", "configure"]]
-
+             ["libpng-1.6.37", "CMAKE"], ["lzo-2.10", "CMAKE"], ["openssl", "Configure"]]
 for component in components :
     buildAndInstall(kernel, component)
 

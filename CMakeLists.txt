@@ -16,7 +16,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 # This will find the Qt5 files. You will need a QT5_DIR env variable
 set(Qt5Widgets_DIR "${CMAKE_SOURCE_DIR}/contrib/qt515/static-build/lib/cmake/Qt5Widgets")
-find_package(Qt5Widgets REQUIRED NO_MODULE)
+#find_package(Qt5Widgets REQUIRED NO_MODULE)
 
 set(SERVERGUI_SOURCES
         src/sgui/main.cpp
@@ -28,9 +28,9 @@ set(SERVERGUI_UI
 set(SERVERGUI_TARGET ServerGui)
 
 # This will create you executable
-add_executable(${SERVERGUI_TARGET} ${SERVERGUI_SOURCES} ${SERVERGUI_HEADERS} ${SERVERGUI_UI})
+#add_executable(${SERVERGUI_TARGET} ${SERVERGUI_SOURCES} ${SERVERGUI_HEADERS} ${SERVERGUI_UI})
 # This will link necessary Qt5 libraries to your project
-target_link_libraries(${SERVERGUI_TARGET} Qt5::Widgets)
+#target_link_libraries(${SERVERGUI_TARGET} Qt5::Widgets)
 
 # C/C++ flags
 #set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -Wdeprecated-declarations ")
@@ -178,6 +178,7 @@ set(SERVERGUI_ICONS
         )
 
 # Installing
-install(TARGETS ${SERVERGUI_TARGET} ${START_SERVER} DESTINATION bin)
+#install(TARGETS ${SERVERGUI_TARGET} ${START_SERVER} DESTINATION bin)
+install(TARGETS ${START_SERVER} DESTINATION bin)
 install(FILES ${SERVERGUI_ICONS} DESTINATION images)
 install(DIRECTORY DESTINATION var/run/)
