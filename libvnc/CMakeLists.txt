@@ -45,7 +45,7 @@ option(WITH_GNUTLS "Search for the GnuTLS secure communications library to suppo
 option(WITH_OPENSSL "Search for the OpenSSL cryptography library to support TLS and use as crypto backend" ON)
 option(WITH_SYSTEMD "Search for libsystemd to build with systemd socket activation support" ON)
 option(WITH_GCRYPT "Search for Libgcrypt to use as crypto backend" ON)
-option(WITH_FFMPEG "Search for FFMPEG to build an example VNC to MPEG encoder" ON)
+#option(WITH_FFMPEG "Search for FFMPEG to build an example VNC to MPEG encoder" ON)
 option(WITH_TIGHTVNC_FILETRANSFER "Enable filetransfer if there is pthreads support" ON)
 option(WITH_24BPP "Allow 24 bpp" ON)
 option(WITH_IPv6 "Enable IPv6 Support" ON)
@@ -114,8 +114,8 @@ set(SDL2_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
 find_package(SDL2 REQUIRED NO_MODULE)
 
 #FFMPEG
-set(FFMPEG_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
-find_package(FFMPEG REQUIRED COMPONENTS avformat avcodec avutil swscale)
+#set(FFMPEG_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
+#find_package(FFMPEG REQUIRED COMPONENTS avformat avcodec avutil swscale)
 
 #PNG
 set(PNG_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
@@ -555,12 +555,12 @@ foreach(e ${LIBVNCSERVER_EXAMPLES})
   target_link_libraries(examples_${e} vncserver ${CMAKE_THREAD_LIBS_INIT})
 endforeach(e ${LIBVNCSERVER_EXAMPLES})
 
-foreach(e ${LIBVNCCLIENT_EXAMPLES})
-  add_executable(client_examples_${e} ${LIBVNCCLIEXAMPLE_DIR}/${e}.c ${LIBVNCCLIEXAMPLE_DIR}/${${e}_EXTRA_SOURCES} )
-  set_target_properties(client_examples_${e} PROPERTIES OUTPUT_NAME ${e})
-  set_target_properties(client_examples_${e} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/client_examples)
-  target_link_libraries(client_examples_${e} vncclient ${CMAKE_THREAD_LIBS_INIT} ${SDL2_LIBRARY} ${FFMPEG_LIBRARIES} ${COREAUDIO_LIB})
-endforeach(e ${LIBVNCCLIENT_EXAMPLES})
+#foreach(e ${LIBVNCCLIENT_EXAMPLES})
+#  add_executable(client_examples_${e} ${LIBVNCCLIEXAMPLE_DIR}/${e}.c ${LIBVNCCLIEXAMPLE_DIR}/${${e}_EXTRA_SOURCES} )
+#  set_target_properties(client_examples_${e} PROPERTIES OUTPUT_NAME ${e})
+#  set_target_properties(client_examples_${e} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/client_examples)
+#  target_link_libraries(client_examples_${e} vncclient ${CMAKE_THREAD_LIBS_INIT} ${SDL2_LIBRARY} ${FFMPEG_LIBRARIES} ${COREAUDIO_LIB})
+#endforeach(e ${LIBVNCCLIENT_EXAMPLES})
 
 #
 # them tests
