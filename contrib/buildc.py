@@ -15,18 +15,39 @@ PWD=os.getcwd() + "/"
 INS="/build/install/"
 BLD="/build/"
 
+def buildWindowsOpenssl():
+    pathINS = PWD + component[0] + INS
+    pathBLD = PWD + component[0]
+    if not os.path.isdir(pathBLD):
+        os.makedirs(pathBLD)
+    os.chdir(pathBLD)
+    print("change to:" + pathBLD)
+    ret=os.system('perl Configure VC-WIN64A no-asm --release --prefix=' + pathINS + ' --openssldir=' + pathINS)
+    if ret != 0:
+        sys.exit(1)
+    ret=os.system('nmake')
+    if ret != 0:
+        sys.exit(1)
+    ret=os.system('nmake install')
+    if ret != 0:
+        sys.exit(1)
+
 def buildAndInstall(kernel, component):
+    if kernel == "windows" and component[0] == "openssl":
+        buildWindowsOpenssl()
+        return
+
     if component[1] == "CMAKE" :
         pathINS = PWD + component[0] + INS
         pathBLD = PWD + component[0] + BLD
         if not os.path.isdir(pathBLD):
             os.makedirs(pathBLD)
         os.chdir(pathBLD)
-        ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../')
+        ret=os.system('cmake -A x64 -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../')
         if ret != 0:
             sys.exit(1)
 
-        ret=os.system('cmake --build . --target install')
+        ret=os.system('cmake --build . --target install --config Release')
         if ret != 0:
             sys.exit(1)
     else:
@@ -84,11 +105,10 @@ else:
         return v.rstrip('\n')
     kernel = normalize_kernel(backtick("uname -s"))
 
-    components = [["SDL2-2.0.12", "CMAKE"], ["libjpeg-turbo-2.0.5", "CMAKE"], ["openssl", "Configure"],\
-                 ["libpng-1.6.37", "CMAKE"], ["ffmpeg", "configure"], ["lzo-2.10", "CMAKE"], ["zlib", "CMAKE"]]
-
-    for component in components :
-        buildAndInstall(kernel, component)
+components = [["SDL2-2.0.12", "CMAKE"], ["libjpeg-turbo-2.0.5", "CMAKE"], ["zlib", "CMAKE"],\
+             ["libpng-1.6.37", "CMAKE"], ["lzo-2.10", "CMAKE"], ["openssl", "Configure"]]
+for component in components :
+    buildAndInstall(kernel, component)
 
 
 
