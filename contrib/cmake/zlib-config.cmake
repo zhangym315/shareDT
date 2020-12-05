@@ -2,7 +2,7 @@
 set(ZLIB_INSTALL ${CMAKE_SOURCE_CONTRIB}/zlib/build/install/)
 set(ZLIB_INCLUDE_DIR ${ZLIB_INSTALL}/include/)
 if(WIN32)
-    set(ZLIB_LIBRARIES ${ZLIB_INSTALL}/lib/zlibstaticd.lib)
+    set(ZLIB_LIBRARIES ${ZLIB_INSTALL}/lib/zlibstaticd.lib ${ZLIB_INSTALL}/lib/zlibd.lib)
     set(ZLIB_LIBRARY ${ZLIB_LIBRARIES})
 else()
     set(ZLIB_LIBRARIES ${ZLIB_INSTALL}/lib/libz.a)

@@ -46,6 +46,11 @@ set(LIBVNC_INCLUDE ${CMAKE_SOURCE_DIR}/libvnc ${CMAKE_SOURCE_DIR}/libvnc/libvncs
 # add exec file name
 add_definitions(-DSTART_SERVER_EXEC="${START_SERVER}")
 
+#zlib
+set(CMAKE_SOURCE_CONTRIB_CMAKE ${CMAKE_SOURCE_CONTRIB}/cmake/)
+set(ZLIB_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
+find_package(ZLIB REQUIRED NO_MODULE)
+
 # include headers
 # ${CMAKE_CURRENT_BINARY_DIR}/libvnc/ for the generated rfbconfig.h
 include_directories (
@@ -57,6 +62,7 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/src/util/
     ${CMAKE_SOURCE_DIR}/contrib/libwxWidgets/include/
     ${CMAKE_BINARY_DIR}/lib/
+    ${ZLIB_INCLUDE_DIR}
 )
 
 set(SHAREDT_SRC ${CMAKE_SOURCE_DIR}/src)
@@ -66,7 +72,7 @@ set(CAPTURE_SRC
     ${CMAKE_SOURCE_DIR}/src/capture/SamplesProvider.cpp
     )
 
-# platform dependent settings
+# platform dependent settingsliblzo2
 if(WIN32)
     set(${PROJECT_NAME}_PLATFORM_LIBS Dwmapi DXGI)
     add_definitions(-DNOMINMAX)
