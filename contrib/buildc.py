@@ -43,11 +43,11 @@ def buildAndInstall(kernel, component):
         if not os.path.isdir(pathBLD):
             os.makedirs(pathBLD)
         os.chdir(pathBLD)
-        ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../')
+        ret=os.system('cmake -A x64 -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../')
         if ret != 0:
             sys.exit(1)
 
-        ret=os.system('cmake --build . --target install')
+        ret=os.system('cmake --build . --target install --config Release')
         if ret != 0:
             sys.exit(1)
     else:
