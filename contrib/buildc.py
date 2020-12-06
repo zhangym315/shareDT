@@ -43,7 +43,11 @@ def buildAndInstall(kernel, component):
         if not os.path.isdir(pathBLD):
             os.makedirs(pathBLD)
         os.chdir(pathBLD)
-        ret=os.system('cmake -A x64 -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../')
+        if kernel == "windows" :
+            ret=os.system('cmake -A x64 -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../')
+        else:
+            ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../')
+
         if ret != 0:
             sys.exit(1)
 
