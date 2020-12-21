@@ -548,12 +548,12 @@ endif(SDL2_FOUND)
 #endif(FFMPEG_FOUND)
 
 
-foreach(e ${LIBVNCSERVER_EXAMPLES})
-  add_executable(examples_${e} ${LIBVNCSRVEXAMPLE_DIR}/${e}.c)
-  set_target_properties(examples_${e} PROPERTIES OUTPUT_NAME ${e})
-  set_target_properties(examples_${e} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/examples)
-  target_link_libraries(examples_${e} vncserver ${CMAKE_THREAD_LIBS_INIT})
-endforeach(e ${LIBVNCSERVER_EXAMPLES})
+#foreach(e ${LIBVNCSERVER_EXAMPLES})
+#  add_executable(examples_${e} ${LIBVNCSRVEXAMPLE_DIR}/${e}.c)
+#  set_target_properties(examples_${e} PROPERTIES OUTPUT_NAME ${e})
+#  set_target_properties(examples_${e} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/examples)
+#  target_link_libraries(examples_${e} vncserver ${CMAKE_THREAD_LIBS_INIT})
+#endforeach(e ${LIBVNCSERVER_EXAMPLES})
 
 #foreach(e ${LIBVNCCLIENT_EXAMPLES})
 #  add_executable(client_examples_${e} ${LIBVNCCLIEXAMPLE_DIR}/${e}.c ${LIBVNCCLIEXAMPLE_DIR}/${${e}_EXTRA_SOURCES} )
@@ -570,62 +570,62 @@ if(UNIX)
     set(ADDITIONAL_TEST_LIBS m)
 endif(UNIX)
 
-set(SIMPLETESTS
-   cargstest
-   copyrecttest
-)
+#set(SIMPLETESTS
+#   cargstest
+#   copyrecttest
+#)
+#
+#if(CMAKE_USE_PTHREADS_INIT)
+#  set(SIMPLETESTS
+#      ${SIMPLETESTS}
+#      encodingstest
+#     )
+#endif(CMAKE_USE_PTHREADS_INIT)
 
-if(CMAKE_USE_PTHREADS_INIT)
-  set(SIMPLETESTS
-      ${SIMPLETESTS}
-      encodingstest
-     )
-endif(CMAKE_USE_PTHREADS_INIT)
+#foreach(t ${SIMPLETESTS})
+#  add_executable(test_${t} ${TESTS_DIR}/${t}.c)
+#  set_target_properties(test_${t} PROPERTIES OUTPUT_NAME ${t})
+#  set_target_properties(test_${t} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test)
+#  target_link_libraries(test_${t} vncserver vncclient ${ADDITIONAL_TEST_LIBS})
+#endforeach(t ${SIMPLETESTS})
 
-foreach(t ${SIMPLETESTS})
-  add_executable(test_${t} ${TESTS_DIR}/${t}.c)
-  set_target_properties(test_${t} PROPERTIES OUTPUT_NAME ${t})
-  set_target_properties(test_${t} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test)
-  target_link_libraries(test_${t} vncserver vncclient ${ADDITIONAL_TEST_LIBS})
-endforeach(t ${SIMPLETESTS})
+#if(WITH_JPEG AND FOUND_LIBJPEG_TURBO)
+#  add_executable(test_tjunittest
+#                 ${TESTS_DIR}/tjunittest.c
+#                 ${TESTS_DIR}/tjutil.c
+#                 ${TESTS_DIR}/tjutil.h
+#                 ${COMMON_DIR}/turbojpeg.c
+#                 ${COMMON_DIR}/turbojpeg.h
+#                )
+#  set_target_properties(test_tjunittest PROPERTIES OUTPUT_NAME tjunittest)
+#  set_target_properties(test_tjunittest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test)
+#  target_link_libraries(test_tjunittest vncserver vncclient ${ADDITIONAL_TEST_LIBS})
+#
+#  add_executable(test_tjbench
+#                 ${TESTS_DIR}/tjbench.c
+#                 ${TESTS_DIR}/tjutil.c
+#                 ${TESTS_DIR}/tjutil.h
+#                 ${TESTS_DIR}/bmp.c
+#                 ${TESTS_DIR}/bmp.h
+#                 ${COMMON_DIR}/turbojpeg.c
+#                 ${COMMON_DIR}/turbojpeg.h
+#                )
+#  set_target_properties(test_tjbench PROPERTIES OUTPUT_NAME tjbench)
+#  set_target_properties(test_tjbench PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test)
+#  target_link_libraries(test_tjbench vncserver vncclient ${ADDITIONAL_TEST_LIBS})
+#
+#endif(WITH_JPEG AND FOUND_LIBJPEG_TURBO)
 
-if(WITH_JPEG AND FOUND_LIBJPEG_TURBO)
-  add_executable(test_tjunittest
-                 ${TESTS_DIR}/tjunittest.c
-                 ${TESTS_DIR}/tjutil.c
-                 ${TESTS_DIR}/tjutil.h
-                 ${COMMON_DIR}/turbojpeg.c
-                 ${COMMON_DIR}/turbojpeg.h
-                )
-  set_target_properties(test_tjunittest PROPERTIES OUTPUT_NAME tjunittest)
-  set_target_properties(test_tjunittest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test)
-  target_link_libraries(test_tjunittest vncserver vncclient ${ADDITIONAL_TEST_LIBS})
-
-  add_executable(test_tjbench
-                 ${TESTS_DIR}/tjbench.c
-                 ${TESTS_DIR}/tjutil.c
-                 ${TESTS_DIR}/tjutil.h
-                 ${TESTS_DIR}/bmp.c
-                 ${TESTS_DIR}/bmp.h
-                 ${COMMON_DIR}/turbojpeg.c
-                 ${COMMON_DIR}/turbojpeg.h
-                )
-  set_target_properties(test_tjbench PROPERTIES OUTPUT_NAME tjbench)
-  set_target_properties(test_tjbench PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test)
-  target_link_libraries(test_tjbench vncserver vncclient ${ADDITIONAL_TEST_LIBS})
-
-endif(WITH_JPEG AND FOUND_LIBJPEG_TURBO)
-
-if(LIBVNCSERVER_WITH_WEBSOCKETS)
-  add_executable(test_wstest
-    ${TESTS_DIR}/wstest.c
-    ${TESTS_DIR}/wstestdata.inc
-    )
-  set_target_properties(test_wstest PROPERTIES OUTPUT_NAME wstest)
-  set_target_properties(test_wstest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test)
-  target_link_libraries(test_wstest vncserver vncclient ${ADDITIONAL_TEST_LIBS})
-endif(LIBVNCSERVER_WITH_WEBSOCKETS)
-
+#if(LIBVNCSERVER_WITH_WEBSOCKETS)
+#  add_executable(test_wstest
+#    ${TESTS_DIR}/wstest.c
+#    ${TESTS_DIR}/wstestdata.inc
+#    )
+#  set_target_properties(test_wstest PROPERTIES OUTPUT_NAME wstest)
+#  set_target_properties(test_wstest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test)
+#  target_link_libraries(test_wstest vncserver vncclient ${ADDITIONAL_TEST_LIBS})
+#endif(LIBVNCSERVER_WITH_WEBSOCKETS)
+#
 add_test(NAME cargs COMMAND test_cargstest)
 if(FOUND_LIBJPEG_TURBO)
     add_test(NAME turbojpeg COMMAND test_tjunittest)

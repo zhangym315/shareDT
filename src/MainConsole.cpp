@@ -13,6 +13,7 @@
 #include "Path.h"
 #include "ReadWriteFD.h"
 #include "Sock.h"
+#include "ExportImages.h"
 
 #include <fcntl.h>
 #ifdef __SHAREDT_WIN__
@@ -412,7 +413,7 @@ int main(int argc, char** argv)
     static const struct {
         const char *name;
         int (*func)(const char **extra,
-                     const struct cmdConf *cconf);
+                    const struct cmdConf *cconf);
     } cmdHandlers[] = {
             { "start" ,     &mainStart   },     /* start service         */
             { "stop"  ,     &mainStop    },     /* stop  service         */
@@ -421,7 +422,8 @@ int main(int argc, char** argv)
             { "newCapture", &mainNewCapture },  /* new capture process   */
             { "show",       &mainShow    },     /* command show win      */
             { "nodaemon",   &noDaemon    },     /* run in no daemon mode */
-            { "status",     &status      }      /* run in no daemon mode */
+            { "status",     &status      },     /* run in no daemon mode */
+            { "export",     &mainExport  }      /* cli to export images  */
 #ifdef  __SHAREDT_WIN__
            ,{ "install",    &installService },  /* install service       */
             { "service",    &startService },    /* from scm service      */

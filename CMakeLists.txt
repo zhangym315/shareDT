@@ -60,6 +60,7 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/src/
     ${CMAKE_SOURCE_DIR}/src/capture/
     ${CMAKE_SOURCE_DIR}/src/util/
+    ${CMAKE_SOURCE_DIR}/src/cli/
     ${CMAKE_SOURCE_DIR}/contrib/libwxWidgets/include/
     ${CMAKE_BINARY_DIR}/lib/
     ${ZLIB_INCLUDE_DIR}
@@ -167,6 +168,7 @@ add_executable(${START_SERVER}
         ${SHAREDT_SRC}/util/ReadWriteFD.cpp
         ${SHAREDT_SRC}/util/Sock.cpp
         ${SHAREDT_SRC}/util/Pid.c
+        ${SHAREDT_SRC}/cli/ExportImages.cpp
         ${CAPTURE_SRC}
         )
 #target_link_libraries(${START_SERVER} vncserver screen_capture_lite ${${PROJECT_NAME}_PLATFORM_LIBS} )

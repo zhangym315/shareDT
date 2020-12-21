@@ -2,3 +2,4 @@
 .gitattributes
 .vscode*
 contrib/qt515/*
+contrib/openssl/*
