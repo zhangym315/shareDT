@@ -412,8 +412,7 @@ int main(int argc, char** argv)
 
     static const struct {
         const char *name;
-        int (*func)(const char **extra,
-                    const struct cmdConf *cconf);
+        int (*func)(int argc, const char ** argv);
     } cmdHandlers[] = {
             { "start" ,     &mainStart   },     /* start service         */
             { "stop"  ,     &mainStop    },     /* stop  service         */
