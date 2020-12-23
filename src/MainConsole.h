@@ -8,6 +8,7 @@
 #define SHAREDT_SERVER_COMMAND_NEWCAPTURE "newCapture"
 #define SHAREDT_SERVER_COMMAND_SHOW       "show"
 #define SHAREDT_SERVER_COMMAND_STATUS     "status"
+#define SHAREDT_SERVER_COMMAND_EXPORT     "export"
 
 
 struct cmdConf {

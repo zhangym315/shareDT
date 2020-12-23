@@ -67,7 +67,7 @@ class StartCapture {
     void startCaptureServer();
 
     enum SType { S_NONE, S_WIN_ALL, S_WIN_NAME, S_MONITOR };
-    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_STOP_ALL_SC, C_RESTART, C_SHOW, C_STATUS, C_NONE };
+    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_STOP_ALL_SC, C_RESTART, C_SHOW, C_STATUS, C_EXPORT, C_NONE };
 
     bool setWorkingDirectory();
     void initDaemon();
@@ -80,11 +80,13 @@ class StartCapture {
     StartCapture::CType getCType();
     void  removeAlivePath() const;
 
-    const String & getUserName() const { return _user; }
-    const String & getCapServerPath() const { return _capturePath; }
+    [[nodiscard]] const String & getUserName() const { return _user; }
+    [[nodiscard]] const String & getCapServerPath() const { return _capturePath; }
 
-    bool isDaemon() const { return _daemon; }
-    int  getPort()  const { return _vncPort; }
+    [[nodiscard]] bool isDaemon() const { return _daemon; }
+    [[nodiscard]] int  getPort()  const { return _vncPort; }
+
+    [[nodiscard]] const StringVec & getUnrecognizedOptions() const { return _unrecognizedOptions; }
 
   private:
     void Usage();
@@ -122,10 +124,12 @@ class StartCapture {
     ScopedPtr<ReadWriteFDThread> _listenMMP;
 
     CType            _ctype;  /* command type, newcaptre, start, stop ... */
-    int              _vncPort;
+    int              _vncPort{};
+
+    StringVec        _unrecognizedOptions;
 
     /* rbf related */
-    rfbScreenInfoPtr _rfbserver;
+    rfbScreenInfoPtr _rfbserver{};
 };
 
 #endif

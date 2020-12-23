@@ -162,7 +162,7 @@ static int getValueWithQuote(vector<String>::const_iterator start,
 int StartCapture::parseArgs(const vector<String> & args)
 {
     /* parse argument that belongs to StartServer */
-    for (vector<String>::const_iterator i = args.begin(); i != args.end(); ++i) {
+    for (auto i = args.begin(); i != args.end(); ++i) {
         if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
             _ctype = C_NEWCAPTURE;
         } else if (*i == SHAREDT_SERVER_COMMAND_STOP) {
@@ -178,6 +178,8 @@ int StartCapture::parseArgs(const vector<String> & args)
             _ctype = C_SHOW;
         } else if (*i == SHAREDT_SERVER_COMMAND_STATUS) {
             _ctype = C_STATUS;
+        } else if (*i == SHAREDT_SERVER_COMMAND_EXPORT) {
+            _ctype = C_EXPORT;
         }
         else if (*i == "--help") {
             Usage ();
@@ -265,6 +267,7 @@ int StartCapture::parseArgs(const vector<String> & args)
             }
         }
         else {
+            _unrecognizedOptions.emplace_back(*i);
         }
     }
 
@@ -649,5 +652,4 @@ void StartCapture::startCaptureServer()
     }
 
     removeAlivePath();
-    return;
 }

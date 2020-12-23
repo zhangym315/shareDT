@@ -203,7 +203,7 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 }
 
 /* main service fork/create new process as the capture server */
-int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)\
+int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
     StartCapture cap;
     int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
@@ -412,7 +412,7 @@ int main(int argc, char** argv)
 
     static const struct {
         const char *name;
-        int (*func)(int argc, const char ** argv);
+        int (*func)(const char **extra, const struct cmdConf *cconf);
     } cmdHandlers[] = {
             { "start" ,     &mainStart   },     /* start service         */
             { "stop"  ,     &mainStop    },     /* stop  service         */
