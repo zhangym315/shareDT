@@ -84,7 +84,7 @@ void CircleWriteThread::mainImp()
     } else {
         _isReady = true;
         FrameBuffer * fb;
-        while(true) {
+        while ( true ) {
             fb = _fb->getToWrite();
             if(fb) {
                 if(!WindowsFrame(fb)) { fb->setInvalid(); }

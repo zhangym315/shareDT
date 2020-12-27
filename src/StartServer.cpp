@@ -299,30 +299,30 @@ bool StartCapture::setWorkingDirectory()
 String & StartCapture::setAndGetWID()
 {
     _wID.clear ();
-    /* prefix */
-    _wID.append (ENUM_TO_STR(_type, SPTypePrefix));
-    _wID.append ("_");
-    _wID.append (std::to_string (std::time (nullptr)));
+
+    if ( _ctype == StartCapture::C_EXPORT ) {
+        _wID.append ("EXPORT_");
+    }
+
+    _wID.append (ENUM_TO_STR(_type, SPTypePrefix) +
+                 "_" +
+                 std::to_string (std::time (nullptr)));
 
     if (_type == SP_PARTIAL)
     {
         char s[] = "-";
-        _wID.append ("_BD");
-        _wID.append (_cap._bounds.toString (s));
+        _wID.append ("_BD" + _cap._bounds.toString (s));
     }
     else if (_type == SP_WINDOW) {
         if (_pid != -1) {
-            _wID.append ("_PID");
-            _wID.append (std::to_string (_pid));
+            _wID.append ("_PID" + std::to_string (_pid));
         }
         else {
-            _wID.append ("_HID");
-            _wID.append (std::to_string (_hdler));
+            _wID.append ("_HID" + std::to_string (_hdler));
         }
     }
     else if (_type == SP_MONITOR) {
-        _wID.append ("_ID");
-        _wID.append (std::to_string (_monID));
+        _wID.append ("_ID" + std::to_string (_monID));
     }
     else
         _wID.append ("_INVALIDID");
@@ -426,7 +426,7 @@ int StartCapture::init(int argc, char *argv[])
     if(ret != RETURN_CODE_SUCCESS)
         return ret;
 
-    if(_daemon)
+    if( _daemon )
         initDaemon();
 
     /* create ScreenProvider */
@@ -453,18 +453,22 @@ int StartCapture::init(int argc, char *argv[])
         return RETURN_CODE_INVALID_ARG;
     }
 
+    return RETURN_CODE_SUCCESS;
+}  /* end of StartCapture init/constructor */
+
+int StartCapture::initRFBServer(int argc, char *argv[])
+{
     /* init rfb server */
     _rfbserver = rfbGetScreen(&argc, argv,
-            _sp->getBounds ().getWidth (),
-            _sp->getBounds ().getHeight(), 8, 4, 4);
+                              _sp->getBounds ().getWidth (),
+                              _sp->getBounds ().getHeight(), 8, 4, 4);
     if (!_rfbserver) {
         LOGGER.error() << "Failed to create RFB server";
         return RETURN_CODE_INVALID_RFB;
     }
     _rfbserver->desktopName = SERVERNAME;
-
     return RETURN_CODE_SUCCESS;
-}  /* end of StartCapture init/constructor */
+}
 
 int  StartCapture::parseType ()
 {
@@ -588,8 +592,10 @@ void StartCapture::startCaptureServer()
     int preConnected = 0;
     int currentConnected = 0;
 
-    if (_sp == NULL)
+    if (_sp == NULL) {
         LOGGER.error() << "Failed to start server";
+        return ;
+    }
 
     if(!_sp->startSample()) {
         LOGGER.error() << "Failed to start SampleProvider" ;
@@ -612,7 +618,7 @@ void StartCapture::startCaptureServer()
 
     /* loop through events */
     rfbMarkRectAsModified(_rfbserver, 0, 0,
-        _sp->getWidth(), _sp->getHeight());
+                         _sp->getWidth(), _sp->getHeight());
 
     LOGGER.info() << "Started CaptureServer" ;
     while (rfbIsActive(_rfbserver) && _isServerRunning)
@@ -648,7 +654,7 @@ void StartCapture::startCaptureServer()
         _rfbserver->frameBuffer = (char *) fb->getData();
 
         rfbMarkRectAsModified(_rfbserver, 0, 0,
-            _sp->getWidth(), _sp->getWidth());
+                            _sp->getWidth(), _sp->getWidth());
     }
 
     removeAlivePath();

@@ -51,6 +51,7 @@ static int mainInform(const char * command, const struct cmdConf * conf)
 
 static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
 {
+    (void) cmdArg;
     if(conf->argc == 2)
     {
         fprintf(stdout, "Starting shareDTServer\n");
@@ -113,6 +114,7 @@ static int mainStart (const char ** cmdArg, const struct cmdConf * conf)
 
 static int mainStop (const char ** cmdArg, const struct cmdConf * conf)
 {
+    (void) cmdArg;
     if(!setMainProcessServiceHome(conf) ||
        !checkMainServiceStarted())
         return RETURN_CODE_INTERNAL_ERROR;
@@ -205,8 +207,11 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 /* main service fork/create new process as the capture server */
 int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
+    (void) cmdArg;
     StartCapture cap;
-    int ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
+    char ** argv = const_cast<char **>(conf->argv);
+    int ret = cap.init(conf->argc, argv) ||
+              cap.initRFBServer(conf->argc, argv);
     Path alivePath(cap.getAlivePath(), std::fstream::out);
 
     LOGGER.info() << "Capture Server init finished with ret: " << ret;
@@ -239,6 +244,7 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 
 static int mainShow (const char ** cmdArg, const struct cmdConf * conf)
 {
+    (void) cmdArg;
     StartCapture cap;
     cap.init(conf->argc, const_cast<char **>(conf->argv));
     return RETURN_CODE_SUCCESS;
@@ -246,9 +252,12 @@ static int mainShow (const char ** cmdArg, const struct cmdConf * conf)
 
 static int noDaemon (const char ** cmdArg, const struct cmdConf * conf)
 {
+    (void) cmdArg;
     int ret;
     StartCapture cap;
-    ret = cap.init(conf->argc, const_cast<char **>(conf->argv));
+    char ** argv = const_cast<char **>(conf->argv);
+    ret = cap.init(conf->argc, argv) ||
+          cap.initRFBServer(conf->argc, argv);
 
     /*
      * If RETURN_CODE_SUCCESS_SHO show window handler
@@ -267,6 +276,7 @@ static int noDaemon (const char ** cmdArg, const struct cmdConf * conf)
 
 static int status (const char ** cmdArg, const struct cmdConf * conf)
 {
+    (void) cmdArg;
 #ifdef __SHAREDT_WIN__
     String commandPath;
     TCHAR szPath[MAX_PATH];

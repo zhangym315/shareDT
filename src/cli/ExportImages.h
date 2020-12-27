@@ -6,21 +6,18 @@
 
 extern int mainExport(const char ** cmdArg, const struct cmdConf * conf);
 
-struct ExportImagesOptions {
-    ExportImagesOptions() : frequency(10), format(EXPORT_INVALID) { }
-
-    unsigned int frequency;
-    enum Format { EXPORT_RGB, EXPORT_YUV, EXPORT_INVALID};
-    Format       format;
-};
-
 class ExportImages final : public StartCapture {
+    enum Format { EXPORT_RGB, EXPORT_YUV, EXPORT_INVALID};
   public:
+    ExportImages() : _frequency(10), _format(EXPORT_INVALID) { }
     ExportImages(int argc, char ** argv);
+
+    int startExportImages();
 
   private:
     void parseExportImagesOptions();
-    ExportImagesOptions _option;
+    unsigned int _frequency;
+    Format       _format;
 };
 
 #endif //_EXPORTIMAGES_H_

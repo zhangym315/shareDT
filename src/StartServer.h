@@ -20,10 +20,10 @@
 
 #define RETURN_CODE_SUCCESS      0
 #define RETURN_CODE_SUCCESS_SHO  1
-#define RETURN_CODE_INVALID_RFB -1
-#define RETURN_CODE_INVALID_ARG -2
-#define RETURN_CODE_INTERNAL_ERROR -3
-#define RETURN_CODE_SERVICE_ERROR  -4
+#define RETURN_CODE_INVALID_RFB  2
+#define RETURN_CODE_INVALID_ARG  4
+#define RETURN_CODE_INTERNAL_ERROR 8
+#define RETURN_CODE_SERVICE_ERROR  16
 
 #define CAPTURE_STOPPING "STOPPING"
 
@@ -63,6 +63,7 @@ class StartCapture {
     int init(int argc, char *argv[]) ;
     int init() { return init(0, NULL); }
     int initParsing(int argc, char * argv[]);
+    int initRFBServer(int argc, char *argv[]);
     int getVNCClientCount(struct _rfbClientRec* head);
     void startCaptureServer();
 
@@ -87,6 +88,8 @@ class StartCapture {
     [[nodiscard]] int  getPort()  const { return _vncPort; }
 
     [[nodiscard]] const StringVec & getUnrecognizedOptions() const { return _unrecognizedOptions; }
+
+    ScreenProvider * getScreenProvide() { return _sp; }
 
   private:
     void Usage();
