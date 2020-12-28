@@ -57,7 +57,7 @@ class StartCapture {
   public:
     StartCapture() : _pid(-1), _hdler(0), _show(S_NONE),
          _type(SP_NULL), _sp(NULL), _monID(0), _daemon(false),
-         _ctype(C_NONE) { }
+         _ctype(C_NONE), _frequency(DEFAULT_SAMPLE_PROVIDER) { }
     ~StartCapture();
 
     int init(int argc, char *argv[]) ;
@@ -91,6 +91,10 @@ class StartCapture {
 
     ScreenProvider * getScreenProvide() { return _sp; }
 
+  protected:
+    ScreenProvider * _sp;     /* screen provider */
+    unsigned int     _frequency;
+
   private:
     void Usage();
     int parseArgs(const vector<String> & args);
@@ -112,7 +116,6 @@ class StartCapture {
     } _cap;
 
     SPType           _type;
-    ScreenProvider * _sp;     /* screen provider */
     String           _name;   /* captured named  */
     Pid              _pid;    /* for window capture, the process id we want to capture */
     size_t           _hdler;  /* for window capture, the handler id we want to capture */

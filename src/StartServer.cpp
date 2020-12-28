@@ -265,6 +265,12 @@ int StartCapture::parseArgs(const vector<String> & args)
             {
                 _vncPort = std::atoi((++i)->c_str());
             }
+        } else if ( (*i) == "--frequency" ) {
+            _frequency = stoi(*(++i));
+            if ( _frequency < 0 || _frequency > 1000 ) {
+                std::cerr << "Invalid value for --frequency: " << _frequency << std::endl;
+                return RETURN_CODE_INVALID_ARG;
+            }
         }
         else {
             _unrecognizedOptions.emplace_back(*i);
@@ -431,16 +437,16 @@ int StartCapture::init(int argc, char *argv[])
 
     /* create ScreenProvider */
     if (_type == SP_PARTIAL) {
-        _sp = new ScreenProviderPartial(_cap._bounds);
+        _sp = new ScreenProviderPartial(_cap._bounds, _frequency);
     }
     else if (_type == SP_WINDOW) {
         if(_pid == -1)
-            _sp = new ScreenProviderWindow(_hdler);
+            _sp = new ScreenProviderWindow(_hdler, _frequency);
         else
-            _sp = new ScreenProviderWindow(_pid);
+            _sp = new ScreenProviderWindow(_pid, _frequency);
     }
     else if (_type == SP_MONITOR) {
-        _sp = new ScreenProviderMonitor(_monID);
+        _sp = new ScreenProviderMonitor(_monID, _frequency);
     }
     else if (_type == SP_NULL) {
         Usage();

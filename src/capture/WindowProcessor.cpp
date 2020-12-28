@@ -2,7 +2,8 @@
 #include <assert.h>
 #include "WindowProcessor.h"
 
-void WindowVectorProvider::init() {
+void WindowVectorProvider::init()
+{
     /* no need to initialized */
     if(_pid == 0) {
         _wins.clear();
@@ -25,8 +26,8 @@ void WindowVectorProvider::init() {
  * Running under new thread to check if
  *   new window is created for process _pid
  */
-void WindowVectorProvider::mainImp() {
-
+void WindowVectorProvider::mainImp()
+{
     while(1) {
         /* sleep for amount */
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
@@ -34,7 +35,8 @@ void WindowVectorProvider::mainImp() {
     }
 }
 
-void WindowVectorProvider::getWinByPid(Pid pid, CapWindow & win){
+void WindowVectorProvider::getWinByPid(Pid pid, CapWindow & win)
+{
     win.clear();
     int offsetX = INT32_MAX;
     int offsetY = INT32_MAX;
@@ -60,7 +62,8 @@ void WindowVectorProvider::getWinByPid(Pid pid, CapWindow & win){
     return;
 }
 
-void WindowVectorProvider::getWinByHandler(size_t hd, CapWindow & win){
+void WindowVectorProvider::getWinByHandler(size_t hd, CapWindow & win)
+{
     win.clear();
     for (WindowVector::iterator it = _wins.begin(); it < _wins.end(); it++)
     {
@@ -74,7 +77,8 @@ void WindowVectorProvider::getWinByHandler(size_t hd, CapWindow & win){
     return;
 }
 
-void MonitorVectorProvider::init() {
+void MonitorVectorProvider::init()
+{
 
     CapGetMonitors ();
 
@@ -93,8 +97,8 @@ void MonitorVectorProvider::init() {
  * Running under new thread to check if
  *   monitor is created/adjusted/deleted
  */
-void MonitorVectorProvider::mainImp() {
-
+void MonitorVectorProvider::mainImp()
+{
     while(1) {
         /* sleep for amount */
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));

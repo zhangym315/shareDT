@@ -2,8 +2,7 @@
 
 int mainExport(const char ** cmdArg, const struct cmdConf * conf)
 {
-    ExportImages ei(conf->argc, const_cast<char **>(conf->argv));
-
+    ExportImages ei;
     char ** argv = const_cast<char **>(conf->argv);
     if ( ei.init(conf->argc, argv) != RETURN_CODE_SUCCESS)
     {
@@ -11,47 +10,43 @@ int mainExport(const char ** cmdArg, const struct cmdConf * conf)
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
-    std::cout << "Starting to export images for: " << ei.getWID();
+    std::cout << "Starting to export images for: " << ei.getWID() << std::endl;
 
     return ei.startExportImages();
 }
 
-ExportImages::ExportImages(int argc, char ** argv) : ExportImages()
+int ExportImages::init(int argc, char ** argv)
 {
-    if(initParsing(argc,  argv))
-        return;
-    parseExportImagesOptions();
+    if(StartCapture::init(argc,  argv) || parseExportImagesOptions())
+        return RETURN_CODE_INVALID_ARG;
+    return RETURN_CODE_SUCCESS;
 }
 
-void ExportImages::parseExportImagesOptions()
+int ExportImages::parseExportImagesOptions()
 {
     const StringVec & options = getUnrecognizedOptions();
     for (auto i = options.begin(); i != options.end(); ++i) {
-        if ( (*i) == "--frequency" ) {
-            _frequency = stoi(*(++i));
-            continue;
-        } else if ( (*i) == "--format" ) {
+        if ( (*i) == "--format" ) {
             if( *(++i) == "RGB" || *i == "rgb" )
                 _format = ExportImages::EXPORT_RGB;
             else if ( *i == "YUV" || *i == "yuv" )
                 _format = ExportImages::EXPORT_YUV;
-            continue;
         } else if ( (*i) == "--total" ) {
             _total = stoi(*(++i));
-            continue;
         }
     }
+
+    return RETURN_CODE_SUCCESS;
 }
 
 int ExportImages::startExportImages()
 {
-    ScreenProvider *sp = getScreenProvide();
-    if (sp == nullptr){
+    if (_sp == nullptr){
         LOGGER.error() << "Failed to start server";
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
-    if(!sp->startSample()) {
+    if(!_sp->startSample()) {
         LOGGER.error() << "Failed to start SampleProvider" ;
         return RETURN_CODE_INTERNAL_ERROR;
     }
@@ -61,16 +56,24 @@ int ExportImages::startExportImages()
     else if ( _format == ExportImages::EXPORT_RGB ) {
     }
 
-    while ( !sp->isSampleReady() ) {
+    while ( !_sp->isSampleReady() ) {
         std::this_thread::sleep_for(50ms);
     }
     FrameBuffer * fb;
 
-    for ( int i=0 ; i<_total ; i++)
-    {
-        if ( (fb = sp->getFrameBuffer()) == nullptr )
-            continue;
+    _sp->sampleResume();
 
+    std::chrono::microseconds duration(MICROSECONDS_PER_SECOND/_frequency);
+    for ( int i=0 ; i<_total ; )
+    {
+        if ( (fb = _sp->getFrameBuffer()) == nullptr ) {
+            _sp->sampleResume();
+            std::this_thread::sleep_for(duration);
+            continue;
+        }
+
+        i++;
+        std::cout << "SampleProvider returns data: " << i << std::endl;
     }
 
     return RETURN_CODE_SUCCESS;

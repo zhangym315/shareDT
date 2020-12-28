@@ -19,6 +19,9 @@ const static PLATFORM_STATUS PLATFORM = SHAREDT_LINUX;
 const static PLATFORM_STATUS PLATFORM = SHAREDT_UNKNOWN;
 #endif
 
+#define DEFAULT_SAMPLE_PROVIDER 10
+#define MICROSECONDS_PER_SECOND 1000
+
 enum THREAD_STATUS { STOP, START, PAUSE, CONTI, NONE };
 
 class FrameProcessorImpl;
@@ -38,7 +41,7 @@ class FrameProcessorWrap {
     bool isPause() { return _isPause; }
     void setMinFrameDuration(const std::chrono::microseconds & duration);
     void convert();
-    void setMV(CapMonitor * mon);
+    void setMV(CapMonitor * mon, unsigned int frequency);
     void setBD(CapImageRect * bd);
     CapMonitor * getMonitor ();
     bool isPartial();
@@ -70,19 +73,21 @@ class CircleWriteThread : public Thread {
     /* this is final constructor */
     CircleWriteThread(CircWRBuf<FrameBuffer> * fb,
                       std::chrono::milliseconds sp) : _fb(fb),
-                      _status(NONE), _sleeping(sp), Thread(false),
+                      _status(NONE), _duration(sp), Thread(false),
                       _isReady(false), _isPause(true) {}
 
-    CircleWriteThread(CircWRBuf<FrameBuffer> *fb) :
-        CircleWriteThread(fb, std::chrono::milliseconds(1000)) { }
+    CircleWriteThread(CircWRBuf<FrameBuffer> *fb, unsigned int frequency) :
+        CircleWriteThread(fb, std::chrono::milliseconds(MICROSECONDS_PER_SECOND/frequency)) { }
     CircleWriteThread() : CircleWriteThread(nullptr,
-                      std::chrono::milliseconds(1000)) { }
+                      std::chrono::milliseconds(MICROSECONDS_PER_SECOND)) { }
 
     ~CircleWriteThread () {  }
 
     /* monitor capture thread */
     CircleWriteThread(CircWRBuf<FrameBuffer> * fb,
-                      CapMonitor & mon) : CircleWriteThread(fb){
+                      CapMonitor & mon,
+                      unsigned int frequency) : CircleWriteThread(fb, frequency)
+    {
         _mon = &mon;
         _type = SP_MONITOR;
         init() ;
@@ -90,14 +95,18 @@ class CircleWriteThread : public Thread {
 
     /* partial capture thread */
     CircleWriteThread(CircWRBuf<FrameBuffer> * fb,
-                      CapImageRect & rect) : CircleWriteThread(fb){
+                      CapImageRect & rect,
+                      unsigned int frequency) : CircleWriteThread(fb, frequency)
+    {
         _type = SP_PARTIAL;
         init() ;
     }
 
     CircleWriteThread(CircWRBuf<FrameBuffer> * fb,
-                      CapImageRect & rect, CapMonitor & mon) :
-                        CircleWriteThread(fb) {
+                      CapImageRect & rect,
+                      CapMonitor & mon,
+                      unsigned int frequency) : CircleWriteThread(fb, frequency)
+    {
         _type = SP_PARTIAL;
         _bounds = &rect;
         _mon  = &mon;
@@ -106,7 +115,9 @@ class CircleWriteThread : public Thread {
 
     /* window capture thread */
     CircleWriteThread(CircWRBuf<FrameBuffer> * fb,
-                      CapWindow & win) : CircleWriteThread(fb){
+                      CapWindow & win,
+                      unsigned int frequency) : CircleWriteThread(fb, frequency)
+    {
         _type = SP_WINDOW;
         _win  = &win;
         init() ;
@@ -129,7 +140,7 @@ class CircleWriteThread : public Thread {
   private:
     THREAD_STATUS           _status;
     CircWRBuf<FrameBuffer> * _fb;
-    std::chrono::milliseconds _sleeping;
+    std::chrono::milliseconds _duration;
     SPType                _type;
     CapWindow           * _win;
     CapMonitor          * _mon;
@@ -142,32 +153,31 @@ class CircleWriteThread : public Thread {
 /* Provider monitor samples screen */
 class SamplesProvider  {
   public:
-    SamplesProvider(int size, CapMonitor & mon) :
-        _buffer(size), _cwt(&_buffer, mon) {
+    SamplesProvider(int size, CapMonitor & mon, unsigned int frequency) :
+        _buffer(size), _cwt(&_buffer, mon, frequency) {
         if(PLATFORM == SHAREDT_IOS)
-            FrameProcessorWrap::instance()->setMV(&mon);
+            FrameProcessorWrap::instance()->setMV(&mon, frequency);
         else {
         }
     }
 
-    SamplesProvider(int size, CapWindow & win) : _buffer(size), _cwt(&_buffer, win) {
+    SamplesProvider(int size, CapWindow & win, unsigned int frequency) : _buffer(size), _cwt(&_buffer, win, frequency) {
     }
 
-    SamplesProvider(int size, CapImageRect & rect, CapMonitor & mon) :
-        _buffer(size), _cwt(&_buffer, rect, mon) {
+    SamplesProvider(int size, CapImageRect & rect, CapMonitor & mon, unsigned int frequency) :
+        _buffer(size), _cwt(&_buffer, rect, mon, frequency) {
         if(PLATFORM == SHAREDT_IOS) {
-            FrameProcessorWrap::instance()->setMV(&mon);
+            FrameProcessorWrap::instance()->setMV(&mon, frequency);
             FrameProcessorWrap::instance()->setBD(&rect);
         } else {
 
         }
     }
 
-    /* default 10, should be configured */
-    SamplesProvider(CapMonitor & mon) : SamplesProvider(20, mon) { }
-    SamplesProvider(CapWindow  & win) : SamplesProvider(20, win) {
-    }
-    SamplesProvider(CapImageRect & bd, CapMonitor & mon) : SamplesProvider(20, bd, mon) { }
+    /* default 20, should be configured */
+    SamplesProvider(CapMonitor & mon, unsigned int frequency) : SamplesProvider(20, mon, frequency) { }
+    SamplesProvider(CapWindow  & win, unsigned int frequency) : SamplesProvider(20, win, frequency) { }
+    SamplesProvider(CapImageRect & bd, CapMonitor & mon, unsigned int frequency) : SamplesProvider(20, bd, mon, frequency) { }
 
     ~SamplesProvider () {
         _buffer.clear();

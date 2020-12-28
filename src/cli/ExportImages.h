@@ -9,14 +9,14 @@ extern int mainExport(const char ** cmdArg, const struct cmdConf * conf);
 class ExportImages final : public StartCapture {
     enum Format { EXPORT_RGB, EXPORT_YUV, EXPORT_INVALID};
   public:
-    ExportImages() : _frequency(10), _format(EXPORT_INVALID), _total(100) { }
-    ExportImages(int argc, char ** argv);
+    ExportImages() : _format(EXPORT_INVALID), _total(100) { }
+    int init(int argc, char ** argv);
+    ~ExportImages() { }
 
     int startExportImages();
 
   private:
-    void parseExportImagesOptions();
-    unsigned int _frequency;
+    int parseExportImagesOptions();
     Format       _format;
     unsigned int _total;
 };

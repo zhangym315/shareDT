@@ -61,7 +61,7 @@ class ScreenProvider {
 
 class ScreenProviderPartial final : public ScreenProvider {
   public:
-    ScreenProviderPartial(CapImageRect bounds);
+    ScreenProviderPartial(CapImageRect bounds, unsigned int frequency);
     void init() override;
     bool isValid() override { return _bounds.isValid(); }
 
@@ -72,8 +72,8 @@ class ScreenProviderPartial final : public ScreenProvider {
 
 class ScreenProviderWindow final : public ScreenProvider {
   public:
-    ScreenProviderWindow(size_t hd);
-    ScreenProviderWindow(Pid pid);
+    ScreenProviderWindow(size_t hd, unsigned int frequency);
+    ScreenProviderWindow(Pid pid, unsigned int frequency);
     void init() override;
     bool isValid() override { return _win.isValid(); }
 
@@ -85,8 +85,8 @@ class ScreenProviderWindow final : public ScreenProvider {
 
 class ScreenProviderMonitor final : public ScreenProvider {
   public:
-    ScreenProviderMonitor(int id) ;
-    void init() override;
+    ScreenProviderMonitor(int id, unsigned int frequency) ;
+    void init(unsigned int frequency);
 
     bool isValid() override { return _monitor.isValid(); }
 
