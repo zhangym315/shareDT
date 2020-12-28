@@ -36,6 +36,9 @@ void ExportImages::parseExportImagesOptions()
             else if ( *i == "YUV" || *i == "yuv" )
                 _format = ExportImages::EXPORT_YUV;
             continue;
+        } else if ( (*i) == "--total" ) {
+            _total = stoi(*(++i));
+            continue;
         }
     }
 }
@@ -58,11 +61,17 @@ int ExportImages::startExportImages()
     else if ( _format == ExportImages::EXPORT_RGB ) {
     }
 
+    while ( !sp->isSampleReady() ) {
+        std::this_thread::sleep_for(50ms);
+    }
     FrameBuffer * fb;
 
+    for ( int i=0 ; i<_total ; i++)
+    {
+        if ( (fb = sp->getFrameBuffer()) == nullptr )
+            continue;
 
-    /* get frame buffer and sync to clients */
-    sp->getFrameBuffer();
+    }
 
     return RETURN_CODE_SUCCESS;
 }

@@ -551,7 +551,7 @@ void StartCapture::show()
     if (_show == S_MONITOR || _ctype == C_SHOW)
     {
         MonitorVectorProvider mvp(true);
-        std::cout << "Monitor Lists:" << std::endl;
+        std::cout << "\nMonitor Lists:" << std::endl;
         for (CapMonitor mon : mvp.get())
         {
             std::cout << std::fixed << std::setprecision(3)   /* for scale float cout */
