@@ -660,7 +660,7 @@ void StartCapture::startCaptureServer()
         _rfbserver->frameBuffer = (char *) fb->getData();
 
         rfbMarkRectAsModified(_rfbserver, 0, 0,
-                            _sp->getWidth(), _sp->getWidth());
+                            _sp->getWidth(), _sp->getHeight());
     }
 
     removeAlivePath();

@@ -59,22 +59,63 @@ int ExportImages::startExportImages()
     while ( !_sp->isSampleReady() ) {
         std::this_thread::sleep_for(50ms);
     }
-    FrameBuffer * fb;
-
     _sp->sampleResume();
 
     std::chrono::microseconds duration(MICROSECONDS_PER_SECOND/_frequency);
     for ( int i=0 ; i<_total ; )
     {
-        if ( (fb = _sp->getFrameBuffer()) == nullptr ) {
+        if ( (_fb = _sp->getFrameBuffer()) == nullptr ) {
             _sp->sampleResume();
             std::this_thread::sleep_for(duration);
             continue;
         }
+
+        writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_" + std::to_string(i) + ".png");
 
         i++;
         std::cout << "SampleProvider returns data: " << i << std::endl;
     }
 
     return RETURN_CODE_SUCCESS;
+}
+
+void ExportImages::writeToFile(const String & file)
+{
+    int y;
+    unsigned int width = _sp->getWidth();
+    unsigned int height = _sp->getHeight();
+    FILE *fp = fopen(file.c_str(), "wb");
+    if(!fp) return ;
+
+    png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png) abort();
+
+    png_infop info = png_create_info_struct(png);
+    if (!info) abort();
+
+    if (setjmp(png_jmpbuf(png))) abort();
+
+    png_init_io(png, fp);
+
+    png_set_IHDR(
+            png,
+            info,
+            width, height,
+            8,
+            PNG_COLOR_TYPE_RGBA,
+            PNG_INTERLACE_NONE,
+            PNG_COMPRESSION_TYPE_DEFAULT,
+            PNG_FILTER_TYPE_DEFAULT
+        );
+    png_write_info(png, info);
+
+    for ( int i=0 ; i<height ; i++) {
+        png_write_row(png, (png_bytep)(_fb->getData() + i*width*4));
+    }
+
+    png_write_end(png, NULL);
+    fclose(fp);
+
+    png_destroy_write_struct(&png, &info);
+
 }
