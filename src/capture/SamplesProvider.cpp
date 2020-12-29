@@ -6,9 +6,12 @@
 
 FrameProcessorWrap* FrameProcessorWrap::_instance = 0;
 
-FrameProcessorWrap::FrameProcessorWrap() : _duration(std::chrono::microseconds(100)),
-                _fpi(0), _isPause(true), _isReady(false) {
-}
+FrameProcessorWrap::FrameProcessorWrap() :
+                _duration(std::chrono::microseconds(MICROSECONDS_PER_SECOND/DEFAULT_SAMPLE_PROVIDER)),
+                _fpi(0),
+                _isPause(true),
+                _isReady(false)
+{ }
 
 FrameProcessorWrap * FrameProcessorWrap::instance ()
 {
@@ -22,9 +25,10 @@ void FrameProcessorWrap::setCFB(CircWRBuf<FrameBuffer> *fb) {
     _fb = fb;
 }
 
-void FrameProcessorWrap::setMV(CapMonitor * mon) {
+void FrameProcessorWrap::setMV(CapMonitor * mon, unsigned int frequency) {
     _type = SP_MONITOR;
     _monitor = mon;
+    _duration = std::chrono::microseconds(MICROSECONDS_PER_SECOND/frequency);
 }
 
 void FrameProcessorWrap::setBD(CapImageRect * bd) {
@@ -84,13 +88,19 @@ void CircleWriteThread::mainImp()
     } else {
         _isReady = true;
         FrameBuffer * fb;
-        while(true) {
+        while ( true )
+        {
+            auto start = std::chrono::system_clock::now();
             fb = _fb->getToWrite();
             if(fb) {
                 if(!WindowsFrame(fb)) { fb->setInvalid(); }
             } else {
 //                std::cout << "queu is full, pause..." << std::endl;
                 std::this_thread::sleep_for(5ms);
+            }
+            std::chrono::duration<double> diff = std::chrono::system_clock::now() - start;
+            if(_duration > diff) {
+                std::this_thread::sleep_for(_duration - diff);
             }
         }
     }

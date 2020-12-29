@@ -61,7 +61,7 @@ class FrameBuffer {
             *(dst + rowStart + 0) = data[i].R;
 //            *(dst + rowStart + 1) = data[i].G;  G is no need to shift
             *(dst + rowStart + 2) = tmp;
-            *(dst + rowStart + 3) = 50;
+            *(dst + rowStart + 3) = 255;  /* alpha channel */
         }
     }
 

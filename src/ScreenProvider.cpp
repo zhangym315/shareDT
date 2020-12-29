@@ -46,7 +46,7 @@ void ScreenProvider::setWIDAppdx()
 }
 
 /* ScreenProviderPartial */
-ScreenProviderPartial:: ScreenProviderPartial(CapImageRect bounds)
+ScreenProviderPartial:: ScreenProviderPartial(CapImageRect bounds, unsigned int frequency)
         : ScreenProvider(bounds)
 {
     MonitorVectorProvider mvp(true, true);
@@ -54,28 +54,30 @@ ScreenProviderPartial:: ScreenProviderPartial(CapImageRect bounds)
         _bounds.setInvalid();
     }
     else
-    _samp = new SamplesProvider(_bounds, _monitor);
+    _samp = new SamplesProvider(_bounds, _monitor, frequency);
 
 }
 
 void ScreenProviderPartial::init() {
 }
 
-/* ScreenProviderWindow */
-ScreenProviderWindow::ScreenProviderWindow(Pid pid) : ScreenProvider(SP_WINDOW), _pid(pid)
+/* ScreenProviderWindow for pid */
+ScreenProviderWindow::ScreenProviderWindow(Pid pid, unsigned int frequency)
+    : ScreenProvider(SP_WINDOW), _pid(pid)
 {
     WindowVectorProvider wvp(pid);
     wvp.getWinByPid(pid, _win);
-    _samp = new SamplesProvider(_win);
+    _samp = new SamplesProvider(_win, frequency);
     setBounds(0, _win.getWidth(), 0, _win.getHeight());
 }
 
-/* ScreenProviderWindow */
-ScreenProviderWindow::ScreenProviderWindow(size_t hd) : ScreenProvider(SP_WINDOW), _hd(hd)
+/* ScreenProviderWindow for handler */
+ScreenProviderWindow::ScreenProviderWindow(size_t hd, unsigned int frequency)
+    : ScreenProvider(SP_WINDOW), _hd(hd)
 {
     WindowVectorProvider wvp(-1);
     wvp.getWinByHandler(hd, _win);
-    _samp = new SamplesProvider(_win);
+    _samp = new SamplesProvider(_win, frequency);
     setBounds(0, _win.getWidth(), 0, _win.getHeight());
 }
 
@@ -83,18 +85,19 @@ void ScreenProviderWindow::init()
 {
 }
 
-void ScreenProviderMonitor::init()
+void ScreenProviderMonitor::init(unsigned int frequency)
 {
     MonitorVectorProvider mvp(true, true);
     mvp.getMonByID(_id, _monitor);
-    _samp = new SamplesProvider(_monitor);
+    _samp = new SamplesProvider(_monitor, frequency);
     setBounds(0, _monitor.getOrgWidth(), 0, _monitor.getOrgHeight());
 }
 
-ScreenProviderMonitor::ScreenProviderMonitor(int id) : ScreenProvider(SP_MONITOR)
+ScreenProviderMonitor::ScreenProviderMonitor(int id, unsigned int frequency)
+    : ScreenProvider(SP_MONITOR)
 {
     _id = id;
-    init();
+    init(frequency);
 }
 
 // Format: "MONITOR_1594208741_ID478241813_RND1860363629"

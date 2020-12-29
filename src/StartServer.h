@@ -20,10 +20,10 @@
 
 #define RETURN_CODE_SUCCESS      0
 #define RETURN_CODE_SUCCESS_SHO  1
-#define RETURN_CODE_INVALID_RFB -1
-#define RETURN_CODE_INVALID_ARG -2
-#define RETURN_CODE_INTERNAL_ERROR -3
-#define RETURN_CODE_SERVICE_ERROR  -4
+#define RETURN_CODE_INVALID_RFB  2
+#define RETURN_CODE_INVALID_ARG  4
+#define RETURN_CODE_INTERNAL_ERROR 8
+#define RETURN_CODE_SERVICE_ERROR  16
 
 #define CAPTURE_STOPPING "STOPPING"
 
@@ -57,17 +57,18 @@ class StartCapture {
   public:
     StartCapture() : _pid(-1), _hdler(0), _show(S_NONE),
          _type(SP_NULL), _sp(NULL), _monID(0), _daemon(false),
-         _ctype(C_NONE) { }
+         _ctype(C_NONE), _frequency(DEFAULT_SAMPLE_PROVIDER) { }
     ~StartCapture();
 
     int init(int argc, char *argv[]) ;
     int init() { return init(0, NULL); }
     int initParsing(int argc, char * argv[]);
+    int initRFBServer(int argc, char *argv[]);
     int getVNCClientCount(struct _rfbClientRec* head);
     void startCaptureServer();
 
     enum SType { S_NONE, S_WIN_ALL, S_WIN_NAME, S_MONITOR };
-    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_STOP_ALL_SC, C_RESTART, C_SHOW, C_STATUS, C_NONE };
+    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_STOP_ALL_SC, C_RESTART, C_SHOW, C_STATUS, C_EXPORT, C_NONE };
 
     bool setWorkingDirectory();
     void initDaemon();
@@ -80,11 +81,19 @@ class StartCapture {
     StartCapture::CType getCType();
     void  removeAlivePath() const;
 
-    const String & getUserName() const { return _user; }
-    const String & getCapServerPath() const { return _capturePath; }
+    [[nodiscard]] const String & getUserName() const { return _user; }
+    [[nodiscard]] const String & getCapServerPath() const { return _capturePath; }
 
-    bool isDaemon() const { return _daemon; }
-    int  getPort()  const { return _vncPort; }
+    [[nodiscard]] bool isDaemon() const { return _daemon; }
+    [[nodiscard]] int  getPort()  const { return _vncPort; }
+
+    [[nodiscard]] const StringVec & getUnrecognizedOptions() const { return _unrecognizedOptions; }
+
+    ScreenProvider * getScreenProvide() { return _sp; }
+
+  protected:
+    ScreenProvider * _sp;     /* screen provider */
+    unsigned int     _frequency;
 
   private:
     void Usage();
@@ -107,7 +116,6 @@ class StartCapture {
     } _cap;
 
     SPType           _type;
-    ScreenProvider * _sp;     /* screen provider */
     String           _name;   /* captured named  */
     Pid              _pid;    /* for window capture, the process id we want to capture */
     size_t           _hdler;  /* for window capture, the handler id we want to capture */
@@ -122,10 +130,12 @@ class StartCapture {
     ScopedPtr<ReadWriteFDThread> _listenMMP;
 
     CType            _ctype;  /* command type, newcaptre, start, stop ... */
-    int              _vncPort;
+    int              _vncPort{};
+
+    StringVec        _unrecognizedOptions;
 
     /* rbf related */
-    rfbScreenInfoPtr _rfbserver;
+    rfbScreenInfoPtr _rfbserver{};
 };
 
 #endif
