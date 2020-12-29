@@ -64,16 +64,21 @@ int ExportImages::startExportImages()
     std::chrono::microseconds duration(MICROSECONDS_PER_SECOND/_frequency);
     for ( int i=0 ; i<_total ; )
     {
-        if ( (_fb = _sp->getFrameBuffer()) == nullptr ) {
+        auto start = std::chrono::system_clock::now();
+        if ( (_fb = _sp->getFrameBuffer()) == nullptr || (_fb->getData() == nullptr)) {
             _sp->sampleResume();
             std::this_thread::sleep_for(duration);
             continue;
         }
+        std::cout << "Getting data for : " << i << ", gettingTime=" <<
+                  (std::chrono::system_clock::now()-start).count()/1000 << "ms" << std::endl;
 
+        start = std::chrono::system_clock::now();
         writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_" + std::to_string(i) + ".png");
+        std::cout << "SampleProvider returns data: " << i << ", writtingTime=" <<
+                   (std::chrono::system_clock::now()-start).count()/1000 << "ms" << std::endl;
 
         i++;
-        std::cout << "SampleProvider returns data: " << i << std::endl;
     }
 
     return RETURN_CODE_SUCCESS;
