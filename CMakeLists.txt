@@ -46,10 +46,14 @@ set(LIBVNC_INCLUDE ${CMAKE_SOURCE_DIR}/libvnc ${CMAKE_SOURCE_DIR}/libvnc/libvncs
 # add exec file name
 add_definitions(-DSTART_SERVER_EXEC="${START_SERVER}")
 
-#zlib
+# zlib
 set(CMAKE_SOURCE_CONTRIB_CMAKE ${CMAKE_SOURCE_CONTRIB}/cmake/)
 set(ZLIB_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
 find_package(ZLIB REQUIRED NO_MODULE)
+
+# x265
+set(X265_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
+find_package(X265 REQUIRED NO_MODULE)
 
 # include headers
 # ${CMAKE_CURRENT_BINARY_DIR}/libvnc/ for the generated rfbconfig.h
@@ -64,6 +68,7 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/contrib/libwxWidgets/include/
     ${CMAKE_BINARY_DIR}/lib/
     ${ZLIB_INCLUDE_DIR}
+    ${X265_INCLUDE_DIR}
 )
 
 set(SHAREDT_SRC ${CMAKE_SOURCE_DIR}/src)
@@ -172,10 +177,10 @@ add_executable(${START_SERVER}
         ${CAPTURE_SRC}
         )
 #target_link_libraries(${START_SERVER} vncserver screen_capture_lite ${${PROJECT_NAME}_PLATFORM_LIBS} )
-target_link_libraries(${START_SERVER} vncserver  ${${PROJECT_NAME}_PLATFORM_LIBS} )
+target_link_libraries(${START_SERVER} vncserver  ${${PROJECT_NAME}_PLATFORM_LIBS} ${X265_LIBRARIES} )
 
 #set(VNCSCREENCAP vncserver screen_capture_lite ${${PROJECT_NAME}_PLATFORM_LIBS})
-set(VNCSCREENCAP vncserver  ${${PROJECT_NAME}_PLATFORM_LIBS})
+set( VNCSCREENCAP vncserver  ${${PROJECT_NAME}_PLATFORM_LIBS} )
 
 # set icons
 set(SERVERGUI_ICONS
@@ -183,7 +188,7 @@ set(SERVERGUI_ICONS
         ${SHAREDT_SRC}/sgui/icons/window.png
         ${SHAREDT_SRC}/sgui/icons/callapse.png
         ${SHAREDT_SRC}/sgui/icons/expand.png
-        )
+    )
 
 # Installing
 #install(TARGETS ${SERVERGUI_TARGET} ${START_SERVER} DESTINATION bin)

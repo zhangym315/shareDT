@@ -1,4 +1,5 @@
 #include "ExportImages.h"
+#include "x265.h"
 
 int mainExport(const char ** cmdArg, const struct cmdConf * conf)
 {
@@ -123,4 +124,150 @@ void ExportImages::writeToFile(const String & file)
 
     png_destroy_write_struct(&png, &info);
 
+}
+
+
+
+int TESTING_x265_encode(const char* infile, int width, int height, int type, const char* outfile)
+{
+    FILE *fp_src = NULL;
+    FILE *fp_dst = NULL;
+    unsigned int luma_size = 0;
+    unsigned int chroma_size = 0;
+    //int buff_size = 0;
+    char *buff = NULL;
+    uint32_t i_nal = 0;
+    int i_frame = 0;
+    int ret = 0;
+
+    x265_param param;
+    x265_nal *nal = NULL;
+    x265_encoder *handle = NULL;
+    x265_picture *pic_in = NULL;
+
+    int csp = type; // X265_CSP_I420;
+
+    fp_src = fopen (infile, "rb");
+    fp_dst = fopen (outfile, "wb");
+    if (fp_src == NULL || fp_dst == NULL)
+        {
+            perror ("Error open yuv files:");
+            return -1;
+        }
+
+    x265_param_default (&param);
+    param.bRepeatHeaders = 1;//write sps,pps before keyframe
+    param.internalCsp = csp;
+    param.sourceWidth = width;
+    param.sourceHeight = height;
+    param.fpsNum = 25; // 帧率
+    param.fpsDenom = 1; // 帧率
+
+    handle = x265_encoder_open (&param);
+    if (handle == NULL)
+        {
+            printf ("x265_encoder_open err\n");
+            goto out;
+        }
+
+    pic_in = x265_picture_alloc ();
+    if (pic_in == NULL)
+        {
+            goto out;
+        }
+    x265_picture_init (&param, pic_in);
+
+    // Y分量大小
+    luma_size = param.sourceWidth * param.sourceHeight;
+    // 分量一帧YUV的空间
+    switch (csp)
+        {
+    case X265_CSP_I444:buff = (char *) malloc (luma_size * 3);
+            pic_in->planes[0] = buff;
+            pic_in->planes[1] = buff + luma_size;
+            pic_in->planes[2] = buff + luma_size * 2;
+            pic_in->stride[0] = width;
+            pic_in->stride[1] = width;
+            pic_in->stride[2] = width;
+            break;
+    case X265_CSP_I420:buff = (char *) malloc (luma_size * 3 / 2);
+            pic_in->planes[0] = buff;
+            pic_in->planes[1] = buff + luma_size;
+            pic_in->planes[2] = buff + luma_size * 5 / 4;
+            pic_in->stride[0] = width;
+            pic_in->stride[1] = width / 2;
+            pic_in->stride[2] = width / 2;
+            break;
+    default:
+        printf ("Colorspace Not Support.\n");
+            goto out;
+        }
+
+    // 计算总帧数
+    fseek (fp_src, 0, SEEK_END);
+    switch (csp)
+        {
+    case X265_CSP_I444:i_frame = ftell (fp_src) / (luma_size * 3);
+            chroma_size = luma_size;
+            break;
+    case X265_CSP_I420:i_frame = ftell (fp_src) / (luma_size * 3 / 2);
+            chroma_size = luma_size / 4;
+            break;
+    default:printf ("Colorspace Not Support.\n");
+            return -1;
+        }
+    fseek (fp_src, 0, SEEK_SET);
+    printf ("framecnt: %d, y: %d u: %d\n", i_frame, luma_size, chroma_size);
+
+    for (int i = 0; i < i_frame; i++)
+        {
+            switch (csp)
+                {
+            case X265_CSP_I444:
+            case X265_CSP_I420:
+                if (fread (pic_in->planes[0], 1, luma_size, fp_src) != luma_size)
+                    break;
+                    if (fread (pic_in->planes[1], 1, chroma_size, fp_src) != chroma_size)
+                        break;
+                    if (fread (pic_in->planes[2], 1, chroma_size, fp_src) != chroma_size)
+                        break;
+                    break;
+            default:printf ("Colorspace Not Support.\n");
+                    goto out;
+                }
+
+            ret = x265_encoder_encode (handle, &nal, &i_nal, pic_in, NULL);
+            printf ("encode frame: %5d framesize: %d nal: %d\n", i + 1, ret, i_nal);
+            if (ret < 0)
+                {
+                    printf ("Error encode frame: %d.\n", i + 1);
+                    goto out;
+                }
+
+            for (uint32_t j = 0; j < i_nal; j++)
+                {
+                    fwrite (nal[j].payload, 1, nal[j].sizeBytes, fp_dst);
+                }
+        }
+    // Flush Decoder
+    while ((ret = x265_encoder_encode (handle, &nal, &i_nal, NULL, NULL)))
+        {
+            static int cnt = 1;
+            printf ("flush frame: %d\n", cnt++);
+            for (uint32_t j = 0; j < i_nal; j++)
+                {
+                    fwrite (nal[j].payload, 1, nal[j].sizeBytes, fp_dst);
+                }
+        }
+
+    out:
+    x265_encoder_close (handle);
+    x265_picture_free (pic_in);
+    if (buff)
+        free (buff);
+
+    fclose (fp_src);
+    fclose (fp_dst);
+
+    return 0;
 }
