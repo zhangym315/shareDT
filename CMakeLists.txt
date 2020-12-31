@@ -55,6 +55,10 @@ find_package(ZLIB REQUIRED NO_MODULE)
 set(X265_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
 find_package(X265 REQUIRED NO_MODULE)
 
+# png
+set(png_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
+find_package(png REQUIRED NO_MODULE)
+
 # include headers
 # ${CMAKE_CURRENT_BINARY_DIR}/libvnc/ for the generated rfbconfig.h
 include_directories (
@@ -69,6 +73,7 @@ include_directories (
     ${CMAKE_BINARY_DIR}/lib/
     ${ZLIB_INCLUDE_DIR}
     ${X265_INCLUDE_DIR}
+    ${PNG_INCLUDE_DIR}
 )
 
 set(SHAREDT_SRC ${CMAKE_SOURCE_DIR}/src)
