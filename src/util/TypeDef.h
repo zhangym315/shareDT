@@ -2,7 +2,7 @@
 #define _UTIL_TYPEDEF_H_
 
 #include <thread>
-
+#include <vector>
 #define BUFSIZE 5120
 
 #ifdef _WIN32
