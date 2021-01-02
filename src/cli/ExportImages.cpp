@@ -85,15 +85,19 @@ int ExportImages::startExportImages()
     return RETURN_CODE_SUCCESS;
 }
 
+int ExportImages::startExportH265Video()
+{
+    return 0;
+}
+
 void ExportImages::writeToFile(const String & file)
 {
-    int y;
     unsigned int width = _sp->getWidth();
     unsigned int height = _sp->getHeight();
     FILE *fp = fopen(file.c_str(), "wb");
     if(!fp) return ;
 
-    png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     if (!png) abort();
 
     png_infop info = png_create_info_struct(png);
