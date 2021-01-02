@@ -23,6 +23,7 @@ class ExportImages final : public StartCapture {
     int parseExportImagesOptions();
     void writeToFile(const String & file);
     void checkBufferSize();
+    int _startExportH265Video(const String & infile, int width, int height, int type, const String & outfile);
 
     Format       _format;
     unsigned int _total;
