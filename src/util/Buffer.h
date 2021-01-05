@@ -32,7 +32,7 @@ class FrameBuffer {
     {
         reSet(size);
         std::memcpy(_data, data, size);
-        ConvertBGRA2RGBA(_data, size);
+//        ConvertBGRA2RGBA(_data, size);
         _isValid = true;
     }
 
@@ -41,7 +41,7 @@ class FrameBuffer {
         int perRow = w * 4;
         for (int i=0; i<h; i++) {
             std::memcpy(_data + perRow * i, data+i*bytesrow, perRow);
-            ConvertBGRA2RGBA(_data + perRow * i, perRow);
+//            ConvertBGRA2RGBA(_data + perRow * i, perRow);
         }
         _isValid = true;
     }

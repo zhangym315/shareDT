@@ -40,6 +40,13 @@ CapMonitor * FrameProcessorWrap::getMonitor() {
     return _monitor;
 }
 
+void FrameProcessorWrap::debug(char * array []) {
+    std::cout << "Hello from FrameProcessorWrap::debug" << std::endl;
+    while( (*array) != nullptr) {
+            std::cout << "Hello from FrameProcessorWrap::debug available: " << *array << std::endl;
+    }
+}
+
 bool FrameProcessorWrap::isPartial() {
     return (_type == SP_PARTIAL);
 }

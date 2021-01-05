@@ -18,7 +18,11 @@
         [self.avcapturesession addInput:self.avinput];
 
         self.output = [[AVCaptureVideoDataOutput alloc] init];
-        NSDictionary* videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA], (id)kCVPixelBufferPixelFormatTypeKey, nil];
+        NSDictionary* videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_422YpCbCr8], (id)kCVPixelBufferPixelFormatTypeKey, nil];
+
+        NSArray<NSNumber *> * availableCode = self.output.availableVideoCVPixelFormatTypes;
+        NSLog(@"%@",availableCode);
+//        FrameProcessorWrap::instance()->debug(getArray a_array NSArray:availableCode );
 
         [self.output setVideoSettings:videoSettings];
         [self.output setAlwaysDiscardsLateVideoFrames:true];

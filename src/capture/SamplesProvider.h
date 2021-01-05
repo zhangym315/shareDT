@@ -50,6 +50,7 @@ class FrameProcessorWrap {
     bool isReady() { return _isReady; }
     CapImageRect * getBounds() { return _bounds; }
 
+    void debug(char * array []);
   private:
     FrameProcessorWrap();
     static FrameProcessorWrap * _instance;
