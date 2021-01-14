@@ -80,7 +80,7 @@ class CircleWriteThread : public Thread {
     CircleWriteThread(CircWRBuf<FrameBuffer> * fb,
                       std::chrono::milliseconds sp) : _fb(fb),
                       _status(NONE), _duration(sp), Thread(false),
-                      _isReady(false), _isPause(true) {}
+                      _isReady(false), _isPause(true) { }
 
     CircleWriteThread(CircWRBuf<FrameBuffer> *fb, unsigned int frequency) :
         CircleWriteThread(fb, std::chrono::milliseconds(MICROSECONDS_PER_SECOND/frequency)) { }

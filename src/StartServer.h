@@ -60,8 +60,7 @@ class StartCapture {
          _ctype(C_NONE), _frequency(DEFAULT_SAMPLE_PROVIDER) { }
     ~StartCapture();
 
-    int init(int argc, char *argv[]) ;
-    int init() { return init(0, NULL); }
+    int initSrceenProvider();
     int initParsing(int argc, char * argv[]);
     int initRFBServer(int argc, char *argv[]);
     int getVNCClientCount(struct _rfbClientRec* head);

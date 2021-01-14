@@ -424,18 +424,16 @@ StartCapture::~StartCapture()
  *  RETURN_CODE_SUCCESS: set successfully, needs to continue
  *  Others: Can exit program
  */
-int StartCapture::init(int argc, char *argv[])
+int StartCapture::initSrceenProvider()
 {
-
-    int ret = initParsing(argc, argv);
-
-    if(ret != RETURN_CODE_SUCCESS)
-        return ret;
-
     if( _daemon )
         initDaemon();
 
-    /* create ScreenProvider */
+    /*
+     * Create ScreenProvider
+     * The new ScreenProvider will also initialize
+     *    SampleProvider and FrameProcessorWrap
+     */
     if (_type == SP_PARTIAL) {
         _sp = new ScreenProviderPartial(_cap._bounds, _frequency);
     }

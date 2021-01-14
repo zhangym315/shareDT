@@ -6,7 +6,8 @@ int mainExport(const char ** cmdArg, const struct cmdConf * conf)
     ExportImages ei;
     char ** argv = const_cast<char **>(conf->argv);
     int ret;
-    if ( (ret = ei.init(conf->argc, argv)) != RETURN_CODE_SUCCESS)
+    if ( (ret = ei.initOptions(conf->argc, argv)) != RETURN_CODE_SUCCESS ||
+         (ret = ei.initSrceenProvider()) != RETURN_CODE_SUCCESS )
     {
         if(ret == RETURN_CODE_INVALID_ARG) {
             ei.exportUsage();
@@ -22,11 +23,11 @@ int mainExport(const char ** cmdArg, const struct cmdConf * conf)
     return ei.startExportImages();
 }
 
-int ExportImages::init(int argc, char ** argv)
+int ExportImages::initOptions(int argc, char ** argv)
 {
     int ret;
-    if((ret = StartCapture::init(argc,  argv)) != RETURN_CODE_SUCCESS ||
-       (ret = parseExportImagesOptions()) != RETURN_CODE_SUCCESS )
+    if((ret = StartCapture::initParsing(argc,  argv)) != RETURN_CODE_SUCCESS ||
+        (ret = parseExportImagesOptions()) != RETURN_CODE_SUCCESS )
         return ret;
     return RETURN_CODE_SUCCESS;
 }

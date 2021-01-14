@@ -210,7 +210,8 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
     (void) cmdArg;
     StartCapture cap;
     char ** argv = const_cast<char **>(conf->argv);
-    int ret = cap.init(conf->argc, argv) ||
+    int ret = cap.initParsing(conf->argc, argv) ||
+              cap.initSrceenProvider() ||
               cap.initRFBServer(conf->argc, argv);
     Path alivePath(cap.getAlivePath(), std::fstream::out);
 
@@ -246,7 +247,10 @@ static int mainShow (const char ** cmdArg, const struct cmdConf * conf)
 {
     (void) cmdArg;
     StartCapture cap;
-    cap.init(conf->argc, const_cast<char **>(conf->argv));
+
+    cap.initParsing(conf->argc, const_cast<char **>(conf->argv));
+    cap.initSrceenProvider();
+
     return RETURN_CODE_SUCCESS;
 }
 
@@ -256,7 +260,8 @@ static int noDaemon (const char ** cmdArg, const struct cmdConf * conf)
     int ret;
     StartCapture cap;
     char ** argv = const_cast<char **>(conf->argv);
-    ret = cap.init(conf->argc, argv) ||
+    ret = cap.initParsing(conf->argc, argv) ||
+          cap.initSrceenProvider() ||
           cap.initRFBServer(conf->argc, argv);
 
     /*
