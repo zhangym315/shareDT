@@ -10,8 +10,19 @@ FrameProcessorWrap::FrameProcessorWrap() :
                 _duration(std::chrono::microseconds(MICROSECONDS_PER_SECOND/DEFAULT_SAMPLE_PROVIDER)),
                 _fpi(0),
                 _isPause(true),
-                _isReady(false)
+                _isReady(false),
+                _imgType(SPImageType::SP_IMAGE_RGBA)
 { }
+
+void FrameProcessorWrap::setImageTypeToYUV ()
+{
+    _imgType = SPImageType::SP_IMAGE_YUV;
+}
+
+bool FrameProcessorWrap::isYUVType ()
+{
+    return _imgType == SPImageType::SP_IMAGE_YUV;
+}
 
 FrameProcessorWrap * FrameProcessorWrap::instance ()
 {

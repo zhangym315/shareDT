@@ -5,10 +5,16 @@ int mainExport(const char ** cmdArg, const struct cmdConf * conf)
 {
     ExportImages ei;
     char ** argv = const_cast<char **>(conf->argv);
-    if ( ei.init(conf->argc, argv) != RETURN_CODE_SUCCESS)
+    int ret;
+    if ( (ret = ei.init(conf->argc, argv)) != RETURN_CODE_SUCCESS)
     {
-        std::cout << "Failed to init ExportImages for: " << ei.getWID();
-        return RETURN_CODE_INTERNAL_ERROR;
+        if(ret == RETURN_CODE_INVALID_ARG) {
+            ei.exportUsage();
+            return ret;
+        } else {
+            std::cout << "Failed to init ExportImages for: " << ei.getWID();
+            return RETURN_CODE_INTERNAL_ERROR;
+        }
     }
 
     std::cout << "Starting to export images for: " << ei.getWID() << std::endl;
@@ -18,9 +24,22 @@ int mainExport(const char ** cmdArg, const struct cmdConf * conf)
 
 int ExportImages::init(int argc, char ** argv)
 {
-    if(StartCapture::init(argc,  argv) || parseExportImagesOptions())
-        return RETURN_CODE_INVALID_ARG;
+    int ret;
+    if((ret = StartCapture::init(argc,  argv)) != RETURN_CODE_SUCCESS ||
+       (ret = parseExportImagesOptions()) != RETURN_CODE_SUCCESS )
+        return ret;
     return RETURN_CODE_SUCCESS;
+}
+
+void ExportImages::exportUsage()
+{
+    std::cerr << "\n";
+    std::cerr << "The following options related with export command option"  << std::endl;
+    std::cerr << "--format                     Format of exported image, supported RGB and YUV" << std::endl;
+    std::cerr << "--total                      Total number of images that export command can capture" << std::endl;
+    std::cerr << "--mp4                        Export images as mp4 video" << std::endl;
+    std::cerr << "\n";
+    std::cerr << "\n";
 }
 
 int ExportImages::parseExportImagesOptions()
@@ -32,8 +51,13 @@ int ExportImages::parseExportImagesOptions()
                 _format = ExportImages::EXPORT_RGB;
             else if ( *i == "YUV" || *i == "yuv" )
                 _format = ExportImages::EXPORT_YUV;
+            else
+                return RETURN_CODE_INVALID_ARG;
         } else if ( (*i) == "--total" ) {
             _total = stoi(*(++i));
+        } else if ( (*i) == "--mp4" ) {
+            FrameProcessorWrap::instance()->setImageTypeToYUV();
+            _mp4 = true;
         }
     }
 

@@ -97,7 +97,6 @@ void StartCapture::Usage ()
     std::cerr << "\n";
     std::cerr << "\n";
     std::cerr << "The following options related with rfb" << std::endl;
-    rfbUsage();
 }
 
 StartCapture::CType StartCapture::getCType()
@@ -183,6 +182,7 @@ int StartCapture::parseArgs(const vector<String> & args)
         }
         else if (*i == "--help") {
             Usage ();
+            rfbUsage();
             return RETURN_CODE_INVALID_ARG;
         } else if (*i == "--capture" || *i == "-c" || *i == "--cap") {
             if(_type != SP_NULL) {
@@ -450,6 +450,7 @@ int StartCapture::init(int argc, char *argv[])
     }
     else if (_type == SP_NULL) {
         Usage();
+        rfbUsage();
         return RETURN_CODE_INVALID_ARG;
     }
 

@@ -18,10 +18,22 @@
         [self.avcapturesession addInput:self.avinput];
 
         self.output = [[AVCaptureVideoDataOutput alloc] init];
-        NSDictionary* videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_422YpCbCr8], (id)kCVPixelBufferPixelFormatTypeKey, nil];
+        NSDictionary* videoSettings;
+
+        if(parent->isYUVType()) {
+            videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_422YpCbCr8], (id)kCVPixelBufferPixelFormatTypeKey, nil];
+        } else {
+            videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA], (id)kCVPixelBufferPixelFormatTypeKey, nil];
+        }
 
         NSArray<NSNumber *> * availableCode = self.output.availableVideoCVPixelFormatTypes;
         NSLog(@"%@",availableCode);
+        for (NSNumber* code in availableCode)
+        {
+            NSString *myString = [NSString stringWithFormat:@"%c", code];
+            NSLog(@"%@",myString);
+        }
+
 //        FrameProcessorWrap::instance()->debug(getArray a_array NSArray:availableCode );
 
         [self.output setVideoSettings:videoSettings];

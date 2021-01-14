@@ -12,12 +12,13 @@ class ExportImages final : public StartCapture {
   public:
     ExportImages() : _format(EXPORT_INVALID), _total(100),
                      _row_pointers(nullptr), _X(0), _Y(0),
-                     _fb(nullptr) { }
+                     _fb(nullptr), _mp4(false) { }
     int init(int argc, char ** argv);
     ~ExportImages() { }
 
     int startExportImages();
     int startExportH265Video();
+    void exportUsage();
 
   private:
     int parseExportImagesOptions();
@@ -27,6 +28,7 @@ class ExportImages final : public StartCapture {
 
     Format       _format;
     unsigned int _total;
+    bool         _mp4;
     png_bytep  * _row_pointers;
     size_t       _X;
     size_t       _Y;

@@ -9,6 +9,8 @@
 
 /* define platform specific */
 enum PLATFORM_STATUS { SHAREDT_WIN, SHAREDT_IOS, SHAREDT_LINUX, SHAREDT_UNKNOWN };
+enum SPImageType { SP_IMAGE_RGBA, SP_IMAGE_YUV};  // default RGBA
+
 #ifdef __SHAREDT_WIN__
 const static PLATFORM_STATUS PLATFORM = SHAREDT_WIN;
 #elif __SHAREDT_IOS__
@@ -51,6 +53,8 @@ class FrameProcessorWrap {
     CapImageRect * getBounds() { return _bounds; }
 
     void debug(char * array []);
+    void setImageTypeToYUV();
+    bool isYUVType();
   private:
     FrameProcessorWrap();
     static FrameProcessorWrap * _instance;
@@ -63,6 +67,7 @@ class FrameProcessorWrap {
     bool                        _isReady;
     std::mutex                  _mtx;
     SPType                      _type;
+    SPImageType                 _imgType;
  };
 
 /*

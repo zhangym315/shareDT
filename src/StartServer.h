@@ -90,13 +90,13 @@ class StartCapture {
     [[nodiscard]] const StringVec & getUnrecognizedOptions() const { return _unrecognizedOptions; }
 
     ScreenProvider * getScreenProvide() { return _sp; }
+    void Usage();
 
   protected:
     ScreenProvider * _sp;     /* screen provider */
     unsigned int     _frequency;
 
   private:
-    void Usage();
     int parseArgs(const vector<String> & args);
     bool parseBounds();
     bool parseWindows();
