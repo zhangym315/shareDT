@@ -18,6 +18,7 @@ class ExportImages final : public StartCapture {
 
     int startExportImages();
     int startExportH265Video();
+    int start();
     void exportUsage();
 
   private:

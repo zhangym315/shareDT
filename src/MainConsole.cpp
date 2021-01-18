@@ -247,11 +247,14 @@ static int mainShow (const char ** cmdArg, const struct cmdConf * conf)
 {
     (void) cmdArg;
     StartCapture cap;
+    int ret;
 
-    cap.initParsing(conf->argc, const_cast<char **>(conf->argv));
-    cap.initSrceenProvider();
-
-    return RETURN_CODE_SUCCESS;
+    if( (ret=cap.initParsing(conf->argc, const_cast<char **>(conf->argv)) == RETURN_CODE_SUCCESS_SHO) ||
+        RETURN_CODE_SUCCESS == ret ) {
+        return RETURN_CODE_SUCCESS;
+    } else {
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
 }
 
 static int noDaemon (const char ** cmdArg, const struct cmdConf * conf)

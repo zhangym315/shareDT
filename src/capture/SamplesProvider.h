@@ -47,8 +47,8 @@ class FrameProcessorWrap {
     void setBD(CapImageRect * bd);
     CapMonitor * getMonitor ();
     bool isPartial();
-    void writeBuf(CapMonitor * mon, unsigned char * buf, int bpr) ; /* write buffer */
-    void writeBuf(CapImageRect * bd, unsigned char * buf, int bpr);
+    void writeBuf(CapMonitor * mon, unsigned char * buf, int bpr, size_t bufSize=0) ; /* write buffer */
+    void writeBuf(CapImageRect * bd, unsigned char * buf, int bpr, size_t bufSize=0);
     bool isReady() { return _isReady; }
     CapImageRect * getBounds() { return _bounds; }
 

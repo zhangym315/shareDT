@@ -455,7 +455,7 @@ int StartCapture::initSrceenProvider()
     /* needs to ensure _sp is valid */
     if(!_sp->isValid()) {
         LOGGER.error() << "Invalid content(monitor ID/partial bounds) specifed for capture";
-        return RETURN_CODE_INVALID_ARG;
+        return RETURN_CODE_CANNOT_PARSE;
     }
 
     return RETURN_CODE_SUCCESS;

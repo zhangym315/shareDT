@@ -13,14 +13,23 @@ int mainExport(const char ** cmdArg, const struct cmdConf * conf)
             ei.exportUsage();
             return ret;
         } else {
-            std::cout << "Failed to init ExportImages for: " << ei.getWID();
+            std::cout << "Failed to init ExportImages for: " << ei.getWID() << std::endl;
             return RETURN_CODE_INTERNAL_ERROR;
         }
     }
 
     std::cout << "Starting to export images for: " << ei.getWID() << std::endl;
 
-    return ei.startExportImages();
+    return ei.start();
+}
+
+int ExportImages::start ()
+{
+    if(_mp4) {
+        return startExportH265Video();
+    } else {
+        return startExportImages();
+    }
 }
 
 int ExportImages::initOptions(int argc, char ** argv)
@@ -28,7 +37,9 @@ int ExportImages::initOptions(int argc, char ** argv)
     int ret;
     if((ret = StartCapture::initParsing(argc,  argv)) != RETURN_CODE_SUCCESS ||
         (ret = parseExportImagesOptions()) != RETURN_CODE_SUCCESS )
+    {
         return ret;
+    }
     return RETURN_CODE_SUCCESS;
 }
 
@@ -77,11 +88,6 @@ int ExportImages::startExportImages()
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
-    if ( _format == ExportImages::EXPORT_RGB ) {
-    }
-    else if ( _format == ExportImages::EXPORT_RGB ) {
-    }
-
     while ( !_sp->isSampleReady() ) {
         std::this_thread::sleep_for(50ms);
     }
@@ -112,7 +118,42 @@ int ExportImages::startExportImages()
 
 int ExportImages::startExportH265Video()
 {
-    return 0;
+    if (_sp == nullptr){
+        LOGGER.error() << "Failed to start server";
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
+
+    if(!_sp->startSample()) {
+        LOGGER.error() << "Failed to start SampleProvider" ;
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
+
+    while ( !_sp->isSampleReady() ) {
+        std::this_thread::sleep_for(50ms);
+    }
+    _sp->sampleResume();
+
+    std::chrono::microseconds duration(MICROSECONDS_PER_SECOND/_frequency);
+    for ( int i=0 ; i<_total ; )
+    {
+        auto start = std::chrono::system_clock::now();
+        if ( (_fb = _sp->getFrameBuffer()) == nullptr || (_fb->getData() == nullptr)) {
+            _sp->sampleResume();
+            std::this_thread::sleep_for(duration);
+            continue;
+        }
+        std::cout << "Getting data for : " << i << ", gettingTime=" <<
+                  (std::chrono::system_clock::now()-start).count()/1000 << "ms" << std::endl;
+
+        start = std::chrono::system_clock::now();
+        writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_" + std::to_string(i) + ".png");
+        std::cout << "SampleProvider returns data: " << i << ", writtingTime=" <<
+                  (std::chrono::system_clock::now()-start).count()/1000 << "ms" << std::endl;
+
+        i++;
+    }
+
+    return RETURN_CODE_SUCCESS;
 }
 
 void ExportImages::writeToFile(const String & file)
@@ -228,6 +269,14 @@ int ExportImages::_startExportH265Video(const String & infile,
             pic_in->stride[1] = width / 2;
             pic_in->stride[2] = width / 2;
             break;
+        case X265_CSP_I422:
+            buff = (char *) malloc (luma_size * 3 / 2);
+            pic_in->planes[0] = buff;
+            pic_in->planes[1] = buff + luma_size;
+            pic_in->planes[2] = buff + luma_size * 5 / 4;
+            pic_in->stride[0] = width;
+            pic_in->stride[1] = width / 2;
+            pic_in->stride[2] = width / 2;
         default:
         printf ("Colorspace Not Support.\n");
             goto out;
@@ -242,6 +291,8 @@ int ExportImages::_startExportH265Video(const String & infile,
             break;
         case X265_CSP_I420:i_frame = ftell (fp_src) / (luma_size * 3 / 2);
             chroma_size = luma_size / 4;
+        case X265_CSP_I422:i_frame = ftell (fp_src) / (luma_size * 3 / 2);
+            chroma_size = luma_size / 4;
             break;
         default:printf ("Colorspace Not Support.\n");
             return -1;
@@ -255,13 +306,14 @@ int ExportImages::_startExportH265Video(const String & infile,
         {
             case X265_CSP_I444:
             case X265_CSP_I420:
+            case X265_CSP_I422:
             if (fread (pic_in->planes[0], 1, luma_size, fp_src) != luma_size)
                 break;
-                if (fread (pic_in->planes[1], 1, chroma_size, fp_src) != chroma_size)
-                    break;
-                if (fread (pic_in->planes[2], 1, chroma_size, fp_src) != chroma_size)
-                    break;
+            if (fread (pic_in->planes[1], 1, chroma_size, fp_src) != chroma_size)
                 break;
+            if (fread (pic_in->planes[2], 1, chroma_size, fp_src) != chroma_size)
+                break;
+            break;
             default:printf ("Colorspace Not Support.\n");
                 goto out;
         }
