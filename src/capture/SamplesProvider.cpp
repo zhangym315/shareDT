@@ -89,13 +89,13 @@ void FrameProcessorWrap::writeBuf(CapImageRect * bd, unsigned char * buf,
                                   int bpr, size_t bufferSize)
 {
     FrameBuffer * fb = _fb->getToWrite();
-    if(bufferSize) {
-        fb->reSet(bufferSize);
-    }
-
     if(fb) {
 //std::cout << "bd->getWidth(): " << bd->getWidth() << " bd->getHeight(): " <<  bd->getHeight() << std::endl;
 //            fb->setData(buf, bd->getWidth()*bd->getHeight()*4);
+        if(bufferSize) {
+            fb->reSet(bufferSize);
+        }
+
         fb->setDataPerRow(buf, bd->getWidth(), bd->getHeight(), bpr, !isYUVType());
 //        std::cout << "write Buf queue is write ..." << std::endl;
     } else {

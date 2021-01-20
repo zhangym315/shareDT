@@ -142,13 +142,15 @@ int ExportImages::startExportH265Video()
             std::this_thread::sleep_for(duration);
             continue;
         }
+
         std::cout << "Getting data for : " << i << ", gettingTime=" <<
-                  (std::chrono::system_clock::now()-start).count()/1000 << "ms" << std::endl;
+                  (std::chrono::system_clock::now()-start).count()/1000 << "ms" <<
+                  " size: " << _fb->getSize() << std::endl;
 
         start = std::chrono::system_clock::now();
         writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_" + std::to_string(i) + ".png");
-        std::cout << "SampleProvider returns data: " << i << ", writtingTime=" <<
-                  (std::chrono::system_clock::now()-start).count()/1000 << "ms" << std::endl;
+//        std::cout << "SampleProvider returns data: " << i << ", writtingTime=" <<
+//                  (std::chrono::system_clock::now()-start).count()/1000 << "ms" << std::endl;
 
         i++;
     }
@@ -282,7 +284,6 @@ int ExportImages::_startExportH265Video(const String & infile,
             goto out;
     }
 
-    // 计算总帧数
     fseek (fp_src, 0, SEEK_END);
     switch (csp)
     {
