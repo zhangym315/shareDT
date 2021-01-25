@@ -118,7 +118,7 @@ int ExportImages::startExportImages()
 
 int ExportImages::startExportH265Video()
 {
-    if (_sp == nullptr){
+    if (_sp == nullptr) {
         LOGGER.error() << "Failed to start server";
         return RETURN_CODE_INTERNAL_ERROR;
     }
@@ -127,6 +127,78 @@ int ExportImages::startExportH265Video()
         LOGGER.error() << "Failed to start SampleProvider" ;
         return RETURN_CODE_INTERNAL_ERROR;
     }
+
+    /************ start on x265 init ***************/
+    x265_param param;
+    x265_nal *nal = nullptr;
+    x265_encoder *handle = nullptr;
+    x265_picture *pic_in = nullptr;
+    String outfile = getCapServerPath() + PATH_SEP_STR + "EXPORTED_OUTFILE.mp4";
+    FILE *fp_dst =  fopen (outfile.c_str(), "wb");
+    unsigned int luma_size = 0;
+    unsigned int chroma_size = 0;
+    char *buff = nullptr;
+    int width  = _sp->getWidth();
+    int height = _sp->getHeight();
+
+    x265_param_default (&param);
+    param.bRepeatHeaders = 1;//write sps,pps before keyframe
+    param.internalCsp  = X265_CSP_I422;
+    param.sourceWidth  = width;
+    param.sourceHeight = height;
+    param.fpsNum   = 25; // 帧率
+    param.fpsDenom = 1;  // 帧率
+
+    handle = x265_encoder_open (&param);
+    if (handle == nullptr)
+    {
+        LOGGER.error() << "x265_encoder_open error.";
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
+
+    pic_in = x265_picture_alloc ();
+    if (pic_in == nullptr)
+    {
+        LOGGER.error() << "x265_picture_alloc error.";
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
+    x265_picture_init (&param, pic_in);
+
+    // Y分量大小
+    luma_size = param.sourceWidth * param.sourceHeight;
+    switch (param.internalCsp)
+    {
+        case X265_CSP_I444:
+            buff = (char *) malloc (luma_size * 3);
+            pic_in->planes[0] = buff;
+            pic_in->planes[1] = buff + luma_size;
+            pic_in->planes[2] = buff + luma_size * 2;
+            pic_in->stride[0] = width;
+            pic_in->stride[1] = width;
+            pic_in->stride[2] = width;
+            break;
+        case X265_CSP_I420:
+            buff = (char *) malloc (luma_size * 3 / 2);
+            pic_in->planes[0] = buff;
+            pic_in->planes[1] = buff + luma_size;
+            pic_in->planes[2] = buff + luma_size * 5 / 4;
+            pic_in->stride[0] = width;
+            pic_in->stride[1] = width / 2;
+            pic_in->stride[2] = width / 2;
+            break;
+        case X265_CSP_I422:
+            buff = (char *) malloc (luma_size * 3 / 2);
+            pic_in->planes[0] = buff;
+            pic_in->planes[1] = buff + luma_size;
+            pic_in->planes[2] = buff + luma_size * 5 / 4;
+            pic_in->stride[0] = width;
+            pic_in->stride[1] = width / 2;
+            pic_in->stride[2] = width / 2;
+        default:
+            LOGGER.error() << "Colorspace not support, internalCsp=" << param.internalCsp;
+            return RETURN_CODE_INTERNAL_ERROR;
+    }
+    /************ end on x265 init   ***************/
 
     while ( !_sp->isSampleReady() ) {
         std::this_thread::sleep_for(50ms);
