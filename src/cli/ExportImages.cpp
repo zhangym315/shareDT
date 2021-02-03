@@ -140,10 +140,11 @@ int ExportImages::startExportH265Video()
     char *buff = nullptr;
     int width  = _sp->getWidth();
     int height = _sp->getHeight();
+    uint32_t i_nal = 0;
 
     x265_param_default (&param);
     param.bRepeatHeaders = 1;//write sps,pps before keyframe
-    param.internalCsp  = X265_CSP_I422;
+    param.internalCsp  = X265_CSP_I420;
     param.sourceWidth  = width;
     param.sourceHeight = height;
     param.fpsNum   = 25; // 帧率
@@ -194,6 +195,7 @@ int ExportImages::startExportH265Video()
             pic_in->stride[0] = width;
             pic_in->stride[1] = width / 2;
             pic_in->stride[2] = width / 2;
+            break;
         default:
             LOGGER.error() << "Colorspace not support, internalCsp=" << param.internalCsp;
             return RETURN_CODE_INTERNAL_ERROR;
@@ -219,8 +221,47 @@ int ExportImages::startExportH265Video()
                   (std::chrono::system_clock::now()-start).count()/1000 << "ms" <<
                   " size: " << _fb->getSize() << std::endl;
 
-        start = std::chrono::system_clock::now();
-        writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_" + std::to_string(i) + ".png");
+        switch (param.internalCsp)
+        {
+            case X265_CSP_I444:
+            case X265_CSP_I420:
+            case X265_CSP_I422:
+                memcpy (pic_in->planes[0], _fb->getData(), luma_size);
+                memcpy (pic_in->planes[1], _fb->getSubData(), _fb->getSubCap()/2);
+                memcpy (pic_in->planes[1], _fb->getSubData()+_fb->getSubCap()/2, _fb->getSubCap()/2);
+
+                break;
+            default:
+                LOGGER.error() << "Colorspace not support, internalCsp=" << param.internalCsp;
+                break;
+        }
+
+        int ret = x265_encoder_encode (handle, &nal, &i_nal, pic_in, nullptr);
+        printf ("encode frame: %5d framesize: %d nal: %d\n", i + 1, ret, i_nal);
+        if (ret < 0)
+        {
+            LOGGER.error() << "Error encode frame=" << (i+1);
+            break;
+        }
+
+        for (uint32_t j = 0; j < i_nal; j++)
+        {
+            fwrite (nal[j].payload, 1, nal[j].sizeBytes, fp_dst);
+        }
+        // Flush Decoder
+        while ((ret = x265_encoder_encode (handle, &nal, &i_nal, nullptr, nullptr)))
+        {
+            static int cnt = 1;
+            printf ("flush frame: %d\n", cnt++);
+            for (uint32_t j = 0; j < i_nal; j++)
+            {
+                fwrite (nal[j].payload, 1, nal[j].sizeBytes, fp_dst);
+            }
+        }
+
+
+//        start = std::chrono::system_clock::now();
+//        writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_" + std::to_string(i) + ".png");
 //        std::cout << "SampleProvider returns data: " << i << ", writtingTime=" <<
 //                  (std::chrono::system_clock::now()-start).count()/1000 << "ms" << std::endl;
 

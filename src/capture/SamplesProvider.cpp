@@ -96,7 +96,7 @@ void FrameProcessorWrap::writeBuf(CapImageRect * bd, unsigned char * buf,
             fb->reSet(bufferSize);
         }
 
-        fb->setDataPerRow(buf, bd->getWidth(), bd->getHeight(), bpr, !isYUVType());
+        fb->setDataPerRow(buf, bd->getWidth(), bd->getHeight(), bpr, isYUVType());
 //        std::cout << "write Buf queue is write ..." << std::endl;
     } else {
         pause();

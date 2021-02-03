@@ -13,22 +13,24 @@ struct ImageBGRA {
 
 class FrameBuffer {
   public:
-    FrameBuffer(size_t size) : _size(size), _capacity(size)
+    FrameBuffer(size_t size) : _size(size), _capacity(size),
+                            _subCapacity(0), _subData(nullptr)
     {
         if(size == 0)
-            _data = NULL;
+            _data = nullptr;
         else
             _data = (unsigned char *) malloc (size);
         _isValid = false;
     }
     FrameBuffer(const CapImageRect & bounds, unsigned int bytespp) ;
     FrameBuffer() : FrameBuffer(0) { }
+    ~FrameBuffer() { reSet(0); resetSubData(0); }
 
     [[nodiscard]] size_t getSize() const   { return _size ; }
     [[nodiscard]] size_t getPacity() const { return _capacity; }
     unsigned char * getData() { return _data; }
 
-    void setData(unsigned char * data, int size, bool convert=true);
+    void setData(unsigned char * data, int size, bool isYuv=false);
     void setDataPerRow(unsigned char * data, int w, int h,
                        int bytesrow, bool convert=true);
 
@@ -39,17 +41,25 @@ class FrameBuffer {
      */
     void ConvertBGRA2RGBA(unsigned char * dst, size_t size);
     void ConvertBGRA2RGBA() { return ConvertBGRA2RGBA(_data, _size); }
+    void ConvertBGRA2YCrCb420(unsigned char * dst, size_t size);
 
     void reSet(size_t size);
     void reSet(const CapImageRect & bounds, unsigned int bytespp);
     void reSet() { reSet(0);}
+
+    void resetSubData(size_t size);
+    void resetSubData() { resetSubData(0); }
+    unsigned char * getSubData() { return _subData; }
+    [[nodiscard]] size_t getSubCap() const { return _subCapacity; }
 
     void setInvalid() {_isValid = false;}
 
   private:
     size_t   _size;
     size_t   _capacity;
+    size_t   _subCapacity;
     unsigned char * _data;
+    unsigned char * _subData;
     bool     _isValid;
 };
 

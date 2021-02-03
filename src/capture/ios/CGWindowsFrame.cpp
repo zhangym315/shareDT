@@ -57,7 +57,7 @@ bool CircleWriteThread::WindowsFrame(FrameBuffer * fb)
     auto buf = CFDataGetBytePtr(rawdatas);
 
     fb->setDataPerRow((unsigned char *)buf, _win->getWidth(), _win->getHeight(),
-                      bytesperrow, !FrameProcessorWrap::instance()->isYUVType());
+                      bytesperrow, FrameProcessorWrap::instance()->isYUVType());
 
     CFRelease(rawdatas);
     CGImageRelease(imageRef);

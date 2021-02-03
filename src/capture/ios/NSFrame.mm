@@ -20,11 +20,12 @@
         self.output = [[AVCaptureVideoDataOutput alloc] init];
         NSDictionary* videoSettings;
 
-        if(parent->isYUVType()) {
+        /*
+         if(parent->isYUVType()) {
             videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_422YpCbCr8], (id)kCVPixelBufferPixelFormatTypeKey, nil];
-        } else {
-            videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA], (id)kCVPixelBufferPixelFormatTypeKey, nil];
-        }
+        } else
+         */
+        videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA], (id)kCVPixelBufferPixelFormatTypeKey, nil];
 
         NSArray<NSNumber *> * availableCode = self.output.availableVideoCVPixelFormatTypes;
 //        NSLog(@"%@",availableCode);
