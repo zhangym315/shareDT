@@ -32,7 +32,7 @@ def buildWindowsOpenssl():
     ret=os.system('nmake install')
     if ret != 0:
         sys.exit(1)
-    file(PWD + component[0] + DONE_FILE, 'w+' ).close()
+    open(PWD + component[0] + DONE_FILE, 'w')
 
 def buildAndInstall(kernel, component):
     if os.path.exists(PWD + component[0] + DONE_FILE):
@@ -75,7 +75,7 @@ def buildAndInstall(kernel, component):
         ret=os.system('make install')
         if ret != 0:
             sys.exit(1)
-    file(PWD + component[0] + DONE_FILE, 'w+' ).close()
+    open(PWD + component[0] + DONE_FILE, 'w')
 
 
 def normalize_kernel(k):
