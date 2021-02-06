@@ -14,6 +14,7 @@ build64=None
 PWD=os.getcwd() + "/"
 INS="/build/install/"
 BLD="/build/"
+DONE_FILE=".INSTALLED_DONE"
 
 def buildWindowsOpenssl():
     pathINS = PWD + component[0] + INS
@@ -31,8 +32,13 @@ def buildWindowsOpenssl():
     ret=os.system('nmake install')
     if ret != 0:
         sys.exit(1)
+    file(PWD + component[0] + DONE_FILE, 'w+' ).close()
 
 def buildAndInstall(kernel, component):
+    if os.path.exists(PWD + component[0] + DONE_FILE):
+        print('Built ' + component[0])
+        return;
+
     if kernel == "windows" and component[0] == "openssl":
         buildWindowsOpenssl()
         return
@@ -69,6 +75,8 @@ def buildAndInstall(kernel, component):
         ret=os.system('make install')
         if ret != 0:
             sys.exit(1)
+    file(PWD + component[0] + DONE_FILE, 'w+' ).close()
+
 
 def normalize_kernel(k):
     if k.lower() == "solaris" or k.lower() == "sun":
