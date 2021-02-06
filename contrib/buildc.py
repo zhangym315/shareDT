@@ -14,7 +14,7 @@ build64=None
 PWD=os.getcwd() + "/"
 INS="/build/install/"
 BLD="/build/"
-DONE_FILE=".INSTALLED_DONE"
+DONE_FILE="/.INSTALLED_DONE"
 
 def buildWindowsOpenssl():
     pathINS = PWD + component[0] + INS
@@ -37,7 +37,7 @@ def buildWindowsOpenssl():
 def buildAndInstall(kernel, component):
     if os.path.exists(PWD + component[0] + DONE_FILE):
         print('Built ' + component[0])
-        return;
+        return
 
     if kernel == "windows" and component[0] == "openssl":
         buildWindowsOpenssl()
