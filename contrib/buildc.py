@@ -39,6 +39,7 @@ def buildAndInstall(kernel, component):
         print('Built ' + component[0])
         return
 
+    print('Building ' + component[0])
     if kernel == "windows" and component[0] == "openssl":
         buildWindowsOpenssl()
         return
