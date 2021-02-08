@@ -167,39 +167,6 @@ int ExportImages::startExportH265Video()
 
     // Y分量大小
     luma_size = param.sourceWidth * param.sourceHeight;
-    switch (param.internalCsp)
-    {
-        case X265_CSP_I444:
-            buff = (char *) malloc (luma_size * 3);
-            pic_in->planes[0] = buff;
-            pic_in->planes[1] = buff + luma_size;
-            pic_in->planes[2] = buff + luma_size * 2;
-            pic_in->stride[0] = width;
-            pic_in->stride[1] = width;
-            pic_in->stride[2] = width;
-            break;
-        case X265_CSP_I420:
-            buff = (char *) malloc (luma_size * 3 / 2);
-            pic_in->planes[0] = buff;
-            pic_in->planes[1] = buff + luma_size;
-            pic_in->planes[2] = buff + luma_size * 5 / 4;
-            pic_in->stride[0] = width;
-            pic_in->stride[1] = width / 2;
-            pic_in->stride[2] = width / 2;
-            break;
-        case X265_CSP_I422:
-            buff = (char *) malloc (luma_size * 3 / 2);
-            pic_in->planes[0] = buff;
-            pic_in->planes[1] = buff + luma_size;
-            pic_in->planes[2] = buff + luma_size * 5 / 4;
-            pic_in->stride[0] = width;
-            pic_in->stride[1] = width / 2;
-            pic_in->stride[2] = width / 2;
-            break;
-        default:
-            LOGGER.error() << "Colorspace not support, internalCsp=" << param.internalCsp;
-            return RETURN_CODE_INTERNAL_ERROR;
-    }
     int ret;
     /************ end on x265 init   ***************/
 
