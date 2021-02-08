@@ -97,7 +97,6 @@ void StartCapture::Usage ()
     std::cerr << "\n";
     std::cerr << "\n";
     std::cerr << "The following options related with rfb" << std::endl;
-    rfbUsage();
 }
 
 StartCapture::CType StartCapture::getCType()
@@ -183,6 +182,7 @@ int StartCapture::parseArgs(const vector<String> & args)
         }
         else if (*i == "--help") {
             Usage ();
+            rfbUsage();
             return RETURN_CODE_INVALID_ARG;
         } else if (*i == "--capture" || *i == "-c" || *i == "--cap") {
             if(_type != SP_NULL) {
@@ -424,18 +424,16 @@ StartCapture::~StartCapture()
  *  RETURN_CODE_SUCCESS: set successfully, needs to continue
  *  Others: Can exit program
  */
-int StartCapture::init(int argc, char *argv[])
+int StartCapture::initSrceenProvider()
 {
-
-    int ret = initParsing(argc, argv);
-
-    if(ret != RETURN_CODE_SUCCESS)
-        return ret;
-
     if( _daemon )
         initDaemon();
 
-    /* create ScreenProvider */
+    /*
+     * Create ScreenProvider
+     * The new ScreenProvider will also initialize
+     *    SampleProvider and FrameProcessorWrap
+     */
     if (_type == SP_PARTIAL) {
         _sp = new ScreenProviderPartial(_cap._bounds, _frequency);
     }
@@ -450,13 +448,14 @@ int StartCapture::init(int argc, char *argv[])
     }
     else if (_type == SP_NULL) {
         Usage();
+        rfbUsage();
         return RETURN_CODE_INVALID_ARG;
     }
 
     /* needs to ensure _sp is valid */
     if(!_sp->isValid()) {
         LOGGER.error() << "Invalid content(monitor ID/partial bounds) specifed for capture";
-        return RETURN_CODE_INVALID_ARG;
+        return RETURN_CODE_CANNOT_PARSE;
     }
 
     return RETURN_CODE_SUCCESS;

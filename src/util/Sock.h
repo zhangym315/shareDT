@@ -93,7 +93,7 @@ class SocketSelect {
     bool Readable(Socket const * const s);
 
   private:
-    fd_set fds_;
+    fd_set fds_{};
 };
 
 #endif //_SOCK_H_

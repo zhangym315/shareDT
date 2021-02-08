@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <fcntl.h>
-#include <errno.h>
+#include <cerrno>
 #include <netdb.h>
 #include <sys/select.h>
 #endif
@@ -238,7 +238,7 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type)
 
 Socket* SocketServer::Accept()
 {
-    SOCKET new_sock = ::accept(_s, 0, 0);
+    SOCKET new_sock = ::accept(_s, nullptr, nullptr);
     if (new_sock == INVALID_SOCKET) {
 #ifdef __SHAREDT_WIN__
         int rc = WSAGetLastError();

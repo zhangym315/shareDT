@@ -18,7 +18,23 @@
         [self.avcapturesession addInput:self.avinput];
 
         self.output = [[AVCaptureVideoDataOutput alloc] init];
-        NSDictionary* videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA], (id)kCVPixelBufferPixelFormatTypeKey, nil];
+        NSDictionary* videoSettings;
+
+        /*
+         if(parent->isYUVType()) {
+            videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_422YpCbCr8], (id)kCVPixelBufferPixelFormatTypeKey, nil];
+        } else
+         */
+        videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA], (id)kCVPixelBufferPixelFormatTypeKey, nil];
+
+        NSArray<NSNumber *> * availableCode = self.output.availableVideoCVPixelFormatTypes;
+//        NSLog(@"%@",availableCode);
+//      for (NSNumber* code in availableCode)
+//      {
+//          NSString *myString = [NSString stringWithFormat:@"%c", code];
+//          NSLog(@"%@",myString);
+//      }
+//        FrameProcessorWrap::instance()->debug(getArray a_array NSArray:availableCode );
 
         [self.output setVideoSettings:videoSettings];
         [self.output setAlwaysDiscardsLateVideoFrames:true];
@@ -92,10 +108,11 @@
     CVPixelBufferLockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
     auto bytesperrow = CVPixelBufferGetBytesPerRow(imageBuffer);
     auto buf = static_cast<unsigned char*>(CVPixelBufferGetBaseAddress(imageBuffer));
+    size_t bufferSize = CVPixelBufferGetDataSize(imageBuffer);
     if(self.fpw->isPartial()) {
-        self.fpw->writeBuf(self.fpw->getBounds(), buf, bytesperrow);
+        self.fpw->writeBuf(self.fpw->getBounds(), buf, bytesperrow, bufferSize);
     }else
-        self.fpw->writeBuf(self.fpw->getMonitor(), buf, bytesperrow);
+        self.fpw->writeBuf(self.fpw->getMonitor(), buf, bytesperrow, bufferSize);
     CVPixelBufferUnlockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly);
     self.Working = false;
 }

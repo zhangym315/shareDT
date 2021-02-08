@@ -58,7 +58,7 @@ class ShareDTHome {
     void   reSet(const char *argv);
     void   set(const char *argv);
     String & getHome();
-    bool isValid();
+    bool isValid() const;
 
   private:
     ShareDTHome();
@@ -78,7 +78,7 @@ class CapServerHome {
     void setHome(const String & path,const String & cid);
     const String & getHome();
     const String & getCid();
-    bool  isValid() const { return _valid; }
+    [[nodiscard]] bool  isValid() const { return _valid; }
 
   private:
     CapServerHome();
@@ -93,8 +93,8 @@ static const String EMPTY_STRING = "EMPTY_STRING";
 class Path
 {
   public:
-    Path(String path) : _ffs(path, std::fstream::in | std::fstream::out | std::fstream::app) { }
-    Path(String path, std::ios_base::openmode mode) : _ffs(path, mode) { }
+    explicit Path(const String& path) : _ffs(path, std::fstream::in | std::fstream::out | std::fstream::app) { }
+    Path(const String& path, std::ios_base::openmode mode) : _ffs(path, mode) { }
     ~Path() { _ffs.close(); }
     void write(const String & data);
     void write(int data);

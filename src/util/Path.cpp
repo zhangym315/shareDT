@@ -1,6 +1,5 @@
 #include <iostream>
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdio>
 #include <sys/stat.h>
 #include <thread>
 #include <chrono>
@@ -10,10 +9,8 @@
 #ifdef __SHAREDT_WIN__
 #include <direct.h>
 #include <windows.h>
-#define PATH_SEPERATOR "\\"
 #else
 #include <unistd.h>
-#define PATH_SEPERATOR "/"
 #endif
 
 static String getExecuteFromPath(const char * arg)
@@ -29,7 +26,7 @@ static String getExecuteFromPath(const char * arg)
 
     String s(pPath);
     String delimiter = ":";  /* PATH delimiter */
-    size_t pos = 0;
+    size_t pos;
     String token;
 
     while ((pos = s.find(delimiter)) != String::npos) {
@@ -37,7 +34,7 @@ static String getExecuteFromPath(const char * arg)
         if(token.back() != '/')
             token.append("/");
         token.append(arg);
-        struct stat buf;
+        struct stat buf{};
 
         if(stat (token.c_str(), &buf) == 0) {
                 return token;
@@ -49,7 +46,7 @@ static String getExecuteFromPath(const char * arg)
     if(token.back() != '/')
         token.append("/");
     token.append(arg);
-    struct stat buf;
+    struct stat buf{};
 
     if(stat (token.c_str(), &buf) == 0) {
             return token;
@@ -90,13 +87,12 @@ static String GeParentDir(const String & path, int recur=1) {
     String ret;
     ret = path;
     do {
-        if(ret.back() == '/')
-            ret = ret.substr(0, ret.rfind(PATH_SEPERATOR));
-        else ret = ret;
+        ret = ret.back () == '/' ?
+              ret.substr (0, ret.rfind (PATH_SEP_CHAR)) : ret;
 #ifdef __SHAREDT_WIN__
-        ret = ret.substr(0, ret.rfind(PATH_SEPERATOR));
+        ret = ret.substr(0, ret.rfind(PATH_SEP_CHAR));
 #else
-        ret = ret.substr(0, ret.rfind(PATH_SEPERATOR)+1);
+        ret = ret.substr(0, ret.rfind(PATH_SEP_CHAR)+1);
 #endif
         recur --;
     } while(recur > 0);
@@ -104,7 +100,7 @@ static String GeParentDir(const String & path, int recur=1) {
     return ret;
 }
 
-ShareDTHome* ShareDTHome::_instance = 0;
+ShareDTHome* ShareDTHome::_instance = nullptr;
 
 ShareDTHome::ShareDTHome() : _valid(false) {}
 void ShareDTHome::set(const char * argv)
@@ -126,10 +122,7 @@ void ShareDTHome::reSet(const char *argv)
     String appended, execName;
 
     std::size_t pos;
-    if(String::npos != (pos=path.rfind("/")))
-        execName = path.substr(pos+1);
-    else
-        execName = path;
+    execName = String::npos != (pos = path.rfind ('/')) ? path.substr (pos + 1) : path;
     /* relative path */
     if(argv[0] == '.' && argv[1] == '/') {
         path = getCWD();
@@ -147,7 +140,7 @@ void ShareDTHome::reSet(const char *argv)
         path.replace(pos, pos+3, "/");
 
     appended = String(execName);
-    /* besure it's ending with bin/ShareDTServer */
+    /* be sure it's ending with bin/ShareDTServer */
     if(!hasEnding(path, appended))
     {
         LOGGER.error() << "Can't determine home path for: " << String(argv);
@@ -163,24 +156,24 @@ void ShareDTHome::reSet(const char *argv)
 String & ShareDTHome::getHome()  { return _home; }
 ShareDTHome * ShareDTHome::instance()
 {
-    if (_instance == 0)
+    if (_instance == nullptr)
     {
         _instance = new ShareDTHome();
     }
     return _instance;
 }
 
-bool ShareDTHome::isValid()  { return _valid; }
+bool ShareDTHome::isValid() const  { return _valid; }
 
 
-CapServerHome* CapServerHome::_instance = 0;
+CapServerHome* CapServerHome::_instance = nullptr;
 
 CapServerHome::CapServerHome() : _valid(false) {
 }
 
 CapServerHome * CapServerHome::instance ()
 {
-    if(_instance == 0) {
+    if(_instance == nullptr) {
         _instance = new CapServerHome();
     }
     return _instance;
@@ -198,6 +191,11 @@ const String & CapServerHome::getHome() {
 }
 const String & CapServerHome::getCid() {
     return _cid;
+}
+
+void CapServerHome::init ()
+{
+
 }
 
 void Path::write(const String &data)

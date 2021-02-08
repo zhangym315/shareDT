@@ -13,99 +13,53 @@ struct ImageBGRA {
 
 class FrameBuffer {
   public:
-    FrameBuffer(size_t size) : _size(size), _capacity(size)
+    FrameBuffer(size_t size) : _size(size), _capacity(size),
+                            _subCapacity(0), _subData(nullptr)
     {
         if(size == 0)
-            _data = NULL;
+            _data = nullptr;
         else
             _data = (unsigned char *) malloc (size);
         _isValid = false;
     }
     FrameBuffer(const CapImageRect & bounds, unsigned int bytespp) ;
     FrameBuffer() : FrameBuffer(0) { }
+    ~FrameBuffer() { reSet(0); resetSubData(0); }
 
-    size_t getSize()   { return _size ; }
-    size_t getPacity() { return _capacity; }
+    [[nodiscard]] size_t getSize() const   { return _size ; }
+    [[nodiscard]] size_t getPacity() const { return _capacity; }
     unsigned char * getData() { return _data; }
 
-    void setData(unsigned char * data, int size)
-    {
-        reSet(size);
-        std::memcpy(_data, data, size);
-        ConvertBGRA2RGBA(_data, size);
-        _isValid = true;
-    }
-
-    void setDataPerRow(unsigned char * data, int w, int h, int bytesrow) {
-        reSet(w * h * 4);
-        int perRow = w * 4;
-        for (int i=0; i<h; i++) {
-            std::memcpy(_data + perRow * i, data+i*bytesrow, perRow);
-            ConvertBGRA2RGBA(_data + perRow * i, perRow);
-        }
-        _isValid = true;
-    }
+    void setData(unsigned char * data, int size, bool isYuv=false);
+    void setDataPerRow(unsigned char * data, int w, int h,
+                       int bytesrow, bool convert=true);
 
     /*
      * convert
      * received order is B, G, R, A
      * Convert to R, G, B, A
      */
-    void ConvertBGRA2RGBA(unsigned char * dst, size_t size) {
-        struct ImageBGRA * data = (struct ImageBGRA * ) dst;
-        unsigned char tmp;
-        int rowStart;
-        for (int i=0; i < size/4; i++) {
-            rowStart = i * 4;
-            tmp = data[i].B;
-            *(dst + rowStart + 0) = data[i].R;
-//            *(dst + rowStart + 1) = data[i].G;  G is no need to shift
-            *(dst + rowStart + 2) = tmp;
-            *(dst + rowStart + 3) = 255;  /* alpha channel */
-        }
-    }
+    void ConvertBGRA2RGBA(unsigned char * dst, size_t size);
+    void ConvertBGRA2RGBA() { return ConvertBGRA2RGBA(_data, _size); }
+    void ConvertBGRA2YCrCb420(unsigned char * dst, size_t size);
 
-    void ConvertBGRA2RGBA() {
-        return ConvertBGRA2RGBA(_data, _size);
-    }
+    void reSet(size_t size);
+    void reSet(const CapImageRect & bounds, unsigned int bytespp);
+    void reSet() { reSet(0);}
 
-    void reSet(const size_t size)
-    {
-        /* reset to 0 size */
-        if(size == 0)
-            {
-                if(_data) free(_data);
-                _data = NULL;
-                _size = _capacity = 0;
-                return ;
-            }
-
-        _size = size;
-
-        /*
-         * Only if requested size is greater,
-         * If size < _capacity, there is no need to re-allocate
-         */
-        if(_capacity < size)
-        {
-            if(_data) free(_data);
-            _data = (unsigned char * ) malloc (size) ;
-            _capacity = size;
-        }
-    }
-
-    void reSet(const CapImageRect & bounds, const unsigned int bytespp);
-
-    void reSet() {
-        reSet(0);
-    }
+    void resetSubData(size_t size);
+    void resetSubData() { resetSubData(0); }
+    unsigned char * getSubData() { return _subData; }
+    [[nodiscard]] size_t getSubCap() const { return _subCapacity; }
 
     void setInvalid() {_isValid = false;}
 
   private:
     size_t   _size;
     size_t   _capacity;
+    size_t   _subCapacity;
     unsigned char * _data;
+    unsigned char * _subData;
     bool     _isValid;
 };
 

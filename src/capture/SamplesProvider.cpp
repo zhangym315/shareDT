@@ -10,8 +10,19 @@ FrameProcessorWrap::FrameProcessorWrap() :
                 _duration(std::chrono::microseconds(MICROSECONDS_PER_SECOND/DEFAULT_SAMPLE_PROVIDER)),
                 _fpi(0),
                 _isPause(true),
-                _isReady(false)
+                _isReady(false),
+                _imgType(SPImageType::SP_IMAGE_RGBA)
 { }
+
+void FrameProcessorWrap::setImageTypeToYUV ()
+{
+    _imgType = SPImageType::SP_IMAGE_YUV;
+}
+
+bool FrameProcessorWrap::isYUVType ()
+{
+    return _imgType == SPImageType::SP_IMAGE_YUV;
+}
 
 FrameProcessorWrap * FrameProcessorWrap::instance ()
 {
@@ -21,33 +32,52 @@ FrameProcessorWrap * FrameProcessorWrap::instance ()
     return _instance;
 }
 
-void FrameProcessorWrap::setCFB(CircWRBuf<FrameBuffer> *fb) {
+void FrameProcessorWrap::setCFB(CircWRBuf<FrameBuffer> *fb)
+{
     _fb = fb;
 }
 
-void FrameProcessorWrap::setMV(CapMonitor * mon, unsigned int frequency) {
+void FrameProcessorWrap::setMV(CapMonitor * mon, unsigned int frequency)
+{
     _type = SP_MONITOR;
     _monitor = mon;
     _duration = std::chrono::microseconds(MICROSECONDS_PER_SECOND/frequency);
 }
 
-void FrameProcessorWrap::setBD(CapImageRect * bd) {
+void FrameProcessorWrap::setBD(CapImageRect * bd)
+{
     _type = SP_PARTIAL;
     _bounds = bd;
 }
 
-CapMonitor * FrameProcessorWrap::getMonitor() {
+CapMonitor * FrameProcessorWrap::getMonitor()
+{
     return _monitor;
 }
 
-bool FrameProcessorWrap::isPartial() {
+void FrameProcessorWrap::debug(char * array [])
+{
+    std::cout << "Hello from FrameProcessorWrap::debug" << std::endl;
+    while( (*array) != nullptr) {
+            std::cout << "Hello from FrameProcessorWrap::debug available: " << *array << std::endl;
+    }
+}
+
+bool FrameProcessorWrap::isPartial()
+{
     return (_type == SP_PARTIAL);
 }
 
-void FrameProcessorWrap::writeBuf(CapMonitor * mon, unsigned char * buf, int bpr) {
+void FrameProcessorWrap::writeBuf(CapMonitor * mon, unsigned char * buf,
+                                  int bpr, size_t bufferSize)
+{
     FrameBuffer * fb = _fb->getToWrite();
+    if(bufferSize) {
+        fb->reSet(bufferSize);
+    }
+
     if(fb) {
-        fb->setData(buf, mon->getOrgWidth()*mon->getOrgHeight()*4);
+        fb->setData(buf, mon->getOrgWidth()*mon->getOrgHeight()*4, !isYUVType());
 //        std::cout << "queu is write ..." << std::endl;
     } else {
         pause();
@@ -55,17 +85,24 @@ void FrameProcessorWrap::writeBuf(CapMonitor * mon, unsigned char * buf, int bpr
     }
 }
 
-void FrameProcessorWrap::writeBuf(CapImageRect * bd, unsigned char * buf, int bpr) {
+void FrameProcessorWrap::writeBuf(CapImageRect * bd, unsigned char * buf,
+                                  int bpr, size_t bufferSize)
+{
     FrameBuffer * fb = _fb->getToWrite();
     if(fb) {
 //std::cout << "bd->getWidth(): " << bd->getWidth() << " bd->getHeight(): " <<  bd->getHeight() << std::endl;
 //            fb->setData(buf, bd->getWidth()*bd->getHeight()*4);
-        fb->setDataPerRow(buf, bd->getWidth(), bd->getHeight(), bpr);
+        if(bufferSize) {
+            fb->reSet(bufferSize);
+        }
+
+        fb->setDataPerRow(buf, bd->getWidth(), bd->getHeight(), bpr, isYUVType());
 //        std::cout << "write Buf queue is write ..." << std::endl;
     } else {
         pause();
 //        std::cout << "write Buf queue is full, pause..." << std::endl;
     }
+
 }
 
 void CircleWriteThread::startFPW()
@@ -80,9 +117,13 @@ void CircleWriteThread::mainImp()
     assert(_fb);
     FrameBuffer *fb;
 
-    /* start a singleton to receive the capture from kernel's call back */
+    /*
+     * start a singleton to receive the capture from kernel's call back
+     * For IOS and (Monitor or Partial) capture, start new thread to capture.
+     * Otherwise, do while loop to call CircleWriteThread::WindowsFrame to get frame
+     */
     if( PLATFORM == SHAREDT_IOS && (_type == SP_MONITOR
-        || _type == SP_PARTIAL)) {
+        || _type == SP_PARTIAL) ) {
         /* start FrameProcessorWrap */
         startFPW();
     } else {

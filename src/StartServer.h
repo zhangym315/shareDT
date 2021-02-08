@@ -24,6 +24,7 @@
 #define RETURN_CODE_INVALID_ARG  4
 #define RETURN_CODE_INTERNAL_ERROR 8
 #define RETURN_CODE_SERVICE_ERROR  16
+#define RETURN_CODE_CANNOT_PARSE   32
 
 #define CAPTURE_STOPPING "STOPPING"
 
@@ -60,8 +61,7 @@ class StartCapture {
          _ctype(C_NONE), _frequency(DEFAULT_SAMPLE_PROVIDER) { }
     ~StartCapture();
 
-    int init(int argc, char *argv[]) ;
-    int init() { return init(0, NULL); }
+    int initSrceenProvider();
     int initParsing(int argc, char * argv[]);
     int initRFBServer(int argc, char *argv[]);
     int getVNCClientCount(struct _rfbClientRec* head);
@@ -90,13 +90,13 @@ class StartCapture {
     [[nodiscard]] const StringVec & getUnrecognizedOptions() const { return _unrecognizedOptions; }
 
     ScreenProvider * getScreenProvide() { return _sp; }
+    void Usage();
 
   protected:
     ScreenProvider * _sp;     /* screen provider */
     unsigned int     _frequency;
 
   private:
-    void Usage();
     int parseArgs(const vector<String> & args);
     bool parseBounds();
     bool parseWindows();

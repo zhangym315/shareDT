@@ -9,6 +9,8 @@
 
 /* define platform specific */
 enum PLATFORM_STATUS { SHAREDT_WIN, SHAREDT_IOS, SHAREDT_LINUX, SHAREDT_UNKNOWN };
+enum SPImageType { SP_IMAGE_RGBA, SP_IMAGE_YUV};  // default RGBA
+
 #ifdef __SHAREDT_WIN__
 const static PLATFORM_STATUS PLATFORM = SHAREDT_WIN;
 #elif __SHAREDT_IOS__
@@ -45,11 +47,14 @@ class FrameProcessorWrap {
     void setBD(CapImageRect * bd);
     CapMonitor * getMonitor ();
     bool isPartial();
-    void writeBuf(CapMonitor * mon, unsigned char * buf, int bpr) ; /* write buffer */
-    void writeBuf(CapImageRect * bd, unsigned char * buf, int bpr);
+    void writeBuf(CapMonitor * mon, unsigned char * buf, int bpr, size_t bufSize=0) ; /* write buffer */
+    void writeBuf(CapImageRect * bd, unsigned char * buf, int bpr, size_t bufSize=0);
     bool isReady() { return _isReady; }
     CapImageRect * getBounds() { return _bounds; }
 
+    void debug(char * array []);
+    void setImageTypeToYUV();
+    bool isYUVType();
   private:
     FrameProcessorWrap();
     static FrameProcessorWrap * _instance;
@@ -62,6 +67,7 @@ class FrameProcessorWrap {
     bool                        _isReady;
     std::mutex                  _mtx;
     SPType                      _type;
+    SPImageType                 _imgType;
  };
 
 /*
@@ -74,7 +80,7 @@ class CircleWriteThread : public Thread {
     CircleWriteThread(CircWRBuf<FrameBuffer> * fb,
                       std::chrono::milliseconds sp) : _fb(fb),
                       _status(NONE), _duration(sp), Thread(false),
-                      _isReady(false), _isPause(true) {}
+                      _isReady(false), _isPause(true) { }
 
     CircleWriteThread(CircWRBuf<FrameBuffer> *fb, unsigned int frequency) :
         CircleWriteThread(fb, std::chrono::milliseconds(MICROSECONDS_PER_SECOND/frequency)) { }
