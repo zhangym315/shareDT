@@ -3,3 +3,4 @@
 .vscode*
 contrib/qt515/*
 contrib/openssl/*
+contrib/ffmpeg/*
