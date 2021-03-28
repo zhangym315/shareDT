@@ -59,6 +59,9 @@ find_package(X265 REQUIRED NO_MODULE)
 set(png_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
 find_package(png REQUIRED NO_MODULE)
 
+set(ffmpeg_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
+find_package(ffmpeg REQUIRED NO_MODULE)
+
 # include headers
 # ${CMAKE_CURRENT_BINARY_DIR}/libvnc/ for the generated rfbconfig.h
 include_directories (
@@ -108,6 +111,23 @@ elseif(APPLE)
     find_library(coregraphics_lib CoreGraphics REQUIRED)
     find_library(corevideo_lib CoreVideo REQUIRED)
 
+    # For ffmpeg library linkage
+    find_library(AudioToolbox_LIB AudioToolbox REQUIRED)
+    find_library(CoreFoundation_LIB CoreFoundation REQUIRED)
+    find_library(CoreMedia_LIB CoreMedia REQUIRED)
+    find_library(CoreVideo_LIB CoreVideo REQUIRED)
+    find_library(VideoToolbox_LIB VideoToolbox REQUIRED)
+    find_library(VideoToolbox_Security Security REQUIRED)
+    set(FFMPEG_REQUIRED_LIBS
+        ${FFMPEG_LIBRARIES}
+        ${AudioToolbox_LIB}
+        ${CoreFoundation_LIB}
+        ${CoreMedia_LIB}
+        ${CoreVideo_LIB}
+        ${VideoToolbox_LIB}
+        ${VideoToolbox_Security}
+    )
+
     set(CAPTURE_SRC
         ${CAPTURE_SRC}
         ${CMAKE_SOURCE_DIR}/src/capture/ios/CGWindowProcessor.cpp
@@ -117,6 +137,7 @@ elseif(APPLE)
         ${CMAKE_SOURCE_DIR}/src/capture/ios/CGWindowsFrame.cpp
         ${CMAKE_SOURCE_DIR}/src/MainNixService.cpp
     )
+
     set(${PROJECT_NAME}_PLATFORM_LIBS
         ${CMAKE_THREAD_LIBS_INIT}
         ${corefoundation_lib}
