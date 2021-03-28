@@ -1,3 +1,6 @@
 [submodule "contrib/bzip2"]
 	path = contrib/bzip2
 	url = git://sourceware.org/git/bzip2.git
+[submodule "contrib/liblzma"]
+	path = contrib/liblzma
+	url = https://github.com/kobolabs/liblzma.git
