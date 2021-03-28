@@ -41,6 +41,7 @@ def buildBZip2():
     pathINS = PWD + component[0] + INS
     pathBLD = PWD + component[0]
     print("Change to: " + pathBLD)
+    os.chdir(pathBLD)
 
     ret=os.system('make -j 2')
     if ret != 0:
@@ -147,6 +148,7 @@ else:
 components = [["SDL2-2.0.12", "CMAKE"], ["libjpeg-turbo-2.0.5", "CMAKE"], ["zlib", "CMAKE"],\
               ["libpng-1.6.37", "CMAKE"], ["lzo-2.10", "CMAKE"], ["x265_3.3/source/", "CMAKE"],\
               ["openssl", "Configure"],\
+              ["liblzma", "configure"],\
               ["ffmpeg", "configure  --disable-iconv"],\
               ["bzip2", "configure"]\
               ]
