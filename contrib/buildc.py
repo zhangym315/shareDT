@@ -6,8 +6,6 @@ import sys
 import os
 import multiprocessing
 
-cpuCount=multiprocessing.cpu_count()
-
 try:
     import subprocess
 except:
@@ -18,6 +16,7 @@ PWD=os.getcwd() + "/"
 INS="/build/install/"
 BLD="/build/"
 DONE_FILE="/.INSTALLED_DONE"
+cpuCount=multiprocessing.cpu_count()
 
 def buildWindowsOpenssl():
     pathINS = PWD + component[0] + INS
