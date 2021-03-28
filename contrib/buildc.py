@@ -37,14 +37,32 @@ def buildWindowsOpenssl():
         sys.exit(1)
     open(PWD + component[0] + DONE_FILE, 'w')
 
+def buildBZip2():
+    pathINS = PWD + component[0] + INS
+    pathBLD = PWD + component[0]
+    print("Change to: " + pathBLD)
+
+    ret=os.system('make -j 2')
+    if ret != 0:
+        sys.exit(1)
+
+    ret=os.system('make install PREFIX=' + pathINS)
+    if ret != 0:
+        sys.exit(1)
+    open(PWD + component[0] + DONE_FILE, 'w')
+
 def buildAndInstall(kernel, component):
     if os.path.exists(PWD + component[0] + DONE_FILE):
         print('Built ' + component[0])
         return
 
     print('Building ' + component[0])
+
     if kernel == "windows" and component[0] == "openssl":
         buildWindowsOpenssl()
+        return
+    if component[0] == "bzip2":
+        buildBZip2()
         return
 
     if component[1] == "CMAKE" :
@@ -67,9 +85,11 @@ def buildAndInstall(kernel, component):
     else:
         pathINS = PWD + component[0] + INS
         pathBLD = PWD + component[0]
+
         if not os.path.isdir(pathINS):
             os.makedirs(pathINS)
         os.chdir(pathBLD)
+
         ret=os.system( './' + component[1] + ' --prefix=' + pathINS)
         if ret != 0:
             sys.exit(1)
@@ -127,7 +147,9 @@ else:
 components = [["SDL2-2.0.12", "CMAKE"], ["libjpeg-turbo-2.0.5", "CMAKE"], ["zlib", "CMAKE"],\
               ["libpng-1.6.37", "CMAKE"], ["lzo-2.10", "CMAKE"], ["x265_3.3/source/", "CMAKE"],\
               ["openssl", "Configure"],\
-              ["ffmpeg", "configure  --disable-iconv"]]
+              ["ffmpeg", "configure  --disable-iconv"],\
+              ["bzip2", "configure"]\
+              ]
 
 for component in components :
     buildAndInstall(kernel, component)
