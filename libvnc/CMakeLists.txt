@@ -54,15 +54,15 @@ option(WITH_SASL "Build with SASL support" ON)
 
 ############ Self defined libs Started
 #zlib
-set(ZLIB_DIR ${CMAKE_SOURCE_CMAKE})
+set(ZLIB_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
 find_package(ZLIB REQUIRED NO_MODULE)
 
 #OpenSSL
-set(OpenSSL_DIR ${CMAKE_SOURCE_CMAKE})
+set(OpenSSL_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
 find_package(OpenSSL REQUIRED NO_MODULE)
 
 #JPEG
-set(JPEG_DIR ${CMAKE_SOURCE_CMAKE})
+set(JPEG_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
 find_package(JPEG REQUIRED NO_MODULE)
 if(JPEG_FOUND )
     # Check whether the version of libjpeg we found was libjpeg-turbo and print a
@@ -105,11 +105,11 @@ int main(void) {\n
 endif(JPEG_FOUND)
 
 #LZO
-set(LZO_DIR ${CMAKE_SOURCE_CMAKE})
+set(LZO_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
 find_package(LZO REQUIRED NO_MODULE)
 
 #SDL2
-set(SDL2_DIR ${CMAKE_SOURCE_CMAKE})
+set(SDL2_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
 find_package(SDL2 REQUIRED NO_MODULE)
 
 #FFMPEG
@@ -117,7 +117,7 @@ find_package(SDL2 REQUIRED NO_MODULE)
 #find_package(FFMPEG REQUIRED COMPONENTS avformat avcodec avutil swscale)
 
 #PNG
-set(PNG_DIR ${CMAKE_SOURCE_CMAKE})
+set(PNG_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
 find_package(PNG REQUIRED NO_MODULE)
 
 ############ Self defined libs Ended
