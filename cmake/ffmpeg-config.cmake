@@ -10,5 +10,10 @@ set(FFMPEG_LIBRARIES ${FFMPEG_INSTALL}/lib/libavcodec.a
                      ${FFMPEG_INSTALL}/lib/libswresample.a
         )
 
+foreach(x IN ITEMS ${FFMPEG_LIBRARIES})
+    check_existing(${x})
+endforeach()
+check_existing(${FFMPEG_INCLUDE_DIR})
+
 message(STATUS "Found FFMPEG at ${FFMPEG_INSTALL}")
 set(FFMPEG_FOUND TRUE)

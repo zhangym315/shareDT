@@ -8,6 +8,9 @@ set(CMAKE_CXX_STANDARD 17)
 # set START_SERVER
 set(START_SERVER ShareDTServer)
 set(CMAKE_SOURCE_CONTRIB ${CMAKE_SOURCE_DIR}/contrib)
+set(CMAKE_SOURCE_CMAKE ${CMAKE_SOURCE_DIR}/cmake)
+
+include(${CMAKE_SOURCE_CMAKE}/functions.cmake)
 
 # QMake specific
 # Instruct CMake to run moc automatically when needed.
@@ -47,19 +50,18 @@ set(LIBVNC_INCLUDE ${CMAKE_SOURCE_DIR}/libvnc ${CMAKE_SOURCE_DIR}/libvnc/libvncs
 add_definitions(-DSTART_SERVER_EXEC="${START_SERVER}")
 
 # zlib
-set(CMAKE_SOURCE_CONTRIB_CMAKE ${CMAKE_SOURCE_CONTRIB}/cmake/)
-set(ZLIB_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
+set(ZLIB_DIR ${CMAKE_SOURCE_CMAKE})
 find_package(ZLIB REQUIRED NO_MODULE)
 
 # x265
-set(X265_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
+set(X265_DIR ${CMAKE_SOURCE_CMAKE})
 find_package(X265 REQUIRED NO_MODULE)
 
 # png
-set(png_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
+set(png_DIR ${CMAKE_SOURCE_CMAKE})
 find_package(png REQUIRED NO_MODULE)
 
-set(ffmpeg_DIR ${CMAKE_SOURCE_CONTRIB_CMAKE})
+set(ffmpeg_DIR ${CMAKE_SOURCE_CMAKE})
 find_package(ffmpeg REQUIRED NO_MODULE)
 
 # include headers
@@ -203,7 +205,11 @@ add_executable(${START_SERVER}
         ${CAPTURE_SRC}
         )
 #target_link_libraries(${START_SERVER} vncserver screen_capture_lite ${${PROJECT_NAME}_PLATFORM_LIBS} )
-target_link_libraries(${START_SERVER} vncserver  ${${PROJECT_NAME}_PLATFORM_LIBS} ${X265_LIBRARIES} )
+target_link_libraries(${START_SERVER} vncserver
+                    ${${PROJECT_NAME}_PLATFORM_LIBS}
+                    ${X265_LIBRARIES}
+                    ${FFMPEG_LIBRARIES}
+                    )
 
 #set(VNCSCREENCAP vncserver screen_capture_lite ${${PROJECT_NAME}_PLATFORM_LIBS})
 set( VNCSCREENCAP vncserver  ${${PROJECT_NAME}_PLATFORM_LIBS} )
