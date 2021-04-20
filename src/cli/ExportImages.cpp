@@ -342,8 +342,8 @@ int ExportImages::_startExportH265Video(const String & infile,
     param.internalCsp = csp;
     param.sourceWidth = width;
     param.sourceHeight = height;
-    param.fpsNum = 25; // 帧率
-    param.fpsDenom = 1; // 帧率
+    param.fpsNum = 25;
+    param.fpsDenom = 1;
 
     handle = x265_encoder_open (&param);
     if (handle == nullptr)
@@ -359,9 +359,7 @@ int ExportImages::_startExportH265Video(const String & infile,
     }
     x265_picture_init (&param, pic_in);
 
-    // Y分量大小
     luma_size = param.sourceWidth * param.sourceHeight;
-    // 分量一帧YUV的空间
     switch (csp)
     {
         case X265_CSP_I444:buff = (char *) malloc (luma_size * 3);

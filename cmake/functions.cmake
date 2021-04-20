@@ -1,0 +1,7 @@
+function(check_existing ARGS)
+    if(EXISTS ${ARGS})
+        message(STATUS "Found file ${ARGS}")
+    else()
+        message(FATAL_ERROR " Can't find files ${ARGS}")
+    endif()
+endfunction()
