@@ -1,0 +1,4 @@
+#ifndef _READWRITEVIDEO_H_
+#define _READWRITEVIDEO_H_
+
+#endif //_READWRITEVIDEO_H_

@@ -147,8 +147,8 @@ int ExportImages::startExportH265Video()
     param.internalCsp  = X265_CSP_I420;
     param.sourceWidth  = width;
     param.sourceHeight = height;
-    param.fpsNum   = 25; // 帧率
-    param.fpsDenom = 1;  // 帧率
+    param.fpsNum   = 25;
+    param.fpsDenom = 1;
 
     handle = x265_encoder_open (&param);
     if (handle == nullptr)
@@ -165,7 +165,6 @@ int ExportImages::startExportH265Video()
     }
     x265_picture_init (&param, pic_in);
 
-    // Y分量大小
     luma_size = param.sourceWidth * param.sourceHeight;
     switch (param.internalCsp)
     {

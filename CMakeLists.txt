@@ -90,6 +90,7 @@ add_executable(${START_SERVER}
         ${SHAREDT_SRC}/util/Pid.c
         ${SHAREDT_SRC}/cli/ExportImages.cpp
         ${SHAREDT_SRC}/ffmpeg/ReadWriteImages.c
+        ${SHAREDT_SRC}/ffmpeg/ReadWriteVideo.c
         ${CAPTURE_SRC}
         )
 
