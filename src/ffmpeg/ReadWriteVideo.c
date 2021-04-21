@@ -8,9 +8,10 @@
 #include <libavutil/opt.h>
 #include <libavutil/mathematics.h>
 #include <libavutil/timestamp.h>
-#include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
+
+#include "ReadWriteVideo.h"
 
 #define STREAM_DURATION   10.0
 #define STREAM_FRAME_RATE 25 /* 25 images/s */
@@ -89,7 +90,9 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
 }
 
 /* Add an output stream. */
-static void add_stream(OutputStream *ost, AVFormatContext *oc,
+static void add_stream(ffmpeg_audio_video_input *input,
+                       OutputStream *ost,
+                       AVFormatContext *oc,
                        AVCodec **codec,
                        enum AVCodecID codec_id)
 {
@@ -146,18 +149,18 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
     case AVMEDIA_TYPE_VIDEO:
         c->codec_id = codec_id;
 
-        c->bit_rate = 400000;
+        c->bit_rate = (input->bit_rate==0) ? 400000 : input->bit_rate;
         /* Resolution must be a multiple of two. */
-        c->width    = 352;
-        c->height   = 288;
+        c->width    = input->w;
+        c->height   = input->h;
         /* timebase: This is the fundamental unit of time (in seconds) in terms
          * of which frame timestamps are represented. For fixed-fps content,
          * timebase should be 1/framerate and timestamp increments should be
          * identical to 1. */
-        ost->st->time_base = (AVRational){ 1, STREAM_FRAME_RATE };
+        ost->st->time_base = (AVRational){ 1, input->rate };
         c->time_base       = ost->st->time_base;
 
-        c->gop_size      = 12; /* emit one intra frame every twelve frames at most */
+        c->gop_size      = (input->infra_frame==0) ? 12 : input->infra_frame; /* emit one intra frame every twelve frames at most */
         c->pix_fmt       = STREAM_PIX_FMT;
         if (c->codec_id == AV_CODEC_ID_MPEG2VIDEO) {
             /* just for testing, we also add B-frames */
@@ -418,28 +421,17 @@ static void open_video(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, A
 }
 
 /* Prepare a dummy image. */
-static void fill_yuv_image(AVFrame *pict, int frame_index,
-                           int width, int height)
+static void fill_yuv_image(AVFrame *pict, ffmpeg_video_frame * src_frame )
 {
-    int x, y, i;
-
-    i = frame_index;
-
-    /* Y */
-    for (y = 0; y < height; y++)
-        for (x = 0; x < width; x++)
-            pict->data[0][y * pict->linesize[0] + x] = x + y + i * 3;
-
-    /* Cb and Cr */
-    for (y = 0; y < height / 2; y++) {
-        for (x = 0; x < width / 2; x++) {
-            pict->data[1][y * pict->linesize[1] + x] = 128 + y + i * 2;
-            pict->data[2][y * pict->linesize[2] + x] = 64 + x + i * 5;
-        }
-    }
+    if (src_frame->data0)
+        memcpy(pict->data[0], src_frame->data0, src_frame->data0_len);
+    if (src_frame->data1)
+        memcpy(pict->data[1], src_frame->data1, src_frame->data1_len);
+    if (src_frame->data2)
+        memcpy(pict->data[2], src_frame->data2, src_frame->data2_len);
 }
 
-static AVFrame *get_video_frame(OutputStream *ost)
+static AVFrame *get_video_frame(ffmpeg_video_frame * in_frame, OutputStream *ost)
 {
     AVCodecContext *c = ost->enc;
 
@@ -468,12 +460,12 @@ static AVFrame *get_video_frame(OutputStream *ost)
                 exit(1);
             }
         }
-        fill_yuv_image(ost->tmp_frame, ost->next_pts, c->width, c->height);
+        fill_yuv_image(ost->tmp_frame, in_frame);
         sws_scale(ost->sws_ctx, (const uint8_t * const *) ost->tmp_frame->data,
                   ost->tmp_frame->linesize, 0, c->height, ost->frame->data,
                   ost->frame->linesize);
     } else {
-        fill_yuv_image(ost->frame, ost->next_pts, c->width, c->height);
+        fill_yuv_image(ost->frame, in_frame);
     }
 
     ost->frame->pts = ost->next_pts++;
@@ -485,9 +477,9 @@ static AVFrame *get_video_frame(OutputStream *ost)
  * encode one video frame and send it to the muxer
  * return 1 when encoding is finished, 0 otherwise
  */
-static int write_video_frame(AVFormatContext *oc, OutputStream *ost)
+static int write_video_frame(ffmpeg_video_frame * in_frame, AVFormatContext *oc, OutputStream *ost)
 {
-    return write_frame(oc, ost->enc, ost->st, get_video_frame(ost));
+    return write_frame(oc, ost->enc, ost->st, get_video_frame(in_frame, ost));
 }
 
 static void close_stream(AVFormatContext *oc, OutputStream *ost)
@@ -510,16 +502,8 @@ static int have_video = 0, have_audio = 0;
 static int encode_video = 0, encode_audio = 0;
 static AVDictionary *opt = NULL;
 
-int export_video_open(int argc, char **argv, const char *filename)
+int export_video_open(ffmpeg_audio_video_input *input, const char *filename)
 {
-/*    int i;
-
-    for (i = 2; i+1 < argc; i+=2) {
-        if (!strcmp(argv[i], "-flags") || !strcmp(argv[i], "-fflags"))
-            av_dict_set(&opt, argv[i]+1, argv[i+1], 0);
-    }
-*/
-
     /* allocate the output media context */
     avformat_alloc_output_context2 (&oc, NULL, NULL, filename);
     if (!oc)
@@ -536,16 +520,18 @@ int export_video_open(int argc, char **argv, const char *filename)
      * and initialize the codecs. */
     if (fmt->video_codec != AV_CODEC_ID_NONE)
     {
-        add_stream (&video_st, oc, &video_codec, fmt->video_codec);
+        add_stream (input, &video_st, oc, &video_codec, fmt->video_codec);
         have_video = 1;
         encode_video = 1;
     }
-    if (fmt->audio_codec != AV_CODEC_ID_NONE)
+
+/*    if (fmt->audio_codec != AV_CODEC_ID_NONE)
     {
-        add_stream (&audio_st, oc, &audio_codec, fmt->audio_codec);
+        add_stream (input, &audio_st, oc, &audio_codec, fmt->audio_codec);
         have_audio = 1;
         encode_audio = 1;
     }
+*/
 
     /* Now that all the parameters are set, we can open the audio and
      * video codecs and allocate the necessary encode buffers. */
@@ -581,14 +567,17 @@ int export_video_open(int argc, char **argv, const char *filename)
     return 0;
 }
 
-int export_video_write()
+int export_video_write(ffmpeg_video_frame * in_frame)
 {
     while (encode_video || encode_audio) {
         /* select the stream to encode */
-        if (encode_video &&
+        if (encode_video)
+/*        &&
             (!encode_audio || av_compare_ts(video_st.next_pts, video_st.enc->time_base,
-                                        audio_st.next_pts, audio_st.enc->time_base) <= 0)) {
-            encode_video = !write_video_frame(oc, &video_st);
+                                        audio_st.next_pts, audio_st.enc->time_base) <= 0))
+*/
+        {
+            encode_video = !write_video_frame(in_frame, oc, &video_st);
         } else {
             encode_audio = !write_audio_frame(oc, &audio_st);
         }

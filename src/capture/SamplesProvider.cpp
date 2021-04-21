@@ -72,11 +72,11 @@ void FrameProcessorWrap::writeBuf(CapMonitor * mon, unsigned char * buf,
                                   int bpr, size_t bufferSize)
 {
     FrameBuffer * fb = _fb->getToWrite();
-    if(bufferSize) {
-        fb->reSet(bufferSize);
-    }
 
     if(fb) {
+        if(bufferSize) {
+            fb->reSet(bufferSize);
+        }
         fb->setData(buf, mon->getOrgWidth()*mon->getOrgHeight()*4, !isYUVType());
 //        std::cout << "queu is write ..." << std::endl;
     } else {
