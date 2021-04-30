@@ -39,7 +39,7 @@ include(GNUInstallDirs)
 option(PNG_BUILD_ZLIB "Custom zlib Location, else find_package is used" OFF)
 
 if(NOT PNG_BUILD_ZLIB)
-  set(ZLIB_DIR "${CMAKE_SOURCE_DIR}/../cmake/")
+  set(ZLIB_DIR "${CMAKE_SOURCE_DIR}/../../cmake/contrib/")
   set(CMAKE_SOURCE_CONTRIB "${CMAKE_SOURCE_DIR}/../")
   find_package(ZLIB REQUIRED NO_MODULE)
   message(WARNING "ZLIB INCLUDE: ${ZLIB_INCLUDE_DIR}")
