@@ -14,7 +14,6 @@
 #include "ReadWriteVideo.h"
 
 #define STREAM_DURATION   10.0
-#define STREAM_FRAME_RATE 25 /* 25 images/s */
 #define STREAM_PIX_FMT    AV_PIX_FMT_YUV420P /* default pix_fmt */
 
 #define SCALE_FLAGS SWS_BICUBIC
@@ -77,7 +76,7 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
         pkt.stream_index = st->index;
 
         /* Write the compressed frame to the media file. */
-        log_packet(fmt_ctx, &pkt);
+        //log_packet(fmt_ctx, &pkt);
         ret = av_interleaved_write_frame(fmt_ctx, &pkt);
         av_packet_unref(&pkt);
         if (ret < 0) {
@@ -124,8 +123,8 @@ static void add_stream(ffmpeg_audio_video_input *input,
     case AVMEDIA_TYPE_AUDIO:
         c->sample_fmt  = (*codec)->sample_fmts ?
                          (*codec)->sample_fmts[0] : AV_SAMPLE_FMT_FLTP;
-        c->bit_rate    = 64000;
-        c->sample_rate = 44100;
+//        c->bit_rate    = 64000;
+//        c->sample_rate = 44100;
         if ((*codec)->supported_samplerates) {
             c->sample_rate = (*codec)->supported_samplerates[0];
             for (i = 0; (*codec)->supported_samplerates[i]; i++) {
@@ -149,7 +148,7 @@ static void add_stream(ffmpeg_audio_video_input *input,
     case AVMEDIA_TYPE_VIDEO:
         c->codec_id = codec_id;
 
-        c->bit_rate = (input->bit_rate==0) ? 400000 : input->bit_rate;
+//        c->bit_rate = (input->bit_rate==0) ? 400000 : input->bit_rate;
         /* Resolution must be a multiple of two. */
         c->width    = input->w;
         c->height   = input->h;
@@ -420,15 +419,34 @@ static void open_video(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, A
     }
 }
 
-/* Prepare a dummy image. */
 static void fill_yuv_image(AVFrame *pict, ffmpeg_video_frame * src_frame )
 {
-    if (src_frame->data0)
-        memcpy(pict->data[0], src_frame->data0, src_frame->data0_len);
-    if (src_frame->data1)
-        memcpy(pict->data[1], src_frame->data1, src_frame->data1_len);
-    if (src_frame->data2)
-        memcpy(pict->data[2], src_frame->data2, src_frame->data2_len);
+    int data[8] = {(int) src_frame->w * 3, 0, 0, 0, 0, 0, 0, 0};
+    const uint8_t *const srcSlice[8] = { src_frame->data0, 0, 0, 0, 0, 0, 0, 0 };
+
+    struct SwsContext * sws_ctx = sws_getCachedContext ( src_frame->rgb_to_yuv_ctx, src_frame->w, src_frame->h,
+                                         src_frame->format, src_frame->w, src_frame->h, AV_PIX_FMT_YUV420P,
+                                         SWS_LANCZOS | SWS_ACCURATE_RND , NULL, NULL, NULL );
+/*
+    char * tmp = src_frame->data0;
+    char * tmp1 = tmp;
+    int i = 0;
+    while (tmp < (src_frame->data0+(src_frame->w*src_frame->h*4))) {
+    i++;
+    *tmp1 = *tmp;
+        if (i % 4 == 0)
+        {
+            tmp++;
+        }
+        else
+        {
+            tmp++;
+            tmp1++;
+        }
+    }
+*/
+    sws_scale ( sws_ctx, srcSlice, data, 0,
+                (int) src_frame->h, pict->data, pict->linesize );
 }
 
 static AVFrame *get_video_frame(ffmpeg_video_frame * in_frame, OutputStream *ost)
@@ -437,8 +455,9 @@ static AVFrame *get_video_frame(ffmpeg_video_frame * in_frame, OutputStream *ost
 
     /* check if we want to generate more frames */
     if (av_compare_ts(ost->next_pts, c->time_base,
-                      STREAM_DURATION, (AVRational){ 1, 1 }) > 0)
+                      in_frame->total_time, (AVRational){ 1, 1 }) > 0) {
         return NULL;
+    }
 
     /* when we pass a frame to the encoder, it may keep a reference to it
      * internally; make sure we do not overwrite it here */
@@ -525,14 +544,6 @@ int export_video_open(ffmpeg_audio_video_input *input, const char *filename)
         encode_video = 1;
     }
 
-/*    if (fmt->audio_codec != AV_CODEC_ID_NONE)
-    {
-        add_stream (input, &audio_st, oc, &audio_codec, fmt->audio_codec);
-        have_audio = 1;
-        encode_audio = 1;
-    }
-*/
-
     /* Now that all the parameters are set, we can open the audio and
      * video codecs and allocate the necessary encode buffers. */
     if (have_video)
@@ -569,21 +580,7 @@ int export_video_open(ffmpeg_audio_video_input *input, const char *filename)
 
 int export_video_write(ffmpeg_video_frame * in_frame)
 {
-    while (encode_video || encode_audio) {
-        /* select the stream to encode */
-        if (encode_video)
-/*        &&
-            (!encode_audio || av_compare_ts(video_st.next_pts, video_st.enc->time_base,
-                                        audio_st.next_pts, audio_st.enc->time_base) <= 0))
-*/
-        {
-            encode_video = !write_video_frame(in_frame, oc, &video_st);
-        } else {
-            encode_audio = !write_audio_frame(oc, &audio_st);
-        }
-    }
-
-    return 0;
+    return write_video_frame(in_frame, oc, &video_st);
 }
 
 int export_video_close()

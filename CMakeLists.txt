@@ -92,7 +92,6 @@ add_executable(${START_SERVER}
         ${CAPTURE_SRC}
         )
 
-message("capture src: ${CAPTURE_SRC}")
 #target_link_libraries(${START_SERVER} vncserver screen_capture_lite ${${PROJECT_NAME}_PLATFORM_LIBS} )
 target_link_libraries(${START_SERVER}
         ${BZIP2_LIBRARIES}

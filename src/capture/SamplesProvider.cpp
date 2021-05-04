@@ -16,12 +16,17 @@ FrameProcessorWrap::FrameProcessorWrap() :
 
 void FrameProcessorWrap::setImageTypeToYUV ()
 {
-    _imgType = SPImageType::SP_IMAGE_YUV;
+    _imgType = SPImageType::SP_IMAGE_YUV420;
+}
+
+void FrameProcessorWrap::setImageTypeToRGB ()
+{
+    _imgType = SPImageType::SP_IMAGE_RGB;
 }
 
 bool FrameProcessorWrap::isYUVType ()
 {
-    return _imgType == SPImageType::SP_IMAGE_YUV;
+    return _imgType == SPImageType::SP_IMAGE_YUV420;
 }
 
 FrameProcessorWrap * FrameProcessorWrap::instance ()
@@ -77,11 +82,10 @@ void FrameProcessorWrap::writeBuf(CapMonitor * mon, unsigned char * buf,
         if(bufferSize) {
             fb->reSet(bufferSize);
         }
-        fb->setData(buf, mon->getOrgWidth()*mon->getOrgHeight()*4, !isYUVType());
-//        std::cout << "queu is write ..." << std::endl;
+        fb->setData(buf, mon->getOrgWidth()*mon->getOrgHeight()*4, _imgType);
     } else {
+        // queue is full, needs to pause
         pause();
-//        std::cout << "queu is full, pause..." << std::endl;
     }
 }
 
@@ -90,17 +94,13 @@ void FrameProcessorWrap::writeBuf(CapImageRect * bd, unsigned char * buf,
 {
     FrameBuffer * fb = _fb->getToWrite();
     if(fb) {
-//std::cout << "bd->getWidth(): " << bd->getWidth() << " bd->getHeight(): " <<  bd->getHeight() << std::endl;
-//            fb->setData(buf, bd->getWidth()*bd->getHeight()*4);
         if(bufferSize) {
             fb->reSet(bufferSize);
         }
 
-        fb->setDataPerRow(buf, bd->getWidth(), bd->getHeight(), bpr, isYUVType());
-//        std::cout << "write Buf queue is write ..." << std::endl;
+        fb->setDataPerRow(buf, bd->getWidth(), bd->getHeight(), bpr, getImageType());
     } else {
         pause();
-//        std::cout << "write Buf queue is full, pause..." << std::endl;
     }
 
 }

@@ -3,6 +3,7 @@
 
 extern "C" {
 #include "ReadWriteVideo.h"
+#include "libswscale/swscale.h"
 }
 
 int mainExport(const char ** cmdArg, const struct cmdConf * conf)
@@ -72,8 +73,11 @@ int ExportImages::parseExportImagesOptions()
         } else if ( (*i) == "--total" ) {
             _total = stoi(*(++i));
         } else if ( (*i) == "--mp4" ) {
-            FrameProcessorWrap::instance()->setImageTypeToYUV();
+            FrameProcessorWrap::instance()->setImageTypeToRGB();
             _mp4 = true;
+        } else {
+            std::cerr << "Invalid options: " << (*i);
+            return RETURN_CODE_INVALID_ARG;
         }
     }
 
@@ -117,11 +121,15 @@ int ExportImages::startExportImages()
         i++;
     }
 
+    std::cout << "Images are exported to " << getCapServerPath();
     return RETURN_CODE_SUCCESS;
 }
 
 int ExportImages::startExportH265Video()
 {
+    ffmpeg_audio_video_input ffmpegInput;
+    ffmpeg_video_frame       ffmpegFrame;
+
     if (_sp == nullptr) {
         LOGGER.error() << "Failed to start server";
         return RETURN_CODE_INTERNAL_ERROR;
@@ -133,19 +141,22 @@ int ExportImages::startExportH265Video()
     }
 
     String outfile = getCapServerPath() + PATH_SEP_STR + "EXPORTED_OUTFILE.mp4";
-    unsigned int luma_size = 0;
 
     while ( !_sp->isSampleReady() ) {
         std::this_thread::sleep_for(50ms);
     }
     _sp->sampleResume();
 
-    ffmpeg_audio_video_input ffmpegInput;
-    ffmpeg_video_frame       ffmpegFrame;
     ffmpegInput.rate = _frequency;
     ffmpegInput.w = _sp->getWidth();
     ffmpegInput.h = _sp->getHeight();
-    ffmpegInput.infra_frame = 12;
+    ffmpegInput.infra_frame = 1;
+    ffmpegFrame.rgb_to_yuv_ctx = sws_getContext(_sp->getWidth(), _sp->getHeight(),
+                                                AV_PIX_FMT_RGB24,
+                                                _sp->getWidth(), _sp->getHeight(),
+                                                AV_PIX_FMT_YUV420P,
+                                                SWS_BICUBIC, NULL,NULL,NULL);
+    ffmpegFrame.total_time = _total / _frequency;
     export_video_open(&ffmpegInput, outfile.c_str());
 
     std::chrono::microseconds duration(MICROSECONDS_PER_SECOND/_frequency);
@@ -158,24 +169,27 @@ int ExportImages::startExportH265Video()
             continue;
         }
 
+        ffmpegFrame.w = _sp->getWidth();
+        ffmpegFrame.h = _sp->getHeight();
+        ffmpegFrame.frame_index = i;
+        ffmpegFrame.format = AV_PIX_FMT_RGB24;
+        ffmpegFrame.data0 = _fb->getData();
+        ffmpegFrame.data0_len = _fb->getPacity();
+
         std::cout << "Getting data for : " << i << ", gettingTime=" <<
                   (std::chrono::system_clock::now()-start).count()/1000 << "ms" <<
-                  " size: " << _fb->getSize() << std::endl;
+                  " size: " << _fb->getSize() << " _fb: " << _fb <<
+                  " ffmpegFrame.data0: " << (void *)ffmpegFrame.data0 <<
+                  " ffmpegFrame.data1: " << (void *)(ffmpegFrame.data1) <<
+                  " ffmpegFrame.data2: " << (void *)(ffmpegFrame.data2) << std::endl;
 
-        ffmpegFrame.frame_index = i;
-        ffmpegFrame.format = AV_PIX_FMT_YUV420P;
-        ffmpegFrame.data0 = _fb->getData();
-        ffmpegFrame.data0_len = luma_size;
-        ffmpegFrame.data1 = _fb->getSubData();
-        ffmpegFrame.data1_len = _fb->getSubCap()/2;
-        ffmpegFrame.data2 = _fb->getSubData()+_fb->getSubCap()/2;
-        ffmpegFrame.data2_len = _fb->getSubCap()/2;
         export_video_write(&ffmpegFrame);
-
         i++;
     }
 
     export_video_close();
+
+    cout << "Video file write to: " << outfile;
     return RETURN_CODE_SUCCESS;
 }
 

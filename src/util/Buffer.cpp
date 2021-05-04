@@ -11,34 +11,93 @@ void FrameBuffer::reSet(const CapImageRect & bounds, const unsigned int bytespp)
     reSet(bounds.getHeight() * bounds.getWidth() * bytespp);
 }
 
-void FrameBuffer::setData(unsigned char * data, int size, bool isYuv)
+void FrameBuffer::setData(unsigned char * data, int size, SPImageType type)
 {
     reSet(size);
     std::memcpy(_data, data, size);
-    if( isYuv ) {
+    unsigned char * tmp1 = _data;
+    unsigned char * tmp = data;
+    int i = 0;
+
+    switch (type) {
+    case SPImageType::SP_IMAGE_YUV420:
         ConvertBGRA2YCrCb420(_data, size);
-    } else
-    {
+        break;
+
+    case SPImageType::SP_IMAGE_RGBA:
         ConvertBGRA2RGBA(_data, size);
+        break;
+
+    case SPImageType::SP_IMAGE_RGB:
+        while (i<size) {
+            i++;
+            *tmp1 = *tmp;
+            if (i % 4 == 0)
+            {
+                tmp++;
+            }
+            else
+            {
+                tmp++;
+                tmp1++;
+            }
+        }
+        break;
+
+    default:
+        break;
+
     }
+
     _isValid = true;
 }
 
-void FrameBuffer::setDataPerRow(unsigned char * data, int w, int h, int bytesrow, bool isYuv)
+void FrameBuffer::setDataPerRow(unsigned char * data, int w, int h, int bytesrow, SPImageType type)
 {
-    size_t total = w * h * 4;
-    reSet(total);
+    size_t total, perRow;
+    unsigned char * tmp1 = _data;
+    unsigned char * tmp = data;
+    int i = 0;
 
-    int perRow = w * 4;
-    for (int i=0; i<h; i++)
-    {
-        std::memcpy(_data + perRow * i, data+i*bytesrow, perRow);
-        if ( !isYuv )
+    switch (type) {
+    case SPImageType::SP_IMAGE_RGBA:
+        total = w * h * 4;
+        perRow = w * 4;
+        reSet(total);
+
+        for (int i=0; i<h; i++)
+        {
+            std::memcpy(_data + perRow * i, data+i*bytesrow, perRow);
             ConvertBGRA2RGBA(_data + perRow * i, perRow);
-    }
+        }
+        break;
 
-    if( isYuv ) {
+    case SPImageType::SP_IMAGE_YUV420:
+        total = w * h * 4;
+        reSet(total);
         ConvertBGRA2YCrCb420(_data, total);
+        break;
+
+    case SPImageType::SP_IMAGE_RGB:
+        total = w * h * 3;
+        reSet(total);
+        while (i<total && i<h*bytesrow) {
+            i++;
+            *tmp1 = *tmp;
+            if (i % 4 == 0)
+            {
+                tmp++;
+            }
+            else
+            {
+                tmp++;
+                tmp1++;
+            }
+        }
+        break;
+
+    default:
+        break;
     }
 
     _isValid = true;
@@ -107,7 +166,6 @@ void FrameBuffer::ConvertBGRA2YCrCb420(unsigned char * dst, size_t size)
 {
     struct ImageBGRA * data = (struct ImageBGRA * ) dst;
     unsigned char tmp;
-    int rowStart;
 
     resetSubData(size/4);
     unsigned char * Y  = dst;
@@ -118,6 +176,7 @@ void FrameBuffer::ConvertBGRA2YCrCb420(unsigned char * dst, size_t size)
 
     for (int i=0; i<size/4 && Cb<half && Cr<end ; i++)
     {
+//printf("data[%d]: %.2X %.2X %.2X ", i, data[i].R, data[i].G, data[i].B);
         *Y = CRGB2Y(data[i].R, data[i].G, data[i].B); Y++;
         if ((i & 1) == 0) {
             *Cb = CRGB2Cb(data[i].R, data[i].G, data[i].B); Cb++;

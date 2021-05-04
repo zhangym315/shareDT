@@ -26,6 +26,8 @@ typedef struct _ffmpeg_video_frame {
     unsigned int w;
     unsigned int h;
     size_t   frame_index;
+    size_t   total_time;
+    struct SwsContext * rgb_to_yuv_ctx;
 
     unsigned char * data0;
     unsigned char * data1;
