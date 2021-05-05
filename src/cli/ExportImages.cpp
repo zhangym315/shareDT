@@ -1,6 +1,11 @@
 #include "ExportImages.h"
 #include "x265.h"
 
+extern "C" {
+#include "ReadWriteVideo.h"
+#include "libswscale/swscale.h"
+}
+
 int mainExport(const char ** cmdArg, const struct cmdConf * conf)
 {
     ExportImages ei;
@@ -68,8 +73,11 @@ int ExportImages::parseExportImagesOptions()
         } else if ( (*i) == "--total" ) {
             _total = stoi(*(++i));
         } else if ( (*i) == "--mp4" ) {
-            FrameProcessorWrap::instance()->setImageTypeToYUV();
+            FrameProcessorWrap::instance()->setImageTypeToRGB();
             _mp4 = true;
+        } else {
+            std::cerr << "Invalid options: " << (*i);
+            return RETURN_CODE_INVALID_ARG;
         }
     }
 
@@ -113,11 +121,15 @@ int ExportImages::startExportImages()
         i++;
     }
 
+    std::cout << "Images are exported to " << getCapServerPath();
     return RETURN_CODE_SUCCESS;
 }
 
 int ExportImages::startExportH265Video()
 {
+    ffmpeg_audio_video_input ffmpegInput;
+    ffmpeg_video_frame       ffmpegFrame;
+
     if (_sp == nullptr) {
         LOGGER.error() << "Failed to start server";
         return RETURN_CODE_INTERNAL_ERROR;
@@ -128,142 +140,53 @@ int ExportImages::startExportH265Video()
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
-    /************ start on x265 init ***************/
-    x265_param param;
-    x265_nal *nal = nullptr;
-    x265_encoder *handle = nullptr;
-    x265_picture *pic_in = nullptr;
     String outfile = getCapServerPath() + PATH_SEP_STR + "EXPORTED_OUTFILE.mp4";
-    FILE *fp_dst =  fopen (outfile.c_str(), "wb");
-    unsigned int luma_size = 0;
-    unsigned int chroma_size = 0;
-    char *buff = nullptr;
-    int width  = _sp->getWidth();
-    int height = _sp->getHeight();
-    uint32_t i_nal = 0;
-
-    x265_param_default (&param);
-    param.bRepeatHeaders = 1;//write sps,pps before keyframe
-    param.internalCsp  = X265_CSP_I420;
-    param.sourceWidth  = width;
-    param.sourceHeight = height;
-    param.fpsNum   = 25; // 帧率
-    param.fpsDenom = 1;  // 帧率
-
-    handle = x265_encoder_open (&param);
-    if (handle == nullptr)
-    {
-        LOGGER.error() << "x265_encoder_open error.";
-        return RETURN_CODE_INTERNAL_ERROR;
-    }
-
-    pic_in = x265_picture_alloc ();
-    if (pic_in == nullptr)
-    {
-        LOGGER.error() << "x265_picture_alloc error.";
-        return RETURN_CODE_INTERNAL_ERROR;
-    }
-    x265_picture_init (&param, pic_in);
-
-    // Y分量大小
-    luma_size = param.sourceWidth * param.sourceHeight;
-    switch (param.internalCsp)
-    {
-        case X265_CSP_I444:
-            buff = (char *) malloc (luma_size * 3);
-            pic_in->planes[0] = buff;
-            pic_in->planes[1] = buff + luma_size;
-            pic_in->planes[2] = buff + luma_size * 2;
-            pic_in->stride[0] = width;
-            pic_in->stride[1] = width;
-            pic_in->stride[2] = width;
-            break;
-        case X265_CSP_I420:
-            buff = (char *) malloc (luma_size * 3 / 2);
-            pic_in->planes[0] = buff;
-            pic_in->planes[1] = buff + luma_size;
-            pic_in->planes[2] = buff + luma_size * 5 / 4;
-            pic_in->stride[0] = width;
-            pic_in->stride[1] = width / 2;
-            pic_in->stride[2] = width / 2;
-            break;
-        case X265_CSP_I422:
-            buff = (char *) malloc (luma_size * 3 / 2);
-            pic_in->planes[0] = buff;
-            pic_in->planes[1] = buff + luma_size;
-            pic_in->planes[2] = buff + luma_size * 5 / 4;
-            pic_in->stride[0] = width;
-            pic_in->stride[1] = width / 2;
-            pic_in->stride[2] = width / 2;
-            break;
-        default:
-            LOGGER.error() << "Colorspace not support, internalCsp=" << param.internalCsp;
-            return RETURN_CODE_INTERNAL_ERROR;
-    }
-    int ret;
-    /************ end on x265 init   ***************/
 
     while ( !_sp->isSampleReady() ) {
         std::this_thread::sleep_for(50ms);
     }
     _sp->sampleResume();
 
+    ffmpegInput.rate = _frequency;
+    ffmpegInput.w = _sp->getWidth();
+    ffmpegInput.h = _sp->getHeight();
+    ffmpegInput.infra_frame = 1;
+    ffmpegFrame.rgb_to_yuv_ctx = sws_getContext(_sp->getWidth(), _sp->getHeight(),
+                                                AV_PIX_FMT_RGB24,
+                                                _sp->getWidth(), _sp->getHeight(),
+                                                AV_PIX_FMT_YUV420P,
+                                                SWS_BICUBIC, NULL,NULL,NULL);
+    ffmpegFrame.total_time = _total / _frequency;
+    export_video_open(&ffmpegInput, outfile.c_str());
+
+    auto start = std::chrono::system_clock::now();
     std::chrono::microseconds duration(MICROSECONDS_PER_SECOND/_frequency);
     for ( int i=0 ; i<_total ; )
     {
-        auto start = std::chrono::system_clock::now();
         if ( (_fb = _sp->getFrameBuffer()) == nullptr || (_fb->getData() == nullptr)) {
             _sp->sampleResume();
             std::this_thread::sleep_for(duration);
             continue;
         }
 
+        ffmpegFrame.w = _sp->getWidth();
+        ffmpegFrame.h = _sp->getHeight();
+        ffmpegFrame.frame_index = i;
+        ffmpegFrame.format = AV_PIX_FMT_RGB24;
+        ffmpegFrame.data0 = _fb->getData();
+        ffmpegFrame.data0_len = _fb->getPacity();
+
         std::cout << "Getting data for : " << i << ", gettingTime=" <<
                   (std::chrono::system_clock::now()-start).count()/1000 << "ms" <<
                   " size: " << _fb->getSize() << std::endl;
 
-        switch (param.internalCsp)
-        {
-            case X265_CSP_I444:
-            case X265_CSP_I420:
-            case X265_CSP_I422:
-                memcpy (pic_in->planes[0], _fb->getData(), luma_size);
-                memcpy (pic_in->planes[1], _fb->getSubData(), _fb->getSubCap()/2);
-                memcpy (pic_in->planes[1], _fb->getSubData()+_fb->getSubCap()/2, _fb->getSubCap()/2);
-
-                break;
-            default:
-                LOGGER.error() << "Colorspace not support, internalCsp=" << param.internalCsp;
-                break;
-        }
-
-        ret = x265_encoder_encode (handle, &nal, &i_nal, pic_in, nullptr);
-        printf ("encode frame: %5d framesize: %d nal: %d\n", i + 1, ret, i_nal);
-        if (ret < 0)
-        {
-            LOGGER.error() << "Error encode frame=" << (i+1);
-            break;
-        }
-
-        for (uint32_t j = 0; j < i_nal; j++)
-        {
-            fwrite (nal[j].payload, 1, nal[j].sizeBytes, fp_dst);
-        }
-
+        export_video_write(&ffmpegFrame);
         i++;
     }
 
-    // Flush Decoder
-    while ((ret = x265_encoder_encode (handle, &nal, &i_nal, nullptr, nullptr)))
-    {
-        static int cnt = 1;
-        printf ("flush frame: %d\n", cnt++);
-        for (uint32_t j = 0; j < i_nal; j++)
-        {
-            fwrite (nal[j].payload, 1, nal[j].sizeBytes, fp_dst);
-        }
-    }
+    export_video_close();
 
+    cout << "Video file write to: " << outfile;
     return RETURN_CODE_SUCCESS;
 }
 

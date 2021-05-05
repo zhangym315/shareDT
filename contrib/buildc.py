@@ -58,9 +58,13 @@ def buildAndInstall(kernel, component):
 
     print('Building ' + component[0])
 
-    if kernel == "windows" and component[0] == "openssl":
-        buildWindowsOpenssl()
-        return
+    if kernel == "windows":
+        if component[0] == "openssl":
+            buildWindowsOpenssl()
+            return
+        if component[0] == "liblzma" or component[0] == "ffmpeg" or component[0] == "ffmpeg":
+            print('Please switch cgwin to build ' + component[0])
+            sys.exit(1)
     if component[0] == "bzip2":
         buildBZip2()
         return
@@ -136,6 +140,8 @@ if sys.platform == "win32":
         arch = "amd64"
     else:
         arch = "i386"
+elif sys.platform == "cygwin*":
+    kernel = "cygwin"
 else:
     def backtick(arg):
         uresult = os.popen(arg, "r")
@@ -148,7 +154,7 @@ components = [["SDL2-2.0.12", "CMAKE"], ["libjpeg-turbo-2.0.5", "CMAKE"], ["zlib
               ["libpng-1.6.37", "CMAKE"], ["lzo-2.10", "CMAKE"], ["x265_3.3/source/", "CMAKE"],\
               ["openssl", "Configure"],\
               ["liblzma", "configure"],\
-              ["ffmpeg", "configure  --disable-iconv"],\
+              ["ffmpeg", "configure  --disable-iconv --disable-x86asm"],\
               ["bzip2", "configure"]\
               ]
 

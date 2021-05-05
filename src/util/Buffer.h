@@ -6,6 +6,8 @@
 #include <cstring>
 #include <memory>
 
+enum SPImageType { SP_IMAGE_BGRA, SP_IMAGE_RGBA, SP_IMAGE_RGB, SP_IMAGE_YUV420};  // default RGBA
+
 class CapImageRect;
 struct ImageBGRA {
     unsigned char B, G, R, A;
@@ -30,9 +32,9 @@ class FrameBuffer {
     [[nodiscard]] size_t getPacity() const { return _capacity; }
     unsigned char * getData() { return _data; }
 
-    void setData(unsigned char * data, int size, bool isYuv=false);
+    void setData(unsigned char * data, size_t w, size_t h, SPImageType type=SPImageType::SP_IMAGE_RGBA);
     void setDataPerRow(unsigned char * data, int w, int h,
-                       int bytesrow, bool convert=true);
+                       int bytesrow, SPImageType type=SPImageType::SP_IMAGE_RGBA);
 
     /*
      * convert
@@ -42,6 +44,7 @@ class FrameBuffer {
     void ConvertBGRA2RGBA(unsigned char * dst, size_t size);
     void ConvertBGRA2RGBA() { return ConvertBGRA2RGBA(_data, _size); }
     void ConvertBGRA2YCrCb420(unsigned char * dst, size_t size);
+    void ConcertBGRA2RGB(unsigned char * dst, unsigned char * src, size_t srcSize);
 
     void reSet(size_t size);
     void reSet(const CapImageRect & bounds, unsigned int bytespp);

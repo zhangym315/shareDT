@@ -41,6 +41,14 @@ set(SERVERGUI_TARGET ServerGui)
 #set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -Wdeprecated-declarations ")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wunused-variable")
 
+set(SHAREDT_SRC ${CMAKE_SOURCE_DIR}/src)
+set(CAPTURE_SRC
+    ${CAPTURE_SRC}
+    ${CMAKE_SOURCE_DIR}/src/capture/ImageRect.cpp
+    ${CMAKE_SOURCE_DIR}/src/capture/WindowProcessor.cpp
+    ${CMAKE_SOURCE_DIR}/src/capture/SamplesProvider.cpp
+    )
+
 # include headers
 # ${CMAKE_CURRENT_BINARY_DIR}/libvnc/ for the generated rfbconfig.h
 include_directories (
@@ -57,17 +65,7 @@ include_directories (
     ${X265_INCLUDE_DIR}
     ${PNG_INCLUDE_DIR}
     ${FFMPEG_INCLUDE_DIR}
-)
-
-set(SHAREDT_SRC ${CMAKE_SOURCE_DIR}/src)
-set(CAPTURE_SRC
-    ${CAPTURE_SRC}
-    ${CMAKE_SOURCE_DIR}/src/capture/ImageRect.cpp
-    ${CMAKE_SOURCE_DIR}/src/capture/WindowProcessor.cpp
-    ${CMAKE_SOURCE_DIR}/src/capture/SamplesProvider.cpp
-    )
-
-include_directories(
+    ${SHAREDT_SRC}/ffmpeg/
     ${CMAKE_BINARY_DIR}/lib/wx/include/osx_cocoa-unicode-static-3.1/
 )
 
@@ -89,11 +87,11 @@ add_executable(${START_SERVER}
         ${SHAREDT_SRC}/util/Sock.cpp
         ${SHAREDT_SRC}/util/Pid.c
         ${SHAREDT_SRC}/cli/ExportImages.cpp
+        ${SHAREDT_SRC}/ffmpeg/ReadWriteVideo.c
         ${SHAREDT_SRC}/ffmpeg/ReadWriteImages.c
         ${CAPTURE_SRC}
         )
 
-message("capture src: ${CAPTURE_SRC}")
 #target_link_libraries(${START_SERVER} vncserver screen_capture_lite ${${PROJECT_NAME}_PLATFORM_LIBS} )
 target_link_libraries(${START_SERVER}
         ${BZIP2_LIBRARIES}
