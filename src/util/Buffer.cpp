@@ -11,37 +11,29 @@ void FrameBuffer::reSet(const CapImageRect & bounds, const unsigned int bytespp)
     reSet(bounds.getHeight() * bounds.getWidth() * bytespp);
 }
 
-void FrameBuffer::setData(unsigned char * data, int size, SPImageType type)
+void FrameBuffer::setData(unsigned char * data, size_t w, size_t h, SPImageType type)
 {
-    reSet(size);
-    std::memcpy(_data, data, size);
-    unsigned char * tmp1 = _data;
-    unsigned char * tmp = data;
-    int i = 0;
+    size_t total;
 
     switch (type) {
     case SPImageType::SP_IMAGE_YUV420:
-        ConvertBGRA2YCrCb420(_data, size);
+        total = w * h * 4;
+        reSet(total);
+        std::memcpy(_data, data, total);
+        ConvertBGRA2YCrCb420(_data, total);
         break;
 
     case SPImageType::SP_IMAGE_RGBA:
-        ConvertBGRA2RGBA(_data, size);
+        total = w * h * 4;
+        reSet(total);
+        std::memcpy(_data, data, total);
+        ConvertBGRA2RGBA(_data, total);
         break;
 
     case SPImageType::SP_IMAGE_RGB:
-        while (i<size) {
-            i++;
-            *tmp1 = *tmp;
-            if (i % 4 == 0)
-            {
-                tmp++;
-            }
-            else
-            {
-                tmp++;
-                tmp1++;
-            }
-        }
+        total = w * h * 3;
+        reSet(total);
+        ConcertBGRA2RGB(_data, data, w * h * 4);
         break;
 
     default:
@@ -54,10 +46,7 @@ void FrameBuffer::setData(unsigned char * data, int size, SPImageType type)
 
 void FrameBuffer::setDataPerRow(unsigned char * data, int w, int h, int bytesrow, SPImageType type)
 {
-    size_t total, perRow;
-    unsigned char * tmp1 = _data;
-    unsigned char * tmp = data;
-    int i = 0;
+    size_t total, perRow, dstPerRow;
 
     switch (type) {
     case SPImageType::SP_IMAGE_RGBA:
@@ -74,26 +63,20 @@ void FrameBuffer::setDataPerRow(unsigned char * data, int w, int h, int bytesrow
 
     case SPImageType::SP_IMAGE_YUV420:
         total = w * h * 4;
-        reSet(total);
+        reSet(total);  // problem ~~ TODO, there is no data copy, _data is not set!!!
         ConvertBGRA2YCrCb420(_data, total);
         break;
 
-    case SPImageType::SP_IMAGE_RGB:
+    case SPImageType::SP_IMAGE_RGB:  // TODO deserver to investigate to merge with setData()
         total = w * h * 3;
+        perRow = w * 4;
+        dstPerRow = w * 3;
         reSet(total);
-        while (i<total && i<h*bytesrow) {
-            i++;
-            *tmp1 = *tmp;
-            if (i % 4 == 0)
-            {
-                tmp++;
-            }
-            else
-            {
-                tmp++;
-                tmp1++;
-            }
+//        for (int i=0; i<h; i++)
+        {
+            ConcertBGRA2RGB(_data, data, perRow*h);
         }
+
         break;
 
     default:
@@ -159,6 +142,21 @@ void FrameBuffer::ConvertBGRA2RGBA(unsigned char * dst, size_t size)
 //            *(dst + rowStart + 1) = data[i].G;  G is no need to shift
         *(dst + rowStart + 2) = tmp;
         *(dst + rowStart + 3) = 255;  /* alpha channel */
+    }
+}
+
+void FrameBuffer::ConcertBGRA2RGB(unsigned char * dst, unsigned char * src, size_t srcSize)
+{
+    struct ImageBGRA * data = (struct ImageBGRA * ) src;
+    unsigned char tmp;
+    int rowStart;
+    for (int i=0; i < srcSize/4; i++)
+    {
+        rowStart = i * 3;
+        tmp = data[i].B;
+        *(dst + rowStart + 0) = data[i].R;
+        *(dst + rowStart + 1) = data[i].G;//  G is no need to shift
+        *(dst + rowStart + 2) = tmp;
     }
 }
 

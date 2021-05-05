@@ -82,7 +82,7 @@ void FrameProcessorWrap::writeBuf(CapMonitor * mon, unsigned char * buf,
         if(bufferSize) {
             fb->reSet(bufferSize);
         }
-        fb->setData(buf, mon->getOrgWidth()*mon->getOrgHeight()*4, _imgType);
+        fb->setData(buf, mon->getOrgWidth(), mon->getOrgHeight(), _imgType);
     } else {
         // queue is full, needs to pause
         pause();

@@ -427,24 +427,7 @@ static void fill_yuv_image(AVFrame *pict, ffmpeg_video_frame * src_frame )
     struct SwsContext * sws_ctx = sws_getCachedContext ( src_frame->rgb_to_yuv_ctx, src_frame->w, src_frame->h,
                                          src_frame->format, src_frame->w, src_frame->h, AV_PIX_FMT_YUV420P,
                                          SWS_LANCZOS | SWS_ACCURATE_RND , NULL, NULL, NULL );
-/*
-    char * tmp = src_frame->data0;
-    char * tmp1 = tmp;
-    int i = 0;
-    while (tmp < (src_frame->data0+(src_frame->w*src_frame->h*4))) {
-    i++;
-    *tmp1 = *tmp;
-        if (i % 4 == 0)
-        {
-            tmp++;
-        }
-        else
-        {
-            tmp++;
-            tmp1++;
-        }
-    }
-*/
+
     sws_scale ( sws_ctx, srcSlice, data, 0,
                 (int) src_frame->h, pict->data, pict->linesize );
 }

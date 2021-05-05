@@ -159,10 +159,10 @@ int ExportImages::startExportH265Video()
     ffmpegFrame.total_time = _total / _frequency;
     export_video_open(&ffmpegInput, outfile.c_str());
 
+    auto start = std::chrono::system_clock::now();
     std::chrono::microseconds duration(MICROSECONDS_PER_SECOND/_frequency);
     for ( int i=0 ; i<_total ; )
     {
-        auto start = std::chrono::system_clock::now();
         if ( (_fb = _sp->getFrameBuffer()) == nullptr || (_fb->getData() == nullptr)) {
             _sp->sampleResume();
             std::this_thread::sleep_for(duration);
@@ -178,10 +178,7 @@ int ExportImages::startExportH265Video()
 
         std::cout << "Getting data for : " << i << ", gettingTime=" <<
                   (std::chrono::system_clock::now()-start).count()/1000 << "ms" <<
-                  " size: " << _fb->getSize() << " _fb: " << _fb <<
-                  " ffmpegFrame.data0: " << (void *)ffmpegFrame.data0 <<
-                  " ffmpegFrame.data1: " << (void *)(ffmpegFrame.data1) <<
-                  " ffmpegFrame.data2: " << (void *)(ffmpegFrame.data2) << std::endl;
+                  " size: " << _fb->getSize() << std::endl;
 
         export_video_write(&ffmpegFrame);
         i++;

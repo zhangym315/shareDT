@@ -32,7 +32,7 @@ class FrameBuffer {
     [[nodiscard]] size_t getPacity() const { return _capacity; }
     unsigned char * getData() { return _data; }
 
-    void setData(unsigned char * data, int size, SPImageType type=SPImageType::SP_IMAGE_RGBA);
+    void setData(unsigned char * data, size_t w, size_t h, SPImageType type=SPImageType::SP_IMAGE_RGBA);
     void setDataPerRow(unsigned char * data, int w, int h,
                        int bytesrow, SPImageType type=SPImageType::SP_IMAGE_RGBA);
 
@@ -44,6 +44,7 @@ class FrameBuffer {
     void ConvertBGRA2RGBA(unsigned char * dst, size_t size);
     void ConvertBGRA2RGBA() { return ConvertBGRA2RGBA(_data, _size); }
     void ConvertBGRA2YCrCb420(unsigned char * dst, size_t size);
+    void ConcertBGRA2RGB(unsigned char * dst, unsigned char * src, size_t srcSize);
 
     void reSet(size_t size);
     void reSet(const CapImageRect & bounds, unsigned int bytespp);
