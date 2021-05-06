@@ -94,9 +94,9 @@ add_executable(${START_SERVER}
 
 #target_link_libraries(${START_SERVER} vncserver screen_capture_lite ${${PROJECT_NAME}_PLATFORM_LIBS} )
 target_link_libraries(${START_SERVER}
-        ${BZIP2_LIBRARIES}
         ${LZMA_LIBRARIES}
         ${FFMPEG_LIBRARIES}
+        ${BZIP2_LIBRARIES}
         ${FFMPEG_REQUIRED_LIBS}
         vncserver
         ${${PROJECT_NAME}_PLATFORM_LIBS}
