@@ -110,7 +110,6 @@ elseif(UNIX)
             ${CMAKE_SOURCE_DIR}/src/capture/linux/XGetMonitors.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/linux/XFrameProcessor.cpp
             ${CMAKE_SOURCE_DIR}/src/MainNixService.cpp
-            ${SHAREDT_SRC}/util/Sock.cpp
             )
 
     set(${PROJECT_NAME}_PLATFORM_LIBS

@@ -67,14 +67,11 @@ void FrameBuffer::setDataPerRow(unsigned char * data, int w, int h, int bytesrow
         ConvertBGRA2YCrCb420(_data, total);
         break;
 
-    case SPImageType::SP_IMAGE_RGB:  // TODO deserver to investigate to merge with setData()
-        total = w * h * 3;
-        perRow = w * 4;
-        dstPerRow = w * 3;
-        reSet(total);
-//        for (int i=0; i<h; i++)
+    case SPImageType::SP_IMAGE_RGB:
+        reSet(w * h * 3);
+        for (int i=0; i<h; i++)
         {
-            ConcertBGRA2RGB(_data, data, perRow*h);
+            ConcertBGRA2RGB(_data + i*3*w, data + i*bytesrow, bytesrow);
         }
 
         break;
