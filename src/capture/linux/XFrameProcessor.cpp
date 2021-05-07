@@ -82,7 +82,9 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
                  AllPlanes)) {
             return false;
         }
-        fb->setDataPerRow((unsigned char*)XImage_->data, _mon->getWidth(), _mon->getHeight(), XImage_->bytes_per_line);
+        fb->setDataPerRow((unsigned char*)XImage_->data, _mon->getWidth(),
+                          _mon->getHeight(), XImage_->bytes_per_line,
+                          FrameProcessorWrap::instance()->getImageType());
     } else if(_type == SP_PARTIAL) {
         if(!XShmGetImage(SelectedDisplay,
                        RootWindow(SelectedDisplay, _mon->getId ()),
@@ -92,7 +94,9 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
                        AllPlanes)) {
             return false;
         }
-        fb->setDataPerRow((unsigned char*)XImage_->data, _bounds->getWidth(), _bounds->getHeight(), XImage_->bytes_per_line);
+        fb->setDataPerRow((unsigned char*)XImage_->data,_bounds->getWidth(),
+                          _bounds->getHeight(), XImage_->bytes_per_line,
+                          FrameProcessorWrap::instance()->getImageType());
     } else if ( _type == SP_WINDOW ) {
         XWindowAttributes wndattr;
 
@@ -112,7 +116,10 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
                          AllPlanes)) {
             return false;
         }
-        fb->setDataPerRow((unsigned char*)XImage_->data, _win->getWidth(), _win->getHeight(), XImage_->bytes_per_line);
+        fb->setDataPerRow((unsigned char*)XImage_->data,
+                          _win->getWidth(), _win->getHeight(),
+                          XImage_->bytes_per_line,
+                          FrameProcessorWrap::instance()->getImageType());
     }
 
     return true;
