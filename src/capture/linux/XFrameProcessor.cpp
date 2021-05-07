@@ -65,7 +65,7 @@ bool X11FrameProcessor::init()
 
     ShmInfo->readOnly = False;
     ShmInfo->shmaddr = XImage_->data = (char*)shmat(ShmInfo->shmid, 0, 0);
-std::cout <<  "XImage_ format: " << XImage_->format;
+
     XShmAttach(SelectedDisplay, ShmInfo.get());
 
     return ret;
