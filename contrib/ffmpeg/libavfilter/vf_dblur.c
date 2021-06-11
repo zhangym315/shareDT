@@ -40,7 +40,6 @@ typedef struct DBlurContext {
     int planeheight[4];
     float *buffer;
     int nb_planes;
-    void (*horiz_slice)(float *buffer, int width, int height, int steps, float nu, float bscale);
 } DBlurContext;
 
 #define OFFSET(x) offsetof(DBlurContext, x)
@@ -293,7 +292,7 @@ static const AVFilterPad dblur_outputs[] = {
     { NULL }
 };
 
-AVFilter ff_vf_dblur = {
+const AVFilter ff_vf_dblur = {
     .name          = "dblur",
     .description   = NULL_IF_CONFIG_SMALL("Apply Directional Blur filter."),
     .priv_size     = sizeof(DBlurContext),

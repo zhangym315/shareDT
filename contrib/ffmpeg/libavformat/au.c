@@ -53,6 +53,8 @@ static const AVCodecTag codec_au_tags[] = {
     { AV_CODEC_ID_NONE,       0 },
 };
 
+static const AVCodecTag *const au_codec_tags[] = { codec_au_tags, NULL };
+
 #if CONFIG_AU_DEMUXER
 
 static int au_probe(const AVProbeData *p)
@@ -224,14 +226,14 @@ static int au_read_header(AVFormatContext *s)
     return 0;
 }
 
-AVInputFormat ff_au_demuxer = {
+const AVInputFormat ff_au_demuxer = {
     .name        = "au",
     .long_name   = NULL_IF_CONFIG_SMALL("Sun AU"),
     .read_probe  = au_probe,
     .read_header = au_read_header,
     .read_packet = ff_pcm_read_packet,
     .read_seek   = ff_pcm_read_seek,
-    .codec_tag   = (const AVCodecTag* const []) { codec_au_tags, 0 },
+    .codec_tag   = au_codec_tags,
 };
 
 #endif /* CONFIG_AU_DEMUXER */
@@ -326,7 +328,7 @@ static int au_write_trailer(AVFormatContext *s)
     return 0;
 }
 
-AVOutputFormat ff_au_muxer = {
+const AVOutputFormat ff_au_muxer = {
     .name          = "au",
     .long_name     = NULL_IF_CONFIG_SMALL("Sun AU"),
     .mime_type     = "audio/basic",
@@ -337,7 +339,7 @@ AVOutputFormat ff_au_muxer = {
     .write_header  = au_write_header,
     .write_packet  = ff_raw_write_packet,
     .write_trailer = au_write_trailer,
-    .codec_tag     = (const AVCodecTag* const []) { codec_au_tags, 0 },
+    .codec_tag     = au_codec_tags,
     .flags         = AVFMT_NOTIMESTAMPS,
 };
 

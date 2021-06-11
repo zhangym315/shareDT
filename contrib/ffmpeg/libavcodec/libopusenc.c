@@ -25,6 +25,7 @@
 #include "libavutil/opt.h"
 #include "avcodec.h"
 #include "bytestream.h"
+#include "encode.h"
 #include "internal.h"
 #include "libopus.h"
 #include "vorbis.h"
@@ -94,7 +95,7 @@ static void libopus_write_header(AVCodecContext *avctx, int stream_count,
     bytestream_put_buffer(&p, "OpusHead", 8);
     bytestream_put_byte(&p, 1); /* Version */
     bytestream_put_byte(&p, channels);
-    bytestream_put_le16(&p, avctx->initial_padding); /* Lookahead samples at 48kHz */
+    bytestream_put_le16(&p, avctx->initial_padding * 48000 / avctx->sample_rate); /* Lookahead samples at 48kHz */
     bytestream_put_le32(&p, avctx->sample_rate); /* Original sample rate */
     bytestream_put_le16(&p, 0); /* Gain of 0dB is recommended. */
 
@@ -432,7 +433,6 @@ static av_cold int libopus_encode_init(AVCodecContext *avctx)
 
 fail:
     opus_multistream_encoder_destroy(enc);
-    av_freep(&avctx->extradata);
     return ret;
 }
 
@@ -484,7 +484,7 @@ static int libopus_encode(AVCodecContext *avctx, AVPacket *avpkt,
     /* Maximum packet size taken from opusenc in opus-tools. 120ms packets
      * consist of 6 frames in one packet. The maximum frame size is 1275
      * bytes along with the largest possible packet header of 7 bytes. */
-    if ((ret = ff_alloc_packet2(avctx, avpkt, (1275 * 6 + 7) * opus->stream_count, 0)) < 0)
+    if ((ret = ff_alloc_packet(avctx, avpkt, (1275 * 6 + 7) * opus->stream_count)) < 0)
         return ret;
 
     if (avctx->sample_fmt == AV_SAMPLE_FMT_FLT)
@@ -538,7 +538,6 @@ static av_cold int libopus_encode_close(AVCodecContext *avctx)
     ff_af_queue_close(&opus->afq);
 
     av_freep(&opus->samples);
-    av_freep(&avctx->extradata);
 
     return 0;
 }
@@ -581,7 +580,7 @@ static const int libopus_sample_rates[] = {
     48000, 24000, 16000, 12000, 8000, 0,
 };
 
-AVCodec ff_libopus_encoder = {
+const AVCodec ff_libopus_encoder = {
     .name            = "libopus",
     .long_name       = NULL_IF_CONFIG_SMALL("libopus Opus"),
     .type            = AVMEDIA_TYPE_AUDIO,

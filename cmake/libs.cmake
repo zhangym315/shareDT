@@ -30,9 +30,24 @@ find_package(bzip2 REQUIRED NO_MODULE)
 set(lzma_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
 find_package(lzma REQUIRED NO_MODULE)
 
+#### QT specific
+# QMake specific
+# Instruct CMake to run moc automatically when needed.
+set(CMAKE_AUTOMOC ON)
+# Instruct CMake to run uic automatically when needed.
+set(CMAKE_AUTOUIC ON)
+# This will find the Qt5 files. You will need a QT5_DIR env variable
+set(Qt5Widgets_DIR "${CMAKE_SOURCE_DIR}/contrib/qt515/static-build/lib/cmake/Qt5Widgets")
+find_package(Qt5Widgets REQUIRED NO_MODULE)
+set(SHAREDT_SERVER_QT_LIBS Qt5::Widgets)
+set(SHAREDT_CLIENT_QT_LIBS Qt5::Core Qt5::Gui Qt5::Widgets)
+
 ################ BEGIN Platform specific source and libs
 if(WIN32)
-    set(${PROJECT_NAME}_PLATFORM_LIBS Dwmapi DXGI)
+    set(${PROJECT_NAME}_PLATFORM_LIBS Dwmapi DXGI
+        Secur32 Strmiids Mfuuid Bcrypt ### ffmpeg
+        crypt32   ### openssl
+        )
     add_definitions(-DNOMINMAX)
     add_definitions(-D__SHAREDT_WIN__)
 

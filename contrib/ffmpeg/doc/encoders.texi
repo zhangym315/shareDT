@@ -53,7 +53,7 @@ Set AAC encoder coding method. Possible values:
 
 @table @samp
 @item twoloop
-Two loop searching (TLS) method.
+Two loop searching (TLS) method. This is the default method.
 
 This method first sets quantizers depending on band thresholds and then tries
 to find an optimal combination by adding or subtracting a specific value from
@@ -75,7 +75,6 @@ Constant quantizer method.
 Uses a cheaper version of twoloop algorithm that doesn't try to do as many
 clever adjustments. Worse with low bitrates (less than 64kbps), but is better
 and much faster at higher bitrates.
-This is the default choice for a coder
 
 @end table
 
@@ -151,10 +150,9 @@ the undocumented RealAudio 3 (a.k.a. dnet).
 The @var{ac3} encoder uses floating-point math, while the @var{ac3_fixed}
 encoder only uses fixed-point integer math. This does not mean that one is
 always faster, just that one or the other may be better suited to a
-particular system. The floating-point encoder will generally produce better
-quality audio for a given bitrate. The @var{ac3_fixed} encoder is not the
-default codec for any of the output formats, so it must be specified explicitly
-using the option @code{-acodec ac3_fixed} in order to use it.
+particular system. The @var{ac3_fixed} encoder is not the default codec for
+any of the output formats, so it must be specified explicitly using the option
+@code{-acodec ac3_fixed} in order to use it.
 
 @subsection AC-3 Metadata
 
@@ -1269,6 +1267,48 @@ disabled
 A description of some of the currently available video encoders
 follows.
 
+@section a64_multi, a64_multi5
+
+A64 / Commodore 64 multicolor charset encoder. @code{a64_multi5} is extended with 5th color (colram).
+
+@section GIF
+
+GIF image/animation encoder.
+
+@subsection Options
+
+@table @option
+@item gifflags @var{integer}
+Sets the flags used for GIF encoding.
+
+@table @option
+@item offsetting
+Enables picture offsetting.
+
+Default is enabled.
+
+@item transdiff
+Enables transparency detection between frames.
+
+Default is enabled.
+
+@end table
+
+@item gifimage @var{integer}
+Enables encoding one full GIF image per frame, rather than an animated GIF.
+
+Default value is @option{0}.
+
+@item global_palette @var{integer}
+Writes a palette to the global GIF header where feasible.
+
+If disabled, every frame will always have a palette written, even if there
+is a global palette supplied.
+
+Default value is @option{1}.
+
+@end table
+
 @section Hap
 
 Vidvox Hap video encoder.
@@ -1684,6 +1724,17 @@ Enable interintra compound. Default is true.
 
 @item enable-smooth-interintra (@emph{boolean}) (Requires libaom >= v2.0.0)
 Enable smooth interintra mode. Default is true.
+
+@item aom-params
+Set libaom options using a list of @var{key}=@var{value} pairs separated
+by ":". For a list of supported options, see @command{aomenc --help} under the
+section "AV1 Specific Options".
+
+For example to specify libaom encoding options with @option{-aom-params}:
+
+@example
+ffmpeg -i input -c:v libaom-av1 -b:v 500K -aom-params tune=psnr:enable-tpl-model=1 output.mp4
+@end example
 
 @end table
 
@@ -2129,6 +2180,38 @@ midpoint is passed in rather than calculated for a specific clip or chunk.
 The valid range is [0, 10000]. 0 (default) uses standard VBR.
 @item enable-tpl @var{boolean}
 Enable temporal dependency model.
+@item ref-frame-config
+Using per-frame metadata, set members of the structure @code{vpx_svc_ref_frame_config_t} in @code{vpx/vp8cx.h} to fine-control referencing schemes and frame buffer management.
+@*Use a :-separated list of key=value pairs.
+For example,
+@example
+av_dict_set(&av_frame->metadata, "ref-frame-config", \
+"rfc_update_buffer_slot=7:rfc_lst_fb_idx=0:rfc_gld_fb_idx=1:rfc_alt_fb_idx=2:rfc_reference_last=0:rfc_reference_golden=0:rfc_reference_alt_ref=0");
+@end example
+@table @option
+@item rfc_update_buffer_slot
+Indicates the buffer slot number to update
+@item rfc_update_last
+Indicates whether to update the LAST frame
+@item rfc_update_golden
+Indicates whether to update GOLDEN frame
+@item rfc_update_alt_ref
+Indicates whether to update ALT_REF frame
+@item rfc_lst_fb_idx
+LAST frame buffer index
+@item rfc_gld_fb_idx
+GOLDEN frame buffer index
+@item rfc_alt_fb_idx
+ALT_REF frame buffer index
+@item rfc_reference_last
+Indicates whether to reference LAST frame
+@item rfc_reference_golden
+Indicates whether to reference GOLDEN frame
+@item rfc_reference_alt_ref
+Indicates whether to reference ALT_REF frame
+@item rfc_reference_duration
+Indicates frame duration
+@end table
 @end table
 
 @end table
@@ -2225,9 +2308,7 @@ pixel formats as input instead of YUV.
 @subsection Supported Pixel Formats
 
 x264 supports 8- to 10-bit color spaces. The exact bit depth is controlled at
-x264's configure time. FFmpeg only supports one bit depth in one particular
-build. In other words, it is not possible to build one FFmpeg with multiple
-versions of x264 with different bit depths.
+x264's configure time.
 
 @subsection Options
 

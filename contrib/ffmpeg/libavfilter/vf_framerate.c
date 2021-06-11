@@ -170,7 +170,9 @@ static int process_work_frame(AVFilterContext *ctx)
         return 0;
 
     if (!s->f0) {
-        s->work = av_frame_clone(s->f1);
+        av_assert1(s->flush);
+        s->work = s->f1;
+        s->f1 = NULL;
     } else {
         if (work_pts >= s->pts1 + s->delta && s->flush)
             return 0;
@@ -439,7 +441,7 @@ static const AVFilterPad framerate_outputs[] = {
     { NULL }
 };
 
-AVFilter ff_vf_framerate = {
+const AVFilter ff_vf_framerate = {
     .name          = "framerate",
     .description   = NULL_IF_CONFIG_SMALL("Upsamples or downsamples progressive source between specified frame rates."),
     .priv_size     = sizeof(FrameRateContext),

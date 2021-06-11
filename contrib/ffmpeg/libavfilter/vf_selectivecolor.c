@@ -61,7 +61,7 @@ enum correction_method {
     NB_CORRECTION_METHODS,
 };
 
-static const char *color_names[NB_RANGES] = {
+static const char *const color_names[NB_RANGES] = {
     "red", "yellow", "green", "cyan", "blue", "magenta", "white", "neutral", "black"
 };
 
@@ -470,7 +470,7 @@ static const AVFilterPad selectivecolor_outputs[] = {
     { NULL }
 };
 
-AVFilter ff_vf_selectivecolor = {
+const AVFilter ff_vf_selectivecolor = {
     .name          = "selectivecolor",
     .description   = NULL_IF_CONFIG_SMALL("Apply CMYK adjustments to specific color ranges."),
     .priv_size     = sizeof(SelectiveColorContext),

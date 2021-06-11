@@ -131,6 +131,8 @@ static int rsd_read_header(AVFormatContext *s)
             return ret;
 
         for (i = 0; i < par->channels; i++) {
+            if (avio_feof(pb))
+                return AVERROR_EOF;
             avio_read(s->pb, st->codecpar->extradata + 32 * i, 32);
             avio_skip(s->pb, 8);
         }
@@ -218,7 +220,7 @@ static int rsd_read_packet(AVFormatContext *s, AVPacket *pkt)
     return ret;
 }
 
-AVInputFormat ff_rsd_demuxer = {
+const AVInputFormat ff_rsd_demuxer = {
     .name           =   "rsd",
     .long_name      =   NULL_IF_CONFIG_SMALL("GameCube RSD"),
     .read_probe     =   rsd_probe,

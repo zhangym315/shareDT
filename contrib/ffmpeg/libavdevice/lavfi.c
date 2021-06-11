@@ -440,13 +440,13 @@ static int lavfi_read_packet(AVFormatContext *avctx, AVPacket *pkt)
         size = frame->nb_samples * av_get_bytes_per_sample(frame->format) *
                                    frame->channels;
         if ((ret = av_new_packet(pkt, size)) < 0)
-            goto fail;;
+            goto fail;
         memcpy(pkt->data, frame->data[0], size);
     }
 
     frame_metadata = frame->metadata;
     if (frame_metadata) {
-        int size;
+        size_t size;
         uint8_t *metadata = av_packet_pack_dictionary(frame_metadata, &size);
 
         if (!metadata) {
@@ -456,7 +456,7 @@ static int lavfi_read_packet(AVFormatContext *avctx, AVPacket *pkt)
         if ((ret = av_packet_add_side_data(pkt, AV_PKT_DATA_STRINGS_METADATA,
                                            metadata, size)) < 0) {
             av_freep(&metadata);
-            goto fail;;
+            goto fail;
         }
     }
 
@@ -494,7 +494,7 @@ static const AVClass lavfi_class = {
     .category   = AV_CLASS_CATEGORY_DEVICE_INPUT,
 };
 
-AVInputFormat ff_lavfi_demuxer = {
+const AVInputFormat ff_lavfi_demuxer = {
     .name           = "lavfi",
     .long_name      = NULL_IF_CONFIG_SMALL("Libavfilter virtual input device"),
     .priv_data_size = sizeof(LavfiContext),

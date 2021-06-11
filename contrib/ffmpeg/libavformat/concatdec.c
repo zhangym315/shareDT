@@ -626,7 +626,7 @@ static int concat_read_packet(AVFormatContext *avf, AVPacket *pkt)
            av_ts2str(pkt->pts), av_ts2timestr(pkt->pts, &st->time_base),
            av_ts2str(pkt->dts), av_ts2timestr(pkt->dts, &st->time_base));
     if (cat->cur_file->metadata) {
-        int metadata_len;
+        size_t metadata_len;
         char* packed_metadata = av_packet_pack_dictionary(cat->cur_file->metadata, &metadata_len);
         if (!packed_metadata)
             return AVERROR(ENOMEM);
@@ -638,8 +638,8 @@ static int concat_read_packet(AVFormatContext *avf, AVPacket *pkt)
         }
     }
 
-    if (cat->cur_file->duration == AV_NOPTS_VALUE && st->cur_dts != AV_NOPTS_VALUE) {
-        int64_t next_dts = av_rescale_q(st->cur_dts, st->time_base, AV_TIME_BASE_Q);
+    if (cat->cur_file->duration == AV_NOPTS_VALUE && st->internal->cur_dts != AV_NOPTS_VALUE) {
+        int64_t next_dts = av_rescale_q(st->internal->cur_dts, st->time_base, AV_TIME_BASE_Q);
         if (cat->cur_file->next_dts == AV_NOPTS_VALUE || next_dts > cat->cur_file->next_dts) {
             cat->cur_file->next_dts = next_dts;
         }
@@ -775,7 +775,7 @@ static const AVClass concat_class = {
 };
 
 
-AVInputFormat ff_concat_demuxer = {
+const AVInputFormat ff_concat_demuxer = {
     .name           = "concat",
     .long_name      = NULL_IF_CONFIG_SMALL("Virtual concatenation script"),
     .priv_data_size = sizeof(ConcatContext),

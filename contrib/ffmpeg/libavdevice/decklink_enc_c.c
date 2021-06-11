@@ -28,7 +28,7 @@
 #define OFFSET(x) offsetof(struct decklink_cctx, x)
 #define ENC AV_OPT_FLAG_ENCODING_PARAM
 static const AVOption options[] = {
-    { "list_devices", "list available devices"  , OFFSET(list_devices), AV_OPT_TYPE_INT   , { .i64 = 0   }, 0, 1, ENC },
+    { "list_devices", "use ffmpeg -sinks decklink instead", OFFSET(list_devices), AV_OPT_TYPE_BOOL, { .i64 = 0   }, 0, 1, ENC | AV_OPT_FLAG_DEPRECATED},
     { "list_formats", "list supported formats"  , OFFSET(list_formats), AV_OPT_TYPE_INT   , { .i64 = 0   }, 0, 1, ENC },
     { "preroll"     , "video preroll in seconds", OFFSET(preroll     ), AV_OPT_TYPE_DOUBLE, { .dbl = 0.5 }, 0, 5, ENC },
     { "duplex_mode" , "duplex mode"             , OFFSET(duplex_mode ), AV_OPT_TYPE_INT   , { .i64 = 0   }, 0, 2, ENC, "duplex_mode"},
@@ -48,7 +48,7 @@ static const AVClass decklink_muxer_class = {
     .category   = AV_CLASS_CATEGORY_DEVICE_VIDEO_OUTPUT,
 };
 
-AVOutputFormat ff_decklink_muxer = {
+const AVOutputFormat ff_decklink_muxer = {
     .name           = "decklink",
     .long_name      = NULL_IF_CONFIG_SMALL("Blackmagic DeckLink output"),
     .audio_codec    = AV_CODEC_ID_PCM_S16LE,

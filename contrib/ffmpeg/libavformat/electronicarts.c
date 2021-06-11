@@ -503,7 +503,7 @@ static int init_video_stream(AVFormatContext *s, VideoProperties *video)
     st->codecpar->codec_id    = video->codec;
     // parsing is necessary to make FFmpeg generate correct timestamps
     if (st->codecpar->codec_id == AV_CODEC_ID_MPEG2VIDEO)
-        st->need_parsing = AVSTREAM_PARSE_HEADERS;
+        st->internal->need_parsing = AVSTREAM_PARSE_HEADERS;
     st->codecpar->codec_tag   = 0; /* no fourcc */
     st->codecpar->width       = video->width;
     st->codecpar->height      = video->height;
@@ -607,10 +607,14 @@ static int ea_read_packet(AVFormatContext *s, AVPacket *pkt)
                 break;
             } else if (ea->audio_codec == AV_CODEC_ID_PCM_S16LE_PLANAR ||
                        ea->audio_codec == AV_CODEC_ID_MP3) {
+                if (chunk_size < 12)
+                    return AVERROR_INVALIDDATA;
                 num_samples = avio_rl32(pb);
                 avio_skip(pb, 8);
                 chunk_size -= 12;
             } else if (ea->audio_codec == AV_CODEC_ID_ADPCM_PSX) {
+                if (chunk_size < 8)
+                    return AVERROR_INVALIDDATA;
                 avio_skip(pb, 8);
                 chunk_size -= 8;
             }
@@ -693,6 +697,8 @@ static int ea_read_packet(AVFormatContext *s, AVPacket *pkt)
         case fVGT_TAG:
         case MADm_TAG:
         case MADe_TAG:
+            if (chunk_size > INT_MAX - 8)
+                return AVERROR_INVALIDDATA;
             avio_seek(pb, -8, SEEK_CUR);    // include chunk preamble
             chunk_size += 8;
             goto get_video_packet;
@@ -722,6 +728,7 @@ get_video_packet:
                 ret = av_get_packet(pb, pkt, chunk_size);
             if (ret < 0) {
                 packet_read = 1;
+                partial_packet = 0;
                 break;
             }
             partial_packet = chunk_type == MVIh_TAG;
@@ -745,7 +752,7 @@ get_video_packet:
     return ret;
 }
 
-AVInputFormat ff_ea_demuxer = {
+const AVInputFormat ff_ea_demuxer = {
     .name           = "ea",
     .long_name      = NULL_IF_CONFIG_SMALL("Electronic Arts Multimedia"),
     .priv_data_size = sizeof(EaDemuxContext),

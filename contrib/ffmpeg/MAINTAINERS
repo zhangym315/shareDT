@@ -57,7 +57,7 @@ Patchwork                               Andriy Gelman
 mailing lists                           Baptiste Coudurier
 Twitter                                 Reynaldo H. Verdejo Pinochet
 Launchpad                               Timothy Gu
-ffmpeg-security                         Andreas Cadhalpun, Carl Eugen Hoyos, Clément Bœsch, Michael Niedermayer, Reimar Doeffinger, Rodger Combs, wm4
+ffmpeg-security                         Andreas Cadhalpun, Carl Eugen Hoyos, Clément Bœsch, Michael Niedermayer, Reimar Doeffinger, rcombs, wm4
 
 
 libavutil
@@ -138,13 +138,14 @@ Codecs:
   8bps.c                                Roberto Togni
   8svx.c                                Jaikrishnan Menon
   aacenc*, aaccoder.c                   Rostislav Pehlivanov
+  adpcm.c                               Zane van Iperen
   alacenc.c                             Jaikrishnan Menon
   alsdec.c                              Thilo Borgmann, Umair Khan
   aptx.c                                Aurelien Jacobs
   ass*                                  Aurelien Jacobs
   asv*                                  Michael Niedermayer
   atrac3plus*                           Maxim Poliakovski
-  audiotoolbox*                         Rodger Combs
+  audiotoolbox*                         rcombs
   avs2*                                 Huiwen Ren
   bgmc.c, bgmc.h                        Thilo Borgmann
   binkaudio.c                           Peter Ross
@@ -235,7 +236,6 @@ Codecs:
   rv10.c                                Michael Niedermayer
   s3tc*                                 Ivo van Poorten
   smc.c                                 Mike Melanson
-  smvjpegdec.c                          Ash Hughes
   snow*                                 Michael Niedermayer, Loren Merritt
   sonic.c                               Alex Beregszaszi
   speedhq.c                             Steinar H. Gunderson
@@ -399,6 +399,7 @@ Muxers/Demuxers:
   apngdec.c                             Benoit Fouet
   argo_asf.c                            Zane van Iperen
   argo_brp.c                            Zane van Iperen
+  argo_cvg.c                            Zane van Iperen
   ass*                                  Aurelien Jacobs
   astdec.c                              Paul B Mahol
   astenc.c                              James Almer

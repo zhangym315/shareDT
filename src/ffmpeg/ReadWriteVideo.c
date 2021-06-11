@@ -10,6 +10,7 @@
 #include <libavutil/timestamp.h>
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
+#include <libavcodec/avcodec.h>
 
 #include "ReadWriteVideo.h"
 

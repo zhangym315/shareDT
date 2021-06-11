@@ -270,7 +270,7 @@ static av_cold int geq_init(AVFilterContext *ctx)
     }
 
     for (plane = 0; plane < NB_PLANES; plane++) {
-        static double (*p[])(void *, double, double) = {
+        static double (*const p[])(void *, double, double) = {
             lum   , cb   , cr   , alpha   ,
             lumsum, cbsum, crsub, alphasum,
         };
@@ -283,7 +283,7 @@ static av_cold int geq_init(AVFilterContext *ctx)
             "gsum", "bsum", "rsum", "alphasum", "psum",
             NULL };
         const char *const *func2_names       = geq->is_rgb ? func2_rgb_names : func2_yuv_names;
-        double (*func2[])(void *, double, double) = {
+        double (*const func2[])(void *, double, double) = {
             lum   , cb   , cr   , alpha   , p[plane],
             lumsum, cbsum, crsub, alphasum, p[plane + 4],
             NULL };
@@ -492,7 +492,7 @@ static const AVFilterPad geq_outputs[] = {
     { NULL }
 };
 
-AVFilter ff_vf_geq = {
+const AVFilter ff_vf_geq = {
     .name          = "geq",
     .description   = NULL_IF_CONFIG_SMALL("Apply generic equation to each pixel."),
     .priv_size     = sizeof(GEQContext),

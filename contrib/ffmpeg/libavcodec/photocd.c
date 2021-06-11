@@ -458,7 +458,7 @@ static const AVClass photocd_class = {
     .version    = LIBAVUTIL_VERSION_INT,
 };
 
-AVCodec ff_photocd_decoder = {
+const AVCodec ff_photocd_decoder = {
     .name           = "photocd",
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = AV_CODEC_ID_PHOTOCD,
@@ -469,4 +469,5 @@ AVCodec ff_photocd_decoder = {
     .decode         = photocd_decode_frame,
     .capabilities   = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_FRAME_THREADS,
     .long_name      = NULL_IF_CONFIG_SMALL("Kodak Photo CD"),
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };

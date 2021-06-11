@@ -183,13 +183,6 @@ void avfilter_link_free(AVFilterLink **link)
     av_freep(link);
 }
 
-#if FF_API_FILTER_GET_SET
-int avfilter_link_get_channels(AVFilterLink *link)
-{
-    return link->channels;
-}
-#endif
-
 void ff_filter_set_ready(AVFilterContext *filter, unsigned priority)
 {
     filter->ready = FFMAX(filter->ready, priority);
@@ -230,11 +223,6 @@ void ff_avfilter_link_set_out_status(AVFilterLink *link, int status, int64_t pts
         ff_update_link_current_pts(link, pts);
     filter_unblock(link->dst);
     ff_filter_set_ready(link->src, 200);
-}
-
-void avfilter_link_set_closed(AVFilterLink *link, int closed)
-{
-    ff_avfilter_link_set_out_status(link, closed ? AVERROR_EOF : 0, AV_NOPTS_VALUE);
 }
 
 int avfilter_insert_filter(AVFilterLink *link, AVFilterContext *filt,
@@ -583,30 +571,6 @@ static void *filter_child_next(void *obj, void *prev)
     return NULL;
 }
 
-#if FF_API_CHILD_CLASS_NEXT
-static const AVClass *filter_child_class_next(const AVClass *prev)
-{
-    void *opaque = NULL;
-    const AVFilter *f = NULL;
-
-    /* find the filter that corresponds to prev */
-    while (prev && (f = av_filter_iterate(&opaque)))
-        if (f->priv_class == prev)
-            break;
-
-    /* could not find filter corresponding to prev */
-    if (prev && !f)
-        return NULL;
-
-    /* find next filter with specific options */
-    while ((f = av_filter_iterate(&opaque)))
-        if (f->priv_class)
-            return f->priv_class;
-
-    return NULL;
-}
-#endif
-
 static const AVClass *filter_child_class_iterate(void **iter)
 {
     const AVFilter *f;
@@ -620,11 +584,12 @@ static const AVClass *filter_child_class_iterate(void **iter)
 
 #define OFFSET(x) offsetof(AVFilterContext, x)
 #define FLAGS AV_OPT_FLAG_FILTERING_PARAM
+#define TFLAGS AV_OPT_FLAG_FILTERING_PARAM|AV_OPT_FLAG_RUNTIME_PARAM
 static const AVOption avfilter_options[] = {
     { "thread_type", "Allowed thread types", OFFSET(thread_type), AV_OPT_TYPE_FLAGS,
         { .i64 = AVFILTER_THREAD_SLICE }, 0, INT_MAX, FLAGS, "thread_type" },
         { "slice", NULL, 0, AV_OPT_TYPE_CONST, { .i64 = AVFILTER_THREAD_SLICE }, .flags = FLAGS, .unit = "thread_type" },
-    { "enable", "set enable expression", OFFSET(enable_str), AV_OPT_TYPE_STRING, {.str=NULL}, .flags = FLAGS },
+    { "enable", "set enable expression", OFFSET(enable_str), AV_OPT_TYPE_STRING, {.str=NULL}, .flags = TFLAGS },
     { "threads", "Allowed number of threads", OFFSET(nb_threads), AV_OPT_TYPE_INT,
         { .i64 = 0 }, 0, INT_MAX, FLAGS },
     { "extra_hw_frames", "Number of extra hardware frames to allocate for the user",
@@ -638,9 +603,6 @@ static const AVClass avfilter_class = {
     .version    = LIBAVUTIL_VERSION_INT,
     .category   = AV_CLASS_CATEGORY_FILTER,
     .child_next = filter_child_next,
-#if FF_API_CHILD_CLASS_NEXT
-    .child_class_next = filter_child_class_next,
-#endif
     .child_class_iterate = filter_child_class_iterate,
     .option           = avfilter_options,
 };
@@ -874,11 +836,6 @@ static int process_options(AVFilterContext *ctx, AVDictionary **options,
         count++;
     }
 
-    if (ctx->enable_str) {
-        ret = set_enable_expr(ctx, ctx->enable_str);
-        if (ret < 0)
-            return ret;
-    }
     return count;
 }
 
@@ -929,6 +886,12 @@ int avfilter_init_dict(AVFilterContext *ctx, AVDictionary **options)
     else if (ctx->filter->init_dict)
         ret = ctx->filter->init_dict(ctx, options);
 
+    if (ctx->enable_str) {
+        ret = set_enable_expr(ctx, ctx->enable_str);
+        if (ret < 0)
+            return ret;
+    }
+
     return ret;
 }
 
@@ -945,85 +908,9 @@ int avfilter_init_str(AVFilterContext *filter, const char *args)
             return AVERROR(EINVAL);
         }
 
-#if FF_API_OLD_FILTER_OPTS_ERROR
-            if (   !strcmp(filter->filter->name, "format")     ||
-                   !strcmp(filter->filter->name, "noformat")   ||
-                   !strcmp(filter->filter->name, "frei0r")     ||
-                   !strcmp(filter->filter->name, "frei0r_src") ||
-                   !strcmp(filter->filter->name, "ocv")        ||
-                   !strcmp(filter->filter->name, "pan")        ||
-                   !strcmp(filter->filter->name, "pp")         ||
-                   !strcmp(filter->filter->name, "aevalsrc")) {
-            /* a hack for compatibility with the old syntax
-             * replace colons with |s */
-            char *copy = av_strdup(args);
-            char *p    = copy;
-            int nb_leading = 0; // number of leading colons to skip
-            int deprecated = 0;
-
-            if (!copy) {
-                ret = AVERROR(ENOMEM);
-                goto fail;
-            }
-
-            if (!strcmp(filter->filter->name, "frei0r") ||
-                !strcmp(filter->filter->name, "ocv"))
-                nb_leading = 1;
-            else if (!strcmp(filter->filter->name, "frei0r_src"))
-                nb_leading = 3;
-
-            while (nb_leading--) {
-                p = strchr(p, ':');
-                if (!p) {
-                    p = copy + strlen(copy);
-                    break;
-                }
-                p++;
-            }
-
-            deprecated = strchr(p, ':') != NULL;
-
-            if (!strcmp(filter->filter->name, "aevalsrc")) {
-                deprecated = 0;
-                while ((p = strchr(p, ':')) && p[1] != ':') {
-                    const char *epos = strchr(p + 1, '=');
-                    const char *spos = strchr(p + 1, ':');
-                    const int next_token_is_opt = epos && (!spos || epos < spos);
-                    if (next_token_is_opt) {
-                        p++;
-                        break;
-                    }
-                    /* next token does not contain a '=', assume a channel expression */
-                    deprecated = 1;
-                    *p++ = '|';
-                }
-                if (p && *p == ':') { // double sep '::' found
-                    deprecated = 1;
-                    memmove(p, p + 1, strlen(p));
-                }
-            } else
-            while ((p = strchr(p, ':')))
-                *p++ = '|';
-
-            if (deprecated) {
-                av_log(filter, AV_LOG_ERROR, "This syntax is deprecated. Use "
-                       "'|' to separate the list items ('%s' instead of '%s')\n",
-                       copy, args);
-                ret = AVERROR(EINVAL);
-            } else {
-                ret = process_options(filter, &options, copy);
-            }
-            av_freep(&copy);
-
-            if (ret < 0)
-                goto fail;
-        } else
-#endif
-        {
-            ret = process_options(filter, &options, args);
-            if (ret < 0)
-                goto fail;
-        }
+        ret = process_options(filter, &options, args);
+        if (ret < 0)
+            goto fail;
     }
 
     ret = avfilter_init_dict(filter, &options);

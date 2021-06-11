@@ -16,7 +16,8 @@ struct ImageBGRA {
 class FrameBuffer {
   public:
     FrameBuffer(size_t size) : _size(size), _capacity(size),
-                            _subCapacity(0), _subData(nullptr)
+                            _subCapacity(0), _subData(nullptr),
+                            _isUsed(true)
     {
         if(size == 0)
             _data = nullptr;
@@ -46,7 +47,7 @@ class FrameBuffer {
     void ConvertBGRA2YCrCb420(unsigned char * dst, size_t size);
     void ConcertBGRA2RGB(unsigned char * dst, unsigned char * src, size_t srcSize);
 
-    void reSet(size_t size);
+    bool reSet(size_t size);
     void reSet(const CapImageRect & bounds, unsigned int bytespp);
     void reSet() { reSet(0);}
 
@@ -54,6 +55,10 @@ class FrameBuffer {
     void resetSubData() { resetSubData(0); }
     unsigned char * getSubData() { return _subData; }
     [[nodiscard]] size_t getSubCap() const { return _subCapacity; }
+    [[nodiscard]] bool isUsed() const { return _isUsed ;}
+
+    bool set(unsigned char * data, uint64_t size);
+    void setUsed() { _isUsed = true; }
 
     void setInvalid() {_isValid = false;}
 
@@ -64,6 +69,7 @@ class FrameBuffer {
     unsigned char * _data;
     unsigned char * _subData;
     bool     _isValid;
+    bool     _isUsed;
 };
 
 /*

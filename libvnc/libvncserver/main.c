@@ -460,34 +460,34 @@ clientOutput(void *data)
     while (1) {
         haveUpdate = false;
         while (!haveUpdate) {
-		if (cl->sock == RFB_INVALID_SOCKET) {
-			/* Client has disconnected. */
-			return NULL;
-		}
-		if (cl->state != RFB_NORMAL || cl->onHold) {
-			/* just sleep until things get normal */
-			usleep(cl->screen->deferUpdateTime * 1000);
-			continue;
-		}
+            if (cl->sock == RFB_INVALID_SOCKET) {
+                /* Client has disconnected. */
+                return NULL;
+            }
+            if (cl->state != RFB_NORMAL || cl->onHold) {
+                /* just sleep until things get normal */
+                usleep(cl->screen->deferUpdateTime * 1000);
+                continue;
+            }
 
-		LOCK(cl->updateMutex);
+            LOCK(cl->updateMutex);
 
-		if (sraRgnEmpty(cl->requestedRegion)) {
-			; /* always require a FB Update Request (otherwise can crash.) */
-		} else {
-			haveUpdate = FB_UPDATE_PENDING(cl);
-			if(!haveUpdate) {
-				updateRegion = sraRgnCreateRgn(cl->modifiedRegion);
-				haveUpdate   = sraRgnAnd(updateRegion,cl->requestedRegion);
-				sraRgnDestroy(updateRegion);
-			}
-		}
+            if (sraRgnEmpty(cl->requestedRegion)) {
+                ; /* always require a FB Update Request (otherwise can crash.) */
+            } else {
+                haveUpdate = FB_UPDATE_PENDING(cl);
+                if(!haveUpdate) {
+                    updateRegion = sraRgnCreateRgn(cl->modifiedRegion);
+                    haveUpdate   = sraRgnAnd(updateRegion,cl->requestedRegion);
+                    sraRgnDestroy(updateRegion);
+                }
+            }
 
-		if (!haveUpdate) {
-			WAIT(cl->updateCond, cl->updateMutex);
-		}
+            if (!haveUpdate) {
+                WAIT(cl->updateCond, cl->updateMutex);
+            }
 
-		UNLOCK(cl->updateMutex);
+            UNLOCK(cl->updateMutex);
         }
         
         /* OK, now, to save bandwidth, wait a little while for more
@@ -499,17 +499,17 @@ clientOutput(void *data)
            That way, if anything that overlaps the region we're sending
            is updated, we'll be sure to do another update later. */
         LOCK(cl->updateMutex);
-	updateRegion = sraRgnCreateRgn(cl->modifiedRegion);
+	    updateRegion = sraRgnCreateRgn(cl->modifiedRegion);
         UNLOCK(cl->updateMutex);
 
         /* Now actually send the update. */
-	rfbIncrClientRef(cl);
+	    rfbIncrClientRef(cl);
         LOCK(cl->sendMutex);
         rfbSendFramebufferUpdate(cl, updateRegion);
         UNLOCK(cl->sendMutex);
-	rfbDecrClientRef(cl);
+	    rfbDecrClientRef(cl);
 
-	sraRgnDestroy(updateRegion);
+	    sraRgnDestroy(updateRegion);
     }
 
     /* Not reached. */

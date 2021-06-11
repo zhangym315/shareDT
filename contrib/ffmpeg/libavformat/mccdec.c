@@ -127,8 +127,7 @@ static int mcc_read_header(AVFormatContext *s)
                 num = strtol(rate_str, &df, 10);
                 den = 1;
                 if (df && !av_strncasecmp(df, "DF", 2)) {
-                    num *= 1000;
-                    den  = 1001;
+                    av_reduce(&num, &den, num * 1000LL, 1001, INT_MAX);
                 }
             }
 
@@ -142,7 +141,7 @@ static int mcc_read_header(AVFormatContext *s)
         if (av_sscanf(line, "%d:%d:%d:%d", &hh, &mm, &ss, &fs) != 4)
             continue;
 
-        ts = av_rescale(hh * 3600LL + mm * 60LL + ss, rate.num, rate.den) + fs;
+        ts = av_sat_add64(av_rescale(hh * 3600LL + mm * 60LL + ss, rate.num, rate.den), fs);
 
         lline = (char *)&line;
         lline += 12;
@@ -225,7 +224,7 @@ static int mcc_read_close(AVFormatContext *s)
     return 0;
 }
 
-AVInputFormat ff_mcc_demuxer = {
+const AVInputFormat ff_mcc_demuxer = {
     .name           = "mcc",
     .long_name      = NULL_IF_CONFIG_SMALL("MacCaption"),
     .priv_data_size = sizeof(MCCContext),

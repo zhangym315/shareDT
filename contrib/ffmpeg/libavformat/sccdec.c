@@ -93,7 +93,7 @@ static int scc_read_header(AVFormatContext *s)
                     break;
             }
 
-            ts = (hh * 3600LL + mm * 60LL + ss) * 1000LL + fs * 33;
+            ts = (hh * 3600LL + mm * 60LL + ss) * 1000LL + fs * 33LL;
 
             while (!ff_text_eof(&tr)) {
                 len = ff_subtitles_read_line(&tr, line2, sizeof(line2));
@@ -117,7 +117,7 @@ static int scc_read_header(AVFormatContext *s)
             }
         }
 
-        next_ts = (hh * 3600LL + mm * 60LL + ss) * 1000LL + fs * 33;
+        next_ts = (hh * 3600LL + mm * 60LL + ss) * 1000LL + fs * 33LL;
 
         pos = ff_text_pos(&tr);
         lline = (char *)&line;
@@ -201,7 +201,7 @@ static int scc_read_close(AVFormatContext *s)
     return 0;
 }
 
-AVInputFormat ff_scc_demuxer = {
+const AVInputFormat ff_scc_demuxer = {
     .name           = "scc",
     .long_name      = NULL_IF_CONFIG_SMALL("Scenarist Closed Captions"),
     .priv_data_size = sizeof(SCCContext),

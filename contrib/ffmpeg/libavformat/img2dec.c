@@ -209,7 +209,7 @@ int ff_img_read_header(AVFormatContext *s1)
         s->is_pipe = 0;
     else {
         s->is_pipe       = 1;
-        st->need_parsing = AVSTREAM_PARSE_FULL;
+        st->internal->need_parsing = AVSTREAM_PARSE_FULL;
     }
 
     if (s->ts_from_file == 2) {
@@ -220,8 +220,10 @@ int ff_img_read_header(AVFormatContext *s1)
         avpriv_set_pts_info(st, 64, 1, 1000000000);
     } else if (s->ts_from_file)
         avpriv_set_pts_info(st, 64, 1, 1);
-    else
+    else {
         avpriv_set_pts_info(st, 64, s->framerate.den, s->framerate.num);
+        st->avg_frame_rate = st->r_frame_rate = s->framerate;
+    }
 
     if (s->width && s->height) {
         st->codecpar->width  = s->width;
@@ -379,9 +381,10 @@ int ff_img_read_header(AVFormatContext *s1)
  * as a dictionary, so it can be used by filters like 'drawtext'.
  */
 static int add_filename_as_pkt_side_data(char *filename, AVPacket *pkt) {
-    int metadata_len, ret;
     AVDictionary *d = NULL;
     char *packed_metadata = NULL;
+    size_t metadata_len;
+    int ret;
 
     av_dict_set(&d, "lavf.image2dec.source_path", filename, 0);
     av_dict_set(&d, "lavf.image2dec.source_basename", av_basename(filename), 0);
@@ -479,7 +482,7 @@ int ff_img_read_packet(AVFormatContext *s1, AVPacket *pkt)
             return AVERROR_EOF;
         if (s->frame_size > 0) {
             size[0] = s->frame_size;
-        } else if (!s1->streams[0]->parser) {
+        } else if (!s1->streams[0]->internal->parser) {
             size[0] = avio_size(s1->pb);
         } else {
             size[0] = 4096;
@@ -630,7 +633,7 @@ static const AVClass img2_class = {
     .option     = ff_img_options,
     .version    = LIBAVUTIL_VERSION_INT,
 };
-AVInputFormat ff_image2_demuxer = {
+const AVInputFormat ff_image2_demuxer = {
     .name           = "image2",
     .long_name      = NULL_IF_CONFIG_SMALL("image2 sequence"),
     .priv_data_size = sizeof(VideoDemuxData),
@@ -656,7 +659,7 @@ static const AVClass img2pipe_class = {
     .option     = ff_img2pipe_options,
     .version    = LIBAVUTIL_VERSION_INT,
 };
-AVInputFormat ff_image2pipe_demuxer = {
+const AVInputFormat ff_image2pipe_demuxer = {
     .name           = "image2pipe",
     .long_name      = NULL_IF_CONFIG_SMALL("piped image2 sequence"),
     .priv_data_size = sizeof(VideoDemuxData),
@@ -815,7 +818,7 @@ static int jpeg_probe(const AVProbeData *p)
         return AVPROBE_SCORE_EXTENSION + 1;
     if (state == SOS)
         return AVPROBE_SCORE_EXTENSION / 2;
-    return AVPROBE_SCORE_EXTENSION / 8;
+    return AVPROBE_SCORE_EXTENSION / 8 + 1;
 }
 
 static int jpegls_probe(const AVProbeData *p)
@@ -991,7 +994,7 @@ static inline int pnm_probe(const AVProbeData *p)
 
 static int pbm_probe(const AVProbeData *p)
 {
-    return pnm_magic_check(p, 1) || pnm_magic_check(p, 4) ? pnm_probe(p) : 0;
+    return pnm_magic_check(p, 1) || pnm_magic_check(p, 4) || pnm_magic_check(p, 22) || pnm_magic_check(p, 54) ? pnm_probe(p) : 0;
 }
 
 static inline int pgmx_probe(const AVProbeData *p)
@@ -1027,6 +1030,16 @@ static int ppm_probe(const AVProbeData *p)
 static int pam_probe(const AVProbeData *p)
 {
     return pnm_magic_check(p, 7) ? pnm_probe(p) : 0;
+}
+
+static int xbm_probe(const AVProbeData *p)
+{
+    if (!memcmp(p->buf, "/* XBM X10 format */", 20))
+        return AVPROBE_SCORE_MAX;
+
+    if (!memcmp(p->buf, "#define", 7))
+        return AVPROBE_SCORE_MAX - 1;
+    return 0;
 }
 
 static int xpm_probe(const AVProbeData *p)
@@ -1099,7 +1112,7 @@ static const AVClass imgname ## _class = {\
     .option     = ff_img2pipe_options,\
     .version    = LIBAVUTIL_VERSION_INT,\
 };\
-AVInputFormat ff_image_ ## imgname ## _pipe_demuxer = {\
+const AVInputFormat ff_image_ ## imgname ## _pipe_demuxer = {\
     .name           = AV_STRINGIFY(imgname) "_pipe",\
     .long_name      = NULL_IF_CONFIG_SMALL("piped " AV_STRINGIFY(imgname) " sequence"),\
     .priv_data_size = sizeof(VideoDemuxData),\
@@ -1137,5 +1150,6 @@ IMAGEAUTO_DEMUXER(sunrast, AV_CODEC_ID_SUNRAST)
 IMAGEAUTO_DEMUXER(svg,     AV_CODEC_ID_SVG)
 IMAGEAUTO_DEMUXER(tiff,    AV_CODEC_ID_TIFF)
 IMAGEAUTO_DEMUXER(webp,    AV_CODEC_ID_WEBP)
+IMAGEAUTO_DEMUXER(xbm,     AV_CODEC_ID_XBM)
 IMAGEAUTO_DEMUXER(xpm,     AV_CODEC_ID_XPM)
 IMAGEAUTO_DEMUXER(xwd,     AV_CODEC_ID_XWD)

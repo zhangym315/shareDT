@@ -28,6 +28,7 @@
 #include "libavutil/channel_layout.h"
 #include "libavutil/dict.h"
 #include "libavutil/opt.h"
+#include "libavutil/internal.h"
 #include "libavutil/intfloat.h"
 #include "libavutil/mathematics.h"
 #include "libavutil/time_internal.h"
@@ -40,6 +41,8 @@
 #define VALIDATE_INDEX_TS_THRESH 2500
 
 #define RESYNC_BUFFER_SIZE (1<<20)
+
+#define MAX_DEPTH 16      ///< arbitrary limit to prevent unbounded recursion
 
 typedef struct FLVContext {
     const AVClass *class; ///< Class for private options.
@@ -269,7 +272,7 @@ static void flv_set_audio_codec(AVFormatContext *s, AVStream *astream,
         break;
     case FLV_CODECID_MP3:
         apar->codec_id      = AV_CODEC_ID_MP3;
-        astream->need_parsing = AVSTREAM_PARSE_FULL;
+        astream->internal->need_parsing = AVSTREAM_PARSE_FULL;
         break;
     case FLV_CODECID_NELLYMOSER_8KHZ_MONO:
         // in case metadata does not otherwise declare samplerate
@@ -360,7 +363,7 @@ static int flv_set_video_codec(AVFormatContext *s, AVStream *vstream,
         break;
     case FLV_CODECID_H264:
         par->codec_id = AV_CODEC_ID_H264;
-        vstream->need_parsing = AVSTREAM_PARSE_HEADERS;
+        vstream->internal->need_parsing = AVSTREAM_PARSE_HEADERS;
         ret = 3;     // not 4, reading packet type will consume one byte
         break;
     case FLV_CODECID_MPEG4:
@@ -382,13 +385,18 @@ static int flv_set_video_codec(AVFormatContext *s, AVStream *vstream,
 
 static int amf_get_string(AVIOContext *ioc, char *buffer, int buffsize)
 {
+    int ret;
     int length = avio_rb16(ioc);
     if (length >= buffsize) {
         avio_skip(ioc, length);
         return -1;
     }
 
-    avio_read(ioc, buffer, length);
+    ret = avio_read(ioc, buffer, length);
+    if (ret < 0)
+        return ret;
+    if (ret < length)
+        return AVERROR_INVALIDDATA;
 
     buffer[length] = '\0';
 
@@ -446,9 +454,13 @@ static int parse_keyframes_index(AVFormatContext *s, AVIOContext *ioc, int64_t m
         }
 
         for (i = 0; i < arraylen && avio_tell(ioc) < max_pos - 1; i++) {
+            double d;
             if (avio_r8(ioc) != AMF_DATA_TYPE_NUMBER)
                 goto invalid;
-            current_array[0][i] = av_int2double(avio_rb64(ioc));
+            d = av_int2double(avio_rb64(ioc));
+            if (isnan(d) || d < INT64_MIN || d > INT64_MAX)
+                goto invalid;
+            current_array[0][i] = d;
         }
         if (times && filepositions) {
             // All done, exiting at a position allowing amf_parse_object
@@ -492,6 +504,9 @@ static int amf_parse_object(AVFormatContext *s, AVStream *astream,
     char str_val[1024];
     double num_val;
     amf_date date;
+
+    if (depth > MAX_DEPTH)
+        return AVERROR_PATCHWELCOME;
 
     num_val  = 0;
     ioc      = s->pb;
@@ -667,15 +682,14 @@ static int amf_parse_object(AVFormatContext *s, AVStream *astream,
             av_dict_set(&s->metadata, key, str_val, 0);
         } else if (amf_type == AMF_DATA_TYPE_STRING) {
             av_dict_set(&s->metadata, key, str_val, 0);
-        } else if (amf_type == AMF_DATA_TYPE_DATE) {
-            time_t time;
-            struct tm t;
-            char datestr[128];
-            time =  date.milliseconds / 1000; // to seconds
-            localtime_r(&time, &t);
-            strftime(datestr, sizeof(datestr), "%a, %d %b %Y %H:%M:%S %z", &t);
-
-            av_dict_set(&s->metadata, key, datestr, 0);
+        } else if (   amf_type == AMF_DATA_TYPE_DATE
+                   && isfinite(date.milliseconds)
+                   && date.milliseconds > INT64_MIN/1000
+                   && date.milliseconds < INT64_MAX/1000
+                  ) {
+            // timezone is ignored, since there is no easy way to offset the UTC
+            // timestamp into the specified timezone
+            avpriv_dict_set_timestamp(&s->metadata, key, 1000 * (int64_t)date.milliseconds);
         }
     }
 
@@ -837,9 +851,15 @@ static void clear_index_entries(AVFormatContext *s, int64_t pos)
     }
 }
 
-static int amf_skip_tag(AVIOContext *pb, AMFDataType type)
+static int amf_skip_tag(AVIOContext *pb, AMFDataType type, int depth)
 {
     int nb = -1, ret, parse_name = 1;
+
+    if (depth > MAX_DEPTH)
+        return AVERROR_PATCHWELCOME;
+
+    if (avio_feof(pb))
+        return AVERROR_EOF;
 
     switch (type) {
     case AMF_DATA_TYPE_NUMBER:
@@ -855,6 +875,8 @@ static int amf_skip_tag(AVIOContext *pb, AMFDataType type)
         parse_name = 0;
     case AMF_DATA_TYPE_MIXEDARRAY:
         nb = avio_rb32(pb);
+        if (nb < 0)
+            return AVERROR_INVALIDDATA;
     case AMF_DATA_TYPE_OBJECT:
         while(!pb->eof_reached && (nb-- > 0 || type != AMF_DATA_TYPE_ARRAY)) {
             if (parse_name) {
@@ -865,7 +887,7 @@ static int amf_skip_tag(AVIOContext *pb, AMFDataType type)
                 }
                 avio_skip(pb, size);
             }
-            if ((ret = amf_skip_tag(pb, avio_r8(pb))) < 0)
+            if ((ret = amf_skip_tag(pb, avio_r8(pb), depth + 1)) < 0)
                 return ret;
         }
         break;
@@ -909,7 +931,7 @@ static int flv_data_packet(AVFormatContext *s, AVPacket *pkt,
             else
                 break;
         } else {
-            if ((ret = amf_skip_tag(pb, type)) < 0)
+            if ((ret = amf_skip_tag(pb, type, 0)) < 0)
                 goto skip;
         }
     }
@@ -1158,7 +1180,7 @@ retry_duration:
             avio_seek(s->pb, fsize - 3 - size, SEEK_SET);
             if (size == avio_rb24(s->pb) + 11) {
                 uint32_t ts = avio_rb24(s->pb);
-                ts         |= avio_r8(s->pb) << 24;
+                ts         |= (unsigned)avio_r8(s->pb) << 24;
                 if (ts)
                     s->duration = ts * (int64_t)AV_TIME_BASE / 1000;
                 else if (fsize >= 8 && fsize - 8 >= size) {
@@ -1231,7 +1253,7 @@ retry_duration:
         if (st->codecpar->codec_id == AV_CODEC_ID_H264 || st->codecpar->codec_id == AV_CODEC_ID_MPEG4) {
             // sign extension
             int32_t cts = (avio_rb24(s->pb) + 0xff800000) ^ 0xff800000;
-            pts = dts + cts;
+            pts = av_sat_add64(dts, cts);
             if (cts < 0) { // dts might be wrong
                 if (!flv->wrong_dts)
                     av_log(s, AV_LOG_WARNING,
@@ -1350,7 +1372,7 @@ static const AVClass flv_class = {
     .version    = LIBAVUTIL_VERSION_INT,
 };
 
-AVInputFormat ff_flv_demuxer = {
+const AVInputFormat ff_flv_demuxer = {
     .name           = "flv",
     .long_name      = NULL_IF_CONFIG_SMALL("FLV (Flash Video)"),
     .priv_data_size = sizeof(FLVContext),
@@ -1370,7 +1392,7 @@ static const AVClass live_flv_class = {
     .version    = LIBAVUTIL_VERSION_INT,
 };
 
-AVInputFormat ff_live_flv_demuxer = {
+const AVInputFormat ff_live_flv_demuxer = {
     .name           = "live_flv",
     .long_name      = NULL_IF_CONFIG_SMALL("live RTMP FLV (Flash Video)"),
     .priv_data_size = sizeof(FLVContext),
@@ -1391,7 +1413,7 @@ static const AVClass kux_class = {
     .version    = LIBAVUTIL_VERSION_INT,
 };
 
-AVInputFormat ff_kux_demuxer = {
+const AVInputFormat ff_kux_demuxer = {
     .name           = "kux",
     .long_name      = NULL_IF_CONFIG_SMALL("KUX (YouKu)"),
     .priv_data_size = sizeof(FLVContext),

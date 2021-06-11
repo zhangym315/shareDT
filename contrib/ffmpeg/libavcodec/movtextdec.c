@@ -28,6 +28,7 @@
 #include "libavutil/intreadwrite.h"
 #include "libavutil/mem.h"
 #include "bytestream.h"
+#include "internal.h"
 
 #define STYLE_FLAG_BOLD         (1<<0)
 #define STYLE_FLAG_ITALIC       (1<<1)
@@ -117,7 +118,7 @@ typedef struct {
 typedef struct {
     uint32_t type;
     size_t base_size;
-    int (*decode)(const uint8_t *tsmb, MovTextContext *m, AVPacket *avpkt);
+    int (*decode)(const uint8_t *tsmb, MovTextContext *m, const AVPacket *avpkt);
 } Box;
 
 static void mov_text_cleanup(MovTextContext *m)
@@ -240,14 +241,14 @@ static int mov_text_tx3g(AVCodecContext *avctx, MovTextContext *m)
     return 0;
 }
 
-static int decode_twrp(const uint8_t *tsmb, MovTextContext *m, AVPacket *avpkt)
+static int decode_twrp(const uint8_t *tsmb, MovTextContext *m, const AVPacket *avpkt)
 {
     m->box_flags |= TWRP_BOX;
     m->w.wrap_flag = bytestream_get_byte(&tsmb);
     return 0;
 }
 
-static int decode_hlit(const uint8_t *tsmb, MovTextContext *m, AVPacket *avpkt)
+static int decode_hlit(const uint8_t *tsmb, MovTextContext *m, const AVPacket *avpkt)
 {
     m->box_flags |= HLIT_BOX;
     m->h.hlit_start = bytestream_get_be16(&tsmb);
@@ -255,14 +256,14 @@ static int decode_hlit(const uint8_t *tsmb, MovTextContext *m, AVPacket *avpkt)
     return 0;
 }
 
-static int decode_hclr(const uint8_t *tsmb, MovTextContext *m, AVPacket *avpkt)
+static int decode_hclr(const uint8_t *tsmb, MovTextContext *m, const AVPacket *avpkt)
 {
     m->box_flags |= HCLR_BOX;
     bytestream_get_buffer(&tsmb, m->c.hlit_color, 4);
     return 0;
 }
 
-static int decode_styl(const uint8_t *tsmb, MovTextContext *m, AVPacket *avpkt)
+static int decode_styl(const uint8_t *tsmb, MovTextContext *m, const AVPacket *avpkt)
 {
     int i;
     int style_entries = bytestream_get_be16(&tsmb);
@@ -582,7 +583,7 @@ static const AVClass mov_text_decoder_class = {
     .version    = LIBAVUTIL_VERSION_INT,
 };
 
-AVCodec ff_movtext_decoder = {
+const AVCodec ff_movtext_decoder = {
     .name         = "mov_text",
     .long_name    = NULL_IF_CONFIG_SMALL("3GPP Timed Text subtitle"),
     .type         = AVMEDIA_TYPE_SUBTITLE,
@@ -593,4 +594,5 @@ AVCodec ff_movtext_decoder = {
     .decode       = mov_text_decode_frame,
     .close        = mov_text_decode_close,
     .flush        = mov_text_flush,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };

@@ -33,6 +33,8 @@
 #include "avcodec.h"
 #include "bytestream.h"
 #include "cfhd.h"
+#include "cfhdencdsp.h"
+#include "encode.h"
 #include "put_bits.h"
 #include "internal.h"
 #include "thread.h"
@@ -239,6 +241,8 @@ typedef struct CFHDEncContext {
     Runbook  rb[321];
     Codebook cb[513];
     int16_t *alpha;
+
+    CFHDEncDSPContext dsp;
 } CFHDEncContext;
 
 static av_cold int cfhd_encode_init(AVCodecContext *avctx)
@@ -267,10 +271,10 @@ static av_cold int cfhd_encode_init(AVCodecContext *avctx)
         int width  = i ? avctx->width >> s->chroma_h_shift : avctx->width;
         int height = i ? FFALIGN(avctx->height >> s->chroma_v_shift, 8) :
                          FFALIGN(avctx->height >> s->chroma_v_shift, 8);
-        ptrdiff_t stride = FFALIGN(width / 8, 8) * 8;
+        ptrdiff_t stride = (FFALIGN(width / 8, 8) + 64) * 8;
 
-        w8 = FFALIGN(width / 8, 8);
-        h8 = height / 8;
+        w8 = FFALIGN(width / 8, 8) + 64;
+        h8 = FFALIGN(height, 8) / 8;
         w4 = w8 * 2;
         h4 = h8 * 2;
         w2 = w4 * 2;
@@ -359,6 +363,8 @@ static av_cold int cfhd_encode_init(AVCodecContext *avctx)
             s->lut[i] = last;
     }
 
+    ff_cfhdencdsp_init(&s->dsp);
+
     if (s->planes != 4)
         return 0;
 
@@ -367,42 +373,6 @@ static av_cold int cfhd_encode_init(AVCodecContext *avctx)
         return AVERROR(ENOMEM);
 
     return 0;
-}
-
-static av_always_inline void filter(int16_t *input, ptrdiff_t in_stride,
-                          int16_t *low, ptrdiff_t low_stride,
-                          int16_t *high, ptrdiff_t high_stride,
-                          int len)
-{
-    low[(0>>1) * low_stride]   = av_clip_int16(input[0*in_stride] + input[1*in_stride]);
-    high[(0>>1) * high_stride] = av_clip_int16((5 * input[0*in_stride] - 11 * input[1*in_stride] +
-                                                4 * input[2*in_stride] +  4 * input[3*in_stride] -
-                                                1 * input[4*in_stride] -  1 * input[5*in_stride] + 4) >> 3);
-
-    for (int i = 2; i < len - 2; i += 2) {
-        low[(i>>1) * low_stride]   = av_clip_int16(input[i*in_stride] + input[(i+1)*in_stride]);
-        high[(i>>1) * high_stride] = av_clip_int16(((-input[(i-2)*in_stride] - input[(i-1)*in_stride] +
-                                                      input[(i+2)*in_stride] + input[(i+3)*in_stride] + 4) >> 3) +
-                                                      input[(i+0)*in_stride] - input[(i+1)*in_stride]);
-    }
-
-    low[((len-2)>>1) * low_stride]   = av_clip_int16(input[((len-2)+0)*in_stride] + input[((len-2)+1)*in_stride]);
-    high[((len-2)>>1) * high_stride] = av_clip_int16((11* input[((len-2)+0)*in_stride] - 5 * input[((len-2)+1)*in_stride] -
-                                                      4 * input[((len-2)-1)*in_stride] - 4 * input[((len-2)-2)*in_stride] +
-                                                      1 * input[((len-2)-3)*in_stride] + 1 * input[((len-2)-4)*in_stride] + 4) >> 3);
-}
-
-static void horiz_filter(int16_t *input, int16_t *low, int16_t *high,
-                         int width)
-{
-    filter(input, 1, low, 1, high, 1, width);
-}
-
-static void vert_filter(int16_t *input, ptrdiff_t in_stride,
-                        int16_t *low, ptrdiff_t low_stride,
-                        int16_t *high, ptrdiff_t high_stride, int len)
-{
-    filter(input, in_stride, low, low_stride, high, high_stride, len);
 }
 
 static void quantize_band(int16_t *input, int width, int a_width,
@@ -454,6 +424,7 @@ static int cfhd_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
                              const AVFrame *frame, int *got_packet)
 {
     CFHDEncContext *s = avctx->priv_data;
+    CFHDEncDSPContext *dsp = &s->dsp;
     PutByteContext *pby = &s->pby;
     PutBitContext *pb = &s->pb;
     const Codebook *const cb = s->cb;
@@ -480,12 +451,9 @@ static int cfhd_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
             in_stride = avctx->width;
         }
 
-        for (int i = 0; i < height * 2; i++) {
-            horiz_filter(input, low, high, width * 2);
-            input += in_stride;
-            low += a_width;
-            high += a_width;
-        }
+        dsp->horiz_filter(input, low, high,
+                          in_stride, a_width, a_width,
+                          width * 2, height * 2);
 
         input = s->plane[plane].l_h[7];
         low = s->plane[plane].subband[7];
@@ -493,23 +461,17 @@ static int cfhd_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
         high = s->plane[plane].subband[9];
         high_stride = s->plane[plane].band[2][0].a_width;
 
-        for (int i = 0; i < width; i++) {
-            vert_filter(input, a_width, low, low_stride, high, high_stride, height * 2);
-            input++;
-            low++;
-            high++;
-        }
+        dsp->vert_filter(input, low, high,
+                         a_width, low_stride, high_stride,
+                         width, height * 2);
 
         input = s->plane[plane].l_h[6];
         low = s->plane[plane].l_h[7];
         high = s->plane[plane].subband[8];
 
-        for (int i = 0; i < width; i++) {
-            vert_filter(input, a_width, low, low_stride, high, high_stride, height * 2);
-            input++;
-            low++;
-            high++;
-        }
+        dsp->vert_filter(input, low, high,
+                         a_width, low_stride, high_stride,
+                         width, height * 2);
 
         a_width = s->plane[plane].band[1][0].a_width;
         width = s->plane[plane].band[1][0].width;
@@ -527,34 +489,25 @@ static int cfhd_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
         }
 
         input = s->plane[plane].l_h[7];
-        for (int i = 0; i < height * 2; i++) {
-            horiz_filter(input, low, high, width * 2);
-            input += a_width * 2;
-            low += low_stride;
-            high += high_stride;
-        }
+        dsp->horiz_filter(input, low, high,
+                          a_width * 2, low_stride, high_stride,
+                          width * 2, height * 2);
 
         input = s->plane[plane].l_h[4];
         low = s->plane[plane].subband[4];
         high = s->plane[plane].subband[6];
 
-        for (int i = 0; i < width; i++) {
-            vert_filter(input, a_width, low, low_stride, high, high_stride, height * 2);
-            input++;
-            low++;
-            high++;
-        }
+        dsp->vert_filter(input, low, high,
+                         a_width, low_stride, high_stride,
+                         width, height * 2);
 
         input = s->plane[plane].l_h[3];
         low = s->plane[plane].l_h[4];
         high = s->plane[plane].subband[5];
 
-        for (int i = 0; i < width; i++) {
-            vert_filter(input, a_width, low, low_stride, high, high_stride, height * 2);
-            input++;
-            low++;
-            high++;
-        }
+        dsp->vert_filter(input, low, high,
+                         a_width, low_stride, high_stride,
+                         width, height * 2);
 
         a_width = s->plane[plane].band[0][0].a_width;
         width = s->plane[plane].band[0][0].width;
@@ -574,37 +527,28 @@ static int cfhd_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
         }
 
         input = s->plane[plane].l_h[4];
-        for (int i = 0; i < height * 2; i++) {
-            horiz_filter(input, low, high, width * 2);
-            input += a_width * 2;
-            low += low_stride;
-            high += high_stride;
-        }
+        dsp->horiz_filter(input, low, high,
+                          a_width * 2, low_stride, high_stride,
+                          width * 2, height * 2);
 
         low = s->plane[plane].subband[1];
         high = s->plane[plane].subband[3];
         input = s->plane[plane].l_h[1];
 
-        for (int i = 0; i < width; i++) {
-            vert_filter(input, a_width, low, low_stride, high, high_stride, height * 2);
-            input++;
-            low++;
-            high++;
-        }
+        dsp->vert_filter(input, low, high,
+                         a_width, low_stride, high_stride,
+                         width, height * 2);
 
         low = s->plane[plane].subband[0];
         high = s->plane[plane].subband[2];
         input = s->plane[plane].l_h[0];
 
-        for (int i = 0; i < width; i++) {
-            vert_filter(input, a_width, low, low_stride, high, high_stride, height * 2);
-            input++;
-            low++;
-            high++;
-        }
+        dsp->vert_filter(input, low, high,
+                         a_width, low_stride, high_stride,
+                         width, height * 2);
     }
 
-    ret = ff_alloc_packet2(avctx, pkt, 64LL + s->planes * (2LL * avctx->width * avctx->height + 1000LL), 0);
+    ret = ff_alloc_packet(avctx, pkt, 64LL + s->planes * (2LL * avctx->width * avctx->height + 1000LL));
     if (ret < 0)
         return ret;
 
@@ -650,7 +594,7 @@ static int cfhd_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
     bytestream2_put_be16(pby, avctx->height);
 
     bytestream2_put_be16(pby, -FrameNumber);
-    bytestream2_put_be16(pby, avctx->frame_number);
+    bytestream2_put_be16(pby, frame->pts & 0xFFFF);
 
     bytestream2_put_be16(pby, Precision);
     bytestream2_put_be16(pby, avctx->pix_fmt == AV_PIX_FMT_YUV422P10 ? 10 : 12);
@@ -799,7 +743,7 @@ static int cfhd_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
 
                 for (int m = 0; m < height; m++) {
                     for (int j = 0; j < stride; j++) {
-                        int16_t index = FFSIGN(data[j]) * lut[FFABS(data[j])];
+                        int16_t index = j >= width ? 0 : FFSIGN(data[j]) * lut[FFABS(data[j])];
 
                         if (index < 0)
                             index += 512;
@@ -823,7 +767,7 @@ static int cfhd_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
                 put_bits(pb, cb[512].size, cb[512].bits);
 
                 flush_put_bits(pb);
-                bytestream2_skip_p(pby, put_bits_count(pb) >> 3);
+                bytestream2_skip_p(pby, put_bytes_output(pb));
                 padd = (4 - (bytestream2_tell_p(pby) & 3)) & 3;
                 while (padd--)
                     bytestream2_put_byte(pby, 0);
@@ -902,7 +846,7 @@ static const AVClass cfhd_class = {
     .version    = LIBAVUTIL_VERSION_INT,
 };
 
-AVCodec ff_cfhd_encoder = {
+const AVCodec ff_cfhd_encoder = {
     .name             = "cfhd",
     .long_name        = NULL_IF_CONFIG_SMALL("GoPro CineForm HD"),
     .type             = AVMEDIA_TYPE_VIDEO,
@@ -919,5 +863,5 @@ AVCodec ff_cfhd_encoder = {
                           AV_PIX_FMT_GBRAP12,
                           AV_PIX_FMT_NONE
                         },
-    .caps_internal    = FF_CODEC_CAP_INIT_CLEANUP,
+    .caps_internal    = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
 };

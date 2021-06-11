@@ -1,6 +1,6 @@
 fate-acodec-%: CODEC = $(@:fate-acodec-%=%)
 fate-acodec-%: SRC = tests/data/asynth-44100-2.wav
-fate-acodec-%: CMD = enc_dec wav $(SRC) $(FMT) "-b:a 128k -c $(CODEC) $(ENCOPTS)" wav "-c pcm_s16le $(DECOPTS)" -keep
+fate-acodec-%: CMD = enc_dec wav $(SRC) $(FMT) "-b:a 128k -c $(CODEC) $(ENCOPTS)" wav "-c pcm_s16le $(DECOPTS)" "$(KEEP_OVERRIDE)"
 fate-acodec-%: CMP_UNIT = 2
 fate-acodec-%: REF = $(SRC_PATH)/tests/ref/acodec/$(@:fate-acodec-%=%)
 
@@ -51,6 +51,7 @@ FATE_ACODEC_ADPCM-$(call ENCDEC, ADPCM_IMA_ALP, ALP)      += ima_alp
 FATE_ACODEC_ADPCM-$(call ENCDEC, ADPCM_IMA_QT,  AIFF)     += ima_qt
 FATE_ACODEC_ADPCM-$(call ENCDEC, ADPCM_IMA_SSI, KVAG)     += ima_ssi
 FATE_ACODEC_ADPCM-$(call ENCDEC, ADPCM_IMA_WAV, WAV)      += ima_wav
+FATE_ACODEC_ADPCM-$(call ENCDEC, ADPCM_IMA_WS,  WSAUD)    += ima_ws
 FATE_ACODEC_ADPCM-$(call ENCDEC, ADPCM_MS,      WAV)      += ms
 FATE_ACODEC_ADPCM-$(call ENCDEC, ADPCM_SWF,     FLV)      += swf
 FATE_ACODEC_ADPCM-$(call ENCDEC, ADPCM_SWF,     WAV)      += swf-wav
@@ -68,6 +69,7 @@ fate-acodec-adpcm-ima_apm: FMT = apm
 fate-acodec-adpcm-ima_qt:  FMT = aiff
 fate-acodec-adpcm-ima_ssi: FMT = kvag
 fate-acodec-adpcm-ima_wav: FMT = wav
+fate-acodec-adpcm-ima_ws:  FMT = wsaud
 fate-acodec-adpcm-ms:      FMT = wav
 fate-acodec-adpcm-swf:     FMT = flv
 fate-acodec-adpcm-yamaha:  FMT = wav

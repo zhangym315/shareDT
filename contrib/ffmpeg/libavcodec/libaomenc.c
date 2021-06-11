@@ -36,6 +36,7 @@
 
 #include "av1.h"
 #include "avcodec.h"
+#include "encode.h"
 #include "internal.h"
 #include "packet_internal.h"
 #include "profiles.h"
@@ -124,6 +125,7 @@ typedef struct AOMEncoderContext {
     int enable_diff_wtd_comp;
     int enable_dist_wtd_comp;
     int enable_dual_filter;
+    AVDictionary *aom_params;
 } AOMContext;
 
 static const char *const ctlidstr[] = {
@@ -207,10 +209,10 @@ static av_cold void log_encoder_error(AVCodecContext *avctx, const char *desc)
 }
 
 static av_cold void dump_enc_cfg(AVCodecContext *avctx,
-                                 const struct aom_codec_enc_cfg *cfg)
+                                 const struct aom_codec_enc_cfg *cfg,
+                                 int level)
 {
     int width = -30;
-    int level = AV_LOG_DEBUG;
 
     av_log(avctx, level, "aom_codec_enc_cfg\n");
     av_log(avctx, level, "generic settings\n"
@@ -338,6 +340,9 @@ static int set_pix_fmt(AVCodecContext *avctx, aom_codec_caps_t codec_caps,
     const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(avctx->pix_fmt);
     enccfg->g_bit_depth = enccfg->g_input_bit_depth = desc->comp[0].depth;
     switch (avctx->pix_fmt) {
+    case AV_PIX_FMT_GRAY8:
+        enccfg->monochrome = 1;
+        /* Fall-through */
     case AV_PIX_FMT_YUV420P:
         enccfg->g_profile = FF_PROFILE_AV1_MAIN;
         *img_fmt = AOM_IMG_FMT_I420;
@@ -351,6 +356,10 @@ static int set_pix_fmt(AVCodecContext *avctx, aom_codec_caps_t codec_caps,
         enccfg->g_profile = FF_PROFILE_AV1_HIGH;
         *img_fmt = AOM_IMG_FMT_I444;
         return 0;
+    case AV_PIX_FMT_GRAY10:
+    case AV_PIX_FMT_GRAY12:
+        enccfg->monochrome = 1;
+        /* Fall-through */
     case AV_PIX_FMT_YUV420P10:
     case AV_PIX_FMT_YUV420P12:
         if (codec_caps & AOM_CODEC_CAP_HIGHBITDEPTH) {
@@ -603,7 +612,7 @@ static av_cold int aom_init(AVCodecContext *avctx,
             return AVERROR(EINVAL);
         }
 
-    dump_enc_cfg(avctx, &enccfg);
+    dump_enc_cfg(avctx, &enccfg, AV_LOG_DEBUG);
 
     enccfg.g_w            = avctx->width;
     enccfg.g_h            = avctx->height;
@@ -646,8 +655,11 @@ static av_cold int aom_init(AVCodecContext *avctx,
 
     if (avctx->qmin >= 0)
         enccfg.rc_min_quantizer = avctx->qmin;
-    if (avctx->qmax >= 0)
+    if (avctx->qmax >= 0) {
         enccfg.rc_max_quantizer = avctx->qmax;
+    } else if (!ctx->crf) {
+        enccfg.rc_max_quantizer = 0;
+    }
 
     if (enccfg.rc_end_usage == AOM_CQ || enccfg.rc_end_usage == AOM_Q) {
         if (ctx->crf < enccfg.rc_min_quantizer || ctx->crf > enccfg.rc_max_quantizer) {
@@ -734,13 +746,14 @@ static av_cold int aom_init(AVCodecContext *avctx,
     if (res < 0)
         return res;
 
-    dump_enc_cfg(avctx, &enccfg);
     /* Construct Encoder Context */
     res = aom_codec_enc_init(&ctx->encoder, iface, &enccfg, flags);
     if (res != AOM_CODEC_OK) {
+        dump_enc_cfg(avctx, &enccfg, AV_LOG_WARNING);
         log_encoder_error(avctx, "Failed to initialize encoder");
         return AVERROR(EINVAL);
     }
+    dump_enc_cfg(avctx, &enccfg, AV_LOG_DEBUG);
 
     // codec control failures are currently treated only as warnings
     av_log(avctx, AV_LOG_DEBUG, "aom_codec_control\n");
@@ -867,6 +880,20 @@ static av_cold int aom_init(AVCodecContext *avctx,
         codecctl_int(avctx, AV1E_SET_ENABLE_INTRABC, ctx->enable_intrabc);
 #endif
 
+#if AOM_ENCODER_ABI_VERSION >= 23
+    {
+        AVDictionaryEntry *en = NULL;
+
+        while ((en = av_dict_get(ctx->aom_params, "", en, AV_DICT_IGNORE_SUFFIX))) {
+            int ret = aom_codec_set_option(&ctx->encoder, en->key, en->value);
+            if (ret != AOM_CODEC_OK) {
+                log_encoder_error(avctx, en->key);
+                return AVERROR_EXTERNAL;
+            }
+        }
+    }
+#endif
+
     // provide dummy value to initialize wrapper, values will be updated each _encode()
     aom_img_wrap(&ctx->rawimg, img_fmt, avctx->width, avctx->height, 1,
                  (unsigned char*)1);
@@ -945,7 +972,7 @@ static int storeframe(AVCodecContext *avctx, struct FrameListData *cx_frame,
 {
     AOMContext *ctx = avctx->priv_data;
     int av_unused pict_type;
-    int ret = ff_alloc_packet2(avctx, pkt, cx_frame->sz, 0);
+    int ret = ff_get_encode_buffer(avctx, pkt, cx_frame->sz, 0);
     if (ret < 0) {
         av_log(avctx, AV_LOG_ERROR,
                "Error getting output packet of size %"SIZE_SPECIFIER".\n", cx_frame->sz);
@@ -1158,6 +1185,15 @@ static const enum AVPixelFormat av1_pix_fmts[] = {
     AV_PIX_FMT_NONE
 };
 
+static const enum AVPixelFormat av1_pix_fmts_with_gray[] = {
+    AV_PIX_FMT_YUV420P,
+    AV_PIX_FMT_YUV422P,
+    AV_PIX_FMT_YUV444P,
+    AV_PIX_FMT_GBRP,
+    AV_PIX_FMT_GRAY8,
+    AV_PIX_FMT_NONE
+};
+
 static const enum AVPixelFormat av1_pix_fmts_highbd[] = {
     AV_PIX_FMT_YUV420P,
     AV_PIX_FMT_YUV422P,
@@ -1174,13 +1210,35 @@ static const enum AVPixelFormat av1_pix_fmts_highbd[] = {
     AV_PIX_FMT_NONE
 };
 
+static const enum AVPixelFormat av1_pix_fmts_highbd_with_gray[] = {
+    AV_PIX_FMT_YUV420P,
+    AV_PIX_FMT_YUV422P,
+    AV_PIX_FMT_YUV444P,
+    AV_PIX_FMT_GBRP,
+    AV_PIX_FMT_YUV420P10,
+    AV_PIX_FMT_YUV422P10,
+    AV_PIX_FMT_YUV444P10,
+    AV_PIX_FMT_YUV420P12,
+    AV_PIX_FMT_YUV422P12,
+    AV_PIX_FMT_YUV444P12,
+    AV_PIX_FMT_GBRP10,
+    AV_PIX_FMT_GBRP12,
+    AV_PIX_FMT_GRAY8,
+    AV_PIX_FMT_GRAY10,
+    AV_PIX_FMT_GRAY12,
+    AV_PIX_FMT_NONE
+};
+
 static av_cold void av1_init_static(AVCodec *codec)
 {
+    int supports_monochrome = aom_codec_version() >= 20001;
     aom_codec_caps_t codec_caps = aom_codec_get_caps(aom_codec_av1_cx());
     if (codec_caps & AOM_CODEC_CAP_HIGHBITDEPTH)
-        codec->pix_fmts = av1_pix_fmts_highbd;
+        codec->pix_fmts = supports_monochrome ? av1_pix_fmts_highbd_with_gray :
+                                                av1_pix_fmts_highbd;
     else
-        codec->pix_fmts = av1_pix_fmts;
+        codec->pix_fmts = supports_monochrome ? av1_pix_fmts_with_gray :
+                                                av1_pix_fmts;
 
     if (aom_codec_version_major() < 2)
         codec->capabilities |= AV_CODEC_CAP_EXPERIMENTAL;
@@ -1261,6 +1319,9 @@ static const AVOption options[] = {
     { "enable-masked-comp",           "Enable masked compound",                            OFFSET(enable_masked_comp),           AV_OPT_TYPE_BOOL, {.i64 = -1}, -1, 1, VE},
     { "enable-interintra-comp",       "Enable interintra compound",                        OFFSET(enable_interintra_comp),       AV_OPT_TYPE_BOOL, {.i64 = -1}, -1, 1, VE},
     { "enable-smooth-interintra",     "Enable smooth interintra mode",                     OFFSET(enable_smooth_interintra),     AV_OPT_TYPE_BOOL, {.i64 = -1}, -1, 1, VE},
+#if AOM_ENCODER_ABI_VERSION >= 23
+    { "aom-params",                   "Set libaom options using a :-separated list of key=value pairs", OFFSET(aom_params), AV_OPT_TYPE_DICT, { 0 }, 0, 0, VE },
+#endif
     { NULL },
 };
 
@@ -1285,11 +1346,13 @@ AVCodec ff_libaom_av1_encoder = {
     .long_name      = NULL_IF_CONFIG_SMALL("libaom AV1"),
     .type           = AVMEDIA_TYPE_VIDEO,
     .id             = AV_CODEC_ID_AV1,
+    .capabilities   = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_DELAY |
+                      AV_CODEC_CAP_OTHER_THREADS,
     .priv_data_size = sizeof(AOMContext),
     .init           = av1_init,
     .encode2        = aom_encode,
     .close          = aom_free,
-    .capabilities   = AV_CODEC_CAP_DELAY | AV_CODEC_CAP_AUTO_THREADS,
+    .caps_internal  = FF_CODEC_CAP_AUTO_THREADS,
     .profiles       = NULL_IF_CONFIG_SMALL(ff_av1_profiles),
     .priv_class     = &class_aom,
     .defaults       = defaults,

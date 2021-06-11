@@ -263,7 +263,7 @@ static int caf_write_trailer(AVFormatContext *s)
     return 0;
 }
 
-AVOutputFormat ff_caf_muxer = {
+const AVOutputFormat ff_caf_muxer = {
     .name           = "caf",
     .long_name      = NULL_IF_CONFIG_SMALL("Apple CAF (Core Audio Format)"),
     .mime_type      = "audio/x-caf",
@@ -274,5 +274,5 @@ AVOutputFormat ff_caf_muxer = {
     .write_header   = caf_write_header,
     .write_packet   = caf_write_packet,
     .write_trailer  = caf_write_trailer,
-    .codec_tag      = (const AVCodecTag* const []){ff_codec_caf_tags, 0},
+    .codec_tag      = ff_caf_codec_tags_list,
 };

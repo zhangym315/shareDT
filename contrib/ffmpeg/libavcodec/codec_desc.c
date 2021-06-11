@@ -1420,6 +1420,21 @@ static const AVCodecDescriptor codec_descriptors[] = {
         .props     = AV_CODEC_PROP_LOSSY,
     },
     {
+        .id        = AV_CODEC_ID_MSP2,
+        .type      = AVMEDIA_TYPE_VIDEO,
+        .name      = "msp2",
+        .long_name = NULL_IF_CONFIG_SMALL("Microsoft Paint (MSP) version 2"),
+        .props     = AV_CODEC_PROP_INTRA_ONLY | AV_CODEC_PROP_LOSSLESS,
+    },
+    {
+        .id        = AV_CODEC_ID_VVC,
+        .type      = AVMEDIA_TYPE_VIDEO,
+        .name      = "vvc",
+        .long_name = NULL_IF_CONFIG_SMALL("H.266 / VVC (Versatile Video Coding)"),
+        .props     = AV_CODEC_PROP_LOSSY | AV_CODEC_PROP_REORDER,
+        .profiles  = NULL_IF_CONFIG_SMALL(ff_vvc_profiles),
+    },
+    {
         .id        = AV_CODEC_ID_Y41P,
         .type      = AVMEDIA_TYPE_VIDEO,
         .name      = "y41p",
@@ -1512,6 +1527,7 @@ static const AVCodecDescriptor codec_descriptors[] = {
         .id        = AV_CODEC_ID_SMVJPEG,
         .type      = AVMEDIA_TYPE_VIDEO,
         .name      = "smvjpeg",
+        .props     = AV_CODEC_PROP_INTRA_ONLY | AV_CODEC_PROP_LOSSY,
         .long_name = NULL_IF_CONFIG_SMALL("Sigmatel Motion Video"),
     },
     {
@@ -1826,6 +1842,20 @@ static const AVCodecDescriptor codec_descriptors[] = {
         .long_name = NULL_IF_CONFIG_SMALL("Cintel RAW"),
         .props     = AV_CODEC_PROP_INTRA_ONLY | AV_CODEC_PROP_LOSSY | AV_CODEC_PROP_LOSSLESS,
     },
+    {
+        .id        = AV_CODEC_ID_SIMBIOSIS_IMX,
+        .type      = AVMEDIA_TYPE_VIDEO,
+        .name      = "simbiosis_imx",
+        .long_name = NULL_IF_CONFIG_SMALL("Simbiosis Interactive IMX Video"),
+        .props     = AV_CODEC_PROP_LOSSY,
+    },
+    {
+        .id        = AV_CODEC_ID_SGA_VIDEO,
+        .type      = AVMEDIA_TYPE_VIDEO,
+        .name      = "sga",
+        .long_name = NULL_IF_CONFIG_SMALL("Digital Pictures SGA Video"),
+        .props     = AV_CODEC_PROP_LOSSY,
+    },
 
     /* various PCM "codecs" */
     {
@@ -2072,6 +2102,13 @@ static const AVCodecDescriptor codec_descriptors[] = {
         .name      = "pcm_vidc",
         .long_name = NULL_IF_CONFIG_SMALL("PCM Archimedes VIDC"),
         .props     = AV_CODEC_PROP_INTRA_ONLY | AV_CODEC_PROP_LOSSY,
+    },
+    {
+        .id        = AV_CODEC_ID_PCM_SGA,
+        .type      = AVMEDIA_TYPE_AUDIO,
+        .name      = "pcm_sga",
+        .long_name = NULL_IF_CONFIG_SMALL("PCM SGA"),
+        .props     = AV_CODEC_PROP_INTRA_ONLY | AV_CODEC_PROP_LOSSLESS,
     },
 
     /* various ADPCM codecs */
@@ -2423,6 +2460,13 @@ static const AVCodecDescriptor codec_descriptors[] = {
         .type      = AVMEDIA_TYPE_AUDIO,
         .name      = "adpcm_ima_moflex",
         .long_name = NULL_IF_CONFIG_SMALL("ADPCM IMA MobiClip MOFLEX"),
+        .props     = AV_CODEC_PROP_INTRA_ONLY | AV_CODEC_PROP_LOSSY,
+    },
+    {
+        .id        = AV_CODEC_ID_ADPCM_IMA_ACORN,
+        .type      = AVMEDIA_TYPE_AUDIO,
+        .name      = "adpcm_ima_acorn",
+        .long_name = NULL_IF_CONFIG_SMALL("ADPCM IMA Acorn Replay"),
         .props     = AV_CODEC_PROP_INTRA_ONLY | AV_CODEC_PROP_LOSSY,
     },
 
@@ -3436,6 +3480,13 @@ static const AVCodecDescriptor codec_descriptors[] = {
         .name      = "bin_data",
         .long_name = NULL_IF_CONFIG_SMALL("binary data"),
         .mime_types= MT("application/octet-stream"),
+    },
+    {
+        .id        = AV_CODEC_ID_MPEG2TS,
+        .type      = AVMEDIA_TYPE_DATA,
+        .name      = "mpegts",
+        .long_name = NULL_IF_CONFIG_SMALL("raw MPEG-TS stream"),
+        .mime_types= MT("application/MP2T"),
     },
     {
         .id        = AV_CODEC_ID_WRAPPED_AVFRAME,

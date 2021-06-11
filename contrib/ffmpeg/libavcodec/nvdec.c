@@ -83,6 +83,9 @@ static int map_chroma_format(enum AVPixelFormat pix_fmt)
 {
     int shift_h = 0, shift_v = 0;
 
+    if (av_pix_fmt_count_planes(pix_fmt) == 1)
+        return cudaVideoChromaFormat_Monochrome;
+
     av_pix_fmt_get_chroma_sub_sample(pix_fmt, &shift_h, &shift_v);
 
     if (shift_h == 1 && shift_v == 1)
@@ -239,7 +242,7 @@ fail:
     return ret;
 }
 
-static AVBufferRef *nvdec_decoder_frame_alloc(void *opaque, int size)
+static AVBufferRef *nvdec_decoder_frame_alloc(void *opaque, size_t size)
 {
     NVDECFramePool *pool = opaque;
     AVBufferRef *ret;
@@ -280,7 +283,7 @@ static void nvdec_free_dummy(struct AVHWFramesContext *ctx)
     av_buffer_pool_uninit(&ctx->pool);
 }
 
-static AVBufferRef *nvdec_alloc_dummy(int size)
+static AVBufferRef *nvdec_alloc_dummy(size_t size)
 {
     return av_buffer_create(NULL, 0, NULL, NULL, 0);
 }

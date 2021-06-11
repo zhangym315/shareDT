@@ -928,14 +928,15 @@ static const AVClass evrcdec_class = {
     .version    = LIBAVUTIL_VERSION_INT,
 };
 
-AVCodec ff_evrc_decoder = {
+const AVCodec ff_evrc_decoder = {
     .name           = "evrc",
     .long_name      = NULL_IF_CONFIG_SMALL("EVRC (Enhanced Variable Rate Codec)"),
     .type           = AVMEDIA_TYPE_AUDIO,
     .id             = AV_CODEC_ID_EVRC,
     .init           = evrc_decode_init,
     .decode         = evrc_decode_frame,
-    .capabilities   = AV_CODEC_CAP_DR1,
+    .capabilities   = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_CHANNEL_CONF,
     .priv_data_size = sizeof(EVRCContext),
     .priv_class     = &evrcdec_class,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };

@@ -16,6 +16,7 @@ set(PACKAGE_NAME           "LibVNCServer")
 set(FULL_PACKAGE_NAME      "LibVNCServer")
 set(VERSION_SO             "1")
 set(LIBVNCSERVER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libvncserver)
+set(LIBSOURCE_FFMPEG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ffmpeg)
 set(COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/common)
 set(LIBVNCCLIENT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libvncclient)
 set(LIBVNCSRVEXAMPLE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/examples)
@@ -30,6 +31,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_BINARY_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/libvncserver
                     ${CMAKE_CURRENT_SOURCE_DIR}/common
+                    ${LIBSOURCE_FFMPEG_DIR}
                     /usr/local/include)
 
 # all the build configuration switches
@@ -328,6 +330,7 @@ set(LIBVNCSERVER_SOURCES
     ${LIBVNCSERVER_DIR}/cargs.c
     ${LIBVNCSERVER_DIR}/ultra.c
     ${LIBVNCSERVER_DIR}/scale.c
+    ${LIBSOURCE_FFMPEG_DIR}/ffmpeg_server.c
     ${CRYPTO_SOURCES}
 )
 
@@ -337,6 +340,7 @@ set(LIBVNCCLIENT_SOURCES
     ${LIBVNCCLIENT_DIR}/rfbproto.c
     ${LIBVNCCLIENT_DIR}/sockets.c
     ${LIBVNCCLIENT_DIR}/vncviewer.c
+    ${LIBSOURCE_FFMPEG_DIR}/ffmpeg_client.c
     ${CRYPTO_SOURCES}
 )
 

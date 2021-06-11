@@ -38,6 +38,7 @@
 #include <rfb/rfbregion.h>
 #include "private.h"
 #include "rfb/rfbconfig.h"
+#include "ffmpeg_server.h"
 
 #ifdef LIBVNCSERVER_HAVE_FCNTL_H
 #include <fcntl.h>
@@ -2060,7 +2061,7 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
         cl->format.greenShift = msg.spf.format.greenShift;
         cl->format.blueShift = msg.spf.format.blueShift;
 
-	cl->readyForSetColourMapEntries = TRUE;
+	    cl->readyForSetColourMapEntries = TRUE;
         cl->screen->setTranslateFunction(cl);
 
         rfbStatRecordMessageRcvd(cl, msg.type, sz_rfbSetPixelFormatMsg, sz_rfbSetPixelFormatMsg);
@@ -2150,75 +2151,74 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
             switch (enc) {
 
             case rfbEncodingCopyRect:
-		cl->useCopyRect = TRUE;
+		        cl->useCopyRect = TRUE;
                 break;
             case rfbEncodingRaw:
+            case rfbEncodingFFMPEG:
             case rfbEncodingRRE:
             case rfbEncodingCoRRE:
             case rfbEncodingHextile:
             case rfbEncodingUltra:
 #ifdef LIBVNCSERVER_HAVE_LIBZ
-	    case rfbEncodingZlib:
+            case rfbEncodingZlib:
             case rfbEncodingZRLE:
             case rfbEncodingZYWRLE:
 #ifdef LIBVNCSERVER_HAVE_LIBJPEG
-	    case rfbEncodingTight:
+	        case rfbEncodingTight:
 #endif
 #endif
 #ifdef LIBVNCSERVER_HAVE_LIBPNG
-	    case rfbEncodingTightPng:
+	        case rfbEncodingTightPng:
 #endif
             /* The first supported encoding is the 'preferred' encoding */
                 if (cl->preferredEncoding == -1)
                     cl->preferredEncoding = enc;
-
-
                 break;
-	    case rfbEncodingXCursor:
-		if(!cl->screen->dontConvertRichCursorToXCursor) {
-		    rfbLog("Enabling X-style cursor updates for client %s\n",
-			   cl->host);
-		    /* if cursor was drawn, hide the cursor */
-		    if(!cl->enableCursorShapeUpdates)
-		        rfbRedrawAfterHideCursor(cl,NULL);
+            case rfbEncodingXCursor:
+                if(!cl->screen->dontConvertRichCursorToXCursor) {
+                    rfbLog("Enabling X-style cursor updates for client %s\n",
+                       cl->host);
+                    /* if cursor was drawn, hide the cursor */
+                    if(!cl->enableCursorShapeUpdates)
+                        rfbRedrawAfterHideCursor(cl,NULL);
 
-		    cl->enableCursorShapeUpdates = TRUE;
-		    cl->cursorWasChanged = TRUE;
-		}
-		break;
-	    case rfbEncodingRichCursor:
-	        rfbLog("Enabling full-color cursor updates for client %s\n",
-		       cl->host);
-		/* if cursor was drawn, hide the cursor */
-		if(!cl->enableCursorShapeUpdates)
-		    rfbRedrawAfterHideCursor(cl,NULL);
+                    cl->enableCursorShapeUpdates = TRUE;
+                    cl->cursorWasChanged = TRUE;
+                }
+                break;
+            case rfbEncodingRichCursor:
+                rfbLog("Enabling full-color cursor updates for client %s\n",
+                   cl->host);
+                /* if cursor was drawn, hide the cursor */
+                if(!cl->enableCursorShapeUpdates)
+                    rfbRedrawAfterHideCursor(cl,NULL);
 
-	        cl->enableCursorShapeUpdates = TRUE;
-	        cl->useRichCursorEncoding = TRUE;
-	        cl->cursorWasChanged = TRUE;
-	        break;
-	    case rfbEncodingPointerPos:
-		if (!cl->enableCursorPosUpdates) {
-		    rfbLog("Enabling cursor position updates for client %s\n",
-			   cl->host);
-		    cl->enableCursorPosUpdates = TRUE;
-		    cl->cursorWasMoved = TRUE;
-		}
-	        break;
-	    case rfbEncodingLastRect:
-		if (!cl->enableLastRectEncoding) {
-		    rfbLog("Enabling LastRect protocol extension for client "
-			   "%s\n", cl->host);
-		    cl->enableLastRectEncoding = TRUE;
-		}
-		break;
-	    case rfbEncodingNewFBSize:
-		if (!cl->useNewFBSize) {
-		    rfbLog("Enabling NewFBSize protocol extension for client "
-			   "%s\n", cl->host);
-		    cl->useNewFBSize = TRUE;
-		}
-		break;
+                cl->enableCursorShapeUpdates = TRUE;
+                cl->useRichCursorEncoding = TRUE;
+                cl->cursorWasChanged = TRUE;
+                break;
+            case rfbEncodingPointerPos:
+                if (!cl->enableCursorPosUpdates) {
+                    rfbLog("Enabling cursor position updates for client %s\n",
+                       cl->host);
+                    cl->enableCursorPosUpdates = TRUE;
+                    cl->cursorWasMoved = TRUE;
+                }
+                break;
+            case rfbEncodingLastRect:
+                if (!cl->enableLastRectEncoding) {
+                    rfbLog("Enabling LastRect protocol extension for client "
+                       "%s\n", cl->host);
+                    cl->enableLastRectEncoding = TRUE;
+                }
+                break;
+            case rfbEncodingNewFBSize:
+                if (!cl->useNewFBSize) {
+                    rfbLog("Enabling NewFBSize protocol extension for client "
+                       "%s\n", cl->host);
+                    cl->useNewFBSize = TRUE;
+                }
+                break;
             case rfbEncodingExtDesktopSize:
                 if (!cl->useExtDesktopSize) {
                     rfbLog("Enabling ExtDesktopSize protocol extension for client "
@@ -2267,83 +2267,83 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
                 break;
             default:
 #if defined(LIBVNCSERVER_HAVE_LIBZ) || defined(LIBVNCSERVER_HAVE_LIBPNG)
-		if ( enc >= (uint32_t)rfbEncodingCompressLevel0 &&
-		     enc <= (uint32_t)rfbEncodingCompressLevel9 ) {
-		    cl->zlibCompressLevel = enc & 0x0F;
+                if ( enc >= (uint32_t)rfbEncodingCompressLevel0 &&
+                     enc <= (uint32_t)rfbEncodingCompressLevel9 ) {
+                    cl->zlibCompressLevel = enc & 0x0F;
 #ifdef LIBVNCSERVER_HAVE_LIBJPEG
-		    cl->tightCompressLevel = enc & 0x0F;
-		    rfbLog("Using compression level %d for client %s\n",
-			   cl->tightCompressLevel, cl->host);
+                cl->tightCompressLevel = enc & 0x0F;
+                rfbLog("Using compression level %d for client %s\n",
+                   cl->tightCompressLevel, cl->host);
 #endif
-		} else if ( enc >= (uint32_t)rfbEncodingQualityLevel0 &&
-			    enc <= (uint32_t)rfbEncodingQualityLevel9 ) {
-		    cl->tightQualityLevel = enc & 0x0F;
-		    rfbLog("Using image quality level %d for client %s\n",
-			   cl->tightQualityLevel, cl->host);
+                } else if ( enc >= (uint32_t)rfbEncodingQualityLevel0 &&
+                        enc <= (uint32_t)rfbEncodingQualityLevel9 ) {
+                    cl->tightQualityLevel = enc & 0x0F;
+                    rfbLog("Using image quality level %d for client %s\n",
+                       cl->tightQualityLevel, cl->host);
 #ifdef LIBVNCSERVER_HAVE_LIBJPEG
-		    cl->turboQualityLevel = tight2turbo_qual[enc & 0x0F];
-		    cl->turboSubsampLevel = tight2turbo_subsamp[enc & 0x0F];
-		    rfbLog("Using JPEG subsampling %d, Q%d for client %s\n",
-			   cl->turboSubsampLevel, cl->turboQualityLevel, cl->host);
-		} else if ( enc >= (uint32_t)rfbEncodingFineQualityLevel0 + 1 &&
-			    enc <= (uint32_t)rfbEncodingFineQualityLevel100 ) {
-		    cl->turboQualityLevel = enc & 0xFF;
-		    rfbLog("Using fine quality level %d for client %s\n",
-			   cl->turboQualityLevel, cl->host);
-		} else if ( enc >= (uint32_t)rfbEncodingSubsamp1X &&
-			    enc <= (uint32_t)rfbEncodingSubsampGray ) {
-		    cl->turboSubsampLevel = enc & 0xFF;
-		    rfbLog("Using subsampling level %d for client %s\n",
-			   cl->turboSubsampLevel, cl->host);
+                    cl->turboQualityLevel = tight2turbo_qual[enc & 0x0F];
+                    cl->turboSubsampLevel = tight2turbo_subsamp[enc & 0x0F];
+                    rfbLog("Using JPEG subsampling %d, Q%d for client %s\n",
+                       cl->turboSubsampLevel, cl->turboQualityLevel, cl->host);
+                } else if ( enc >= (uint32_t)rfbEncodingFineQualityLevel0 + 1 &&
+                        enc <= (uint32_t)rfbEncodingFineQualityLevel100 ) {
+                    cl->turboQualityLevel = enc & 0xFF;
+                    rfbLog("Using fine quality level %d for client %s\n",
+                       cl->turboQualityLevel, cl->host);
+                } else if ( enc >= (uint32_t)rfbEncodingSubsamp1X &&
+                        enc <= (uint32_t)rfbEncodingSubsampGray ) {
+                    cl->turboSubsampLevel = enc & 0xFF;
+                    rfbLog("Using subsampling level %d for client %s\n",
+                       cl->turboSubsampLevel, cl->host);
 #endif
-		} else
+		        } else
 #endif
-		{
-			rfbExtensionData* e;
-			for(e = cl->extensions; e;) {
-				rfbExtensionData* next = e->next;
-				if(e->extension->enablePseudoEncoding &&
-					e->extension->enablePseudoEncoding(cl,
-						&e->data, (int)enc))
-					/* ext handles this encoding */
-					break;
-				e = next;
-			}
-			if(e == NULL) {
-				rfbBool handled = FALSE;
-				/* if the pseudo encoding is not handled by the
-				   enabled extensions, search through all
-				   extensions. */
-				rfbProtocolExtension* e;
+                {
+                    rfbExtensionData* e;
+                    for(e = cl->extensions; e;) {
+                        rfbExtensionData* next = e->next;
+                        if(e->extension->enablePseudoEncoding &&
+                            e->extension->enablePseudoEncoding(cl,
+                                &e->data, (int)enc))
+                            /* ext handles this encoding */
+                            break;
+                        e = next;
+                    }
+                    if(e == NULL) {
+                        rfbBool handled = FALSE;
+                        /* if the pseudo encoding is not handled by the
+                           enabled extensions, search through all
+                           extensions. */
+                        rfbProtocolExtension* e;
 
-				for(e = rfbGetExtensionIterator(); e;) {
-					int* encs = e->pseudoEncodings;
-					while(encs && *encs!=0) {
-						if(*encs==(int)enc) {
-							void* data = NULL;
-							if(!e->enablePseudoEncoding(cl, &data, (int)enc)) {
-								rfbLog("Installed extension pretends to handle pseudo encoding 0x%x, but does not!\n",(int)enc);
-							} else {
-								rfbEnableExtension(cl, e, data);
-								handled = TRUE;
-								e = NULL;
-								break;
-							}
-						}
-						encs++;
-					}
+                        for(e = rfbGetExtensionIterator(); e;) {
+                            int* encs = e->pseudoEncodings;
+                            while(encs && *encs!=0) {
+                                if(*encs==(int)enc) {
+                                    void* data = NULL;
+                                    if(!e->enablePseudoEncoding(cl, &data, (int)enc)) {
+                                        rfbLog("Installed extension pretends to handle pseudo encoding 0x%x, but does not!\n",(int)enc);
+                                    } else {
+                                        rfbEnableExtension(cl, e, data);
+                                        handled = TRUE;
+                                        e = NULL;
+                                        break;
+                                    }
+                                }
+                                encs++;
+                            }
 
-					if(e)
-						e = e->next;
-				}
-				rfbReleaseExtensionIterator();
+                            if(e)
+                                e = e->next;
+                        }
+                        rfbReleaseExtensionIterator();
 
-				if(!handled)
-					rfbLog("rfbProcessClientNormalMessage: "
-					    "ignoring unsupported encoding type %s\n",
-					    encodingName(enc,encBuf,sizeof(encBuf)));
-			}
-		}
+                        if(!handled)
+                            rfbLog("rfbProcessClientNormalMessage: "
+                                    "ignoring unsupported encoding type %s\n",
+                                    encodingName(enc,encBuf,sizeof(encBuf)));
+                    }
+                }
             }
         }
 
@@ -2361,20 +2361,20 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
         }
         else
         {
-          if (lastPreferredEncoding==-1) {
-              rfbLog("Using %s encoding for client %s\n", encodingName(cl->preferredEncoding,encBuf,sizeof(encBuf)),cl->host);
-          } else {
-              rfbLog("Switching from %s to %s Encoding for client %s\n", 
-                  encodingName(lastPreferredEncoding,encBuf2,sizeof(encBuf2)),
-                  encodingName(cl->preferredEncoding,encBuf,sizeof(encBuf)), cl->host);
-          }
+            if (lastPreferredEncoding==-1) {
+                rfbLog("Using %s encoding for client %s\n", encodingName(cl->preferredEncoding,encBuf,sizeof(encBuf)),cl->host);
+            } else {
+                rfbLog("Switching from %s to %s Encoding for client %s\n",
+                encodingName(lastPreferredEncoding,encBuf2,sizeof(encBuf2)),
+                encodingName(cl->preferredEncoding,encBuf,sizeof(encBuf)), cl->host);
+            }
         }
         
-	if (cl->enableCursorPosUpdates && !cl->enableCursorShapeUpdates) {
-	  rfbLog("Disabling cursor position updates for client %s\n",
-		 cl->host);
-	  cl->enableCursorPosUpdates = FALSE;
-	}
+        if (cl->enableCursorPosUpdates && !cl->enableCursorShapeUpdates) {
+            rfbLog("Disabling cursor position updates for client %s\n",
+             cl->host);
+            cl->enableCursorPosUpdates = FALSE;
+        }
 
         return;
     }
@@ -2816,7 +2816,17 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
     }
 }
 
-
+/*
+ * rfbBool
+rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
+                        int x,
+                        int y,
+                        int w,
+                        int h)
+{
+    return rfbSendRectEncodingRaw (cl, x, y, w, h);
+}
+*/
 
 /*
  * rfbSendFramebufferUpdate - send the currently pending framebuffer update to
@@ -3220,7 +3230,8 @@ rfbSendFramebufferUpdate(rfbClientPtr cl,
 	        goto updateFailed;
     }
 
-    for(i = sraRgnGetIterator(updateRegion); sraRgnIteratorNext(i,&rect);){
+    for(i = sraRgnGetIterator(updateRegion); sraRgnIteratorNext(i,&rect);)
+    {
         int x = rect.x1;
         int y = rect.y1;
         int w = rect.x2 - x;
@@ -3230,52 +3241,60 @@ rfbSendFramebufferUpdate(rfbClientPtr cl,
         if (cl->screen!=cl->scaledScreen)
             rfbScaledCorrection(cl->screen, cl->scaledScreen, &x, &y, &w, &h, "rfbSendFramebufferUpdate");
 
-        switch (cl->preferredEncoding) {
-	case -1:
+        switch (cl->preferredEncoding)
+            {
+        case -1:
         case rfbEncodingRaw:
-            if (!rfbSendRectEncodingRaw(cl, x, y, w, h))
-	        goto updateFailed;
-            break;
-        case rfbEncodingRRE:
-            if (!rfbSendRectEncodingRRE(cl, x, y, w, h))
-	        goto updateFailed;
-            break;
-        case rfbEncodingCoRRE:
-            if (!rfbSendRectEncodingCoRRE(cl, x, y, w, h))
-	        goto updateFailed;
-	    break;
-        case rfbEncodingHextile:
-            if (!rfbSendRectEncodingHextile(cl, x, y, w, h))
-	        goto updateFailed;
-            break;
-        case rfbEncodingUltra:
-            if (!rfbSendRectEncodingUltra(cl, x, y, w, h))
+            if (!rfbSendRectEncodingRaw (cl, x, y, w, h))
                 goto updateFailed;
-            break;
+                break;
+        case rfbEncodingRRE:
+            if (!rfbSendRectEncodingRRE (cl, x, y, w, h))
+                goto updateFailed;
+                break;
+        case rfbEncodingCoRRE:
+            if (!rfbSendRectEncodingCoRRE (cl, x, y, w, h))
+                goto updateFailed;
+                break;
+        case rfbEncodingHextile:
+            if (!rfbSendRectEncodingHextile (cl, x, y, w, h))
+                goto updateFailed;
+                break;
+        case rfbEncodingUltra:
+            if (!rfbSendRectEncodingUltra (cl, x, y, w, h))
+                goto updateFailed;
+                break;
 #ifdef LIBVNCSERVER_HAVE_LIBZ
-	case rfbEncodingZlib:
-	    if (!rfbSendRectEncodingZlib(cl, x, y, w, h))
-	        goto updateFailed;
-	    break;
-       case rfbEncodingZRLE:
-       case rfbEncodingZYWRLE:
-           if (!rfbSendRectEncodingZRLE(cl, x, y, w, h))
-	       goto updateFailed;
-           break;
+        case rfbEncodingZlib:
+            if (!rfbSendRectEncodingZlib (cl, x, y, w, h))
+                goto updateFailed;
+                break;
+        case rfbEncodingZRLE:
+        case rfbEncodingZYWRLE:
+            if (!rfbSendRectEncodingZRLE (cl, x, y, w, h))
+                goto updateFailed;
+                break;
 #endif
 #if defined(LIBVNCSERVER_HAVE_LIBJPEG) && (defined(LIBVNCSERVER_HAVE_LIBZ) || defined(LIBVNCSERVER_HAVE_LIBPNG))
-	case rfbEncodingTight:
-	    if (!rfbSendRectEncodingTight(cl, x, y, w, h))
-	        goto updateFailed;
-	    break;
+        case rfbEncodingTight:
+            if (!rfbSendRectEncodingTight (cl, x, y, w, h))
+                goto updateFailed;
+                break;
 #ifdef LIBVNCSERVER_HAVE_LIBPNG
-	case rfbEncodingTightPng:
-	    if (!rfbSendRectEncodingTightPng(cl, x, y, w, h))
-	        goto updateFailed;
-	    break;
+        case rfbEncodingTightPng:
+            if (!rfbSendRectEncodingTightPng (cl, x, y, w, h))
+                goto updateFailed;
+                break;
 #endif
 #endif
+        case rfbEncodingFFMPEG:
+        {
+            if (!rfbSendRectEncodingFFMPEG (cl, x, y, w, h))
+                goto updateFailed;
+            break;
         }
+      }
+
     }
     if (i) {
         sraRgnReleaseIterator(i);
@@ -3394,12 +3413,12 @@ rfbSendRectEncodingRaw(rfbClientPtr cl,
     rect.r.h = Swap16IfLE(h);
     rect.encoding = Swap32IfLE(rfbEncodingRaw);
 
-    memcpy(&cl->updateBuf[cl->ublen], (char *)&rect,sz_rfbFramebufferUpdateRectHeader);
+    memcpy(&cl->updateBuf[cl->ublen], (char *)&rect, sz_rfbFramebufferUpdateRectHeader);
     cl->ublen += sz_rfbFramebufferUpdateRectHeader;
 
 
     rfbStatRecordEncodingSent(cl, rfbEncodingRaw, sz_rfbFramebufferUpdateRectHeader + bytesPerLine * h,
-        sz_rfbFramebufferUpdateRectHeader + bytesPerLine * h);
+                                sz_rfbFramebufferUpdateRectHeader + bytesPerLine * h);
 
     nlines = (UPDATE_BUF_SIZE - cl->ublen) / bytesPerLine;
 
@@ -3408,9 +3427,9 @@ rfbSendRectEncodingRaw(rfbClientPtr cl,
             nlines = h;
 
         (*cl->translateFn)(cl->translateLookupTable,
-			   &(cl->screen->serverFormat),
-                           &cl->format, fbptr, &cl->updateBuf[cl->ublen],
-                           cl->scaledScreen->paddedWidthInBytes, w, nlines);
+			                &(cl->screen->serverFormat),
+                            &cl->format, fbptr, &cl->updateBuf[cl->ublen],
+                            cl->scaledScreen->paddedWidthInBytes, w, nlines);
 
         cl->ublen += nlines * bytesPerLine;
         h -= nlines;

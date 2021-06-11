@@ -30,6 +30,7 @@
 #include "libavutil/intreadwrite.h"
 #include "libavutil/opt.h"
 #include "avcodec.h"
+#include "encode.h"
 #include "internal.h"
 #include <openjpeg.h>
 
@@ -661,9 +662,8 @@ static int libopenjpeg_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
         goto done;
     }
 
-    if ((ret = ff_alloc_packet2(avctx, pkt, 1024, 0)) < 0) {
+    if ((ret = ff_alloc_packet(avctx, pkt, 1024)) < 0)
         goto done;
-    }
 
     compress = opj_create_compress(ctx->format);
     if (!compress) {
@@ -755,7 +755,7 @@ static const AVClass openjpeg_class = {
     .version    = LIBAVUTIL_VERSION_INT,
 };
 
-AVCodec ff_libopenjpeg_encoder = {
+const AVCodec ff_libopenjpeg_encoder = {
     .name           = "libopenjpeg",
     .long_name      = NULL_IF_CONFIG_SMALL("OpenJPEG JPEG 2000"),
     .type           = AVMEDIA_TYPE_VIDEO,

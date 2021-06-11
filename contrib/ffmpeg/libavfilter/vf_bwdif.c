@@ -335,10 +335,9 @@ static int config_props(AVFilterLink *link)
     BWDIFContext *s = link->src->priv;
     YADIFContext *yadif = &s->yadif;
 
-    link->time_base.num = link->src->inputs[0]->time_base.num;
-    link->time_base.den = link->src->inputs[0]->time_base.den * 2;
-    link->w             = link->src->inputs[0]->w;
-    link->h             = link->src->inputs[0]->h;
+    link->time_base = av_mul_q(ctx->inputs[0]->time_base, (AVRational){1, 2});
+    link->w         = link->src->inputs[0]->w;
+    link->h         = link->src->inputs[0]->h;
 
     if(yadif->mode&1)
         link->frame_rate = av_mul_q(link->src->inputs[0]->frame_rate, (AVRational){2,1});
@@ -410,7 +409,7 @@ static const AVFilterPad avfilter_vf_bwdif_outputs[] = {
     { NULL }
 };
 
-AVFilter ff_vf_bwdif = {
+const AVFilter ff_vf_bwdif = {
     .name          = "bwdif",
     .description   = NULL_IF_CONFIG_SMALL("Deinterlace the input image."),
     .priv_size     = sizeof(BWDIFContext),

@@ -1,4 +1,5 @@
 #include "Enum.h"
+#include <string>
 
 const String INVALID_ENUM = "INVALID_TYPE=";
 

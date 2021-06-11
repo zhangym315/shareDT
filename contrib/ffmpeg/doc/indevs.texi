@@ -353,6 +353,11 @@ Timecode type to include in the frame and video stream metadata. Must be
 @samp{rp188hfr}, @samp{rp188any}, @samp{vitc}, @samp{vitc2}, or @samp{serial}.
 Defaults to @samp{none} (not included).
 
+In order to properly support 50/60 fps timecodes, the ordering of the queried
+timecode types for @samp{rp188any} is HFR, VITC1, VITC2 and LTC for >30 fps
+content. Note that this is slightly different to the ordering used by the
+DeckLink API, which is HFR, VITC1, LTC, VITC2.
+
 @item video_input
 Sets the video input source. Must be @samp{unset}, @samp{sdi}, @samp{hdmi},
 @samp{optical_sdi}, @samp{component}, @samp{composite} or @samp{s_video}.
@@ -1559,8 +1564,21 @@ With @var{follow_mouse}:
 ffmpeg -f x11grab -follow_mouse centered -show_region 1 -framerate 25 -video_size cif -i :0.0 out.mpg
 @end example
 
+@item window_id
+Grab this window, instead of the whole screen. Default value is 0, which maps to
+the whole screen (root window).
+
+The id of a window can be found using the @command{xwininfo} program, possibly with options -tree and
+-root.
+
+If the window is later enlarged, the new area is not recorded. Video ends when
+the window is closed, unmapped (i.e., iconified) or shrunk beyond the video
+size (which defaults to the initial window size).
+
+This option disables options @option{follow_mouse} and @option{select_region}.
+
 @item video_size
-Set the video frame size. Default is the full desktop.
+Set the video frame size. Default is the full desktop or window.
 
 @item grab_x
 @item grab_y

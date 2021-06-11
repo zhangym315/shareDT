@@ -45,6 +45,7 @@
 
 #include "avcodec.h"
 #include "elbg.h"
+#include "encode.h"
 #include "internal.h"
 
 #define CVID_HEADER_SIZE 10
@@ -182,7 +183,7 @@ static av_cold int cinepak_encode_init(AVCodecContext *avctx)
         return AVERROR(ENOMEM);
 
     if (!(s->codebook_closest = av_malloc_array((avctx->width * avctx->height) >> 2, sizeof(*s->codebook_closest))))
-        return AVERROR(ENOMEM);;
+        return AVERROR(ENOMEM);
 
     for (x = 0; x < (avctx->pix_fmt == AV_PIX_FMT_RGB24 ? 4 : 3); x++)
         if (!(s->pict_bufs[x] = av_malloc((avctx->pix_fmt == AV_PIX_FMT_RGB24 ? 6 : 4) * (avctx->width * avctx->height) >> 2)))
@@ -1140,7 +1141,7 @@ static int cinepak_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
 
     s->lambda = frame->quality ? frame->quality - 1 : 2 * FF_LAMBDA_SCALE;
 
-    if ((ret = ff_alloc_packet2(avctx, pkt, s->frame_buf_size, 0)) < 0)
+    if ((ret = ff_alloc_packet(avctx, pkt, s->frame_buf_size)) < 0)
         return ret;
     ret       = rd_frame(s, frame, (s->curframe == 0), pkt->data, s->frame_buf_size);
     pkt->size = ret;
@@ -1178,7 +1179,7 @@ static av_cold int cinepak_encode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec ff_cinepak_encoder = {
+const AVCodec ff_cinepak_encoder = {
     .name           = "cinepak",
     .long_name      = NULL_IF_CONFIG_SMALL("Cinepak"),
     .type           = AVMEDIA_TYPE_VIDEO,
@@ -1189,5 +1190,5 @@ AVCodec ff_cinepak_encoder = {
     .close          = cinepak_encode_end,
     .pix_fmts       = (const enum AVPixelFormat[]) { AV_PIX_FMT_RGB24, AV_PIX_FMT_GRAY8, AV_PIX_FMT_NONE },
     .priv_class     = &cinepak_class,
-    .caps_internal  = FF_CODEC_CAP_INIT_CLEANUP,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
 };

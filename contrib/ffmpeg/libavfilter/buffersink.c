@@ -148,7 +148,7 @@ int attribute_align_arg av_buffersink_get_samples(AVFilterContext *ctx,
     return get_frame_internal(ctx, frame, 0, nb_samples);
 }
 
-#if FF_API_NEXT
+#if FF_API_BUFFERSINK_ALLOC
 AVBufferSinkParams *av_buffersink_params_alloc(void)
 {
     static const int pixel_fmts[] = { AV_PIX_FMT_NONE };
@@ -335,7 +335,7 @@ static const AVFilterPad avfilter_vsink_buffer_inputs[] = {
     { NULL }
 };
 
-AVFilter ff_vsink_buffer = {
+const AVFilter ff_vsink_buffer = {
     .name          = "buffersink",
     .description   = NULL_IF_CONFIG_SMALL("Buffer video frames, and make them available to the end of the filter graph."),
     .priv_size     = sizeof(BufferSinkContext),
@@ -355,7 +355,7 @@ static const AVFilterPad avfilter_asink_abuffer_inputs[] = {
     { NULL }
 };
 
-AVFilter ff_asink_abuffer = {
+const AVFilter ff_asink_abuffer = {
     .name          = "abuffersink",
     .description   = NULL_IF_CONFIG_SMALL("Buffer audio frames, and make them available to the end of the filter graph."),
     .priv_class    = &abuffersink_class,

@@ -829,7 +829,7 @@ static int write_trailer(AVFormatContext *s)
     return 0;
 }
 
-AVOutputFormat ff_wtv_muxer = {
+const AVOutputFormat ff_wtv_muxer = {
     .name           = "wtv",
     .long_name      = NULL_IF_CONFIG_SMALL("Windows Television (WTV)"),
     .extensions     = "wtv",
@@ -839,6 +839,5 @@ AVOutputFormat ff_wtv_muxer = {
     .write_header   = write_header,
     .write_packet   = write_packet,
     .write_trailer  = write_trailer,
-    .codec_tag      = (const AVCodecTag* const []){ ff_codec_bmp_tags,
-                                                    ff_codec_wav_tags, 0 },
+    .codec_tag      = ff_riff_codec_tags_list,
 };

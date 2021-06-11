@@ -172,6 +172,8 @@ static int parse_int(AVIOContext *pb, int *cur_byte, int64_t *result)
     if ((unsigned)*cur_byte - '0' > 9)
         return AVERROR_INVALIDDATA;
     while (BETWEEN(*cur_byte, '0', '9')) {
+        if (val > INT_MAX/10 - (*cur_byte - '0'))
+            return AVERROR_INVALIDDATA;
         val = val * 10 + (*cur_byte - '0');
         next_byte(pb, cur_byte);
     }
@@ -291,16 +293,16 @@ static av_cold int tedcaptions_read_header(AVFormatContext *avf)
     }
     ff_subtitles_queue_finalize(avf, &tc->subs);
     for (i = 0; i < tc->subs.nb_subs; i++)
-        tc->subs.subs[i].pts += tc->start_time;
+        tc->subs.subs[i]->pts += tc->start_time;
 
-    last = &tc->subs.subs[tc->subs.nb_subs - 1];
+    last = tc->subs.subs[tc->subs.nb_subs - 1];
     st->codecpar->codec_type     = AVMEDIA_TYPE_SUBTITLE;
     st->codecpar->codec_id       = AV_CODEC_ID_TEXT;
     avpriv_set_pts_info(st, 64, 1, 1000);
-    st->probe_packets = 0;
+    st->internal->probe_packets = 0;
     st->start_time    = 0;
     st->duration      = last->pts + last->duration;
-    st->cur_dts       = 0;
+    st->internal->cur_dts       = 0;
 
     return 0;
 }
@@ -352,7 +354,7 @@ static int tedcaptions_read_seek(AVFormatContext *avf, int stream_index,
                                    min_ts, ts, max_ts, flags);
 }
 
-AVInputFormat ff_tedcaptions_demuxer = {
+const AVInputFormat ff_tedcaptions_demuxer = {
     .name           = "tedcaptions",
     .long_name      = NULL_IF_CONFIG_SMALL("TED Talks captions"),
     .priv_data_size = sizeof(TEDCaptionsDemuxer),

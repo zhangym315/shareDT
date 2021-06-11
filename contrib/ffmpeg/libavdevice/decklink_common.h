@@ -75,7 +75,7 @@ class decklink_output_callback;
 class decklink_input_callback;
 
 typedef struct AVPacketQueue {
-    AVPacketList *first_pkt, *last_pkt;
+    PacketList *first_pkt, *last_pkt;
     int nb_packets;
     unsigned long long size;
     int abort_request;
@@ -155,12 +155,14 @@ struct decklink_ctx {
 
 typedef enum { DIRECTION_IN, DIRECTION_OUT} decklink_direction_t;
 
-#ifdef _WIN32
-typedef unsigned int buffercount_type;
-IDeckLinkIterator *CreateDeckLinkIteratorInstance(void);
-#else
-typedef uint32_t buffercount_type;
-#endif
+static const BMDPixelFormat decklink_raw_format_map[] = {
+    (BMDPixelFormat)0,
+    bmdFormat8BitYUV,
+    bmdFormat10BitYUV,
+    bmdFormat8BitARGB,
+    bmdFormat8BitBGRA,
+    bmdFormat10BitRGB,
+};
 
 static const BMDAudioConnection decklink_audio_connection_map[] = {
     (BMDAudioConnection)0,

@@ -1,5 +1,7 @@
 /*
  * MOFLEX Fast Audio decoder
+ * Copyright (c) 2015-2016 Florian Nouwt
+ * Copyright (c) 2017 Adib Surani
  * Copyright (c) 2020 Paul B Mahol
  *
  * This file is part of FFmpeg.
@@ -89,7 +91,7 @@ static int read_bits(int bits, int *ppos, unsigned *src)
 
     pos = *ppos;
     pos += bits;
-    r = src[(pos - 1) / 32] >> (32 - pos % 32);
+    r = src[(pos - 1) / 32] >> ((-pos) & 31);
     *ppos = pos;
 
     return r & ((1 << bits) - 1);
@@ -185,7 +187,7 @@ static av_cold int fastaudio_close(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec ff_fastaudio_decoder = {
+const AVCodec ff_fastaudio_decoder = {
     .name           = "fastaudio",
     .long_name      = NULL_IF_CONFIG_SMALL("MobiClip FastAudio"),
     .type           = AVMEDIA_TYPE_AUDIO,
@@ -197,4 +199,5 @@ AVCodec ff_fastaudio_decoder = {
     .capabilities   = AV_CODEC_CAP_DR1,
     .sample_fmts    = (const enum AVSampleFormat[]) { AV_SAMPLE_FMT_FLTP,
                                                       AV_SAMPLE_FMT_NONE },
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };

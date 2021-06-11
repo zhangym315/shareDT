@@ -25,6 +25,7 @@
 
 #include "libavutil/attributes.h"
 #include "libavutil/mem.h"
+#include "libavutil/thread.h"
 
 #include "asv.h"
 #include "avcodec.h"
@@ -45,29 +46,23 @@ static VLC dc_ccp_vlc;
 static VLC ac_ccp_vlc;
 static VLC asv2_level_vlc;
 
-static av_cold void init_vlcs(ASV1Context *a)
+static av_cold void init_vlcs(void)
 {
-    static int done = 0;
-
-    if (!done) {
-        done = 1;
-
-        INIT_VLC_STATIC(&ccp_vlc, CCP_VLC_BITS, 17,
-                        &ff_asv_ccp_tab[0][1], 2, 1,
-                        &ff_asv_ccp_tab[0][0], 2, 1, 32);
-        INIT_LE_VLC_STATIC(&dc_ccp_vlc, DC_CCP_VLC_BITS, 8,
-                           &ff_asv_dc_ccp_tab[0][1], 2, 1,
-                           &ff_asv_dc_ccp_tab[0][0], 2, 1, 16);
-        INIT_LE_VLC_STATIC(&ac_ccp_vlc, AC_CCP_VLC_BITS, 16,
-                           &ff_asv_ac_ccp_tab[0][1], 2, 1,
-                           &ff_asv_ac_ccp_tab[0][0], 2, 1, 64);
-        INIT_VLC_STATIC(&level_vlc,      ASV1_LEVEL_VLC_BITS, 7,
-                        &ff_asv_level_tab[0][1], 2, 1,
-                        &ff_asv_level_tab[0][0], 2, 1, 16);
-        INIT_LE_VLC_STATIC(&asv2_level_vlc, ASV2_LEVEL_VLC_BITS, 63,
-                           &ff_asv2_level_tab[0][1], 4, 2,
-                           &ff_asv2_level_tab[0][0], 4, 2, 1024);
-    }
+    INIT_VLC_STATIC(&ccp_vlc, CCP_VLC_BITS, 17,
+                    &ff_asv_ccp_tab[0][1], 2, 1,
+                    &ff_asv_ccp_tab[0][0], 2, 1, 32);
+    INIT_LE_VLC_STATIC(&dc_ccp_vlc, DC_CCP_VLC_BITS, 8,
+                       &ff_asv_dc_ccp_tab[0][1], 2, 1,
+                       &ff_asv_dc_ccp_tab[0][0], 2, 1, 16);
+    INIT_LE_VLC_STATIC(&ac_ccp_vlc, AC_CCP_VLC_BITS, 16,
+                       &ff_asv_ac_ccp_tab[0][1], 2, 1,
+                       &ff_asv_ac_ccp_tab[0][0], 2, 1, 64);
+    INIT_VLC_STATIC(&level_vlc, ASV1_LEVEL_VLC_BITS, 7,
+                    &ff_asv_level_tab[0][1], 2, 1,
+                    &ff_asv_level_tab[0][0], 2, 1, 16);
+    INIT_LE_VLC_STATIC(&asv2_level_vlc, ASV2_LEVEL_VLC_BITS, 63,
+                       &ff_asv2_level_tab[0][1], 4, 2,
+                       &ff_asv2_level_tab[0][0], 4, 2, 1024);
 }
 
 static inline int asv1_get_level(GetBitContext *gb)
@@ -286,6 +281,7 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *got_frame,
 
 static av_cold int decode_init(AVCodecContext *avctx)
 {
+    static AVOnce init_static_once = AV_ONCE_INIT;
     ASV1Context *const a = avctx->priv_data;
     const int scale      = avctx->codec_id == AV_CODEC_ID_ASV1 ? 1 : 2;
     int i;
@@ -297,7 +293,6 @@ static av_cold int decode_init(AVCodecContext *avctx)
     ff_asv_common_init(avctx);
     ff_blockdsp_init(&a->bdsp, avctx);
     ff_idctdsp_init(&a->idsp, avctx);
-    init_vlcs(a);
     ff_init_scantable(a->idsp.idct_permutation, &a->scantable, ff_asv_scantab);
     avctx->pix_fmt = AV_PIX_FMT_YUV420P;
 
@@ -316,6 +311,8 @@ static av_cold int decode_init(AVCodecContext *avctx)
                              a->inv_qscale;
     }
 
+    ff_thread_once(&init_static_once, init_vlcs);
+
     return 0;
 }
 
@@ -330,7 +327,7 @@ static av_cold int decode_end(AVCodecContext *avctx)
 }
 
 #if CONFIG_ASV1_DECODER
-AVCodec ff_asv1_decoder = {
+const AVCodec ff_asv1_decoder = {
     .name           = "asv1",
     .long_name      = NULL_IF_CONFIG_SMALL("ASUS V1"),
     .type           = AVMEDIA_TYPE_VIDEO,
@@ -340,11 +337,12 @@ AVCodec ff_asv1_decoder = {
     .close          = decode_end,
     .decode         = decode_frame,
     .capabilities   = AV_CODEC_CAP_DR1,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };
 #endif
 
 #if CONFIG_ASV2_DECODER
-AVCodec ff_asv2_decoder = {
+const AVCodec ff_asv2_decoder = {
     .name           = "asv2",
     .long_name      = NULL_IF_CONFIG_SMALL("ASUS V2"),
     .type           = AVMEDIA_TYPE_VIDEO,
@@ -353,5 +351,6 @@ AVCodec ff_asv2_decoder = {
     .init           = decode_init,
     .decode         = decode_frame,
     .capabilities   = AV_CODEC_CAP_DR1,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };
 #endif
