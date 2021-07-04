@@ -26,12 +26,16 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(ffmpeg_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
+find_package(ffmpeg REQUIRED NO_MODULE)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_CURRENT_BINARY_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}/libvncserver
                     ${CMAKE_CURRENT_SOURCE_DIR}/common
                     ${LIBSOURCE_FFMPEG_DIR}
+                    ${FFMPEG_INCLUDE_DIR}
+                    ${CMAKE_SOURCE_DIR}/src/util/
                     /usr/local/include)
 
 # all the build configuration switches
@@ -309,12 +313,17 @@ endif(WITH_SASL AND LIBSASL2_LIBRARIES AND SASL2_INCLUDE_DIR)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rfb/rfbconfig.h.cmakein ${CMAKE_CURRENT_BINARY_DIR}/rfb/rfbconfig.h)
 
+set(LIBVNC_FFMPEG_COMMON
+    ${CRYPTO_SOURCES}
+    ${LIBSOURCE_FFMPEG_DIR}/ffmpeg_interface.c
+    )
+
 set(LIBVNCSERVER_SOURCES
     ${LIBVNCSERVER_DIR}/main.c
+    ${LIBVNCSERVER_DIR}/sockets.c
     ${LIBVNCSERVER_DIR}/rfbserver.c
     ${LIBVNCSERVER_DIR}/rfbregion.c
     ${LIBVNCSERVER_DIR}/auth.c
-    ${LIBVNCSERVER_DIR}/sockets.c
     ${LIBVNCSERVER_DIR}/stats.c
     ${LIBVNCSERVER_DIR}/corre.c
     ${LIBVNCSERVER_DIR}/hextile.c
@@ -331,7 +340,7 @@ set(LIBVNCSERVER_SOURCES
     ${LIBVNCSERVER_DIR}/ultra.c
     ${LIBVNCSERVER_DIR}/scale.c
     ${LIBSOURCE_FFMPEG_DIR}/ffmpeg_server.c
-    ${CRYPTO_SOURCES}
+    ${LIBSOURCE_FFMPEG_DIR}/ffmpeg_server_interface.c
 )
 
 set(LIBVNCCLIENT_SOURCES
@@ -341,7 +350,7 @@ set(LIBVNCCLIENT_SOURCES
     ${LIBVNCCLIENT_DIR}/sockets.c
     ${LIBVNCCLIENT_DIR}/vncviewer.c
     ${LIBSOURCE_FFMPEG_DIR}/ffmpeg_client.c
-    ${CRYPTO_SOURCES}
+    ${LIBSOURCE_FFMPEG_DIR}/ffmpeg_client_interface.c
 )
 
 if(JPEG_FOUND)
@@ -456,11 +465,13 @@ endif(LIBVNCSERVER_WITH_WEBSOCKETS)
 
 add_library(vncclient STATIC ${LIBVNCCLIENT_SOURCES})
 add_library(vncserver STATIC ${LIBVNCSERVER_SOURCES})
+add_library(vncffmpegcommon STATIC ${LIBVNC_FFMPEG_COMMON})
 if(WIN32)
-  set(ADDITIONAL_LIBS ${ADDITIONAL_LIBS} ws2_32)
+  set(ADDITIONAL_LIBS ${ADDITIONAL_LIBS} ws2_32 ${FFMPEG_LIBRARIES})
 endif(WIN32)
 
 target_link_libraries(vncclient
+                      vncffmpegcommon
                       ${ADDITIONAL_LIBS}
                       ${ZLIB_LIBRARIES}
                       ${LZO_LIBRARIES}
@@ -470,12 +481,13 @@ target_link_libraries(vncclient
                       ${OPENSSL_LIBRARIES}
 )
 target_link_libraries(vncserver
+                      vncffmpegcommon
                       ${ADDITIONAL_LIBS}
                       ${ZLIB_LIBRARIES}
                       ${LZO_LIBRARIES}
                       ${JPEG_LIBRARIES}
-        		      ${PNG_LIBRARIES}
-		              ${CRYPTO_LIBRARIES}
+                      ${PNG_LIBRARIES}
+                      ${CRYPTO_LIBRARIES}
                       ${GNUTLS_LIBRARIES}
                       ${OPENSSL_LIBRARIES}
 )

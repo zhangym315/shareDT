@@ -155,43 +155,43 @@ ReadFromRFBServer(rfbClient* client, char *out, unsigned int n)
   if (n <= RFB_BUF_SIZE) {
 
     while (client->buffered < n) {
-      int i;
-      if (client->tlsSession)
-        i = ReadFromTLS(client, client->buf + client->buffered, RFB_BUF_SIZE - client->buffered);
-      else
-#ifdef LIBVNCSERVER_HAVE_SASL
-      if (client->saslconn)
-        i = ReadFromSASL(client, client->buf + client->buffered, RFB_BUF_SIZE - client->buffered);
-      else {
-#endif /* LIBVNCSERVER_HAVE_SASL */
-        i = read(client->sock, client->buf + client->buffered, RFB_BUF_SIZE - client->buffered);
-#ifdef WIN32
-	if (i < 0) errno=WSAGetLastError();
-#endif
-#ifdef LIBVNCSERVER_HAVE_SASL
-      }
-#endif
-  
-      if (i <= 0) {
-	if (i < 0) {
-	  if (errno == EWOULDBLOCK || errno == EAGAIN) {
-	    /* TODO:
-	       ProcessXtEvents();
-	    */
-	    WaitForMessage(client, 100000);
-	    i = 0;
-	  } else {
-	    rfbClientErr("read (%d: %s)\n",errno,strerror(errno));
-	    return FALSE;
-	  }
-	} else {
-	  if (errorMessageOnReadFailure) {
-	    rfbClientLog("VNC server closed connection\n");
-	  }
-	  return FALSE;
-	}
-      }
-      client->buffered += i;
+          int i;
+          if (client->tlsSession)
+            i = ReadFromTLS(client, client->buf + client->buffered, RFB_BUF_SIZE - client->buffered);
+          else
+    #ifdef LIBVNCSERVER_HAVE_SASL
+          if (client->saslconn)
+            i = ReadFromSASL(client, client->buf + client->buffered, RFB_BUF_SIZE - client->buffered);
+          else {
+    #endif /* LIBVNCSERVER_HAVE_SASL */
+            i = read(client->sock, client->buf + client->buffered, RFB_BUF_SIZE - client->buffered);
+    #ifdef WIN32
+        if (i < 0) errno=WSAGetLastError();
+    #endif
+    #ifdef LIBVNCSERVER_HAVE_SASL
+          }
+    #endif
+
+        if (i <= 0) {
+            if (i < 0) {
+              if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                /* TODO:
+                   ProcessXtEvents();
+                */
+                WaitForMessage(client, 100000);
+                i = 0;
+              } else {
+                rfbClientErr("read (%d: %s)\n",errno,strerror(errno));
+                return FALSE;
+              }
+            } else {
+              if (errorMessageOnReadFailure) {
+                rfbClientLog("VNC server closed connection\n");
+              }
+              return FALSE;
+            }
+        }
+        client->buffered += i;
     }
 
     memcpy(out, client->bufoutptr, n);
@@ -213,26 +213,26 @@ ReadFromRFBServer(rfbClient* client, char *out, unsigned int n)
         i = read(client->sock, out, n);
 
       if (i <= 0) {
-	if (i < 0) {
+	    if (i < 0) {
 #ifdef WIN32
 	  errno=WSAGetLastError();
 #endif
-	  if (errno == EWOULDBLOCK || errno == EAGAIN) {
-	    /* TODO:
-	       ProcessXtEvents();
-	    */
-	    WaitForMessage(client, 100000);
-	    i = 0;
-	  } else {
-	    rfbClientErr("read (%s)\n",strerror(errno));
-	    return FALSE;
-	  }
-	} else {
-	  if (errorMessageOnReadFailure) {
-	    rfbClientLog("VNC server closed connection\n");
-	  }
-	  return FALSE;
-	}
+            if (errno == EWOULDBLOCK || errno == EAGAIN) {
+                /* TODO:
+                   ProcessXtEvents();
+                */
+                WaitForMessage(client, 100000);
+                i = 0;
+            } else {
+                rfbClientErr("read (%s)\n",strerror(errno));
+                return FALSE;
+            }
+        } else {
+            if (errorMessageOnReadFailure) {
+                rfbClientLog("VNC server closed connection\n");
+            }
+            return FALSE;
+        }
       }
       out += i;
       n -= i;

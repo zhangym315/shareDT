@@ -454,6 +454,7 @@ typedef struct _rfbClient {
     void * _si;
     void * _fetcher;
     uint64_t _sequence;
+    uint32_t _available_frame;
 } rfbClient;
 
 /* cursor.c */

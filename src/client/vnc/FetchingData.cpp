@@ -156,6 +156,7 @@ void FetchingDataFromServer::HandleRectFromServer(rfbClient* client, int x, int 
 
 void FetchingDataFromServer::HandleRect (rfbClient* client)
 {
+    if (std::string(client->appData.encodingsString) == "ffmpeg" && !client->_available_frame) return;
     _frame.frame.set(client->frameBuffer, client->width*client->height*4);
     _frame.w = client->width;
     _frame.h = client->height;

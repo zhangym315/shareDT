@@ -36,6 +36,7 @@
 #endif
 #include <errno.h>
 #include <rfb/rfbclient.h>
+#include "ffmpeg_client.h"
 #ifdef WIN32
 #undef socklen_t
 #endif
@@ -1680,7 +1681,6 @@ HandleRFBServerMessage(rfbClient* client)
           rect.r.w = rfbClientSwap16IfLE(rect.r.w);
           rect.r.h = rfbClientSwap16IfLE(rect.r.h);
 
-
           if (rect.encoding == rfbEncodingXCursor ||
               rect.encoding == rfbEncodingRichCursor) {
 
@@ -1761,6 +1761,7 @@ HandleRFBServerMessage(rfbClient* client)
 
               /* buffer now contains rect.r.h # of uint32_t encodings that the server supports */
               /* currently ignored by this library */
+              rfbClientLog("supported encodings: %s\n", buffer);
               free(buffer);
               continue;
           }
@@ -1809,7 +1810,13 @@ HandleRFBServerMessage(rfbClient* client)
           switch (rect.encoding) {
 
               case rfbEncodingFFMPEG:
-              case rfbEncodingRaw: {
+              {
+                rfbSendRectEncodingFFMPEG(client, &rect);
+                break;
+              }
+
+              case rfbEncodingRaw:
+              {
                 int y=rect.r.y, h=rect.r.h;
 
                 bytesPerLine = rect.r.w * client->format.bitsPerPixel / 8;
@@ -1822,11 +1829,11 @@ HandleRFBServerMessage(rfbClient* client)
                   if (linesToRead > h)
                     linesToRead = h;
 
-                  if (!ReadFromRFBServer(client, client->buffer,bytesPerLine * linesToRead))
+                  if (!ReadFromRFBServer(client, client->buffer, bytesPerLine * linesToRead))
                     return FALSE;
 
                   client->GotBitmap(client, (uint8_t *)client->buffer,
-                           rect.r.x, y, rect.r.w,linesToRead);
+                                    rect.r.x, y, rect.r.w,linesToRead);   // CopyRectangle
 
                   h -= linesToRead;
                   y += linesToRead;
