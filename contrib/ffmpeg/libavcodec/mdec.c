@@ -27,6 +27,8 @@
  * This is very similar to intra-only MPEG-1.
  */
 
+#include "libavutil/mem_internal.h"
+
 #include "avcodec.h"
 #include "blockdsp.h"
 #include "bswapdsp.h"
@@ -248,7 +250,7 @@ static av_cold int decode_end(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec ff_mdec_decoder = {
+const AVCodec ff_mdec_decoder = {
     .name             = "mdec",
     .long_name        = NULL_IF_CONFIG_SMALL("Sony PlayStation MDEC (Motion DECoder)"),
     .type             = AVMEDIA_TYPE_VIDEO,
@@ -258,4 +260,5 @@ AVCodec ff_mdec_decoder = {
     .close            = decode_end,
     .decode           = decode_frame,
     .capabilities     = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_FRAME_THREADS,
+    .caps_internal    = FF_CODEC_CAP_INIT_THREADSAFE,
 };

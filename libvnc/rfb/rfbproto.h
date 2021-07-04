@@ -449,6 +449,7 @@ typedef struct {
 #define rfbEncodingTRLE 15
 #define rfbEncodingZRLE 16
 #define rfbEncodingZYWRLE 17
+#define rfbEncodingFFMPEG 18
 
 #define rfbEncodingH264               0x48323634
 

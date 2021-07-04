@@ -25,6 +25,19 @@ enabled decoders.
 A description of some of the currently available video decoders
 follows.
 
+@section av1
+
+AOMedia Video 1 (AV1) decoder.
+
+@subsection Options
+
+@table @option
+
+@item operating_point
+Select an operating point of a scalable AV1 bitstream (0 - 31). Default is 0.
+
+@end table
+
 @section rawvideo
 
 Raw video decoder.
@@ -280,6 +293,8 @@ Enabled by default.
 @table @option
 @item compute_clut
 @table @option
+@item -2
+Compute clut once if no matching CLUT is in the stream.
 @item -1
 Compute clut if no matching CLUT is in the stream.
 @item 0

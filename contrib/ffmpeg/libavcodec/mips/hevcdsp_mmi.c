@@ -32,7 +32,7 @@ void ff_hevc_put_hevc_qpel_h##w##_8_mmi(int16_t *dst, uint8_t *_src,     \
     int x, y;                                                            \
     pixel *src = (pixel*)_src - 3;                                       \
     ptrdiff_t srcstride = _srcstride / sizeof(pixel);                    \
-    uint64_t ftmp[15];                                                   \
+    double ftmp[15];                                                     \
     uint64_t rtmp[1];                                                    \
     const int8_t *filter = ff_hevc_qpel_filters[mx - 1];                 \
                                                                          \
@@ -46,7 +46,7 @@ void ff_hevc_put_hevc_qpel_h##w##_8_mmi(int16_t *dst, uint8_t *_src,     \
         "punpcklbh    %[ftmp1],      %[ftmp0],      %[ftmp1]    \n\t"    \
         "psrah        %[ftmp1],      %[ftmp1],      %[ftmp0]    \n\t"    \
         "psrah        %[ftmp2],      %[ftmp2],      %[ftmp0]    \n\t"    \
-        "xor          %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"    \
+        "pxor         %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"    \
                                                                          \
         "1:                                                     \n\t"    \
         "2:                                                     \n\t"    \
@@ -132,7 +132,7 @@ void ff_hevc_put_hevc_qpel_hv##w##_8_mmi(int16_t *dst, uint8_t *_src,    \
     ptrdiff_t srcstride = _srcstride / sizeof(pixel);                    \
     int16_t tmp_array[(MAX_PB_SIZE + QPEL_EXTRA) * MAX_PB_SIZE];         \
     int16_t *tmp = tmp_array;                                            \
-    uint64_t ftmp[15];                                                   \
+    double ftmp[15];                                                     \
     uint64_t rtmp[1];                                                    \
                                                                          \
     src   -= (QPEL_EXTRA_BEFORE * srcstride + 3);                        \
@@ -147,7 +147,7 @@ void ff_hevc_put_hevc_qpel_hv##w##_8_mmi(int16_t *dst, uint8_t *_src,    \
         "punpcklbh    %[ftmp1],      %[ftmp0],      %[ftmp1]    \n\t"    \
         "psrah        %[ftmp1],      %[ftmp1],      %[ftmp0]    \n\t"    \
         "psrah        %[ftmp2],      %[ftmp2],      %[ftmp0]    \n\t"    \
-        "xor          %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"    \
+        "pxor         %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"    \
                                                                          \
         "1:                                                     \n\t"    \
         "2:                                                     \n\t"    \
@@ -329,10 +329,12 @@ void ff_hevc_put_hevc_qpel_bi_h##w##_8_mmi(uint8_t *_dst,               \
     pixel *dst          = (pixel *)_dst;                                \
     ptrdiff_t dststride = _dststride / sizeof(pixel);                   \
     const int8_t *filter    = ff_hevc_qpel_filters[mx - 1];             \
-    uint64_t ftmp[20];                                                  \
+    double ftmp[20];                                                    \
     uint64_t rtmp[1];                                                   \
-    int shift = 7;                                                      \
-    int offset = 64;                                                    \
+    union av_intfloat64 shift;                                          \
+    union av_intfloat64 offset;                                         \
+    shift.i = 7;                                                        \
+    offset.i = 64;                                                      \
                                                                         \
     x = width >> 2;                                                     \
     y = height;                                                         \
@@ -344,7 +346,7 @@ void ff_hevc_put_hevc_qpel_bi_h##w##_8_mmi(uint8_t *_dst,               \
         "punpcklbh    %[ftmp1],      %[ftmp0],      %[ftmp1]    \n\t"   \
         "psrah        %[ftmp1],      %[ftmp1],      %[ftmp0]    \n\t"   \
         "psrah        %[ftmp2],      %[ftmp2],      %[ftmp0]    \n\t"   \
-        "xor          %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"   \
+        "pxor         %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"   \
         "punpcklhw    %[offset],     %[offset],     %[offset]   \n\t"   \
         "punpcklwd    %[offset],     %[offset],     %[offset]   \n\t"   \
                                                                         \
@@ -403,7 +405,7 @@ void ff_hevc_put_hevc_qpel_bi_h##w##_8_mmi(uint8_t *_dst,               \
         "psraw        %[ftmp6],      %[ftmp6],      %[shift]    \n\t"   \
         "packsswh     %[ftmp5],      %[ftmp5],      %[ftmp6]    \n\t"   \
         "pcmpgth      %[ftmp7],      %[ftmp5],      %[ftmp0]    \n\t"   \
-        "and          %[ftmp3],      %[ftmp5],      %[ftmp7]    \n\t"   \
+        "pand         %[ftmp3],      %[ftmp5],      %[ftmp7]    \n\t"   \
         "packushb     %[ftmp3],      %[ftmp3],      %[ftmp3]    \n\t"   \
         "gsswlc1      %[ftmp3],      0x03(%[dst])               \n\t"   \
         "gsswrc1      %[ftmp3],      0x00(%[dst])               \n\t"   \
@@ -430,9 +432,9 @@ void ff_hevc_put_hevc_qpel_bi_h##w##_8_mmi(uint8_t *_dst,               \
           [ftmp10]"=&f"(ftmp[10]), [ftmp11]"=&f"(ftmp[11]),             \
           [ftmp12]"=&f"(ftmp[12]), [src2]"+&r"(src2),                   \
           [dst]"+&r"(dst), [src]"+&r"(src), [y]"+&r"(y), [x]"=&r"(x),   \
-          [offset]"+&f"(offset), [rtmp0]"=&r"(rtmp[0])                  \
+          [offset]"+&f"(offset.f), [rtmp0]"=&r"(rtmp[0])                \
         : [src_stride]"r"(srcstride), [dst_stride]"r"(dststride),       \
-          [filter]"r"(filter), [shift]"f"(shift)                        \
+          [filter]"r"(filter), [shift]"f"(shift.f)                      \
         : "memory"                                                      \
     );                                                                  \
 }
@@ -463,10 +465,12 @@ void ff_hevc_put_hevc_qpel_bi_hv##w##_8_mmi(uint8_t *_dst,              \
     ptrdiff_t dststride = _dststride / sizeof(pixel);                   \
     int16_t tmp_array[(MAX_PB_SIZE + QPEL_EXTRA) * MAX_PB_SIZE];        \
     int16_t *tmp = tmp_array;                                           \
-    uint64_t ftmp[20];                                                  \
+    double ftmp[20];                                                    \
     uint64_t rtmp[1];                                                   \
-    int shift = 7;                                                      \
-    int offset = 64;                                                    \
+    union av_intfloat64 shift;                                          \
+    union av_intfloat64 offset;                                         \
+    shift.i = 7;                                                        \
+    offset.i = 64;                                                      \
                                                                         \
     src   -= (QPEL_EXTRA_BEFORE * srcstride + 3);                       \
     filter = ff_hevc_qpel_filters[mx - 1];                              \
@@ -480,7 +484,7 @@ void ff_hevc_put_hevc_qpel_bi_hv##w##_8_mmi(uint8_t *_dst,              \
         "punpcklbh    %[ftmp1],      %[ftmp0],      %[ftmp1]    \n\t"   \
         "psrah        %[ftmp1],      %[ftmp1],      %[ftmp0]    \n\t"   \
         "psrah        %[ftmp2],      %[ftmp2],      %[ftmp0]    \n\t"   \
-        "xor          %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"   \
+        "pxor         %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"   \
                                                                         \
         "1:                                                     \n\t"   \
         "2:                                                     \n\t"   \
@@ -612,7 +616,7 @@ void ff_hevc_put_hevc_qpel_bi_hv##w##_8_mmi(uint8_t *_dst,              \
         "packsswh     %[ftmp3],      %[ftmp3],      %[ftmp5]    \n\t"   \
         "gsldlc1      %[ftmp4],      0x07(%[src2])              \n\t"   \
         "gsldrc1      %[ftmp4],      0x00(%[src2])              \n\t"   \
-        "xor          %[ftmp7],      %[ftmp7],      %[ftmp7]    \n\t"   \
+        "pxor         %[ftmp7],      %[ftmp7],      %[ftmp7]    \n\t"   \
         "li           %[rtmp0],      0x10                       \n\t"   \
         "dmtc1        %[rtmp0],      %[ftmp8]                   \n\t"   \
         "punpcklhw    %[ftmp5],      %[ftmp7],      %[ftmp3]    \n\t"   \
@@ -631,7 +635,7 @@ void ff_hevc_put_hevc_qpel_bi_hv##w##_8_mmi(uint8_t *_dst,              \
         "psraw        %[ftmp6],      %[ftmp6],      %[shift]    \n\t"   \
         "packsswh     %[ftmp5],      %[ftmp5],      %[ftmp6]    \n\t"   \
         "pcmpgth      %[ftmp7],      %[ftmp5],      %[ftmp7]    \n\t"   \
-        "and          %[ftmp3],      %[ftmp5],      %[ftmp7]    \n\t"   \
+        "pand         %[ftmp3],      %[ftmp5],      %[ftmp7]    \n\t"   \
         "packushb     %[ftmp3],      %[ftmp3],      %[ftmp3]    \n\t"   \
         "gsswlc1      %[ftmp3],      0x03(%[dst])               \n\t"   \
         "gsswrc1      %[ftmp3],      0x00(%[dst])               \n\t"   \
@@ -659,9 +663,9 @@ void ff_hevc_put_hevc_qpel_bi_hv##w##_8_mmi(uint8_t *_dst,              \
           [ftmp12]"=&f"(ftmp[12]), [ftmp13]"=&f"(ftmp[13]),             \
           [ftmp14]"=&f"(ftmp[14]), [src2]"+&r"(src2),                   \
           [dst]"+&r"(dst), [tmp]"+&r"(tmp), [y]"+&r"(y), [x]"=&r"(x),   \
-          [offset]"+&f"(offset), [rtmp0]"=&r"(rtmp[0])                  \
+          [offset]"+&f"(offset.f), [rtmp0]"=&r"(rtmp[0])                \
         : [filter]"r"(filter), [stride]"r"(dststride),                  \
-          [shift]"f"(shift)                                             \
+          [shift]"f"(shift.f)                                           \
         : "memory"                                                      \
     );                                                                  \
 }
@@ -692,10 +696,12 @@ void ff_hevc_put_hevc_epel_bi_hv##w##_8_mmi(uint8_t *_dst,              \
     const int8_t *filter = ff_hevc_epel_filters[mx - 1];                \
     int16_t tmp_array[(MAX_PB_SIZE + EPEL_EXTRA) * MAX_PB_SIZE];        \
     int16_t *tmp = tmp_array;                                           \
-    uint64_t ftmp[12];                                                  \
+    double  ftmp[12];                                                   \
     uint64_t rtmp[1];                                                   \
-    int shift = 7;                                                      \
-    int offset = 64;                                                    \
+    union av_intfloat64 shift;                                          \
+    union av_intfloat64 offset;                                         \
+    shift.i = 7;                                                        \
+    offset.i = 64;                                                      \
                                                                         \
     src -= (EPEL_EXTRA_BEFORE * srcstride + 1);                         \
     x = width >> 2;                                                     \
@@ -706,7 +712,7 @@ void ff_hevc_put_hevc_epel_bi_hv##w##_8_mmi(uint8_t *_dst,              \
         "dmtc1        %[rtmp0],      %[ftmp0]                   \n\t"   \
         "punpcklbh    %[ftmp1],      %[ftmp0],      %[ftmp1]    \n\t"   \
         "psrah        %[ftmp1],      %[ftmp1],      %[ftmp0]    \n\t"   \
-        "xor          %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"   \
+        "pxor         %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"   \
                                                                         \
         "1:                                                     \n\t"   \
         "2:                                                     \n\t"   \
@@ -771,7 +777,7 @@ void ff_hevc_put_hevc_epel_bi_hv##w##_8_mmi(uint8_t *_dst,              \
         "li           %[rtmp0],      0x06                       \n\t"   \
         "dmtc1        %[rtmp0],      %[ftmp0]                   \n\t"   \
         "punpcklwd    %[offset],     %[offset],     %[offset]   \n\t"   \
-        "xor          %[ftmp2],      %[ftmp2],      %[ftmp2]    \n\t"   \
+        "pxor         %[ftmp2],      %[ftmp2],      %[ftmp2]    \n\t"   \
                                                                         \
         "1:                                                     \n\t"   \
         "li           %[x],        " #x_step "                  \n\t"   \
@@ -821,7 +827,7 @@ void ff_hevc_put_hevc_epel_bi_hv##w##_8_mmi(uint8_t *_dst,              \
         "psraw        %[ftmp6],      %[ftmp6],      %[shift]    \n\t"   \
         "packsswh     %[ftmp5],      %[ftmp5],      %[ftmp6]    \n\t"   \
         "pcmpgth      %[ftmp7],      %[ftmp5],      %[ftmp2]    \n\t"   \
-        "and          %[ftmp3],      %[ftmp5],      %[ftmp7]    \n\t"   \
+        "pand         %[ftmp3],      %[ftmp5],      %[ftmp7]    \n\t"   \
         "packushb     %[ftmp3],      %[ftmp3],      %[ftmp3]    \n\t"   \
         "gsswlc1      %[ftmp3],      0x03(%[dst])               \n\t"   \
         "gsswrc1      %[ftmp3],      0x00(%[dst])               \n\t"   \
@@ -847,9 +853,9 @@ void ff_hevc_put_hevc_epel_bi_hv##w##_8_mmi(uint8_t *_dst,              \
           [ftmp8]"=&f"(ftmp[8]), [ftmp9]"=&f"(ftmp[9]),                 \
           [ftmp10]"=&f"(ftmp[10]), [src2]"+&r"(src2),                   \
           [dst]"+&r"(dst), [tmp]"+&r"(tmp), [y]"+&r"(y), [x]"=&r"(x),   \
-          [offset]"+&f"(offset), [rtmp0]"=&r"(rtmp[0])                  \
+          [offset]"+&f"(offset.f), [rtmp0]"=&r"(rtmp[0])                \
         : [filter]"r"(filter), [stride]"r"(dststride),                  \
-          [shift]"f"(shift)                                             \
+          [shift]"f"(shift.f)                                           \
         : "memory"                                                      \
     );                                                                  \
 }
@@ -875,14 +881,15 @@ void ff_hevc_put_hevc_pel_bi_pixels##w##_8_mmi(uint8_t *_dst,             \
     ptrdiff_t srcstride = _srcstride / sizeof(pixel);                     \
     pixel *dst          = (pixel *)_dst;                                  \
     ptrdiff_t dststride = _dststride / sizeof(pixel);                     \
-    uint64_t ftmp[12];                                                    \
+    double  ftmp[12];                                                     \
     uint64_t rtmp[1];                                                     \
-    int shift = 7;                                                        \
+    union av_intfloat64 shift;                                            \
+    shift.i = 7;                                                          \
                                                                           \
     y = height;                                                           \
     x = width >> 3;                                                       \
     __asm__ volatile(                                                     \
-        "xor          %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"     \
+        "pxor         %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"     \
         "li           %[rtmp0],      0x06                       \n\t"     \
         "dmtc1        %[rtmp0],      %[ftmp1]                   \n\t"     \
         "li           %[rtmp0],      0x10                       \n\t"     \
@@ -930,8 +937,8 @@ void ff_hevc_put_hevc_pel_bi_pixels##w##_8_mmi(uint8_t *_dst,             \
         "packsswh     %[ftmp4],      %[ftmp4],      %[ftmp5]    \n\t"     \
         "pcmpgth      %[ftmp3],      %[ftmp2],      %[ftmp0]    \n\t"     \
         "pcmpgth      %[ftmp5],      %[ftmp4],      %[ftmp0]    \n\t"     \
-        "and          %[ftmp2],      %[ftmp2],      %[ftmp3]    \n\t"     \
-        "and          %[ftmp4],      %[ftmp4],      %[ftmp5]    \n\t"     \
+        "pand         %[ftmp2],      %[ftmp2],      %[ftmp3]    \n\t"     \
+        "pand         %[ftmp4],      %[ftmp4],      %[ftmp5]    \n\t"     \
         "packushb     %[ftmp2],      %[ftmp2],      %[ftmp4]    \n\t"     \
         "gssdlc1      %[ftmp2],      0x07(%[dst])               \n\t"     \
         "gssdrc1      %[ftmp2],      0x00(%[dst])               \n\t"     \
@@ -959,7 +966,7 @@ void ff_hevc_put_hevc_pel_bi_pixels##w##_8_mmi(uint8_t *_dst,             \
           [ftmp10]"=&f"(ftmp[10]), [offset]"=&f"(ftmp[11]),               \
           [src2]"+&r"(src2), [dst]"+&r"(dst), [src]"+&r"(src),            \
           [x]"+&r"(x), [y]"+&r"(y), [rtmp0]"=&r"(rtmp[0])                 \
-        : [dststride]"r"(dststride), [shift]"f"(shift),                   \
+        : [dststride]"r"(dststride), [shift]"f"(shift.f),                 \
           [srcstride]"r"(srcstride)                                       \
         : "memory"                                                        \
     );                                                                    \
@@ -989,10 +996,12 @@ void ff_hevc_put_hevc_qpel_uni_hv##w##_8_mmi(uint8_t *_dst,             \
     ptrdiff_t dststride = _dststride / sizeof(pixel);                   \
     int16_t tmp_array[(MAX_PB_SIZE + QPEL_EXTRA) * MAX_PB_SIZE];        \
     int16_t *tmp = tmp_array;                                           \
-    uint64_t ftmp[20];                                                  \
+    double ftmp[20];                                                    \
     uint64_t rtmp[1];                                                   \
-    int shift = 6;                                                      \
-    int offset = 32;                                                    \
+    union av_intfloat64 shift;                                          \
+    union av_intfloat64 offset;                                         \
+    shift.i = 6;                                                        \
+    offset.i = 32;                                                      \
                                                                         \
     src   -= (QPEL_EXTRA_BEFORE * srcstride + 3);                       \
     filter = ff_hevc_qpel_filters[mx - 1];                              \
@@ -1006,7 +1015,7 @@ void ff_hevc_put_hevc_qpel_uni_hv##w##_8_mmi(uint8_t *_dst,             \
         "punpcklbh    %[ftmp1],      %[ftmp0],      %[ftmp1]    \n\t"   \
         "psrah        %[ftmp1],      %[ftmp1],      %[ftmp0]    \n\t"   \
         "psrah        %[ftmp2],      %[ftmp2],      %[ftmp0]    \n\t"   \
-        "xor          %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"   \
+        "pxor         %[ftmp0],      %[ftmp0],      %[ftmp0]    \n\t"   \
                                                                         \
         "1:                                                     \n\t"   \
         "2:                                                     \n\t"   \
@@ -1139,9 +1148,9 @@ void ff_hevc_put_hevc_qpel_uni_hv##w##_8_mmi(uint8_t *_dst,             \
         "packsswh     %[ftmp3],      %[ftmp3],      %[ftmp5]    \n\t"   \
         "paddh        %[ftmp3],      %[ftmp3],      %[offset]   \n\t"   \
         "psrah        %[ftmp3],      %[ftmp3],      %[shift]    \n\t"   \
-        "xor          %[ftmp7],      %[ftmp7],      %[ftmp7]    \n\t"   \
+        "pxor         %[ftmp7],      %[ftmp7],      %[ftmp7]    \n\t"   \
         "pcmpgth      %[ftmp7],      %[ftmp3],      %[ftmp7]    \n\t"   \
-        "and          %[ftmp3],      %[ftmp3],      %[ftmp7]    \n\t"   \
+        "pand         %[ftmp3],      %[ftmp3],      %[ftmp7]    \n\t"   \
         "packushb     %[ftmp3],      %[ftmp3],      %[ftmp3]    \n\t"   \
         "gsswlc1      %[ftmp3],      0x03(%[dst])               \n\t"   \
         "gsswrc1      %[ftmp3],      0x00(%[dst])               \n\t"   \
@@ -1166,9 +1175,9 @@ void ff_hevc_put_hevc_qpel_uni_hv##w##_8_mmi(uint8_t *_dst,             \
           [ftmp12]"=&f"(ftmp[12]), [ftmp13]"=&f"(ftmp[13]),             \
           [ftmp14]"=&f"(ftmp[14]),                                      \
           [dst]"+&r"(dst), [tmp]"+&r"(tmp), [y]"+&r"(y), [x]"=&r"(x),   \
-          [offset]"+&f"(offset), [rtmp0]"=&r"(rtmp[0])                  \
+          [offset]"+&f"(offset.f), [rtmp0]"=&r"(rtmp[0])                \
         : [filter]"r"(filter), [stride]"r"(dststride),                  \
-          [shift]"f"(shift)                                             \
+          [shift]"f"(shift.f)                                           \
         : "memory"                                                      \
     );                                                                  \
 }

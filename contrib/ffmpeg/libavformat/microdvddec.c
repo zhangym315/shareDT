@@ -65,12 +65,12 @@ static int64_t get_pts(const char *buf)
     return AV_NOPTS_VALUE;
 }
 
-static int get_duration(const char *buf)
+static int64_t get_duration(const char *buf)
 {
     int frame_start, frame_end;
 
     if (sscanf(buf, "{%d}{%d}", &frame_start, &frame_end) == 2)
-        return frame_end - frame_start;
+        return frame_end - (int64_t)frame_start;
     return -1;
 }
 
@@ -203,7 +203,7 @@ static const AVClass microdvd_class = {
     .version    = LIBAVUTIL_VERSION_INT,
 };
 
-AVInputFormat ff_microdvd_demuxer = {
+const AVInputFormat ff_microdvd_demuxer = {
     .name           = "microdvd",
     .long_name      = NULL_IF_CONFIG_SMALL("MicroDVD subtitle format"),
     .priv_data_size = sizeof(MicroDVDContext),

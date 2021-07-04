@@ -30,6 +30,7 @@
 #include "libavutil/cpu.h"
 #include "libavutil/avutil.h"
 #include "libavutil/mathematics.h"
+#include "libavutil/mem_internal.h"
 #include "libavutil/bswap.h"
 #include "libavutil/pixdesc.h"
 #include "libavutil/avassert.h"
@@ -1805,7 +1806,7 @@ static int planarCopyWrapper(SwsContext *c, const uint8_t *src[],
     const AVPixFmtDescriptor *desc_src = av_pix_fmt_desc_get(c->srcFormat);
     const AVPixFmtDescriptor *desc_dst = av_pix_fmt_desc_get(c->dstFormat);
     int plane, i, j;
-    for (plane = 0; plane < 4; plane++) {
+    for (plane = 0; plane < 4 && dst[plane] != NULL; plane++) {
         int length = (plane == 0 || plane == 3) ? c->srcW  : AV_CEIL_RSHIFT(c->srcW,   c->chrDstHSubSample);
         int y =      (plane == 0 || plane == 3) ? srcSliceY: AV_CEIL_RSHIFT(srcSliceY, c->chrDstVSubSample);
         int height = (plane == 0 || plane == 3) ? srcSliceH: AV_CEIL_RSHIFT(srcSliceH, c->chrDstVSubSample);
@@ -1813,8 +1814,6 @@ static int planarCopyWrapper(SwsContext *c, const uint8_t *src[],
         uint8_t *dstPtr = dst[plane] + dstStride[plane] * y;
         int shiftonly = plane == 1 || plane == 2 || (!c->srcRange && plane == 0);
 
-        if (!dst[plane])
-            continue;
         // ignore palette for GRAY8
         if (plane == 1 && !dst[2]) continue;
         if (!src[plane] || (plane == 1 && !src[2])) {
@@ -1979,6 +1978,7 @@ void ff_get_unscaled_swscale(SwsContext *c)
     const enum AVPixelFormat dstFormat = c->dstFormat;
     const int flags = c->flags;
     const int dstH = c->dstH;
+    const int dstW = c->dstW;
     int needsDither;
 
     needsDither = isAnyRGB(dstFormat) &&
@@ -2034,7 +2034,7 @@ void ff_get_unscaled_swscale(SwsContext *c)
     /* bgr24toYV12 */
     if (srcFormat == AV_PIX_FMT_BGR24 &&
         (dstFormat == AV_PIX_FMT_YUV420P || dstFormat == AV_PIX_FMT_YUVA420P) &&
-        !(flags & SWS_ACCURATE_RND))
+        !(flags & SWS_ACCURATE_RND) && !(dstW&1))
         c->swscale = bgr24ToYv12Wrapper;
 
     /* RGB/BGR -> RGB/BGR (no dither needed forms) */

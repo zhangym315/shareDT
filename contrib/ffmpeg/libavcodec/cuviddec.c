@@ -336,7 +336,8 @@ static int CUDAAPI cuvid_handle_picture_decode(void *opaque, CUVIDPICPARAMS* pic
 
     av_log(avctx, AV_LOG_TRACE, "pfnDecodePicture\n");
 
-    ctx->key_frame[picparams->CurrPicIdx] = picparams->intra_pic_flag;
+    if(picparams->intra_pic_flag)
+        ctx->key_frame[picparams->CurrPicIdx] = picparams->intra_pic_flag;
 
     ctx->internal_error = CHECK_CU(ctx->cvdl->cuvidDecodePicture(ctx->cudecoder, picparams));
     if (ctx->internal_error < 0)
@@ -553,6 +554,12 @@ static int cuvid_output_frame(AVCodecContext *avctx, AVFrame *frame)
 
             tmp_frame->format        = AV_PIX_FMT_CUDA;
             tmp_frame->hw_frames_ctx = av_buffer_ref(ctx->hwframe);
+            if (!tmp_frame->hw_frames_ctx) {
+                ret = AVERROR(ENOMEM);
+                av_frame_free(&tmp_frame);
+                goto error;
+            }
+
             tmp_frame->width         = avctx->width;
             tmp_frame->height        = avctx->height;
 
@@ -587,6 +594,8 @@ static int cuvid_output_frame(AVCodecContext *avctx, AVFrame *frame)
         }
 
         frame->key_frame = ctx->key_frame[parsed_frame.dispinfo.picture_index];
+        ctx->key_frame[parsed_frame.dispinfo.picture_index] = 0;
+
         frame->width = avctx->width;
         frame->height = avctx->height;
         if (avctx->pkt_timebase.num && avctx->pkt_timebase.den)
@@ -608,11 +617,6 @@ static int cuvid_output_frame(AVCodecContext *avctx, AVFrame *frame)
         /* CUVIDs opaque reordering breaks the internal pkt logic.
          * So set pkt_pts and clear all the other pkt_ fields.
          */
-#if FF_API_PKT_PTS
-FF_DISABLE_DEPRECATION_WARNINGS
-        frame->pkt_pts = frame->pts;
-FF_ENABLE_DEPRECATION_WARNINGS
-#endif
         frame->pkt_pos = -1;
         frame->pkt_duration = 0;
         frame->pkt_size = -1;
@@ -628,6 +632,9 @@ FF_ENABLE_DEPRECATION_WARNINGS
     }
 
 error:
+    if (ret < 0)
+        av_frame_unref(frame);
+
     if (mapped_frame)
         eret = CHECK_CU(ctx->cvdl->cuvidUnmapVideoFrame(ctx->cudecoder, mapped_frame));
 
@@ -639,48 +646,24 @@ error:
         return ret;
 }
 
-static int cuvid_decode_frame(AVCodecContext *avctx, void *data, int *got_frame, AVPacket *avpkt)
-{
-    CuvidContext *ctx = avctx->priv_data;
-    AVFrame *frame = data;
-    int ret = 0;
-
-    av_log(avctx, AV_LOG_TRACE, "cuvid_decode_frame\n");
-
-    if (ctx->deint_mode_current != cudaVideoDeinterlaceMode_Weave) {
-        av_log(avctx, AV_LOG_ERROR, "Deinterlacing is not supported via the old API\n");
-        return AVERROR(EINVAL);
-    }
-
-    if (!ctx->decoder_flushing) {
-        ret = cuvid_decode_packet(avctx, avpkt);
-        if (ret < 0)
-            return ret;
-    }
-
-    ret = cuvid_output_frame(avctx, frame);
-    if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-        *got_frame = 0;
-    } else if (ret < 0) {
-        return ret;
-    } else {
-        *got_frame = 1;
-    }
-
-    return 0;
-}
-
 static av_cold int cuvid_decode_end(AVCodecContext *avctx)
 {
     CuvidContext *ctx = avctx->priv_data;
+    AVHWDeviceContext *device_ctx = (AVHWDeviceContext *)ctx->hwdevice->data;
+    AVCUDADeviceContext *device_hwctx = device_ctx->hwctx;
+    CUcontext dummy, cuda_ctx = device_hwctx->cuda_ctx;
 
     av_fifo_freep(&ctx->frame_queue);
+
+    ctx->cudl->cuCtxPushCurrent(cuda_ctx);
 
     if (ctx->cuparser)
         ctx->cvdl->cuvidDestroyVideoParser(ctx->cuparser);
 
     if (ctx->cudecoder)
         ctx->cvdl->cuvidDestroyDecoder(ctx->cudecoder);
+
+    ctx->cudl->cuCtxPopCurrent(&dummy);
 
     ctx->cudl = NULL;
 
@@ -983,7 +966,7 @@ static av_cold int cuvid_decode_init(AVCodecContext *avctx)
     }
 
     ctx->cuparseinfo.ulMaxNumDecodeSurfaces = ctx->nb_surfaces;
-    ctx->cuparseinfo.ulMaxDisplayDelay = 4;
+    ctx->cuparseinfo.ulMaxDisplayDelay = (avctx->flags & AV_CODEC_FLAG_LOW_DELAY) ? 0 : 4;
     ctx->cuparseinfo.pUserData = avctx;
     ctx->cuparseinfo.pfnSequenceCallback = cuvid_handle_video_sequence;
     ctx->cuparseinfo.pfnDecodePicture = cuvid_handle_picture_decode;
@@ -1120,7 +1103,7 @@ static const AVCodecHWConfigInternal *const cuvid_hw_configs[] = {
         .option = options, \
         .version = LIBAVUTIL_VERSION_INT, \
     }; \
-    AVCodec ff_##x##_cuvid_decoder = { \
+    const AVCodec ff_##x##_cuvid_decoder = { \
         .name           = #x "_cuvid", \
         .long_name      = NULL_IF_CONFIG_SMALL("Nvidia CUVID " #X " decoder"), \
         .type           = AVMEDIA_TYPE_VIDEO, \
@@ -1129,11 +1112,11 @@ static const AVCodecHWConfigInternal *const cuvid_hw_configs[] = {
         .priv_class     = &x##_cuvid_class, \
         .init           = cuvid_decode_init, \
         .close          = cuvid_decode_end, \
-        .decode         = cuvid_decode_frame, \
         .receive_frame  = cuvid_output_frame, \
         .flush          = cuvid_flush, \
         .bsfs           = bsf_name, \
         .capabilities   = AV_CODEC_CAP_DELAY | AV_CODEC_CAP_AVOID_PROBING | AV_CODEC_CAP_HARDWARE, \
+        .caps_internal  = FF_CODEC_CAP_SETS_FRAME_PROPS, \
         .pix_fmts       = (const enum AVPixelFormat[]){ AV_PIX_FMT_CUDA, \
                                                         AV_PIX_FMT_NV12, \
                                                         AV_PIX_FMT_P010, \

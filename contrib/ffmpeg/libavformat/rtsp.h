@@ -27,6 +27,7 @@
 #include "rtpdec.h"
 #include "network.h"
 #include "httpauth.h"
+#include "internal.h"
 
 #include "libavutil/log.h"
 #include "libavutil/opt.h"
@@ -187,6 +188,11 @@ typedef struct RTSPMessageHeader {
      * Content type header
      */
     char content_type[64];
+
+    /**
+     * SAT>IP com.ses.streamID header
+     */
+    char stream_id[64];
 } RTSPMessageHeader;
 
 /**
@@ -209,6 +215,7 @@ enum RTSPServerType {
     RTSP_SERVER_RTP,  /**< Standards-compliant RTP-server */
     RTSP_SERVER_REAL, /**< Realmedia-style server */
     RTSP_SERVER_WMS,  /**< Windows Media server */
+    RTSP_SERVER_SATIP,/**< SAT>IP server */
     RTSP_SERVER_NB
 };
 
@@ -316,7 +323,7 @@ typedef struct RTSPState {
     /** some MS RTSP streams contain a URL in the SDP that we need to use
      * for all subsequent RTSP requests, rather than the input URI; in
      * other cases, this is a copy of AVFormatContext->filename. */
-    char control_uri[2048];
+    char control_uri[MAX_URL_SIZE];
 
     /** The following are used for parsing raw mpegts in udp */
     //@{
@@ -422,6 +429,7 @@ typedef struct RTSPState {
 #define RTSP_FLAG_RTCP_TO_SOURCE 0x8 /**< Send RTCP packets to the source
                                           address of received packets. */
 #define RTSP_FLAG_PREFER_TCP  0x10   /**< Try RTP via TCP first if possible. */
+#define RTSP_FLAG_SATIP_RAW   0x20   /**< Export SAT>IP stream as raw MPEG-TS */
 
 typedef struct RTSPSource {
     char addr[128]; /**< Source-specific multicast include source IP address (from SDP content) */
@@ -444,7 +452,7 @@ typedef struct RTSPStream {
      * for the selected transport. Only used for TCP. */
     int interleaved_min, interleaved_max;
 
-    char control_url[1024];   /**< url for this stream (from SDP) */
+    char control_url[MAX_URL_SIZE];   /**< url for this stream (from SDP) */
 
     /** The following are used only in SDP, not RTSP */
     //@{

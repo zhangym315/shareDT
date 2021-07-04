@@ -28,6 +28,7 @@
 
 #include "libavutil/buffer.h"
 #include "libavutil/channel_layout.h"
+#include "libavutil/fifo.h"
 #include "libavutil/mathematics.h"
 #include "libavutil/pixfmt.h"
 #include "avcodec.h"
@@ -73,6 +74,15 @@
  * uses ff_thread_report/await_progress().
  */
 #define FF_CODEC_CAP_ALLOCATE_PROGRESS      (1 << 6)
+/**
+ * Codec handles avctx->thread_count == 0 (auto) internally.
+ */
+#define FF_CODEC_CAP_AUTO_THREADS           (1 << 7)
+/**
+ * Codec handles output frame properties internally instead of letting the
+ * internal logic derive them from AVCodecInternal.last_pkt_props.
+ */
+#define FF_CODEC_CAP_SETS_FRAME_PROPS       (1 << 8)
 
 /**
  * AVCodec.codec_tags termination value
@@ -131,8 +141,6 @@ typedef struct AVCodecInternal {
      */
     int last_audio_frame;
 
-    AVFrame *to_free;
-
     AVBufferRef *pool;
 
     void *thread_ctx;
@@ -145,8 +153,7 @@ typedef struct AVCodecInternal {
      * for decoding.
      */
     AVPacket *last_pkt_props;
-    AVPacketList *pkt_props;
-    AVPacketList *pkt_props_tail;
+    AVFifoBuffer *pkt_props;
 
     /**
      * temporary buffer used for encoders to store their bitstream
@@ -157,6 +164,12 @@ typedef struct AVCodecInternal {
     void *frame_thread_encoder;
 
     EncodeSimpleContext es;
+
+    /**
+     * If this is set, then AVCodec->close (if existing) needs to be called
+     * for the parent AVCodecContext.
+     */
+    int needs_close;
 
     /**
      * Number of audio samples to skip at the start of the next decoded frame
@@ -179,15 +192,6 @@ typedef struct AVCodecInternal {
     AVPacket *buffer_pkt;
     AVFrame *buffer_frame;
     int draining_done;
-    int compat_decode_warned;
-    /* this variable is set by the decoder internals to signal to the old
-     * API compat wrappers the amount of data consumed from the last packet */
-    size_t compat_decode_consumed;
-    /* when a partial packet has been consumed, this stores the remaining size
-     * of the packet (that should be submitted in the next decode call */
-    size_t compat_decode_partial_size;
-    AVFrame *compat_decode_frame;
-    AVPacket *compat_encode_packet;
 
     int showed_multi_packet_warning;
 
@@ -228,34 +232,6 @@ void ff_color_frame(AVFrame *frame, const int color[4]);
  * addressable by a 32-bit signed integer as used by get_bits.
  */
 #define FF_MAX_EXTRADATA_SIZE ((1 << 28) - AV_INPUT_BUFFER_PADDING_SIZE)
-
-/**
- * Check AVPacket size and/or allocate data.
- *
- * Encoders supporting AVCodec.encode2() can use this as a convenience to
- * ensure the output packet data is large enough, whether provided by the user
- * or allocated in this function.
- *
- * @param avctx   the AVCodecContext of the encoder
- * @param avpkt   the AVPacket
- *                If avpkt->data is already set, avpkt->size is checked
- *                to ensure it is large enough.
- *                If avpkt->data is NULL, a new buffer is allocated.
- *                avpkt->size is set to the specified size.
- *                All other AVPacket fields will be reset with av_init_packet().
- * @param size    the minimum required packet size
- * @param min_size This is a hint to the allocation algorithm, which indicates
- *                to what minimal size the caller might later shrink the packet
- *                to. Encoders often allocate packets which are larger than the
- *                amount of data that is written into them as the exact amount is
- *                not known at the time of allocation. min_size represents the
- *                size a packet might be shrunk to by the caller. Can be set to
- *                0. setting this roughly correctly allows the allocation code
- *                to choose between several allocation strategies to improve
- *                speed slightly.
- * @return        non negative on success, negative error code on failure
- */
-int ff_alloc_packet2(AVCodecContext *avctx, AVPacket *avpkt, int64_t size, int64_t min_size);
 
 /**
  * Rescale from sample rate to AVCodecContext.time_base.
@@ -305,13 +281,6 @@ int ff_reget_buffer(AVCodecContext *avctx, AVFrame *frame, int flags);
 int ff_thread_can_start_frame(AVCodecContext *avctx);
 
 int avpriv_h264_has_num_reorder_frames(AVCodecContext *avctx);
-
-/**
- * Call avcodec_open2 recursively by decrementing counter, unlocking mutex,
- * calling the function and then restoring again. Assumes the mutex is
- * already locked
- */
-int ff_codec_open2_recursive(AVCodecContext *avctx, const AVCodec *codec, AVDictionary **options);
 
 const uint8_t *avpriv_find_start_code(const uint8_t *p,
                                       const uint8_t *end,

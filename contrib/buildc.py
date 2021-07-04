@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 #
 # build-contrib.py -- build script for contrib
-
 import sys
 import os
 import multiprocessing
@@ -16,59 +15,158 @@ PWD=os.getcwd() + "/"
 INS="/build/install/"
 BLD="/build/"
 DONE_FILE="/.INSTALLED_DONE"
-cpuCount=multiprocessing.cpu_count()
+cpuCount = multiprocessing.cpu_count()
+cpuToBuild = str(cpuCount-2 if (cpuCount > 3) else cpuCount)
+
+#"""Check whether `name` is on PATH and marked as executable."""
+def is_tool(name):
+    # from whichcraft import which
+    from shutil import which
+    return which(name) is not None
+
+def execute_qt(k):
+    pathBLD = PWD + component[0]
+
+    if not os.path.isdir(pathBLD):
+        os.makedirs(pathBLD)
+    os.chdir(pathBLD)
+
+    if not os.path.exists('.git'):
+        os.mkdir('.git')
+
+    ret=-1
+    if k.lower() == "linux":
+        ret=os.system('./configure -static -release -prefix ./static-build -xcb-xlib -xcb -recheck-all -nomake examples -nomake tests -skip qtwebengine -confirm-license -opensource')
+    elif k.lower() == "darwin":
+        ret=os.system('./configure -static -release -prefix ./static-build -recheck-all -nomake examples -nomake tests -skip qtwebengine -confirm-license -opensource ')
+    elif k.lower() == "windows":
+        ret=os.system('configure -static -release -prefix ./static-build -recheck-all -nomake examples -nomake tests -skip qtwebengine -confirm-license -opensource')
+    else:
+        print("NO specific platform")
+
+    if ret != 0:
+       return 1
+
+    if k.lower() == "windows":
+        ret=os.system('nmake')
+    else:
+        ret=os.system('make -j6')
+    if ret != 0:
+        return 1
+
+    if k.lower() == "windows":
+        ret=os.system('nmake install')
+    else:
+        ret=os.system('make install')
+    if ret != 0:
+        return 1
+    open(PWD + component[0] + DONE_FILE, 'w')
 
 def buildWindowsOpenssl():
     pathINS = PWD + component[0] + INS
     pathBLD = PWD + component[0]
+
     if not os.path.isdir(pathBLD):
         os.makedirs(pathBLD)
     os.chdir(pathBLD)
-    print("change to:" + pathBLD)
-    ret=os.system('perl Configure VC-WIN64A no-asm --release --prefix=' + pathINS + ' --openssldir=' + pathINS)
+
+    ret=os.system('perl Configure VC-WIN64A no-asm no-shared -static --release --prefix=' + pathINS + ' --openssldir=' + pathINS)
     if ret != 0:
-        sys.exit(1)
+        return 1
+
     ret=os.system('nmake')
     if ret != 0:
-        sys.exit(1)
+        return 1
+
     ret=os.system('nmake install')
     if ret != 0:
-        sys.exit(1)
+        return 1
     open(PWD + component[0] + DONE_FILE, 'w')
 
 def buildBZip2():
     pathINS = PWD + component[0] + INS
     pathBLD = PWD + component[0]
-    print("Change to: " + pathBLD)
+
     os.chdir(pathBLD)
 
-    ret=os.system('make -j 2')
+    ret=os.system('make -j ' + cpuToBuild)
     if ret != 0:
-        sys.exit(1)
+        return 1
 
     ret=os.system('make install PREFIX=' + pathINS)
     if ret != 0:
-        sys.exit(1)
+        return 1
     open(PWD + component[0] + DONE_FILE, 'w')
+
+# specific to build on windows msys, for ffmpeg, liblzma and liblzma
+def buildOnWinMSYS(component):
+    pathINS = PWD + component[0] + INS
+    pathBLD = PWD + component[0]
+
+    if not os.path.isdir(pathINS):
+        os.makedirs(pathINS)
+    os.chdir(pathBLD)
+
+    if component[0] == "ffmpeg":
+        print('Running ffmpeg configure, this may take several mins, please wait...')
+        cmd = 'unset CL && ./' + component[1] +' --toolchain=msvc --enable-swscale --enable-asm --enable-yasm --target-os=win64 --arch=x86_64 --disable-shared  --disable-avdevice  --disable-doc  --disable-ffplay  --disable-ffprobe  --disable-ffmpeg  --enable-w32threads --disable-amf --disable-ffnvcodec --disable-mediafoundation --prefix="' + pathINS +'"'
+
+        ret = os.system(cmd)
+        if ret != 0:
+            return 1
+    else:
+        os.system('pwd')
+        cmd = './' + component[1] +'  --prefix=' + pathINS
+        print ("running: " + cmd)
+        ret=os.system(cmd)
+        if ret != 0:
+            return 1
+
+    MakeCMD = 'make -j ' + cpuToBuild
+    print("Running CMD: " + MakeCMD)
+    ret=os.system(MakeCMD)
+
+    if ret != 0:
+        return 1
+    ret=os.system('make install')
+
+    if ret != 0:
+        return 1
+    open(PWD + component[0] + DONE_FILE, 'w')
+
+    return
 
 def buildAndInstall(kernel, component):
     if os.path.exists(PWD + component[0] + DONE_FILE):
         print('Built ' + component[0])
         return
 
-    print('Building ' + component[0])
+    print('Building ' + component[0] + ' at platform ' + kernel)
 
-    if kernel == "windows":
-        if component[0] == "openssl":
-            buildWindowsOpenssl()
-            return
-        if component[0] == "liblzma" or component[0] == "ffmpeg" or component[0] == "ffmpeg":
-            print('Please switch cgwin to build ' + component[0])
-            sys.exit(1)
+    ### build special component first
+    if component[0] == "qt515":
+        return execute_qt(kernel)
     if component[0] == "bzip2":
-        buildBZip2()
-        return
+        return buildBZip2()
 
+    ## windows build component
+    if kernel == "windows" or kernel.startswith("cygwin") or kernel.startswith("msys"):
+        if component[0] == "openssl":
+            return buildWindowsOpenssl()
+
+        if component[0] == "liblzma" or component[0] == "ffmpeg":
+            if (kernel.startswith("msys")):
+                return buildOnWinMSYS(component=component)
+            else:
+                if os.path.exists('C:\msys64\msys2_shell.cmd'):
+                    print('Switching to msys to build windows special component ' + component[0])
+                    os.system('C:\msys64\msys2_shell.cmd -msys -use-full-path -here -c ./buildc.py')
+                else:
+                    print("Cannot find msys64 to build" + component[0] + ", please refer to README.md to setup the environment.")
+                    print('Please switch msys to build ' + component[0])
+                return 2 ### switching msys64 to build
+
+    ## Normal cmake build
     if component[1] == "CMAKE" :
         pathINS = PWD + component[0] + INS
         pathBLD = PWD + component[0] + BLD
@@ -81,11 +179,12 @@ def buildAndInstall(kernel, component):
             ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../')
 
         if ret != 0:
-            sys.exit(1)
+            return 1
 
         ret=os.system('cmake --build . --target install --config Release')
         if ret != 0:
-            sys.exit(1)
+            return 1
+    ## normal Makefile build
     else:
         pathINS = PWD + component[0] + INS
         pathBLD = PWD + component[0]
@@ -96,16 +195,16 @@ def buildAndInstall(kernel, component):
 
         ret=os.system( './' + component[1] + ' --prefix=' + pathINS)
         if ret != 0:
-            sys.exit(1)
+            return 1
 
-        MakeCMD = 'make -j ' + str(cpuCount-2 if (cpuCount > 3) else cpuCount)
+        MakeCMD = 'make -j ' + cpuToBuild
         print("Running CMD: " + MakeCMD)
         ret=os.system(MakeCMD)
         if ret != 0:
-            sys.exit(1)
+            return 1
         ret=os.system('make install')
         if ret != 0:
-            sys.exit(1)
+            return 1
     open(PWD + component[0] + DONE_FILE, 'w')
 
 
@@ -117,7 +216,7 @@ def normalize_kernel(k):
     for onek in [ "Linux", "FreeBSD", "OpenBSD", "SunOS", "Darwin", "AIX", "windows", "HP-UX" ]:
         if k.lower() == onek.lower():
             return onek
-    return k
+    return k.lower()
 
 if build64 is None:
     # Assume that we want a 64-bit build unless --32 was specifically passed in.
@@ -150,16 +249,25 @@ else:
         return v.rstrip('\n')
     kernel = normalize_kernel(backtick("uname -s"))
 
-components = [["SDL2-2.0.12", "CMAKE"], ["libjpeg-turbo-2.0.5", "CMAKE"], ["zlib", "CMAKE"],\
-              ["libpng-1.6.37", "CMAKE"], ["lzo-2.10", "CMAKE"], ["x265_3.3/source/", "CMAKE"],\
+components = [["SDL2-2.0.12", "CMAKE"],
+              ["libjpeg-turbo-2.0.5", "CMAKE"],
+              ["zlib", "CMAKE"],\
+              ["libpng-1.6.37", "CMAKE"],
+              ["lzo-2.10", "CMAKE"],
+              ["x265_3.3/source/", "CMAKE"],\
               ["openssl", "Configure"],\
+              ["qt515", "configure"],\
+              ["ffmpeg", "configure --disable-iconv"],\
               ["liblzma", "configure"],\
-              ["ffmpeg", "configure  --disable-iconv --disable-x86asm"],\
               ["bzip2", "configure"]\
               ]
 
 for component in components :
-    buildAndInstall(kernel, component)
+    buildRet=buildAndInstall(kernel, component)
+    if buildRet == 1 or buildRet == 2:
+        if buildRet == 1:
+            print("Failed to build " + component[0])
+        break
 
-
-
+if (kernel.startswith("msys")):
+    os.system("bash")  ## start bash to avoid exit automatically

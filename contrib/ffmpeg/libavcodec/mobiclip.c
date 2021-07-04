@@ -1,5 +1,6 @@
 /*
  * MobiClip Video decoder
+ * Copyright (c) 2015-2016 Florian Nouwt
  * Copyright (c) 2017 Adib Surani
  * Copyright (c) 2020 Paul B Mahol
  *
@@ -23,6 +24,7 @@
 #include <inttypes.h>
 
 #include "libavutil/avassert.h"
+#include "libavutil/thread.h"
 
 #include "avcodec.h"
 #include "bytestream.h"
@@ -128,19 +130,6 @@ static const uint8_t bits0[] = {
      6,  6,  6,  6,  6,  6,  5,  5,  5,  4,  2,  3,  4,  4,
 };
 
-static const uint8_t codes0[] = {
-    0x0, 0x4, 0x5, 0x6, 0x7, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA,
-    0xB, 0xC, 0xD, 0xE, 0xF, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25,
-    0x26, 0x27, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
-    0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x3, 0x20,
-    0x21, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
-    0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23,
-    0x24, 0x25, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A,
-    0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x10, 0x11, 0x12, 0x13, 0x14,
-    0x15, 0x16, 0x17, 0xC, 0xD, 0xE, 0xF, 0x10, 0x11, 0x12,
-    0x13, 0x14, 0x15, 0xB, 0xC, 0xD, 0x7, 0x2, 0x6, 0xE, 0xF,
-};
-
 static const uint16_t syms0[] = {
     0x0, 0x822, 0x803, 0xB, 0xA, 0xB81, 0xB61, 0xB41, 0xB21, 0x122,
     0x102, 0xE2, 0xC2, 0xA2, 0x63, 0x43, 0x24, 0xC, 0x25, 0x2E1, 0x301,
@@ -170,124 +159,84 @@ static const uint8_t mv_len[16] =
     10, 8, 8, 7, 8, 8, 8, 7, 8, 8, 8, 7, 7, 7, 7, 6,
 };
 
-static const uint8_t mv_bits[16][10] =
+static const uint8_t mv_bits[2][16][10] =
 {
-    { 1, 3, 3, 4, 4, 5, 5, 5, 6, 6 },
-    { 2, 2, 3, 3, 3, 4, 5, 5 },
-    { 2, 2, 3, 3, 4, 4, 4, 4 },
-    { 1, 3, 3, 4, 4, 4, 4 },
-    { 2, 2, 3, 3, 3, 4, 5, 5 },
-    { 2, 3, 3, 3, 3, 3, 4, 4 },
-    { 1, 3, 3, 4, 4, 4, 5, 5 },
-    { 1, 3, 3, 4, 4, 4, 4 },
-    { 2, 2, 3, 3, 4, 4, 4, 4 },
-    { 1, 3, 3, 4, 4, 4, 5, 5 },
-    { 2, 2, 3, 3, 4, 4, 4, 4 },
-    { 2, 2, 3, 3, 3, 4, 4 },
-    { 1, 3, 3, 4, 4, 4, 4 },
-    { 1, 3, 3, 4, 4, 4, 4 },
-    { 2, 2, 3, 3, 3, 4, 4 },
-    { 2, 2, 3, 3, 3, 3 },
+    {
+        { 2, 3, 3, 5, 5, 4, 4, 5, 5, 2 },
+        { 2, 3, 4, 4, 3, 4, 4, 2 },
+        { 3, 4, 4, 2, 4, 4, 3, 2 },
+        { 1, 3, 4, 5, 5, 3, 3 },
+        { 2, 4, 4, 3, 3, 4, 4, 2 },
+        { 2, 3, 4, 4, 4, 4, 3, 2 },
+        { 2, 3, 4, 4, 4, 4, 3, 2 },
+        { 2, 2, 3, 4, 5, 5, 2 },
+        { 2, 3, 4, 4, 3, 4, 4, 2 },
+        { 2, 4, 4, 3, 4, 4, 3, 2 },
+        { 2, 3, 3, 5, 5, 4, 3, 2 },
+        { 2, 3, 4, 4, 3, 3, 2 },
+        { 1, 4, 4, 3, 3, 4, 4 },
+        { 2, 3, 4, 4, 3, 3, 2 },
+        { 2, 3, 4, 4, 3, 3, 2 },
+        { 3, 3, 2, 2, 3, 3 },
+    },
+    {
+        { 3, 4, 5, 5, 3, 5, 6, 6, 4, 1 },
+        { 2, 3, 4, 5, 5, 2, 3, 3 },
+        { 2, 4, 4, 3, 3, 4, 4, 2 },
+        { 1, 4, 4, 3, 4, 4, 3 },
+        { 3, 3, 2, 4, 5, 5, 3, 2 },
+        { 3, 4, 4, 3, 3, 3, 3, 2 },
+        { 1, 3, 3, 4, 4, 4, 5, 5 },
+        { 1, 4, 4, 3, 3, 4, 4 },
+        { 2, 4, 4, 3, 3, 4, 4, 2 },
+        { 1, 3, 3, 4, 4, 4, 5, 5 },
+        { 2, 3, 4, 4, 4, 4, 3, 2 },
+        { 2, 3, 3, 4, 4, 3, 2 },
+        { 1, 4, 4, 3, 3, 4, 4 },
+        { 1, 4, 4, 3, 3, 4, 4 },
+        { 2, 3, 3, 4, 4, 3, 2 },
+        { 2, 3, 3, 3, 3, 2 },
+    }
 };
 
-static const uint8_t mv_codes[16][10] =
+static const uint8_t mv_syms[2][16][10] =
 {
-    { 1, 0, 2, 2, 7, 6, 7, 12, 26, 27 },
-    { 0, 2, 2, 6, 7, 6, 14, 15 },
-    { 0, 3, 3, 4, 4, 5, 10, 11 },
-    { 0, 5, 7, 8, 9, 12, 13 },
-    { 1, 3, 0, 1, 5, 8, 18, 19 },
-    { 3, 0, 2, 3, 4, 5, 2, 3 },
-    { 0, 4, 5, 12, 13, 14, 30, 31 },
-    { 0, 5, 6, 8, 9, 14, 15 },
-    { 0, 3, 3, 4, 4, 5, 10, 11 },
-    { 0, 4, 5, 12, 13, 14, 30, 31 },
-    { 0, 3, 2, 5, 6, 7, 8, 9 },
-    { 0, 3, 2, 3, 5, 8, 9 },
-    { 0, 5, 6, 8, 9, 14, 15 },
-    { 0, 5, 6, 8, 9, 14, 15 },
-    { 0, 3, 2, 3, 5, 8, 9 },
-    { 0, 3, 2, 3, 4, 5 },
-};
-
-static const uint8_t mv_syms[16][10] =
-{
-    { 0, 8, 1, 2, 9, 3, 6, 7, 5, 4 },
-    { 9, 1, 2, 8, 0, 3, 5, 4 },
-    { 0, 1, 2, 9, 5, 4, 3, 8 },
-    { 1, 2, 0, 5, 4, 8, 3 },
-    { 8, 1, 2, 9, 0, 3, 5, 4 },
-    { 1, 3, 2, 9, 8, 0, 5, 4 },
-    { 1, 2, 0, 9, 8, 3, 5, 4 },
-    { 1, 2, 0, 8, 5, 4, 3 },
-    { 0, 1, 2, 8, 5, 4, 3, 9 },
-    { 1, 2, 0, 9, 8, 3, 5, 4 },
-    { 0, 1, 3, 2, 9, 8, 5, 4 },
-    { 0, 1, 4, 3, 2, 8, 5 },
-    { 1, 2, 0, 5, 4, 9, 3 },
-    { 1, 2, 0, 9, 5, 4, 3 },
-    { 0, 1, 5, 3, 2, 9, 4 },
-    { 0, 1, 4, 5, 3, 2 },
-};
-
-static const uint8_t mv_bits_mods[16][10] =
-{
-    { 2, 2, 3, 3, 4, 4, 5, 5, 5, 5 },
-    { 2, 2, 3, 3, 4, 4, 4, 4 },
-    { 2, 2, 3, 3, 4, 4, 4, 4 },
-    { 1, 3, 3, 3, 4, 5, 5 },
-    { 2, 2, 3, 3, 4, 4, 4, 4 },
-    { 2, 2, 3, 3, 4, 4, 4, 4 },
-    { 2, 2, 3, 3, 4, 4, 4, 4 },
-    { 2, 2, 2, 3, 4, 5, 5 },
-    { 2, 2, 3, 3, 4, 4, 4, 4 },
-    { 2, 2, 3, 3, 4, 4, 4, 4 },
-    { 2, 2, 3, 3, 3, 4, 5, 5 },
-    { 2, 2, 3, 3, 3, 4, 4 },
-    { 1, 3, 3, 4, 4, 4, 4 },
-    { 2, 2, 3, 3, 3, 4, 4 },
-    { 2, 2, 3, 3, 3, 4, 4 },
-    { 2, 2, 3, 3, 3, 3 },
-};
-
-static const uint8_t mv_codes_mods[16][10] =
-{
-    { 0, 3, 2, 3, 9, 10, 16, 17, 22, 23 },
-    { 0, 3, 2, 4, 6, 7, 10, 11 },
-    { 1, 3, 0, 5, 2, 3, 8, 9 },
-    { 0, 4, 6, 7, 10, 22, 23 },
-    { 0, 3, 3, 4, 4, 5, 10, 11 },
-    { 0, 3, 2, 5, 6, 7, 8, 9 },
-    { 0, 3, 2, 5, 6, 7, 8, 9 },
-    { 0, 1, 3, 4, 10, 22, 23 },
-    { 0, 3, 2, 4, 6, 7, 10, 11 },
-    { 0, 3, 3, 5, 4, 5, 8, 9 },
-    { 0, 3, 2, 3, 5, 9, 16, 17 },
-    { 0, 3, 2, 4, 5, 6, 7 },
-    { 0, 5, 6, 8, 9, 14, 15 },
-    { 0, 3, 2, 4, 5, 6, 7 },
-    { 0, 3, 2, 4, 5, 6, 7 },
-    { 1, 2, 0, 1, 6, 7 },
-};
-
-static const uint8_t mv_syms_mods[16][10] =
-{
-    { 1, 0, 8, 9, 2, 7, 4, 3, 5, 6 },
-    { 0, 1, 9, 2, 5, 4, 3, 8 },
-    { 0, 1, 3, 2, 9, 5, 4, 8 },
-    { 1, 3, 2, 0, 4, 8, 5 },
-    { 0, 1, 8, 2, 5, 4, 3, 9 },
-    { 0, 1, 3, 2, 5, 9, 4, 8 },
-    { 0, 1, 3, 2, 9, 5, 8, 4 },
-    { 0, 2, 1, 3, 4, 8, 5 },
-    { 0, 1, 3, 2, 8, 4, 5, 9 },
-    { 2, 1, 3, 0, 8, 9, 5, 4 },
-    { 0, 1, 4, 3, 2, 5, 8, 9 },
-    { 0, 1, 4, 3, 2, 8, 5 },
-    { 1, 2, 0, 9, 4, 5, 3 },
-    { 2, 1, 4, 3, 0, 9, 5 },
-    { 0, 1, 4, 3, 2, 9, 5 },
-    { 1, 0, 5, 4, 3, 2 },
+    {
+        { 1, 8, 9, 4, 3, 2, 7, 5, 6, 0 },
+        { 0, 9, 5, 4, 2, 3, 8, 1 },
+        { 3, 9, 5, 0, 4, 8, 2, 1 },
+        { 1, 3, 4, 8, 5, 2, 0 },
+        { 0, 5, 4, 8, 2, 3, 9, 1 },
+        { 0, 3, 5, 9, 4, 8, 2, 1 },
+        { 0, 3, 9, 5, 8, 4, 2, 1 },
+        { 0, 2, 3, 4, 8, 5, 1 },
+        { 0, 3, 8, 4, 2, 5, 9, 1 },
+        { 2, 8, 9, 3, 5, 4, 0, 1 },
+        { 0, 4, 3, 8, 9, 5, 2, 1 },
+        { 0, 4, 8, 5, 3, 2, 1 },
+        { 1, 9, 4, 2, 0, 5, 3 },
+        { 2, 4, 9, 5, 3, 0, 1 },
+        { 0, 4, 9, 5, 3, 2, 1 },
+        { 5, 4, 1, 0, 3, 2 },
+    },
+    {
+        { 8, 2, 3, 6, 1, 7, 5, 4, 9, 0 },
+        { 9, 2, 3, 5, 4, 1, 8, 0 },
+        { 0, 5, 4, 2, 9, 3, 8, 1 },
+        { 1, 5, 4, 2, 8, 3, 0 },
+        { 2, 9, 8, 3, 5, 4, 0, 1 },
+        { 3, 5, 4, 2, 9, 8, 0, 1 },
+        { 1, 2, 0, 9, 8, 3, 5, 4 },
+        { 1, 8, 5, 2, 0, 4, 3 },
+        { 0, 5, 4, 2, 8, 3, 9, 1 },
+        { 1, 2, 0, 9, 8, 3, 5, 4 },
+        { 0, 3, 9, 8, 5, 4, 2, 1 },
+        { 0, 4, 3, 8, 5, 2, 1 },
+        { 1, 5, 4, 2, 0, 9, 3 },
+        { 1, 9, 5, 2, 0, 4, 3 },
+        { 0, 5, 3, 9, 4, 2, 1 },
+        { 0, 4, 5, 3, 2, 1 },
+    }
 };
 
 typedef struct BlockXY {
@@ -327,8 +276,32 @@ typedef struct MobiClipContext {
 static VLC rl_vlc[2];
 static VLC mv_vlc[2][16];
 
+static av_cold void mobiclip_init_static(void)
+{
+    INIT_VLC_STATIC_FROM_LENGTHS(&rl_vlc[0], MOBI_RL_VLC_BITS, 104,
+                                 bits0, sizeof(*bits0),
+                                 syms0, sizeof(*syms0), sizeof(*syms0),
+                                 0, 0, 1 << MOBI_RL_VLC_BITS);
+    INIT_VLC_STATIC_FROM_LENGTHS(&rl_vlc[1], MOBI_RL_VLC_BITS, 104,
+                                 bits0, sizeof(*bits0),
+                                 syms1, sizeof(*syms1), sizeof(*syms1),
+                                 0, 0, 1 << MOBI_RL_VLC_BITS);
+    for (int i = 0; i < 2; i++) {
+        static VLC_TYPE vlc_buf[2 * 16 << MOBI_MV_VLC_BITS][2];
+        for (int j = 0; j < 16; j++) {
+            mv_vlc[i][j].table           = &vlc_buf[(16 * i + j) << MOBI_MV_VLC_BITS];
+            mv_vlc[i][j].table_allocated = 1 << MOBI_MV_VLC_BITS;
+            ff_init_vlc_from_lengths(&mv_vlc[i][j], MOBI_MV_VLC_BITS, mv_len[j],
+                                     mv_bits[i][j], sizeof(*mv_bits[i][j]),
+                                     mv_syms[i][j], sizeof(*mv_syms[i][j]), sizeof(*mv_syms[i][j]),
+                                     0, INIT_VLC_USE_NEW_STATIC, NULL);
+        }
+    }
+}
+
 static av_cold int mobiclip_init(AVCodecContext *avctx)
 {
+    static AVOnce init_static_once = AV_ONCE_INIT;
     MobiClipContext *s = avctx->priv_data;
 
     if (avctx->width & 15 || avctx->height & 15) {
@@ -351,31 +324,7 @@ static av_cold int mobiclip_init(AVCodecContext *avctx)
             return AVERROR(ENOMEM);
     }
 
-    INIT_VLC_SPARSE_STATIC(&rl_vlc[0], MOBI_RL_VLC_BITS, 104,
-                           bits0,  sizeof(*bits0),  sizeof(*bits0),
-                           codes0, sizeof(*codes0), sizeof(*codes0),
-                           syms0,  sizeof(*syms0),  sizeof(*syms0),
-                           1 << MOBI_RL_VLC_BITS);
-    INIT_VLC_SPARSE_STATIC(&rl_vlc[1], MOBI_RL_VLC_BITS, 104,
-                           bits0,  sizeof(*bits0),  sizeof(*bits0),
-                           codes0, sizeof(*codes0), sizeof(*codes0),
-                           syms1,  sizeof(*syms1),  sizeof(*syms1),
-                           1 << MOBI_RL_VLC_BITS);
-    for (int j = 0; j < 16; j++) {
-        static VLC_TYPE vlc_buf[2 * 16 << MOBI_MV_VLC_BITS][2];
-        mv_vlc[0][j].table           = &vlc_buf[2 * j << MOBI_MV_VLC_BITS];
-        mv_vlc[0][j].table_allocated = 1 << MOBI_MV_VLC_BITS;
-        ff_init_vlc_sparse(&mv_vlc[0][j], MOBI_MV_VLC_BITS, mv_len[j],
-                           mv_bits_mods[j],  sizeof(*mv_bits_mods[j]),  sizeof(*mv_bits_mods[j]),
-                           mv_codes_mods[j], sizeof(*mv_codes_mods[j]), sizeof(*mv_codes_mods[j]),
-                           mv_syms_mods[j],  sizeof(*mv_syms_mods[j]),  sizeof(*mv_syms_mods[j]), INIT_VLC_USE_NEW_STATIC);
-        mv_vlc[1][j].table           = &vlc_buf[(2 * j + 1) << MOBI_MV_VLC_BITS];
-        mv_vlc[1][j].table_allocated = 1 << MOBI_MV_VLC_BITS;
-        ff_init_vlc_sparse(&mv_vlc[1][j], MOBI_MV_VLC_BITS, mv_len[j],
-                           mv_bits[j],  sizeof(*mv_bits[j]),  sizeof(*mv_bits[j]),
-                           mv_codes[j], sizeof(*mv_codes[j]), sizeof(*mv_codes[j]),
-                           mv_syms[j],  sizeof(*mv_syms[j]),  sizeof(*mv_syms[j]), INIT_VLC_USE_NEW_STATIC);
-    }
+    ff_thread_once(&init_static_once, mobiclip_init_static);
 
     return 0;
 }
@@ -596,7 +545,7 @@ static uint8_t half(int a, int b)
 
 static uint8_t half3(int a, int b, int c)
 {
-    return ((a + b + b + c) * 2 / 4 + 1) / 2;;
+    return ((a + b + b + c) * 2 / 4 + 1) / 2;
 }
 
 static uint8_t pick_above(BlockXY bxy)
@@ -900,7 +849,7 @@ static int predict_intra(AVCodecContext *avctx, AVFrame *frame, int ax, int ay,
             uint8_t *left = frame->data[plane] + ay * frame->linesize[plane] + FFMAX(ax - 1, 0);
             int bottommost = frame->data[plane][(ay + size - 1) * frame->linesize[plane] + FFMAX(ax - 1, 0)];
             int rightmost = frame->data[plane][FFMAX(ay - 1, 0) * frame->linesize[plane] + ax + size - 1];
-            int avg = (bottommost + rightmost + 1) / 2 + 2 * get_se_golomb(gb);
+            int avg = (bottommost + rightmost + 1) / 2 + 2 * av_clip(get_se_golomb(gb), -(1<<16), 1<<16);
             int r6 = adjust(avg - bottommost, size);
             int r9 = adjust(avg - rightmost, size);
             int shift = adjust(size, size) == 8 ? 3 : 2;
@@ -1143,9 +1092,11 @@ static int predict_motion(AVCodecContext *avctx,
             sidx += 6;
 
         if (index > 0) {
-            mv.x = mv.x + get_se_golomb(gb);
-            mv.y = mv.y + get_se_golomb(gb);
+            mv.x = mv.x + (unsigned)get_se_golomb(gb);
+            mv.y = mv.y + (unsigned)get_se_golomb(gb);
         }
+        if (mv.x >= INT_MAX || mv.y >= INT_MAX)
+            return AVERROR_INVALIDDATA;
 
         motion[offsetm].x = mv.x;
         motion[offsetm].y = mv.y;
@@ -1389,7 +1340,7 @@ static av_cold int mobiclip_close(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec ff_mobiclip_decoder = {
+const AVCodec ff_mobiclip_decoder = {
     .name           = "mobiclip",
     .long_name      = NULL_IF_CONFIG_SMALL("MobiClip Video"),
     .type           = AVMEDIA_TYPE_VIDEO,
@@ -1400,5 +1351,5 @@ AVCodec ff_mobiclip_decoder = {
     .flush          = mobiclip_flush,
     .close          = mobiclip_close,
     .capabilities   = AV_CODEC_CAP_DR1,
-    .caps_internal  = FF_CODEC_CAP_INIT_CLEANUP,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
 };

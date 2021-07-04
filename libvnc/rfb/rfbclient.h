@@ -447,6 +447,13 @@ typedef struct _rfbClient {
 
 #endif
 #endif
+
+    /*
+     * Customized options started
+     */
+    void * _si;
+    void * _fetcher;
+    uint64_t _sequence;
 } rfbClient;
 
 /* cursor.c */

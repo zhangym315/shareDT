@@ -139,8 +139,8 @@ static int name##_##nbits(AVFilterContext *ctx, void *arg, int jobnr, int nb_job
     }                                                                                                 \
     return 0;                                                                                         \
 }
-DEF_UNSHARP_SLICE_FUNC(unsharp_slice, 16);
-DEF_UNSHARP_SLICE_FUNC(unsharp_slice, 8);
+DEF_UNSHARP_SLICE_FUNC(unsharp_slice, 16)
+DEF_UNSHARP_SLICE_FUNC(unsharp_slice, 8)
 
 static int apply_unsharp_c(AVFilterContext *ctx, AVFrame *in, AVFrame *out)
 {
@@ -356,7 +356,7 @@ static const AVFilterPad avfilter_vf_unsharp_outputs[] = {
     { NULL }
 };
 
-AVFilter ff_vf_unsharp = {
+const AVFilter ff_vf_unsharp = {
     .name          = "unsharp",
     .description   = NULL_IF_CONFIG_SMALL("Sharpen or blur the input video."),
     .priv_size     = sizeof(UnsharpContext),

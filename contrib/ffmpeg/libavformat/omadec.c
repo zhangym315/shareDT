@@ -59,6 +59,20 @@ static const uint64_t leaf_table[] = {
     0x1573cd93da7df623, 0x47f98d79620dd535
 };
 
+/** map ATRAC-X channel id to internal channel layout */
+static const uint64_t oma_chid_to_native_layout[7] = {
+    AV_CH_LAYOUT_MONO,
+    AV_CH_LAYOUT_STEREO,
+    AV_CH_LAYOUT_SURROUND,
+    AV_CH_LAYOUT_4POINT0,
+    AV_CH_LAYOUT_5POINT1_BACK,
+    AV_CH_LAYOUT_6POINT1_BACK,
+    AV_CH_LAYOUT_7POINT1
+};
+
+/** map ATRAC-X channel id to total number of channels */
+static const int oma_chid_to_num_channels[7] = { 1, 2, 3, 4, 6, 7, 8 };
+
 typedef struct OMAContext {
     uint64_t content_start;
     int encrypted;
@@ -399,7 +413,7 @@ static int oma_read_header(AVFormatContext *s)
     uint8_t buf[EA3_HEADER_SIZE];
     uint8_t *edata;
     AVStream *st;
-    ID3v2ExtraMeta *extra_meta = NULL;
+    ID3v2ExtraMeta *extra_meta;
     OMAContext *oc = s->priv_data;
 
     ff_id3v2_read(s, ID3v2_EA3_MAGIC, &extra_meta, 0);
@@ -492,8 +506,8 @@ static int oma_read_header(AVFormatContext *s)
             ret = AVERROR_INVALIDDATA;
             goto fail;
         }
-        st->codecpar->channel_layout = ff_oma_chid_to_native_layout[channel_id - 1];
-        st->codecpar->channels       = ff_oma_chid_to_num_channels[channel_id - 1];
+        st->codecpar->channel_layout = oma_chid_to_native_layout[channel_id - 1];
+        st->codecpar->channels       = oma_chid_to_num_channels[channel_id - 1];
         framesize = ((codec_params & 0x3FF) * 8) + 8;
         samplerate = ff_oma_srate_tab[(codec_params >> 13) & 7] * 100;
         if (!samplerate) {
@@ -506,7 +520,7 @@ static int oma_read_header(AVFormatContext *s)
         avpriv_set_pts_info(st, 64, 1, samplerate);
         break;
     case OMA_CODECID_MP3:
-        st->need_parsing = AVSTREAM_PARSE_FULL_RAW;
+        st->internal->need_parsing = AVSTREAM_PARSE_FULL_RAW;
         framesize = 1024;
         break;
     case OMA_CODECID_LPCM:
@@ -610,7 +624,7 @@ wipe:
     return err;
 }
 
-AVInputFormat ff_oma_demuxer = {
+const AVInputFormat ff_oma_demuxer = {
     .name           = "oma",
     .long_name      = NULL_IF_CONFIG_SMALL("Sony OpenMG audio"),
     .priv_data_size = sizeof(OMAContext),
@@ -621,5 +635,5 @@ AVInputFormat ff_oma_demuxer = {
     .read_close     = oma_read_close,
     .flags          = AVFMT_GENERIC_INDEX,
     .extensions     = "oma,omg,aa3",
-    .codec_tag      = (const AVCodecTag* const []){ff_oma_codec_tags, 0},
+    .codec_tag      = ff_oma_codec_tags_list,
 };

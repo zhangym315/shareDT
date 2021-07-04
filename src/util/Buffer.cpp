@@ -83,7 +83,7 @@ void FrameBuffer::setDataPerRow(unsigned char * data, int w, int h, int bytesrow
     _isValid = true;
 }
 
-void FrameBuffer::reSet(const size_t size)
+bool FrameBuffer::reSet(const size_t size)
 {
     /* reset to 0 size */
     if(size == 0)
@@ -91,7 +91,7 @@ void FrameBuffer::reSet(const size_t size)
         if(_data) free(_data);
         _data = nullptr;
         _size = _capacity = 0;
-        return ;
+        return true;
     }
 
     _size = size;
@@ -104,8 +104,12 @@ void FrameBuffer::reSet(const size_t size)
     {
         if(_data) free(_data);
         _data = (unsigned char * ) malloc (size) ;
+        if (_data == nullptr)
+            return false;
         _capacity = size;
     }
+
+    return true;
 }
 
 void FrameBuffer::resetSubData(const size_t size)
@@ -179,4 +183,16 @@ void FrameBuffer::ConvertBGRA2YCrCb420(unsigned char * dst, size_t size)
             *Cr = CRGB2Cr(data[i].R, data[i].G, data[i].B); Cr++;
         }
     }
+}
+
+
+bool FrameBuffer::set (unsigned char *data, uint64_t size)
+{
+    if (!reSet (size))
+        return false;
+
+    memcpy(_data, data, size);
+    _size = size;
+    _isUsed = true;
+    return true;
 }

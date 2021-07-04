@@ -115,6 +115,9 @@ typedef struct BiquadsContext {
     int poles;
     int csg;
     int transform_type;
+    int precision;
+
+    int bypass;
 
     double gain;
     double frequency;
@@ -139,30 +142,20 @@ typedef struct BiquadsContext {
                    int disabled);
 } BiquadsContext;
 
-static av_cold int init(AVFilterContext *ctx)
-{
-    BiquadsContext *s = ctx->priv;
-
-    if (s->filter_type != biquad) {
-        if (s->frequency <= 0 || s->width <= 0) {
-            av_log(ctx, AV_LOG_ERROR, "Invalid frequency %f and/or width %f <= 0\n",
-                   s->frequency, s->width);
-            return AVERROR(EINVAL);
-        }
-    }
-
-    return 0;
-}
-
 static int query_formats(AVFilterContext *ctx)
 {
+    BiquadsContext *s = ctx->priv;
     AVFilterFormats *formats;
     AVFilterChannelLayouts *layouts;
-    static const enum AVSampleFormat sample_fmts[] = {
+    static const enum AVSampleFormat auto_sample_fmts[] = {
         AV_SAMPLE_FMT_S16P,
         AV_SAMPLE_FMT_S32P,
         AV_SAMPLE_FMT_FLTP,
         AV_SAMPLE_FMT_DBLP,
+        AV_SAMPLE_FMT_NONE
+    };
+    enum AVSampleFormat sample_fmts[] = {
+        AV_SAMPLE_FMT_S16P,
         AV_SAMPLE_FMT_NONE
     };
     int ret;
@@ -174,7 +167,27 @@ static int query_formats(AVFilterContext *ctx)
     if (ret < 0)
         return ret;
 
-    formats = ff_make_format_list(sample_fmts);
+    switch (s->precision) {
+    case 0:
+        sample_fmts[0] = AV_SAMPLE_FMT_S16P;
+        formats = ff_make_format_list(sample_fmts);
+        break;
+    case 1:
+        sample_fmts[0] = AV_SAMPLE_FMT_S32P;
+        formats = ff_make_format_list(sample_fmts);
+        break;
+    case 2:
+        sample_fmts[0] = AV_SAMPLE_FMT_FLTP;
+        formats = ff_make_format_list(sample_fmts);
+        break;
+    case 3:
+        sample_fmts[0] = AV_SAMPLE_FMT_DBLP;
+        formats = ff_make_format_list(sample_fmts);
+        break;
+    default:
+        formats = ff_make_format_list(auto_sample_fmts);
+        break;
+    }
     if (!formats)
         return AVERROR(ENOMEM);
     ret = ff_set_common_formats(ctx, formats);
@@ -388,16 +401,14 @@ static void biquad_latt_## name (BiquadsContext *s,                           \
         in   = ibuf[i];                                                       \
         t0   = in - k1 * s0;                                                  \
         t1   = t0 * k1 + s0;                                                  \
-        s0   = t1;                                                            \
         out += t1 * v2;                                                       \
                                                                               \
         t0    = t0 - k0 * s1;                                                 \
         t1    = t0 * k0 + s1;                                                 \
         out  += t1 * v1;                                                      \
-        s1    = t1;                                                           \
                                                                               \
         out  += t0 * v0;                                                      \
-        s0    = s1;                                                           \
+        s0    = t1;                                                           \
         s1    = t0;                                                           \
                                                                               \
         out = out * wet + in * dry;                                           \
@@ -449,12 +460,14 @@ static int config_filter(AVFilterLink *outlink, int reset)
     double K = tan(w0 / 2.);
     double alpha, beta;
 
-    if (w0 > M_PI) {
-        av_log(ctx, AV_LOG_ERROR,
-               "Invalid frequency %f. Frequency must be less than half the sample-rate %d.\n",
-               s->frequency, inlink->sample_rate);
-        return AVERROR(EINVAL);
+    s->bypass = (((w0 > M_PI || w0 <= 0.) && reset) || (s->width <= 0.)) && (s->filter_type != biquad);
+    if (s->bypass) {
+        av_log(ctx, AV_LOG_WARNING, "Invalid frequency and/or width!\n");
+        return 0;
     }
+
+    if ((w0 > M_PI || w0 <= 0.) && (s->filter_type != biquad))
+        return AVERROR(EINVAL);
 
     switch (s->width_type) {
     case NONE:
@@ -501,22 +514,54 @@ static int config_filter(AVFilterLink *outlink, int reset)
     case bass:
         beta = sqrt((A * A + 1) - (A - 1) * (A - 1));
     case lowshelf:
-        s->a0 =          (A + 1) + (A - 1) * cos(w0) + beta * alpha;
-        s->a1 =    -2 * ((A - 1) + (A + 1) * cos(w0));
-        s->a2 =          (A + 1) + (A - 1) * cos(w0) - beta * alpha;
-        s->b0 =     A * ((A + 1) - (A - 1) * cos(w0) + beta * alpha);
-        s->b1 = 2 * A * ((A - 1) - (A + 1) * cos(w0));
-        s->b2 =     A * ((A + 1) - (A - 1) * cos(w0) - beta * alpha);
+        if (s->poles == 1) {
+            double A = ff_exp10(s->gain / 20);
+            double ro = -sin(w0 / 2. - M_PI_4) / sin(w0 / 2. + M_PI_4);
+            double n = (A + 1) / (A - 1);
+            double alpha1 = A == 1. ? 0. : n - FFSIGN(n) * sqrt(n * n - 1);
+            double beta0 = ((1 + A) + (1 - A) * alpha1) * 0.5;
+            double beta1 = ((1 - A) + (1 + A) * alpha1) * 0.5;
+
+            s->a0 = 1 + ro * alpha1;
+            s->a1 = -ro - alpha1;
+            s->a2 = 0;
+            s->b0 = beta0 + ro * beta1;
+            s->b1 = -beta1 - ro * beta0;
+            s->b2 = 0;
+        } else {
+            s->a0 =          (A + 1) + (A - 1) * cos(w0) + beta * alpha;
+            s->a1 =    -2 * ((A - 1) + (A + 1) * cos(w0));
+            s->a2 =          (A + 1) + (A - 1) * cos(w0) - beta * alpha;
+            s->b0 =     A * ((A + 1) - (A - 1) * cos(w0) + beta * alpha);
+            s->b1 = 2 * A * ((A - 1) - (A + 1) * cos(w0));
+            s->b2 =     A * ((A + 1) - (A - 1) * cos(w0) - beta * alpha);
+        }
         break;
     case treble:
         beta = sqrt((A * A + 1) - (A - 1) * (A - 1));
     case highshelf:
-        s->a0 =          (A + 1) - (A - 1) * cos(w0) + beta * alpha;
-        s->a1 =     2 * ((A - 1) - (A + 1) * cos(w0));
-        s->a2 =          (A + 1) - (A - 1) * cos(w0) - beta * alpha;
-        s->b0 =     A * ((A + 1) + (A - 1) * cos(w0) + beta * alpha);
-        s->b1 =-2 * A * ((A - 1) + (A + 1) * cos(w0));
-        s->b2 =     A * ((A + 1) + (A - 1) * cos(w0) - beta * alpha);
+        if (s->poles == 1) {
+            double A = ff_exp10(s->gain / 20);
+            double ro = sin(w0 / 2. - M_PI_4) / sin(w0 / 2. + M_PI_4);
+            double n = (A + 1) / (A - 1);
+            double alpha1 = A == 1. ? 0. : n - FFSIGN(n) * sqrt(n * n - 1);
+            double beta0 = ((1 + A) + (1 - A) * alpha1) * 0.5;
+            double beta1 = ((1 - A) + (1 + A) * alpha1) * 0.5;
+
+            s->a0 = 1 + ro * alpha1;
+            s->a1 = ro + alpha1;
+            s->a2 = 0;
+            s->b0 = beta0 + ro * beta1;
+            s->b1 = beta1 + ro * beta0;
+            s->b2 = 0;
+        } else {
+            s->a0 =          (A + 1) - (A - 1) * cos(w0) + beta * alpha;
+            s->a1 =     2 * ((A - 1) - (A + 1) * cos(w0));
+            s->a2 =          (A + 1) - (A - 1) * cos(w0) - beta * alpha;
+            s->b0 =     A * ((A + 1) + (A - 1) * cos(w0) + beta * alpha);
+            s->b1 =-2 * A * ((A - 1) + (A + 1) * cos(w0));
+            s->b2 =     A * ((A + 1) + (A - 1) * cos(w0) - beta * alpha);
+        }
         break;
     case bandpass:
         if (s->csg) {
@@ -750,6 +795,9 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *buf)
     ThreadData td;
     int ch;
 
+    if (s->bypass)
+        return ff_filter_frame(outlink, buf);
+
     if (av_frame_is_writable(buf)) {
         out_buf = buf;
     } else {
@@ -822,15 +870,14 @@ static const AVFilterPad outputs[] = {
 
 #define DEFINE_BIQUAD_FILTER(name_, description_)                       \
 AVFILTER_DEFINE_CLASS(name_);                                           \
-static av_cold int name_##_init(AVFilterContext *ctx) \
+static av_cold int name_##_init(AVFilterContext *ctx)                   \
 {                                                                       \
     BiquadsContext *s = ctx->priv;                                      \
-    s->class = &name_##_class;                                          \
     s->filter_type = name_;                                             \
-    return init(ctx);                                             \
+    return 0;                                                           \
 }                                                                       \
                                                          \
-AVFilter ff_af_##name_ = {                         \
+const AVFilter ff_af_##name_ = {                               \
     .name          = #name_,                             \
     .description   = NULL_IF_CONFIG_SMALL(description_), \
     .priv_size     = sizeof(BiquadsContext),             \
@@ -871,13 +918,20 @@ static const AVOption equalizer_options[] = {
     {"dii",  "direct form II", 0, AV_OPT_TYPE_CONST, {.i64=DII}, 0, 0, AF, "transform_type"},
     {"tdii", "transposed direct form II", 0, AV_OPT_TYPE_CONST, {.i64=TDII}, 0, 0, AF, "transform_type"},
     {"latt", "lattice-ladder form", 0, AV_OPT_TYPE_CONST, {.i64=LATT}, 0, 0, AF, "transform_type"},
+    {"precision", "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"r",         "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"auto", "automatic",            0, AV_OPT_TYPE_CONST, {.i64=-1}, 0, 0, AF, "precision"},
+    {"s16", "signed 16-bit",         0, AV_OPT_TYPE_CONST, {.i64=0},  0, 0, AF, "precision"},
+    {"s32", "signed 32-bit",         0, AV_OPT_TYPE_CONST, {.i64=1},  0, 0, AF, "precision"},
+    {"f32", "floating-point single", 0, AV_OPT_TYPE_CONST, {.i64=2},  0, 0, AF, "precision"},
+    {"f64", "floating-point double", 0, AV_OPT_TYPE_CONST, {.i64=3},  0, 0, AF, "precision"},
     {NULL}
 };
 
 DEFINE_BIQUAD_FILTER(equalizer, "Apply two-pole peaking equalization (EQ) filter.");
 #endif  /* CONFIG_EQUALIZER_FILTER */
-#if CONFIG_BASS_FILTER
-static const AVOption bass_options[] = {
+#if CONFIG_BASS_FILTER || CONFIG_LOWSHELF_FILTER
+static const AVOption bass_lowshelf_options[] = {
     {"frequency", "set central frequency", OFFSET(frequency), AV_OPT_TYPE_DOUBLE, {.dbl=100}, 0, 999999, FLAGS},
     {"f",         "set central frequency", OFFSET(frequency), AV_OPT_TYPE_DOUBLE, {.dbl=100}, 0, 999999, FLAGS},
     {"width_type", "set filter-width type", OFFSET(width_type), AV_OPT_TYPE_INT, {.i64=QFACTOR}, HERTZ, NB_WTYPE-1, FLAGS, "width_type"},
@@ -891,6 +945,8 @@ static const AVOption bass_options[] = {
     {"w",     "set shelf transition steep", OFFSET(width), AV_OPT_TYPE_DOUBLE, {.dbl=0.5}, 0, 99999, FLAGS},
     {"gain", "set gain", OFFSET(gain), AV_OPT_TYPE_DOUBLE, {.dbl=0}, -900, 900, FLAGS},
     {"g",    "set gain", OFFSET(gain), AV_OPT_TYPE_DOUBLE, {.dbl=0}, -900, 900, FLAGS},
+    {"poles", "set number of poles", OFFSET(poles), AV_OPT_TYPE_INT, {.i64=2}, 1, 2, AF},
+    {"p",     "set number of poles", OFFSET(poles), AV_OPT_TYPE_INT, {.i64=2}, 1, 2, AF},
     {"mix", "set mix", OFFSET(mix), AV_OPT_TYPE_DOUBLE, {.dbl=1}, 0, 1, FLAGS},
     {"m",   "set mix", OFFSET(mix), AV_OPT_TYPE_DOUBLE, {.dbl=1}, 0, 1, FLAGS},
     {"channels", "set channels to filter", OFFSET(channels), AV_OPT_TYPE_CHANNEL_LAYOUT, {.i64=-1}, INT64_MIN, INT64_MAX, FLAGS},
@@ -903,13 +959,28 @@ static const AVOption bass_options[] = {
     {"dii",  "direct form II", 0, AV_OPT_TYPE_CONST, {.i64=DII}, 0, 0, AF, "transform_type"},
     {"tdii", "transposed direct form II", 0, AV_OPT_TYPE_CONST, {.i64=TDII}, 0, 0, AF, "transform_type"},
     {"latt", "lattice-ladder form", 0, AV_OPT_TYPE_CONST, {.i64=LATT}, 0, 0, AF, "transform_type"},
+    {"precision", "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"r",         "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"auto", "automatic",            0, AV_OPT_TYPE_CONST, {.i64=-1}, 0, 0, AF, "precision"},
+    {"s16", "signed 16-bit",         0, AV_OPT_TYPE_CONST, {.i64=0},  0, 0, AF, "precision"},
+    {"s32", "signed 32-bit",         0, AV_OPT_TYPE_CONST, {.i64=1},  0, 0, AF, "precision"},
+    {"f32", "floating-point single", 0, AV_OPT_TYPE_CONST, {.i64=2},  0, 0, AF, "precision"},
+    {"f64", "floating-point double", 0, AV_OPT_TYPE_CONST, {.i64=3},  0, 0, AF, "precision"},
     {NULL}
 };
 
+#if CONFIG_BASS_FILTER
+#define bass_options bass_lowshelf_options
 DEFINE_BIQUAD_FILTER(bass, "Boost or cut lower frequencies.");
 #endif  /* CONFIG_BASS_FILTER */
-#if CONFIG_TREBLE_FILTER
-static const AVOption treble_options[] = {
+
+#if CONFIG_LOWSHELF_FILTER
+#define lowshelf_options bass_lowshelf_options
+DEFINE_BIQUAD_FILTER(lowshelf, "Apply a low shelf filter.");
+#endif  /* CONFIG_LOWSHELF_FILTER */
+#endif  /* CONFIG_BASS_FILTER || CONFIG LOWSHELF_FILTER */
+#if CONFIG_TREBLE_FILTER || CONFIG_HIGHSHELF_FILTER
+static const AVOption treble_highshelf_options[] = {
     {"frequency", "set central frequency", OFFSET(frequency), AV_OPT_TYPE_DOUBLE, {.dbl=3000}, 0, 999999, FLAGS},
     {"f",         "set central frequency", OFFSET(frequency), AV_OPT_TYPE_DOUBLE, {.dbl=3000}, 0, 999999, FLAGS},
     {"width_type", "set filter-width type", OFFSET(width_type), AV_OPT_TYPE_INT, {.i64=QFACTOR}, HERTZ, NB_WTYPE-1, FLAGS, "width_type"},
@@ -923,6 +994,8 @@ static const AVOption treble_options[] = {
     {"w",     "set shelf transition steep", OFFSET(width), AV_OPT_TYPE_DOUBLE, {.dbl=0.5}, 0, 99999, FLAGS},
     {"gain", "set gain", OFFSET(gain), AV_OPT_TYPE_DOUBLE, {.dbl=0}, -900, 900, FLAGS},
     {"g",    "set gain", OFFSET(gain), AV_OPT_TYPE_DOUBLE, {.dbl=0}, -900, 900, FLAGS},
+    {"poles", "set number of poles", OFFSET(poles), AV_OPT_TYPE_INT, {.i64=2}, 1, 2, AF},
+    {"p",     "set number of poles", OFFSET(poles), AV_OPT_TYPE_INT, {.i64=2}, 1, 2, AF},
     {"mix", "set mix", OFFSET(mix), AV_OPT_TYPE_DOUBLE, {.dbl=1}, 0, 1, FLAGS},
     {"m",   "set mix", OFFSET(mix), AV_OPT_TYPE_DOUBLE, {.dbl=1}, 0, 1, FLAGS},
     {"channels", "set channels to filter", OFFSET(channels), AV_OPT_TYPE_CHANNEL_LAYOUT, {.i64=-1}, INT64_MIN, INT64_MAX, FLAGS},
@@ -935,11 +1008,26 @@ static const AVOption treble_options[] = {
     {"dii",  "direct form II", 0, AV_OPT_TYPE_CONST, {.i64=DII}, 0, 0, AF, "transform_type"},
     {"tdii", "transposed direct form II", 0, AV_OPT_TYPE_CONST, {.i64=TDII}, 0, 0, AF, "transform_type"},
     {"latt", "lattice-ladder form", 0, AV_OPT_TYPE_CONST, {.i64=LATT}, 0, 0, AF, "transform_type"},
+    {"precision", "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"r",         "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"auto", "automatic",            0, AV_OPT_TYPE_CONST, {.i64=-1}, 0, 0, AF, "precision"},
+    {"s16", "signed 16-bit",         0, AV_OPT_TYPE_CONST, {.i64=0},  0, 0, AF, "precision"},
+    {"s32", "signed 32-bit",         0, AV_OPT_TYPE_CONST, {.i64=1},  0, 0, AF, "precision"},
+    {"f32", "floating-point single", 0, AV_OPT_TYPE_CONST, {.i64=2},  0, 0, AF, "precision"},
+    {"f64", "floating-point double", 0, AV_OPT_TYPE_CONST, {.i64=3},  0, 0, AF, "precision"},
     {NULL}
 };
 
+#if CONFIG_TREBLE_FILTER
+#define treble_options treble_highshelf_options
 DEFINE_BIQUAD_FILTER(treble, "Boost or cut upper frequencies.");
 #endif  /* CONFIG_TREBLE_FILTER */
+
+#if CONFIG_HIGHSHELF_FILTER
+#define highshelf_options treble_highshelf_options
+DEFINE_BIQUAD_FILTER(highshelf, "Apply a high shelf filter.");
+#endif  /* CONFIG_HIGHSHELF_FILTER */
+#endif  /* CONFIG_TREBLE_FILTER || CONFIG_HIGHSHELF_FILTER */
 #if CONFIG_BANDPASS_FILTER
 static const AVOption bandpass_options[] = {
     {"frequency", "set central frequency", OFFSET(frequency), AV_OPT_TYPE_DOUBLE, {.dbl=3000}, 0, 999999, FLAGS},
@@ -966,6 +1054,13 @@ static const AVOption bandpass_options[] = {
     {"dii",  "direct form II", 0, AV_OPT_TYPE_CONST, {.i64=DII}, 0, 0, AF, "transform_type"},
     {"tdii", "transposed direct form II", 0, AV_OPT_TYPE_CONST, {.i64=TDII}, 0, 0, AF, "transform_type"},
     {"latt", "lattice-ladder form", 0, AV_OPT_TYPE_CONST, {.i64=LATT}, 0, 0, AF, "transform_type"},
+    {"precision", "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"r",         "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"auto", "automatic",            0, AV_OPT_TYPE_CONST, {.i64=-1}, 0, 0, AF, "precision"},
+    {"s16", "signed 16-bit",         0, AV_OPT_TYPE_CONST, {.i64=0},  0, 0, AF, "precision"},
+    {"s32", "signed 32-bit",         0, AV_OPT_TYPE_CONST, {.i64=1},  0, 0, AF, "precision"},
+    {"f32", "floating-point single", 0, AV_OPT_TYPE_CONST, {.i64=2},  0, 0, AF, "precision"},
+    {"f64", "floating-point double", 0, AV_OPT_TYPE_CONST, {.i64=3},  0, 0, AF, "precision"},
     {NULL}
 };
 
@@ -996,6 +1091,13 @@ static const AVOption bandreject_options[] = {
     {"dii",  "direct form II", 0, AV_OPT_TYPE_CONST, {.i64=DII}, 0, 0, AF, "transform_type"},
     {"tdii", "transposed direct form II", 0, AV_OPT_TYPE_CONST, {.i64=TDII}, 0, 0, AF, "transform_type"},
     {"latt", "lattice-ladder form", 0, AV_OPT_TYPE_CONST, {.i64=LATT}, 0, 0, AF, "transform_type"},
+    {"precision", "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"r",         "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"auto", "automatic",            0, AV_OPT_TYPE_CONST, {.i64=-1}, 0, 0, AF, "precision"},
+    {"s16", "signed 16-bit",         0, AV_OPT_TYPE_CONST, {.i64=0},  0, 0, AF, "precision"},
+    {"s32", "signed 32-bit",         0, AV_OPT_TYPE_CONST, {.i64=1},  0, 0, AF, "precision"},
+    {"f32", "floating-point single", 0, AV_OPT_TYPE_CONST, {.i64=2},  0, 0, AF, "precision"},
+    {"f64", "floating-point double", 0, AV_OPT_TYPE_CONST, {.i64=3},  0, 0, AF, "precision"},
     {NULL}
 };
 
@@ -1028,6 +1130,13 @@ static const AVOption lowpass_options[] = {
     {"dii",  "direct form II", 0, AV_OPT_TYPE_CONST, {.i64=DII}, 0, 0, AF, "transform_type"},
     {"tdii", "transposed direct form II", 0, AV_OPT_TYPE_CONST, {.i64=TDII}, 0, 0, AF, "transform_type"},
     {"latt", "lattice-ladder form", 0, AV_OPT_TYPE_CONST, {.i64=LATT}, 0, 0, AF, "transform_type"},
+    {"precision", "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"r",         "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"auto", "automatic",            0, AV_OPT_TYPE_CONST, {.i64=-1}, 0, 0, AF, "precision"},
+    {"s16", "signed 16-bit",         0, AV_OPT_TYPE_CONST, {.i64=0},  0, 0, AF, "precision"},
+    {"s32", "signed 32-bit",         0, AV_OPT_TYPE_CONST, {.i64=1},  0, 0, AF, "precision"},
+    {"f32", "floating-point single", 0, AV_OPT_TYPE_CONST, {.i64=2},  0, 0, AF, "precision"},
+    {"f64", "floating-point double", 0, AV_OPT_TYPE_CONST, {.i64=3},  0, 0, AF, "precision"},
     {NULL}
 };
 
@@ -1060,6 +1169,13 @@ static const AVOption highpass_options[] = {
     {"dii",  "direct form II", 0, AV_OPT_TYPE_CONST, {.i64=DII}, 0, 0, AF, "transform_type"},
     {"tdii", "transposed direct form II", 0, AV_OPT_TYPE_CONST, {.i64=TDII}, 0, 0, AF, "transform_type"},
     {"latt", "lattice-ladder form", 0, AV_OPT_TYPE_CONST, {.i64=LATT}, 0, 0, AF, "transform_type"},
+    {"precision", "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"r",         "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"auto", "automatic",            0, AV_OPT_TYPE_CONST, {.i64=-1}, 0, 0, AF, "precision"},
+    {"s16", "signed 16-bit",         0, AV_OPT_TYPE_CONST, {.i64=0},  0, 0, AF, "precision"},
+    {"s32", "signed 32-bit",         0, AV_OPT_TYPE_CONST, {.i64=1},  0, 0, AF, "precision"},
+    {"f32", "floating-point single", 0, AV_OPT_TYPE_CONST, {.i64=2},  0, 0, AF, "precision"},
+    {"f64", "floating-point double", 0, AV_OPT_TYPE_CONST, {.i64=3},  0, 0, AF, "precision"},
     {NULL}
 };
 
@@ -1092,75 +1208,18 @@ static const AVOption allpass_options[] = {
     {"dii",  "direct form II", 0, AV_OPT_TYPE_CONST, {.i64=DII}, 0, 0, AF, "transform_type"},
     {"tdii", "transposed direct form II", 0, AV_OPT_TYPE_CONST, {.i64=TDII}, 0, 0, AF, "transform_type"},
     {"latt", "lattice-ladder form", 0, AV_OPT_TYPE_CONST, {.i64=LATT}, 0, 0, AF, "transform_type"},
+    {"precision", "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"r",         "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"auto", "automatic",            0, AV_OPT_TYPE_CONST, {.i64=-1}, 0, 0, AF, "precision"},
+    {"s16", "signed 16-bit",         0, AV_OPT_TYPE_CONST, {.i64=0},  0, 0, AF, "precision"},
+    {"s32", "signed 32-bit",         0, AV_OPT_TYPE_CONST, {.i64=1},  0, 0, AF, "precision"},
+    {"f32", "floating-point single", 0, AV_OPT_TYPE_CONST, {.i64=2},  0, 0, AF, "precision"},
+    {"f64", "floating-point double", 0, AV_OPT_TYPE_CONST, {.i64=3},  0, 0, AF, "precision"},
     {NULL}
 };
 
 DEFINE_BIQUAD_FILTER(allpass, "Apply a two-pole all-pass filter.");
 #endif  /* CONFIG_ALLPASS_FILTER */
-#if CONFIG_LOWSHELF_FILTER
-static const AVOption lowshelf_options[] = {
-    {"frequency", "set central frequency", OFFSET(frequency), AV_OPT_TYPE_DOUBLE, {.dbl=100}, 0, 999999, FLAGS},
-    {"f",         "set central frequency", OFFSET(frequency), AV_OPT_TYPE_DOUBLE, {.dbl=100}, 0, 999999, FLAGS},
-    {"width_type", "set filter-width type", OFFSET(width_type), AV_OPT_TYPE_INT, {.i64=QFACTOR}, HERTZ, NB_WTYPE-1, FLAGS, "width_type"},
-    {"t",          "set filter-width type", OFFSET(width_type), AV_OPT_TYPE_INT, {.i64=QFACTOR}, HERTZ, NB_WTYPE-1, FLAGS, "width_type"},
-    {"h", "Hz", 0, AV_OPT_TYPE_CONST, {.i64=HERTZ}, 0, 0, FLAGS, "width_type"},
-    {"q", "Q-Factor", 0, AV_OPT_TYPE_CONST, {.i64=QFACTOR}, 0, 0, FLAGS, "width_type"},
-    {"o", "octave", 0, AV_OPT_TYPE_CONST, {.i64=OCTAVE}, 0, 0, FLAGS, "width_type"},
-    {"s", "slope", 0, AV_OPT_TYPE_CONST, {.i64=SLOPE}, 0, 0, FLAGS, "width_type"},
-    {"k", "kHz", 0, AV_OPT_TYPE_CONST, {.i64=KHERTZ}, 0, 0, FLAGS, "width_type"},
-    {"width", "set shelf transition steep", OFFSET(width), AV_OPT_TYPE_DOUBLE, {.dbl=0.5}, 0, 99999, FLAGS},
-    {"w",     "set shelf transition steep", OFFSET(width), AV_OPT_TYPE_DOUBLE, {.dbl=0.5}, 0, 99999, FLAGS},
-    {"gain", "set gain", OFFSET(gain), AV_OPT_TYPE_DOUBLE, {.dbl=0}, -900, 900, FLAGS},
-    {"g",    "set gain", OFFSET(gain), AV_OPT_TYPE_DOUBLE, {.dbl=0}, -900, 900, FLAGS},
-    {"mix", "set mix", OFFSET(mix), AV_OPT_TYPE_DOUBLE, {.dbl=1}, 0, 1, FLAGS},
-    {"m",   "set mix", OFFSET(mix), AV_OPT_TYPE_DOUBLE, {.dbl=1}, 0, 1, FLAGS},
-    {"channels", "set channels to filter", OFFSET(channels), AV_OPT_TYPE_CHANNEL_LAYOUT, {.i64=-1}, INT64_MIN, INT64_MAX, FLAGS},
-    {"c",        "set channels to filter", OFFSET(channels), AV_OPT_TYPE_CHANNEL_LAYOUT, {.i64=-1}, INT64_MIN, INT64_MAX, FLAGS},
-    {"normalize", "normalize coefficients", OFFSET(normalize), AV_OPT_TYPE_BOOL, {.i64=0}, 0, 1, FLAGS},
-    {"n",         "normalize coefficients", OFFSET(normalize), AV_OPT_TYPE_BOOL, {.i64=0}, 0, 1, FLAGS},
-    {"transform", "set transform type", OFFSET(transform_type), AV_OPT_TYPE_INT, {.i64=0}, 0, NB_TTYPE-1, AF, "transform_type"},
-    {"a",         "set transform type", OFFSET(transform_type), AV_OPT_TYPE_INT, {.i64=0}, 0, NB_TTYPE-1, AF, "transform_type"},
-    {"di",   "direct form I",  0, AV_OPT_TYPE_CONST, {.i64=DI}, 0, 0, AF, "transform_type"},
-    {"dii",  "direct form II", 0, AV_OPT_TYPE_CONST, {.i64=DII}, 0, 0, AF, "transform_type"},
-    {"tdii", "transposed direct form II", 0, AV_OPT_TYPE_CONST, {.i64=TDII}, 0, 0, AF, "transform_type"},
-    {"latt", "lattice-ladder form", 0, AV_OPT_TYPE_CONST, {.i64=LATT}, 0, 0, AF, "transform_type"},
-    {NULL}
-};
-
-DEFINE_BIQUAD_FILTER(lowshelf, "Apply a low shelf filter.");
-#endif  /* CONFIG_LOWSHELF_FILTER */
-#if CONFIG_HIGHSHELF_FILTER
-static const AVOption highshelf_options[] = {
-    {"frequency", "set central frequency", OFFSET(frequency), AV_OPT_TYPE_DOUBLE, {.dbl=3000}, 0, 999999, FLAGS},
-    {"f",         "set central frequency", OFFSET(frequency), AV_OPT_TYPE_DOUBLE, {.dbl=3000}, 0, 999999, FLAGS},
-    {"width_type", "set filter-width type", OFFSET(width_type), AV_OPT_TYPE_INT, {.i64=QFACTOR}, HERTZ, NB_WTYPE-1, FLAGS, "width_type"},
-    {"t",          "set filter-width type", OFFSET(width_type), AV_OPT_TYPE_INT, {.i64=QFACTOR}, HERTZ, NB_WTYPE-1, FLAGS, "width_type"},
-    {"h", "Hz", 0, AV_OPT_TYPE_CONST, {.i64=HERTZ}, 0, 0, FLAGS, "width_type"},
-    {"q", "Q-Factor", 0, AV_OPT_TYPE_CONST, {.i64=QFACTOR}, 0, 0, FLAGS, "width_type"},
-    {"o", "octave", 0, AV_OPT_TYPE_CONST, {.i64=OCTAVE}, 0, 0, FLAGS, "width_type"},
-    {"s", "slope", 0, AV_OPT_TYPE_CONST, {.i64=SLOPE}, 0, 0, FLAGS, "width_type"},
-    {"k", "kHz", 0, AV_OPT_TYPE_CONST, {.i64=KHERTZ}, 0, 0, FLAGS, "width_type"},
-    {"width", "set shelf transition steep", OFFSET(width), AV_OPT_TYPE_DOUBLE, {.dbl=0.5}, 0, 99999, FLAGS},
-    {"w",     "set shelf transition steep", OFFSET(width), AV_OPT_TYPE_DOUBLE, {.dbl=0.5}, 0, 99999, FLAGS},
-    {"gain", "set gain", OFFSET(gain), AV_OPT_TYPE_DOUBLE, {.dbl=0}, -900, 900, FLAGS},
-    {"g",    "set gain", OFFSET(gain), AV_OPT_TYPE_DOUBLE, {.dbl=0}, -900, 900, FLAGS},
-    {"mix", "set mix", OFFSET(mix), AV_OPT_TYPE_DOUBLE, {.dbl=1}, 0, 1, FLAGS},
-    {"m",   "set mix", OFFSET(mix), AV_OPT_TYPE_DOUBLE, {.dbl=1}, 0, 1, FLAGS},
-    {"channels", "set channels to filter", OFFSET(channels), AV_OPT_TYPE_CHANNEL_LAYOUT, {.i64=-1}, INT64_MIN, INT64_MAX, FLAGS},
-    {"c",        "set channels to filter", OFFSET(channels), AV_OPT_TYPE_CHANNEL_LAYOUT, {.i64=-1}, INT64_MIN, INT64_MAX, FLAGS},
-    {"normalize", "normalize coefficients", OFFSET(normalize), AV_OPT_TYPE_BOOL, {.i64=0}, 0, 1, FLAGS},
-    {"n",         "normalize coefficients", OFFSET(normalize), AV_OPT_TYPE_BOOL, {.i64=0}, 0, 1, FLAGS},
-    {"transform", "set transform type", OFFSET(transform_type), AV_OPT_TYPE_INT, {.i64=0}, 0, NB_TTYPE-1, AF, "transform_type"},
-    {"a",         "set transform type", OFFSET(transform_type), AV_OPT_TYPE_INT, {.i64=0}, 0, NB_TTYPE-1, AF, "transform_type"},
-    {"di",   "direct form I",  0, AV_OPT_TYPE_CONST, {.i64=DI}, 0, 0, AF, "transform_type"},
-    {"dii",  "direct form II", 0, AV_OPT_TYPE_CONST, {.i64=DII}, 0, 0, AF, "transform_type"},
-    {"tdii", "transposed direct form II", 0, AV_OPT_TYPE_CONST, {.i64=TDII}, 0, 0, AF, "transform_type"},
-    {"latt", "lattice-ladder form", 0, AV_OPT_TYPE_CONST, {.i64=LATT}, 0, 0, AF, "transform_type"},
-    {NULL}
-};
-
-DEFINE_BIQUAD_FILTER(highshelf, "Apply a high shelf filter.");
-#endif  /* CONFIG_HIGHSHELF_FILTER */
 #if CONFIG_BIQUAD_FILTER
 static const AVOption biquad_options[] = {
     {"a0", NULL, OFFSET(oa0), AV_OPT_TYPE_DOUBLE, {.dbl=1}, INT32_MIN, INT32_MAX, FLAGS},
@@ -1181,6 +1240,13 @@ static const AVOption biquad_options[] = {
     {"dii",  "direct form II", 0, AV_OPT_TYPE_CONST, {.i64=DII}, 0, 0, AF, "transform_type"},
     {"tdii", "transposed direct form II", 0, AV_OPT_TYPE_CONST, {.i64=TDII}, 0, 0, AF, "transform_type"},
     {"latt", "lattice-ladder form", 0, AV_OPT_TYPE_CONST, {.i64=LATT}, 0, 0, AF, "transform_type"},
+    {"precision", "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"r",         "set filtering precision", OFFSET(precision), AV_OPT_TYPE_INT, {.i64=-1}, -1, 3, AF, "precision"},
+    {"auto", "automatic",            0, AV_OPT_TYPE_CONST, {.i64=-1}, 0, 0, AF, "precision"},
+    {"s16", "signed 16-bit",         0, AV_OPT_TYPE_CONST, {.i64=0},  0, 0, AF, "precision"},
+    {"s32", "signed 32-bit",         0, AV_OPT_TYPE_CONST, {.i64=1},  0, 0, AF, "precision"},
+    {"f32", "floating-point single", 0, AV_OPT_TYPE_CONST, {.i64=2},  0, 0, AF, "precision"},
+    {"f64", "floating-point double", 0, AV_OPT_TYPE_CONST, {.i64=3},  0, 0, AF, "precision"},
     {NULL}
 };
 

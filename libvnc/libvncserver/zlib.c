@@ -204,13 +204,12 @@ rfbSendOneRectEncodingZlib(rfbClientPtr cl,
 
     /* Update statics */
     rfbStatRecordEncodingSent(cl, rfbEncodingZlib, sz_rfbFramebufferUpdateRectHeader + sz_rfbZlibHeader + zlibAfterBufLen,
-        + w * (cl->format.bitsPerPixel / 8) * h);
+                                + w * (cl->format.bitsPerPixel / 8) * h);
 
-    if (cl->ublen + sz_rfbFramebufferUpdateRectHeader + sz_rfbZlibHeader
-	> UPDATE_BUF_SIZE)
+    if (cl->ublen + sz_rfbFramebufferUpdateRectHeader + sz_rfbZlibHeader > UPDATE_BUF_SIZE)
     {
-	if (!rfbSendUpdateBuf(cl))
-	    return FALSE;
+        if (!rfbSendUpdateBuf(cl))
+            return FALSE;
     }
 
     rect.r.x = Swap16IfLE(x);
@@ -220,7 +219,7 @@ rfbSendOneRectEncodingZlib(rfbClientPtr cl,
     rect.encoding = Swap32IfLE(rfbEncodingZlib);
 
     memcpy(&cl->updateBuf[cl->ublen], (char *)&rect,
-	   sz_rfbFramebufferUpdateRectHeader);
+	        sz_rfbFramebufferUpdateRectHeader);
     cl->ublen += sz_rfbFramebufferUpdateRectHeader;
 
     hdr.nBytes = Swap32IfLE(zlibAfterBufLen);
@@ -230,25 +229,23 @@ rfbSendOneRectEncodingZlib(rfbClientPtr cl,
 
     for (i = 0; i < zlibAfterBufLen;) {
 
-	int bytesToCopy = UPDATE_BUF_SIZE - cl->ublen;
+        int bytesToCopy = UPDATE_BUF_SIZE - cl->ublen;
 
-	if (i + bytesToCopy > zlibAfterBufLen) {
-	    bytesToCopy = zlibAfterBufLen - i;
-	}
+        if (i + bytesToCopy > zlibAfterBufLen) {
+            bytesToCopy = zlibAfterBufLen - i;
+    	}
 
-	memcpy(&cl->updateBuf[cl->ublen], &zlibAfterBuf[i], bytesToCopy);
+        memcpy(&cl->updateBuf[cl->ublen], &zlibAfterBuf[i], bytesToCopy);
 
-	cl->ublen += bytesToCopy;
-	i += bytesToCopy;
+        cl->ublen += bytesToCopy;
+        i += bytesToCopy;
 
-	if (cl->ublen == UPDATE_BUF_SIZE) {
-	    if (!rfbSendUpdateBuf(cl))
-		return FALSE;
-	}
+        if (cl->ublen == UPDATE_BUF_SIZE) {
+            if (!rfbSendUpdateBuf(cl))
+                return FALSE;
+        }
     }
-
     return TRUE;
-
 }
 
 

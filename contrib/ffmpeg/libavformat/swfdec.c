@@ -33,6 +33,7 @@
 #include "libavutil/intreadwrite.h"
 #include "libavcodec/get_bits.h"
 #include "swf.h"
+#include "flv.h"
 
 typedef struct SWFDecContext {
     int samples_per_frame;
@@ -51,7 +52,7 @@ static const AVCodecTag swf_audio_codec_tags[] = {
     { AV_CODEC_ID_ADPCM_SWF,  0x01 },
     { AV_CODEC_ID_MP3,        0x02 },
     { AV_CODEC_ID_PCM_S16LE,  0x03 },
-//  { AV_CODEC_ID_NELLYMOSER, 0x06 },
+    { AV_CODEC_ID_NELLYMOSER, 0x06 },
     { AV_CODEC_ID_NONE,          0 },
 };
 
@@ -203,7 +204,7 @@ static AVStream *create_new_audio_stream(AVFormatContext *s, int id, int info)
     }
     ast->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;
     ast->codecpar->codec_id   = ff_codec_get_id(swf_audio_codec_tags, info>>4 & 15);
-    ast->need_parsing = AVSTREAM_PARSE_FULL;
+    ast->internal->need_parsing = AVSTREAM_PARSE_FULL;
     sample_rate_code = info>>2 & 3;
     sample_size_code = info>>1 & 1;
     if (!sample_size_code && ast->codecpar->codec_id == AV_CODEC_ID_PCM_S16LE)
@@ -307,15 +308,24 @@ static int swf_read_packet(AVFormatContext *s, AVPacket *pkt)
             for(i=0; i<s->nb_streams; i++) {
                 st = s->streams[i];
                 if (st->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && st->id == ch_id) {
+                    int pkt_flags = 0;
                     frame = avio_rl16(pb);
                     len -= 2;
                     if (len <= 0)
                         goto skip;
+                    if (st->codecpar->codec_id == AV_CODEC_ID_FLASHSV) {
+                        unsigned flags = avio_r8(pb);
+                        len--;
+                        if (len <= 0)
+                            goto skip;
+                        pkt_flags |= (flags & FLV_VIDEO_FRAMETYPE_MASK) == FLV_FRAME_KEY ? AV_PKT_FLAG_KEY : 0;
+                    }
                     if ((res = av_get_packet(pb, pkt, len)) < 0)
                         return res;
                     pkt->pos = pos;
                     pkt->pts = frame;
                     pkt->stream_index = st->index;
+                    pkt->flags |= pkt_flags;
                     return pkt->size;
                 }
             }
@@ -367,15 +377,25 @@ static int swf_read_packet(AVFormatContext *s, AVPacket *pkt)
             ff_dlog(s, "bitmap: ch=%d fmt=%d %dx%d (linesize=%d) len=%d->%ld pal=%d\n",
                     ch_id, bmp_fmt, width, height, linesize, len, out_len, colormapsize);
 
+            if (len * 17373LL < out_len)
+                goto bitmap_end_skip;
+
             zbuf = av_malloc(len);
-            buf  = av_malloc(out_len);
-            if (!zbuf || !buf) {
+            if (!zbuf) {
                 res = AVERROR(ENOMEM);
                 goto bitmap_end;
             }
 
             len = avio_read(pb, zbuf, len);
-            if (len < 0 || (res = uncompress(buf, &out_len, zbuf, len)) != Z_OK) {
+            if (len < 0)
+                goto bitmap_end_skip;
+
+            buf  = av_malloc(out_len);
+            if (!buf) {
+                res = AVERROR(ENOMEM);
+                goto bitmap_end;
+            }
+            if ((res = uncompress(buf, &out_len, zbuf, len)) != Z_OK) {
                 av_log(s, AV_LOG_WARNING, "Failed to uncompress one bitmap\n");
                 goto bitmap_end_skip;
             }
@@ -547,7 +567,7 @@ static av_cold int swf_read_close(AVFormatContext *avctx)
 }
 #endif
 
-AVInputFormat ff_swf_demuxer = {
+const AVInputFormat ff_swf_demuxer = {
     .name           = "swf",
     .long_name      = NULL_IF_CONFIG_SMALL("SWF (ShockWave Flash)"),
     .priv_data_size = sizeof(SWFDecContext),

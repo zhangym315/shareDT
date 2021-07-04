@@ -19,8 +19,13 @@
 #ifndef AVCODEC_CBS_INTERNAL_H
 #define AVCODEC_CBS_INTERNAL_H
 
-#include "avcodec.h"
+#include <stdint.h>
+
+#include "libavutil/buffer.h"
+#include "libavutil/log.h"
+
 #include "cbs.h"
+#include "codec_id.h"
 #include "get_bits.h"
 #include "put_bits.h"
 
@@ -85,6 +90,12 @@ typedef const struct CodedBitstreamUnitTypeDescriptor {
 
 typedef struct CodedBitstreamType {
     enum AVCodecID codec_id;
+
+    // A class for the private data, used to declare private AVOptions.
+    // This field is NULL for types that do not declare any options.
+    // If this field is non-NULL, the first member of the filter private data
+    // must be a pointer to AVClass.
+    const AVClass *priv_class;
 
     size_t priv_data_size;
 

@@ -18,20 +18,30 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include <stdint.h>
+
+#include "libavutil/dict.h"
 #include "libavutil/imgutils.h"
+#include "libavutil/log.h"
+#include "libavutil/pixfmt.h"
+
+#include "libavformat/avformat.h"
+
+#include "libavcodec/avcodec.h"
+
 #include "lavfutils.h"
 
 int ff_load_image(uint8_t *data[4], int linesize[4],
                   int *w, int *h, enum AVPixelFormat *pix_fmt,
                   const char *filename, void *log_ctx)
 {
-    AVInputFormat *iformat = NULL;
+    const AVInputFormat *iformat = NULL;
     AVFormatContext *format_ctx = NULL;
     const AVCodec *codec;
     AVCodecContext *codec_ctx = NULL;
     AVCodecParameters *par;
     AVFrame *frame = NULL;
-    int frame_decoded, ret = 0;
+    int ret = 0;
     AVPacket pkt;
     AVDictionary *opt=NULL;
 
@@ -86,12 +96,16 @@ int ff_load_image(uint8_t *data[4], int linesize[4],
         goto end;
     }
 
-    ret = avcodec_decode_video2(codec_ctx, frame, &frame_decoded, &pkt);
+    ret = avcodec_send_packet(codec_ctx, &pkt);
     av_packet_unref(&pkt);
-    if (ret < 0 || !frame_decoded) {
+    if (ret < 0) {
+        av_log(log_ctx, AV_LOG_ERROR, "Error submitting a packet to decoder\n");
+        goto end;
+    }
+
+    ret = avcodec_receive_frame(codec_ctx, frame);
+    if (ret < 0) {
         av_log(log_ctx, AV_LOG_ERROR, "Failed to decode image from file\n");
-        if (ret >= 0)
-            ret = -1;
         goto end;
     }
 

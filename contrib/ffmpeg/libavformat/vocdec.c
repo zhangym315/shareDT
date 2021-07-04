@@ -98,7 +98,7 @@ static int voc_read_seek(AVFormatContext *s, int stream_index,
     return -1;
 }
 
-AVInputFormat ff_voc_demuxer = {
+const AVInputFormat ff_voc_demuxer = {
     .name           = "voc",
     .long_name      = NULL_IF_CONFIG_SMALL("Creative Voice"),
     .priv_data_size = sizeof(VocDecContext),
@@ -106,5 +106,5 @@ AVInputFormat ff_voc_demuxer = {
     .read_header    = voc_read_header,
     .read_packet    = voc_read_packet,
     .read_seek      = voc_read_seek,
-    .codec_tag      = (const AVCodecTag* const []){ ff_voc_codec_tags, 0 },
+    .codec_tag      = ff_voc_codec_tags_list,
 };

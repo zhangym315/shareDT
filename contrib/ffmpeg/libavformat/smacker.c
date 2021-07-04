@@ -105,8 +105,8 @@ static int smacker_read_header(AVFormatContext *s)
     height = avio_rl32(pb);
     smk->frames = avio_rl32(pb);
     pts_inc = avio_rl32(pb);
-    if (pts_inc > INT_MAX / 100) {
-        av_log(s, AV_LOG_ERROR, "pts_inc %d is too large\n", pts_inc);
+    if (pts_inc > INT_MAX / 100 || pts_inc == INT_MIN) {
+        av_log(s, AV_LOG_ERROR, "pts_inc %d is invalid\n", pts_inc);
         return AVERROR_INVALIDDATA;
     }
 
@@ -386,7 +386,7 @@ static int smacker_read_seek(AVFormatContext *s, int stream_index,
     return 0;
 }
 
-AVInputFormat ff_smacker_demuxer = {
+const AVInputFormat ff_smacker_demuxer = {
     .name           = "smk",
     .long_name      = NULL_IF_CONFIG_SMALL("Smacker"),
     .priv_data_size = sizeof(SmackerContext),

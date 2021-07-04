@@ -288,7 +288,7 @@ static av_cold int sgi_decode_init(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec ff_sgi_decoder = {
+const AVCodec ff_sgi_decoder = {
     .name           = "sgi",
     .long_name      = NULL_IF_CONFIG_SMALL("SGI image"),
     .type           = AVMEDIA_TYPE_VIDEO,
@@ -297,4 +297,5 @@ AVCodec ff_sgi_decoder = {
     .decode         = decode_frame,
     .init           = sgi_decode_init,
     .capabilities   = AV_CODEC_CAP_DR1,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };

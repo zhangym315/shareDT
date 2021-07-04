@@ -19,6 +19,7 @@
 #include "libavutil/crc.h"
 #include "libavutil/float_dsp.h"
 #include "libavutil/intreadwrite.h"
+#include "libavutil/mem_internal.h"
 #include "libavutil/tx.h"
 
 #include "avcodec.h"
@@ -444,7 +445,7 @@ static av_cold int decode_close(AVCodecContext *avctx)
     return 0;
 }
 
-AVCodec ff_hca_decoder = {
+const AVCodec ff_hca_decoder = {
     .name           = "hca",
     .long_name      = NULL_IF_CONFIG_SMALL("CRI HCA"),
     .type           = AVMEDIA_TYPE_AUDIO,

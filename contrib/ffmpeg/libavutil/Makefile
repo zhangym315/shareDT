@@ -21,6 +21,7 @@ HEADERS = adler32.h                                                     \
           cpu.h                                                         \
           crc.h                                                         \
           des.h                                                         \
+          detection_bbox.h                                              \
           dict.h                                                        \
           display.h                                                     \
           dovi_meta.h                                                   \
@@ -84,6 +85,7 @@ HEADERS = adler32.h                                                     \
           xtea.h                                                        \
           tea.h                                                         \
           tx.h                                                          \
+          film_grain_params.h                                           \
 
 HEADERS-$(CONFIG_LZO)                   += lzo.h
 
@@ -112,6 +114,7 @@ OBJS = adler32.o                                                        \
        cpu.o                                                            \
        crc.o                                                            \
        des.o                                                            \
+       detection_bbox.o                                                 \
        dict.o                                                           \
        display.o                                                        \
        dovi_meta.o                                                      \
@@ -170,6 +173,7 @@ OBJS = adler32.o                                                        \
        tx_double.o                                                      \
        tx_int32.o                                                       \
        video_enc_params.o                                               \
+       film_grain_params.o                                              \
 
 
 OBJS-$(CONFIG_CUDA)                     += hwcontext_cuda.o

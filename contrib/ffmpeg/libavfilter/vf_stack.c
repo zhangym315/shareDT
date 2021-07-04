@@ -60,24 +60,21 @@ typedef struct StackContext {
 
 static int query_formats(AVFilterContext *ctx)
 {
-    AVFilterFormats *pix_fmts = NULL;
+    AVFilterFormats *formats = NULL;
     StackContext *s = ctx->priv;
-    int fmt, ret;
+    int ret;
 
     if (s->fillcolor_enable) {
         return ff_set_common_formats(ctx, ff_draw_supported_pixel_formats(0));
     }
 
-    for (fmt = 0; av_pix_fmt_desc_get(fmt); fmt++) {
-        const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(fmt);
-        if (!(desc->flags & AV_PIX_FMT_FLAG_PAL ||
-              desc->flags & AV_PIX_FMT_FLAG_HWACCEL ||
-              desc->flags & AV_PIX_FMT_FLAG_BITSTREAM) &&
-            (ret = ff_add_format(&pix_fmts, fmt)) < 0)
-            return ret;
-    }
-
-    return ff_set_common_formats(ctx, pix_fmts);
+    ret = ff_formats_pixdesc_filter(&formats, 0,
+                                    AV_PIX_FMT_FLAG_HWACCEL |
+                                    AV_PIX_FMT_FLAG_BITSTREAM |
+                                    AV_PIX_FMT_FLAG_PAL);
+    if (ret < 0)
+        return ret;
+    return ff_set_common_formats(ctx, formats);
 }
 
 static av_cold int init(AVFilterContext *ctx)
@@ -412,7 +409,7 @@ static const AVFilterPad outputs[] = {
 #define hstack_options stack_options
 AVFILTER_DEFINE_CLASS(hstack);
 
-AVFilter ff_vf_hstack = {
+const AVFilter ff_vf_hstack = {
     .name          = "hstack",
     .description   = NULL_IF_CONFIG_SMALL("Stack video inputs horizontally."),
     .priv_size     = sizeof(StackContext),
@@ -432,7 +429,7 @@ AVFilter ff_vf_hstack = {
 #define vstack_options stack_options
 AVFILTER_DEFINE_CLASS(vstack);
 
-AVFilter ff_vf_vstack = {
+const AVFilter ff_vf_vstack = {
     .name          = "vstack",
     .description   = NULL_IF_CONFIG_SMALL("Stack video inputs vertically."),
     .priv_size     = sizeof(StackContext),
@@ -459,7 +456,7 @@ static const AVOption xstack_options[] = {
 
 AVFILTER_DEFINE_CLASS(xstack);
 
-AVFilter ff_vf_xstack = {
+const AVFilter ff_vf_xstack = {
     .name          = "xstack",
     .description   = NULL_IF_CONFIG_SMALL("Stack video inputs into custom layout."),
     .priv_size     = sizeof(StackContext),

@@ -98,67 +98,69 @@ char *encodingName(uint32_t type, char *buf, int len) {
     if (buf==NULL) return "error";
     
     switch (type) {
-    case rfbEncodingRaw:                snprintf(buf, len, "raw");         break;
-    case rfbEncodingCopyRect:           snprintf(buf, len, "copyRect");    break;
-    case rfbEncodingRRE:                snprintf(buf, len, "RRE");         break;
-    case rfbEncodingCoRRE:              snprintf(buf, len, "CoRRE");       break;
-    case rfbEncodingHextile:            snprintf(buf, len, "hextile");     break;
-    case rfbEncodingZlib:               snprintf(buf, len, "zlib");        break;
-    case rfbEncodingTight:              snprintf(buf, len, "tight");       break;
-    case rfbEncodingTightPng:           snprintf(buf, len, "tightPng");    break;
-    case rfbEncodingZlibHex:            snprintf(buf, len, "zlibhex");     break;
-    case rfbEncodingUltra:              snprintf(buf, len, "ultra");       break;
-    case rfbEncodingZRLE:               snprintf(buf, len, "ZRLE");        break;
-    case rfbEncodingZYWRLE:             snprintf(buf, len, "ZYWRLE");      break;
-    case rfbEncodingCache:              snprintf(buf, len, "cache");       break;
-    case rfbEncodingCacheEnable:        snprintf(buf, len, "cacheEnable"); break;
-    case rfbEncodingXOR_Zlib:           snprintf(buf, len, "xorZlib");     break;
-    case rfbEncodingXORMonoColor_Zlib:  snprintf(buf, len, "xorMonoZlib");  break;
-    case rfbEncodingXORMultiColor_Zlib: snprintf(buf, len, "xorColorZlib"); break;
-    case rfbEncodingSolidColor:         snprintf(buf, len, "solidColor");  break;
-    case rfbEncodingXOREnable:          snprintf(buf, len, "xorEnable");   break;
-    case rfbEncodingCacheZip:           snprintf(buf, len, "cacheZip");    break;
-    case rfbEncodingSolMonoZip:         snprintf(buf, len, "monoZip");     break;
-    case rfbEncodingUltraZip:           snprintf(buf, len, "ultraZip");    break;
+        case rfbEncodingRaw:                snprintf(buf, len, "raw");         break;
+        case rfbEncodingCopyRect:           snprintf(buf, len, "copyRect");    break;
+        case rfbEncodingRRE:                snprintf(buf, len, "RRE");         break;
+        case rfbEncodingCoRRE:              snprintf(buf, len, "CoRRE");       break;
+        case rfbEncodingHextile:            snprintf(buf, len, "hextile");     break;
+        case rfbEncodingZlib:               snprintf(buf, len, "zlib");        break;
+        case rfbEncodingTight:              snprintf(buf, len, "tight");       break;
+        case rfbEncodingTightPng:           snprintf(buf, len, "tightPng");    break;
+        case rfbEncodingZlibHex:            snprintf(buf, len, "zlibhex");     break;
+        case rfbEncodingUltra:              snprintf(buf, len, "ultra");       break;
+        case rfbEncodingZRLE:               snprintf(buf, len, "ZRLE");        break;
+        case rfbEncodingZYWRLE:             snprintf(buf, len, "ZYWRLE");      break;
+        case rfbEncodingCache:              snprintf(buf, len, "cache");       break;
+        case rfbEncodingCacheEnable:        snprintf(buf, len, "cacheEnable"); break;
+        case rfbEncodingXOR_Zlib:           snprintf(buf, len, "xorZlib");     break;
+        case rfbEncodingXORMonoColor_Zlib:  snprintf(buf, len, "xorMonoZlib");  break;
+        case rfbEncodingXORMultiColor_Zlib: snprintf(buf, len, "xorColorZlib"); break;
+        case rfbEncodingSolidColor:         snprintf(buf, len, "solidColor");  break;
+        case rfbEncodingXOREnable:          snprintf(buf, len, "xorEnable");   break;
+        case rfbEncodingCacheZip:           snprintf(buf, len, "cacheZip");    break;
+        case rfbEncodingSolMonoZip:         snprintf(buf, len, "monoZip");     break;
+        case rfbEncodingUltraZip:           snprintf(buf, len, "ultraZip");    break;
 
-    case rfbEncodingXCursor:            snprintf(buf, len, "Xcursor");     break;
-    case rfbEncodingRichCursor:         snprintf(buf, len, "RichCursor");  break;
-    case rfbEncodingPointerPos:         snprintf(buf, len, "PointerPos");  break;
+        case rfbEncodingXCursor:            snprintf(buf, len, "Xcursor");     break;
+        case rfbEncodingRichCursor:         snprintf(buf, len, "RichCursor");  break;
+        case rfbEncodingPointerPos:         snprintf(buf, len, "PointerPos");  break;
 
-    case rfbEncodingLastRect:           snprintf(buf, len, "LastRect");    break;
-    case rfbEncodingNewFBSize:          snprintf(buf, len, "NewFBSize");   break;
-    case rfbEncodingExtDesktopSize:     snprintf(buf, len, "ExtendedDesktopSize"); break;
-    case rfbEncodingKeyboardLedState:   snprintf(buf, len, "LedState");    break;
-    case rfbEncodingSupportedMessages:  snprintf(buf, len, "SupportedMessage");  break;
-    case rfbEncodingSupportedEncodings: snprintf(buf, len, "SupportedEncoding"); break;
-    case rfbEncodingServerIdentity:     snprintf(buf, len, "ServerIdentify");    break;
+        case rfbEncodingLastRect:           snprintf(buf, len, "LastRect");    break;
+        case rfbEncodingNewFBSize:          snprintf(buf, len, "NewFBSize");   break;
+        case rfbEncodingExtDesktopSize:     snprintf(buf, len, "ExtendedDesktopSize"); break;
+        case rfbEncodingKeyboardLedState:   snprintf(buf, len, "LedState");    break;
+        case rfbEncodingSupportedMessages:  snprintf(buf, len, "SupportedMessage");  break;
+        case rfbEncodingSupportedEncodings: snprintf(buf, len, "SupportedEncoding"); break;
+        case rfbEncodingServerIdentity:     snprintf(buf, len, "ServerIdentify");    break;
 
-    /* The following lookups do not report in stats */
-    case rfbEncodingCompressLevel0: snprintf(buf, len, "CompressLevel0");  break;
-    case rfbEncodingCompressLevel1: snprintf(buf, len, "CompressLevel1");  break;
-    case rfbEncodingCompressLevel2: snprintf(buf, len, "CompressLevel2");  break;
-    case rfbEncodingCompressLevel3: snprintf(buf, len, "CompressLevel3");  break;
-    case rfbEncodingCompressLevel4: snprintf(buf, len, "CompressLevel4");  break;
-    case rfbEncodingCompressLevel5: snprintf(buf, len, "CompressLevel5");  break;
-    case rfbEncodingCompressLevel6: snprintf(buf, len, "CompressLevel6");  break;
-    case rfbEncodingCompressLevel7: snprintf(buf, len, "CompressLevel7");  break;
-    case rfbEncodingCompressLevel8: snprintf(buf, len, "CompressLevel8");  break;
-    case rfbEncodingCompressLevel9: snprintf(buf, len, "CompressLevel9");  break;
-    
-    case rfbEncodingQualityLevel0:  snprintf(buf, len, "QualityLevel0");   break;
-    case rfbEncodingQualityLevel1:  snprintf(buf, len, "QualityLevel1");   break;
-    case rfbEncodingQualityLevel2:  snprintf(buf, len, "QualityLevel2");   break;
-    case rfbEncodingQualityLevel3:  snprintf(buf, len, "QualityLevel3");   break;
-    case rfbEncodingQualityLevel4:  snprintf(buf, len, "QualityLevel4");   break;
-    case rfbEncodingQualityLevel5:  snprintf(buf, len, "QualityLevel5");   break;
-    case rfbEncodingQualityLevel6:  snprintf(buf, len, "QualityLevel6");   break;
-    case rfbEncodingQualityLevel7:  snprintf(buf, len, "QualityLevel7");   break;
-    case rfbEncodingQualityLevel8:  snprintf(buf, len, "QualityLevel8");   break;
-    case rfbEncodingQualityLevel9:  snprintf(buf, len, "QualityLevel9");   break;
+        /* The following lookups do not report in stats */
+        case rfbEncodingCompressLevel0: snprintf(buf, len, "CompressLevel0");  break;
+        case rfbEncodingCompressLevel1: snprintf(buf, len, "CompressLevel1");  break;
+        case rfbEncodingCompressLevel2: snprintf(buf, len, "CompressLevel2");  break;
+        case rfbEncodingCompressLevel3: snprintf(buf, len, "CompressLevel3");  break;
+        case rfbEncodingCompressLevel4: snprintf(buf, len, "CompressLevel4");  break;
+        case rfbEncodingCompressLevel5: snprintf(buf, len, "CompressLevel5");  break;
+        case rfbEncodingCompressLevel6: snprintf(buf, len, "CompressLevel6");  break;
+        case rfbEncodingCompressLevel7: snprintf(buf, len, "CompressLevel7");  break;
+        case rfbEncodingCompressLevel8: snprintf(buf, len, "CompressLevel8");  break;
+        case rfbEncodingCompressLevel9: snprintf(buf, len, "CompressLevel9");  break;
 
+        case rfbEncodingQualityLevel0:  snprintf(buf, len, "QualityLevel0");   break;
+        case rfbEncodingQualityLevel1:  snprintf(buf, len, "QualityLevel1");   break;
+        case rfbEncodingQualityLevel2:  snprintf(buf, len, "QualityLevel2");   break;
+        case rfbEncodingQualityLevel3:  snprintf(buf, len, "QualityLevel3");   break;
+        case rfbEncodingQualityLevel4:  snprintf(buf, len, "QualityLevel4");   break;
+        case rfbEncodingQualityLevel5:  snprintf(buf, len, "QualityLevel5");   break;
+        case rfbEncodingQualityLevel6:  snprintf(buf, len, "QualityLevel6");   break;
+        case rfbEncodingQualityLevel7:  snprintf(buf, len, "QualityLevel7");   break;
+        case rfbEncodingQualityLevel8:  snprintf(buf, len, "QualityLevel8");   break;
+        case rfbEncodingQualityLevel9:  snprintf(buf, len, "QualityLevel9");   break;
 
-    default:
-        snprintf(buf, len, "Enc(0x%08X)", type);
+        /* customized */
+        case rfbEncodingFFMPEG: snprintf(buf, len, "ffmpeg"); break;
+
+        default:
+            snprintf(buf, len, "Enc(0x%08X)", type);
     }
 
     return buf;

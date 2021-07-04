@@ -524,7 +524,6 @@
             "index": 0,
             "codec_name": "pcm_s16le",
             "codec_type": "audio",
-            "codec_time_base": "1/44100",
             "codec_tag_string": "PSD[16]",
             "codec_tag": "0x10445350",
             "sample_fmt": "s16",
@@ -551,7 +550,12 @@
                 "visual_impaired": 0,
                 "clean_effects": 0,
                 "attached_pic": 0,
-                "timed_thumbnails": 0
+                "timed_thumbnails": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0
             },
             "tags": {
                 "E": "mc²",
@@ -562,7 +566,6 @@
             "index": 1,
             "codec_name": "rawvideo",
             "codec_type": "video",
-            "codec_time_base": "1/25",
             "codec_tag_string": "RGB[24]",
             "codec_tag": "0x18424752",
             "width": 320,
@@ -595,7 +598,12 @@
                 "visual_impaired": 0,
                 "clean_effects": 0,
                 "attached_pic": 0,
-                "timed_thumbnails": 0
+                "timed_thumbnails": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0
             },
             "tags": {
                 "title": "foobar",
@@ -607,7 +615,6 @@
             "index": 2,
             "codec_name": "rawvideo",
             "codec_type": "video",
-            "codec_time_base": "1/25",
             "codec_tag_string": "RGB[24]",
             "codec_tag": "0x18424752",
             "width": 100,
@@ -640,7 +647,12 @@
                 "visual_impaired": 0,
                 "clean_effects": 0,
                 "attached_pic": 0,
-                "timed_thumbnails": 0
+                "timed_thumbnails": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0
             },
             "tags": {
                 "encoder": "Lavc rawvideo"
