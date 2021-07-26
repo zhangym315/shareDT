@@ -1,18 +1,24 @@
+#include <png.h>
+
 #include "gtest/gtest.h"
 #include "FfmpegEncodeDecode.h"
+
+extern "C" {
+#include <libswscale/swscale.h>
+}
 
 TEST(ffmpeg_encode_decode, ffmpeg_encode) {
     FfmpegEncodeDecodeFrameTesting coder(1024, 2048);
 
     EXPECT_TRUE(coder.valid());
-    EXPECT_TRUE(coder.getSampleFrame(50));
+    EXPECT_TRUE(coder.getSampleFrame(10));
+    coder.toRGBandExportToFiles(coder.getSrcFrames(), "Input_RDB32_");
 
     EXPECT_TRUE(coder.encodeToBuffer());
 
 
     coder.decodeToFrame();
-
-
+    coder.toRGBandExportToFiles(coder.getDstFrames(), "Output_RDB32_");
 }
 
 TEST(ffmpeg_encode_decode, ffmpeg_decode) {
@@ -31,6 +37,7 @@ FfmpegEncodeDecodeFrameTesting::FfmpegEncodeDecodeFrameTesting(int w, int h, int
                                                     _packet(NULL),
                                                     _decCtx(NULL),
                                                     _decodec(NULL),
+                                                    _sws_yuv420_to_rgbx32(NULL),
                                                     _isLastFrameUnused(false)
 {
     _codec = avcodec_find_encoder_by_name(codecName.c_str());
@@ -91,6 +98,9 @@ FfmpegEncodeDecodeFrameTesting::FfmpegEncodeDecodeFrameTesting(int w, int h, int
         return;
     }
 
+    _sws_yuv420_to_rgbx32 = sws_getContext(_width, _height, AV_PIX_FMT_YUV420P,
+                                           _width, _height, AV_PIX_FMT_RGB32,
+                                           SWS_BICUBIC, NULL,NULL,NULL);
     _valid = true;
 }
 
@@ -252,4 +262,24 @@ bool FfmpegEncodeDecodeFrameTesting::decodeToFrame()
     }
 
     return true;
+}
+
+void FfmpegEncodeDecodeFrameTesting::toRGBandExportToFiles(const std::vector<AVFrame *> & frameVector, const String & prefix)
+{
+    int i = 0;
+    unsigned char * buffer = (unsigned char* ) malloc(_width * _height * 4);
+    for (const auto & frame : frameVector) {
+        int data[8] = {(int) _width * 4, 0, 0, 0, 0, 0, 0, 0};
+        uint8_t * srcSlice[8] = { (uint8_t *) buffer, 0, 0, 0, 0, 0, 0, 0 };
+
+        sws_scale ( _sws_yuv420_to_rgbx32, (const uint8_t *const *)(frame->data), (const int *)(frame->linesize), 0,
+                    _height, srcSlice, data );
+        exportRGBX32ToFiles(prefix + std::to_string(i++) + ".png", buffer, _width, _height);
+    }
+}
+
+void FfmpegEncodeDecodeFrameTesting::exportRGBX32ToFiles(const String &path, unsigned char *buffer,
+                                                         size_t w, size_t h)
+{
+    write_RGB32_image(path.c_str(), buffer, w, h);
 }

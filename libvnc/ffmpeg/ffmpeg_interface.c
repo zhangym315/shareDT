@@ -6,6 +6,8 @@
 #include "ffmpeg_interface.h"
 #include "Size.h"
 
+#include <png.h>
+
 void release_total_packet_buf()
 {
     if (av_packet_buf._capacity > 0 && av_packet_buf._data != NULL) {
@@ -120,7 +122,7 @@ struct SwsContext * get_yuv420_ctx(int w, int h, enum AVPixelFormat src_format)
 void convert_to_avframeYUV420(struct SwsContext * sws_ctx, AVFrame *pict,
                            const char * data_frame, int w, int h)
 {
-    int data[8] = {(int) w * 3, 0, 0, 0, 0, 0, 0, 0};
+    int data[8] = {(int) w * 4, 0, 0, 0, 0, 0, 0, 0};
     const uint8_t *const srcSlice[8] = { (uint8_t *)data_frame, 0, 0, 0, 0, 0, 0, 0 };
 
     sws_scale ( sws_ctx, srcSlice, data, 0,
@@ -164,3 +166,39 @@ AVFrame * alloc_avframe(AVFrame * src, int w, int h, enum AVPixelFormat format)
     return frame;
 }
 
+void write_RGB32_image(const char * path, unsigned char *buffer, size_t w, size_t h)
+{
+    FILE *fp = fopen(path, "wb");
+    if(!fp) return ;
+
+    png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png) abort();
+
+    png_infop info = png_create_info_struct(png);
+    if (!info) abort();
+
+    if (setjmp(png_jmpbuf(png))) abort();
+
+    png_init_io(png, fp);
+
+    png_set_IHDR(png,
+                 info,
+                 w, h,
+                 8,
+                 PNG_COLOR_TYPE_RGBA,
+                 PNG_INTERLACE_NONE,
+                 PNG_COMPRESSION_TYPE_DEFAULT,
+                 PNG_FILTER_TYPE_DEFAULT
+    );
+    png_write_info(png, info);
+
+    for ( int i=0 ; i<h ; i++) {
+        png_write_row(png, (png_bytep)(buffer + i*w*4));
+    }
+
+    png_write_end(png, NULL);
+    fclose(fp);
+
+    png_destroy_write_struct(&png, &info);
+
+}
