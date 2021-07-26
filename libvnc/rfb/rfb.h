@@ -439,12 +439,12 @@ typedef struct _rfbFileTransferData {
 
 typedef struct _rfbStatList {
     uint32_t type;
-    uint32_t sentCount;
-    uint32_t bytesSent;
-    uint32_t bytesSentIfRaw;
-    uint32_t rcvdCount;
-    uint32_t bytesRcvd;
-    uint32_t bytesRcvdIfRaw;
+    uint64_t sentCount;
+    uint64_t bytesSent;
+    uint64_t bytesSentIfRaw;
+    uint64_t rcvdCount;
+    uint64_t bytesRcvd;
+    uint64_t bytesRcvdIfRaw;
     struct _rfbStatList *Next;
 } rfbStatList;
 

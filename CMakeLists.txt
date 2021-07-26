@@ -16,6 +16,7 @@ set(CMAKE_SOURCE_CMAKE ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_SOURCE_CMAKE_CONTRIB ${CMAKE_SOURCE_DIR}/cmake/contrib)
 set(SHAREDT_SRC ${CMAKE_SOURCE_DIR}/src)
 set(SHAREDT_SRC_CLIENT ${SHAREDT_SRC}/client)
+set(CMAKE_SOURCE_LIBVNC ${CMAKE_SOURCE_DIR}/libvnc)
 
 include(${CMAKE_SOURCE_CMAKE}/functions.cmake)
 include(${CMAKE_SOURCE_CMAKE}/libs.cmake)
@@ -34,7 +35,6 @@ add_executable(${START_SERVER} ${SHAREDT_SERVER_SRC})
 
 target_link_libraries(${START_SERVER}
     ${LZMA_LIBRARIES}
-    ${FFMPEG_LIBRARIES}
     ${BZIP2_LIBRARIES}
     ${FFMPEG_REQUIRED_LIBS}
     vncserver
@@ -67,6 +67,8 @@ target_link_libraries(${START_CLIENT}
     ${PNG_LIBRARIES}
     ${${PROJECT_NAME}_PLATFORM_LIBS}
     ${SHAREDT_CLIENT_QT_LIBS}
+    ${FFMPEG_REQUIRED_LIBS}
+    ${LZMA_LIBRARIES}
 )
 
 ### Installing
@@ -77,3 +79,6 @@ install(DIRECTORY DESTINATION server/var/run/)
 
 # ShareDTClient
 install(TARGETS ${START_CLIENT} DESTINATION client/bin)
+
+#### Testing
+add_subdirectory( testing )

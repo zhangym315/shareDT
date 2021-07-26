@@ -49,6 +49,7 @@ AVCodecParserContext *av_parser_init(int codec_id)
             parser->codec_ids[4] == codec_id)
             goto found;
     }
+
     return NULL;
 
 found:

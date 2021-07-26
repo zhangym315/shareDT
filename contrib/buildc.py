@@ -24,7 +24,7 @@ def is_tool(name):
     from shutil import which
     return which(name) is not None
 
-def execute_qt(k):
+def buildQT(k):
     pathBLD = PWD + component[0]
 
     if not os.path.isdir(pathBLD):
@@ -145,7 +145,7 @@ def buildAndInstall(kernel, component):
 
     ### build special component first
     if component[0] == "qt515":
-        return execute_qt(kernel)
+        return buildQT(kernel)
     if component[0] == "bzip2":
         return buildBZip2()
 
