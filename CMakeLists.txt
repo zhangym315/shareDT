@@ -81,4 +81,6 @@ install(DIRECTORY DESTINATION server/var/run/)
 install(TARGETS ${START_CLIENT} DESTINATION client/bin)
 
 #### Testing
+if(NOT WIN32)
 add_subdirectory( testing )
+endif()

@@ -3244,6 +3244,12 @@ rfbSendFramebufferUpdate(rfbClientPtr cl,
         switch (cl->preferredEncoding)
             {
         case -1:
+        case rfbEncodingFFMPEG:
+        {
+            if (!rfbSendRectEncodingFFMPEG (cl, x, y, w, h))
+                goto updateFailed;
+            break;
+        }
         case rfbEncodingRaw:
             if (!rfbSendRectEncodingRaw (cl, x, y, w, h))
                 goto updateFailed;
@@ -3287,12 +3293,6 @@ rfbSendFramebufferUpdate(rfbClientPtr cl,
                 break;
 #endif
 #endif
-        case rfbEncodingFFMPEG:
-        {
-            if (!rfbSendRectEncodingFFMPEG (cl, x, y, w, h))
-                goto updateFailed;
-            break;
-        }
       }
 
     }

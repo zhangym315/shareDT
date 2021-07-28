@@ -14,8 +14,8 @@ public:
     FfmpegEncodeDecodeFrameTesting() : _encCtx(NULL), _codec(NULL),
                                  _pixFormat(AV_PIX_FMT_NONE), _width(0),
                                  _height(0), _totalFrames(0), _pts(0),
-                                 _parser(NULL), _packet(NULL), _decCtx(NULL),
-                                 _decodec(NULL) {
+                                 _parser(NULL), _packet(NULL), _sws_yuv420_to_rgbx32(NULL),
+                                 _decCtx(NULL), _decodec(NULL) {
         _originalFrames.clear();
         _encodeBuffer.clear();
     }
@@ -28,7 +28,11 @@ public:
     bool encodeToBuffer();
     bool decodeToFrame();
     AVFrame * allocateFrame();
+    void toRGBandExportToFiles(const std::vector<AVFrame *> & frameVector, const String & prefix);
+    void exportRGBX32ToFiles(const String & path, unsigned char * buffer, size_t w, size_t h);
 
+    [[nodiscard]] const std::vector<AVFrame *> & getDstFrames() const { return _dstFrames; }
+    [[nodiscard]] const std::vector<AVFrame *> & getSrcFrames() const { return _originalFrames; }
     const std::vector<AVPacketBuf> & getBuffer();
 private:
     AVCodecContext * _encCtx;
@@ -49,6 +53,7 @@ private:
     std::vector<AVFrame *> _dstFrames;
     AVCodecParserContext * _parser;
     AVPacket * _packet;
+    struct SwsContext * _sws_yuv420_to_rgbx32;
     bool _isLastFrameUnused;  /* true for unused last frame in _dstFrames */
 
 };

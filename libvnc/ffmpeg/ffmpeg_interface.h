@@ -24,6 +24,7 @@ extern void convert_to_avframeYUV420(struct SwsContext * sws_ctx, AVFrame *pict,
 extern void convert_to_avframeRGB32(struct SwsContext * sws_ctx, AVFrame * srcFrame,
                                      char * data_frame, int w, int h);
 extern rfbBool realloc_total_packet_buf(AVPacketBuf * packetBuf, size_t size);
+extern void write_RGB32_image(const char * path, unsigned char *buffer, size_t w, size_t h);
 
 typedef union {
     unsigned char header[16];

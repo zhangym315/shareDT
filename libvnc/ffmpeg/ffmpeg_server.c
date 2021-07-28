@@ -5,7 +5,7 @@
 static AVCodecContext * codec_ctx   = NULL;
 static struct SwsContext * sws_ctx  = NULL;
 static AVFrame *  av_frame  = NULL;
-
+static int writer_counter = 0;
 rfbBool
 rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
                           int x,
@@ -22,13 +22,13 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
     }
 
     if (av_frame == NULL && (av_frame=alloc_avframe(av_frame, w, h, AV_PIX_FMT_YUV420P)) == NULL) {
-        rfbErr("Failed to alloac avframe for width=%d height=%d format=%d\n", w, h, AV_PIX_FMT_RGB24);
+        rfbErr("Failed to alloac avframe for width=%d height=%d format=%d\n", w, h, AV_PIX_FMT_YUV420P);
         return FALSE;
     }
     rfbErr("frame size: w=%d, h=%d, av_frame.size:%lu\n", w, h, av_frame->buf[0]->size);
 
-    if (sws_ctx == NULL && (sws_ctx=get_yuv420_ctx(w, h, AV_PIX_FMT_RGB24)) == NULL) {
-        fprintf(stderr, "Failed to alloac avframe for width=%d height=%d format=%d\n", w, h, AV_PIX_FMT_RGB24);
+    if (sws_ctx == NULL && (sws_ctx=get_yuv420_ctx(w, h, AV_PIX_FMT_RGB32)) == NULL) {
+        fprintf(stderr, "Failed to alloac avframe for width=%d height=%d format=%d\n", w, h, AV_PIX_FMT_RGB32);
         return FALSE;
     }
 
@@ -61,6 +61,12 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
 //    memcpy(av_frame->data[0], cl->scaledScreen->frameBuffer, w*h*3);
     convert_to_avframeYUV420(sws_ctx, av_frame, cl->scaledScreen->frameBuffer, w, h);
     AVPacketBuf * packet_buf = encode(codec_ctx, av_frame);
+
+/*
+ * char path[128] = {'\0'};
+    sprintf(path,  "output_%d_.png", writer_counter++);
+    write_RGB32_image(path, (unsigned char * ) cl->scaledScreen->frameBuffer, w, h);
+*/
 
     if (!packet_buf) {
         rfbErr("encoded avframe, receive zero packet\n");

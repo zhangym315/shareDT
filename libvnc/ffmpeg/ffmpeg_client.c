@@ -12,6 +12,8 @@ static AVFrame *  av_frame  = NULL;
 static AVPacket * av_packet = NULL;
 static AVCodecParserContext * parser = NULL;
 
+static int writer_counter = 0;
+
 static void
 rfbDefaultLogStd(const char *format, ...)
 {
@@ -70,6 +72,8 @@ rfbSendRectEncodingFFMPEG(rfbClient* client,
             return FALSE;
         }
 
+        codec_ctx->width = rect->r.w;
+        codec_ctx->height = rect->r.h;
         if (avcodec_open2(codec_ctx, codec, NULL) < 0) {
             fprintf(stderr, "Could not open codec\n");
             return FALSE;
@@ -111,20 +115,11 @@ rfbSendRectEncodingFFMPEG(rfbClient* client,
     /*
      * TODO, handle if width and height changed
      */
-    if (av_frame == NULL ) {
-        if ((av_frame=av_frame_alloc()) == NULL) {
-            fprintf(stderr, "Could not allocate video frame\n");
-            return FALSE;
-        }
-
-        av_frame->format = codec_ctx->pix_fmt;
-        av_frame->width  = codec_ctx->width;
-        av_frame->height = codec_ctx->height;
-
-        if (av_frame_get_buffer(av_frame, 0) < 0) {
-            fprintf(stderr, "Could not allocate the video frame data\n");
-            return FALSE;
-        }
+    if (rect->r.w == 0 ||  rect->r.h == 0 ||
+        NULL == (av_frame=alloc_avframe(av_frame, rect->r.w, rect->r.h, AV_PIX_FMT_YUV420P))) {
+        fprintf(stderr, "Could not allocate video frame, rect->r.w=%d, rect->r.h=%d\n",
+                rect->r.w, rect->r.h);
+        return FALSE;
     }
 
     rfbErr("Recevied packet size: %lu, av_packet_buf._size:%lu, av_frame->width:%d, av_frame->height:%d\n",
@@ -135,6 +130,11 @@ rfbSendRectEncodingFFMPEG(rfbClient* client,
             client->_available_frame = 1;
             convert_to_avframeRGB32(sws_ctx, av_frame, (char * )client->frameBuffer,
                                     client->width, client->height);
+/*
+            char path[128] = {'\0'};
+            sprintf(path,  "output_%d_.png", writer_counter++);
+            write_RGB32_image(path, (unsigned char * )client->frameBuffer, client->width, client->height);
+*/
             rfbLog("Recevied frame size linesize[0]: %lu, linesize[1]: %lu\n", av_frame->linesize[0], av_frame->linesize[1]);
         }
         else

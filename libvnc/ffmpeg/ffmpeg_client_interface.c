@@ -11,10 +11,9 @@
 rfbBool fetch_frame(AVCodecContext *dec_ctx, AVFrame *frame)
 {
     int ret = avcodec_receive_frame(dec_ctx, frame);
-    if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+    if (ret > 0) {
         return FALSE;
     } else if (ret < 0) {
-        rfbErr("Error during decoding\n");
         return FALSE;
     } else {
         return TRUE;
@@ -27,7 +26,11 @@ rfbBool decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt)
 
     if (!dec_ctx || !frame || !pkt) return FALSE;
     ret = avcodec_send_packet(dec_ctx, pkt);
-    if (ret < 0) {
+    if (ret == AVERROR(EAGAIN)) {
+        rfbErr("Error sending a packet for decoding, reason='Resource temporarily unavailable'\n");
+        fetch_frame(dec_ctx, frame);  /* fetch frame to drain one frame, TODO: may need fetching multi frame ? */
+        avcodec_send_packet(dec_ctx, pkt); /* resend the pkt, as we can't aford to discard one */
+    } else if (ret < 0) {
         rfbErr("Error sending a packet for decoding\n");
         return FALSE;
     }
