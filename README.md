@@ -14,10 +14,11 @@ sudo apt-get install libxtst-dev
 sudo apt-get install nasm
 ```
 ### MacOS
-* Required package: xcode, python
+* Required package: xcode, python, pkg-config
 * Install nasm
 ```
 brew install nasm
+brew install pkg-config
 ```
 
 ### CMD To Build
@@ -62,7 +63,7 @@ https://sourceforge.net/projects/winflexbison/files/win_flex_bison-2.5.5.zip/dow
 ```
 https://github.com/yasm/yasm/releases/tag/v1.3.0
 ```
-
+* 6. Download and install Microsoft Visual C++ 2010 Redistributable Package x64
 
 
 ### Build

@@ -449,6 +449,7 @@ rfbNewTCPOrUDPClient(rfbScreenInfoPtr rfbScreen,
       cl->useExtDesktopSize = FALSE;
       cl->requestedDesktopSizeChange = 0;
       cl->lastDesktopSizeChangeError = 0;
+      cl->ffmpeg_encoder = 0;
 
 #ifdef LIBVNCSERVER_HAVE_LIBZ
       cl->compStreamInited = FALSE;
@@ -2817,23 +2818,10 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
 }
 
 /*
- * rfbBool
-rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
-                        int x,
-                        int y,
-                        int w,
-                        int h)
-{
-    return rfbSendRectEncodingRaw (cl, x, y, w, h);
-}
-*/
-
-/*
  * rfbSendFramebufferUpdate - send the currently pending framebuffer update to
  * the RFB client.
  * givenUpdateRegion is not changed.
  */
-
 rfbBool
 rfbSendFramebufferUpdate(rfbClientPtr cl,
                          sraRegionPtr givenUpdateRegion)

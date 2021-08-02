@@ -5,15 +5,9 @@
 #include "ffmpeg_interface.h"
 #include "ffmpeg_client_interface.h"
 
-static const AVCodec * codec   = NULL;
-static AVCodecContext * codec_ctx   = NULL;
-static struct SwsContext * sws_ctx  = NULL;
-static AVFrame *  av_frame  = NULL;
-static AVPacket * av_packet = NULL;
-static AVCodecParserContext * parser = NULL;
+static uint64_t total_received_bytes = 0;
 
-static int writer_counter = 0;
-
+static writer_counter = 0;
 static void
 rfbDefaultLogStd(const char *format, ...)
 {
@@ -39,6 +33,66 @@ rfbDefaultLogError(const char *format, ...)
 rfbLogProc rfbLog=rfbDefaultLogStd;
 rfbLogProc rfbErr=rfbDefaultLogError;
 
+static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h)
+{
+    ffmpeg_client_ctx_t * ret   = NULL;
+
+    ret = (ffmpeg_client_ctx_t * ) malloc(sizeof(ffmpeg_client_ctx_t));
+    if (ret == NULL) {
+        rfbErr("Cannot allocate for ffmpeg_client_ctx_t.\n");
+        return NULL;
+    }
+    memset(ret, 0, sizeof(ffmpeg_client_ctx_t));
+
+    char * codec_name = current_codec->codec_name;
+    /* find the mpeg1video encoder */
+    if (strcmp(current_codec->codec_name, "libx265") == 0) {
+        codec_name = "hevc";
+    }
+
+    if ((ret->codec=avcodec_find_decoder_by_name(codec_name)) == NULL) {
+        rfbErr("Codec '%s' not found\n", codec_name);
+        goto failed;
+    }
+
+    if ((ret->parser = av_parser_init(ret->codec->id)) == NULL)
+    {
+        rfbErr("parser not found\n");
+        goto failed;
+    }
+
+    if ((ret->av_packet=av_packet_alloc()) == NULL) {
+        rfbErr("Failed to allocate packet for decoding\n");
+        goto failed;
+    }
+
+
+    if ((ret->codec_ctx = avcodec_alloc_context3(ret->codec)) == NULL) {
+        rfbErr("Could not allocate video codec context\n");
+        goto failed;
+    }
+
+    ret->codec_ctx->width = w;
+    ret->codec_ctx->height = h;
+    if (avcodec_open2(ret->codec_ctx, ret->codec, NULL) < 0) {
+        rfbErr("Could not open codec\n");
+        goto failed;
+    }
+
+    if ((ret->sws_ctx = sws_getContext(w, h, current_codec->pix_format,
+                                  w, h, AV_PIX_FMT_RGB32,
+                                  SWS_BICUBIC, NULL,NULL,NULL)) == NULL ) {
+        rfbErr("Could get sws_getContext\n");
+        goto failed;
+    }
+
+    return ret;
+
+failed:
+    free(ret);
+    return NULL;
+}
+
 /*
  * TODO, if return FALSE. Exiting the program or consume the buffer and waiting for next loop.
  */
@@ -48,43 +102,15 @@ rfbSendRectEncodingFFMPEG(rfbClient* client,
 {
     FFMPEG_HEADER_T av_header = { 0 };
 
-    /* find the mpeg1video encoder */
-    if (codec == NULL && (codec=avcodec_find_decoder_by_name(codec_name)) == NULL) {
-        rfbErr("Codec '%s' not found\n", codec_name);
-        return FALSE;
-    }
-
-    if (parser == NULL && ( parser = av_parser_init(codec->id)) == NULL)
-    {
-        rfbErr("parser not found\n");
-        return FALSE;
-    }
-
-    if (av_packet == NULL && (av_packet=av_packet_alloc()) == NULL) {
-        rfbErr("Failed to allocate packet for decoding\n");
-        return FALSE;
-    }
-
-
-    if (codec_ctx == NULL) {
-        if ((codec_ctx = avcodec_alloc_context3(codec)) == NULL) {
-            rfbErr("Could not allocate video codec context\n");
-            return FALSE;
-        }
-
-        codec_ctx->width = rect->r.w;
-        codec_ctx->height = rect->r.h;
-        if (avcodec_open2(codec_ctx, codec, NULL) < 0) {
-            fprintf(stderr, "Could not open codec\n");
+    if (client->_ffmpeg_decoder == NULL) {
+        client->_ffmpeg_decoder = get_client_ctxs(rect->r.w, rect->r.h);
+        if (client->_ffmpeg_decoder == NULL) {
+            rfbErr("Error to get client ffmpeg ctxs\n");
             return FALSE;
         }
     }
 
-    if (sws_ctx == NULL) {
-        sws_ctx = sws_getContext(rect->r.w, rect->r.h, AV_PIX_FMT_YUV420P,
-                                 rect->r.w, rect->r.h, AV_PIX_FMT_RGB32,
-                                   SWS_BICUBIC, NULL,NULL,NULL);
-    }
+    ffmpeg_client_ctx_t * decoder_ctx = (ffmpeg_client_ctx_t *) client->_ffmpeg_decoder;
 
     /* Read header */
     if (!ReadFromRFBServer(client, (char *) av_header.header, sizeof(av_header)))
@@ -103,7 +129,8 @@ rfbSendRectEncodingFFMPEG(rfbClient* client,
     }
     av_packet_buf._size = av_header.HEADER.ffmpeg_body_len;
 
-    if (av_parser_parse2(parser, codec_ctx, &av_packet->data, &av_packet->size,
+    if (av_parser_parse2(decoder_ctx->parser, decoder_ctx->codec_ctx, &decoder_ctx->av_packet->data,
+                         &decoder_ctx->av_packet->size,
                          av_packet_buf._data, (int) av_packet_buf._size,
                          AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0) < 0) {
         fprintf(stderr, "Error while parsing\n");
@@ -112,30 +139,35 @@ rfbSendRectEncodingFFMPEG(rfbClient* client,
 
     client->_available_frame = 0;
 
-    /*
-     * TODO, handle if width and height changed
-     */
+    total_received_bytes += av_packet_buf._size + sizeof(av_header);
+
+    /* get av_frame */
     if (rect->r.w == 0 ||  rect->r.h == 0 ||
-        NULL == (av_frame=alloc_avframe(av_frame, rect->r.w, rect->r.h, AV_PIX_FMT_YUV420P))) {
+        NULL == (decoder_ctx->av_frame=alloc_avframe(decoder_ctx->av_frame, rect->r.w,
+                                                     rect->r.h, current_codec->pix_format))) {
         fprintf(stderr, "Could not allocate video frame, rect->r.w=%d, rect->r.h=%d\n",
                 rect->r.w, rect->r.h);
         return FALSE;
     }
 
-    rfbErr("Recevied packet size: %lu, av_packet_buf._size:%lu, av_frame->width:%d, av_frame->height:%d\n",
-           av_packet->size, av_packet_buf._size, av_frame->width, av_frame->height);
-    if (av_packet->size) {
-        if (decode(codec_ctx, av_frame, av_packet) ||
-                fetch_frame(codec_ctx, av_frame)) {
+    if (decoder_ctx->av_packet->size) {
+        if (decode(decoder_ctx->codec_ctx, decoder_ctx->av_frame, decoder_ctx->av_packet) ||
+                fetch_frame(decoder_ctx->codec_ctx, decoder_ctx->av_frame)) {
             client->_available_frame = 1;
-            convert_to_avframeRGB32(sws_ctx, av_frame, (char * )client->frameBuffer,
+            convert_to_avframeRGB32(decoder_ctx->sws_ctx,decoder_ctx-> av_frame, (char * )client->frameBuffer,
                                     client->width, client->height);
-/*
+            rfbLog("Recevied packet size: %lu, av_packet_buf._size:%lu, av_frame->width:%d, av_frame->height:%d "
+                   "total_received_bytes:%llu\n",
+                   decoder_ctx->av_packet->size, av_packet_buf._size, decoder_ctx->av_frame->width,
+                   decoder_ctx->av_frame->height, total_received_bytes);
+
+
             char path[128] = {'\0'};
             sprintf(path,  "output_%d_.png", writer_counter++);
-            write_RGB32_image(path, (unsigned char * )client->frameBuffer, client->width, client->height);
-*/
-            rfbLog("Recevied frame size linesize[0]: %lu, linesize[1]: %lu\n", av_frame->linesize[0], av_frame->linesize[1]);
+//            write_RGB32_image(path, (unsigned char * )client->frameBuffer, client->width, client->height);
+
+            rfbLog("Recevied frame size linesize[0]: %lu, linesize[1]: %lu\n",
+                   decoder_ctx->av_frame->linesize[0], decoder_ctx->av_frame->linesize[1]);
         }
         else
             client->_available_frame = 0;

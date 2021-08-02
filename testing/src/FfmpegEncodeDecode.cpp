@@ -8,7 +8,7 @@ extern "C" {
 }
 
 TEST(ffmpeg_encode_decode, ffmpeg_encode) {
-    FfmpegEncodeDecodeFrameTesting coder(1024, 2048);
+    FfmpegEncodeDecodeFrameTesting coder(1024, 2048, 50, AV_PIX_FMT_RGB24);
 
     EXPECT_TRUE(coder.valid());
     EXPECT_TRUE(coder.getSampleFrame(10));
@@ -170,6 +170,20 @@ bool FfmpegEncodeDecodeFrameTesting::getSampleFrame(int framesCnt)
             }
 
             frame->pts = _pts++;
+        } else if (_pixFormat == AV_PIX_FMT_RGB24) {
+            /* make sure the frame data is writable */
+            if (av_frame_make_writable(frame) < 0)
+                return false;
+
+            for (int y = 0; y < _encCtx->height; y++) {
+                int lineStartsBytes = y*_encCtx->width*3;
+                for (int x = 0; x < _encCtx->width; x++) {
+                    frame->data[0][lineStartsBytes + x*3 + 0] = y/128;
+                    frame->data[0][lineStartsBytes + x*3 + 1] = y/128;
+                    frame->data[0][lineStartsBytes + x*3 + 2] = y/128;
+                }
+            }
+            frame->pts = _pts++;
         }
 
         _originalFrames.emplace_back(frame);
@@ -269,7 +283,7 @@ void FfmpegEncodeDecodeFrameTesting::toRGBandExportToFiles(const std::vector<AVF
     int i = 0;
     unsigned char * buffer = (unsigned char* ) malloc(_width * _height * 4);
     for (const auto & frame : frameVector) {
-        int data[8] = {(int) _width * 4, 0, 0, 0, 0, 0, 0, 0};
+        int data[8] = {(int) _width * 3, 0, 0, 0, 0, 0, 0, 0};
         uint8_t * srcSlice[8] = { (uint8_t *) buffer, 0, 0, 0, 0, 0, 0, 0 };
 
         sws_scale ( _sws_yuv420_to_rgbx32, (const uint8_t *const *)(frame->data), (const int *)(frame->linesize), 0,

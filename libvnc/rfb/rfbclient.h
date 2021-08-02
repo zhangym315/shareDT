@@ -453,6 +453,7 @@ typedef struct _rfbClient {
      */
     void * _si;
     void * _fetcher;
+    void * _ffmpeg_decoder;
     uint64_t _sequence;
     uint32_t _available_frame;
 } rfbClient;

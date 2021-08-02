@@ -15,7 +15,7 @@ AVPacketBuf * encode(AVCodecContext *enc_ctx, AVFrame *frame)
 
     ret = avcodec_send_frame(enc_ctx, frame);
     if (ret < 0) {
-        rfbErr("Error sending a frame for encoding\n");
+        rfbErr("Error sending a frame for encoding ret=%d\n", ret);
         return NULL;
     }
 
