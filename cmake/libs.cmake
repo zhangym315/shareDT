@@ -138,7 +138,9 @@ elseif(UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DwxUSE_THREADS=1 -DLINK_LEXERS -DNO_CXX11_REGEX -DSCI_LEXER -DWXBUILDING -DWX_PRECOMP -D_LIB -D_UNICODE -D__WXGTK2__ -D__WXGTK__ -D__WX__ -DwxUSE_BASE=1 -DwxUSE_GUI=1")
 
     # libs for FFMPEG
-    set(FFMPEG_REQUIRED_LIBS "")
+    set(FFMPEG_REQUIRED_LIBS
+            ${FFMPEG_LIBRARIES}
+            )
 else()
     message(FATAL_ERROR " Not supported platform ${ARGS}")
 endif()
