@@ -8,6 +8,25 @@
 
 #include <png.h>
 
+const char * FFMPEG_HEADER_KEY = "FFMPEGHEADER";
+const int FFMPEG_HEADER_KEY_LEN = 12;
+const int FFMPEG_HEADER_LEN = sizeof(FFMPEG_HEADER_T);
+AVPacketBuf av_packet_buf = { 0 };
+
+const encoder_decoder_t supported_codecs[] = {
+        {"h263", AV_PIX_FMT_YUV422P},
+        {"libx265", AV_PIX_FMT_YUV420P},
+        {"libx265", AV_PIX_FMT_YUV422P},
+        {"libx265", AV_PIX_FMT_YUV444P},
+        {"mpeg2video", AV_PIX_FMT_YUV420P},
+        {"mpeg2video", AV_PIX_FMT_YUV422P},
+        {"png"  , AV_PIX_FMT_RGB24},    /* TODO new fix picture misleading */
+        {"ppm"  , AV_PIX_FMT_RGB24},
+        {NULL, AV_PIX_FMT_NONE}
+};
+
+const encoder_decoder_t * current_codec = &supported_codecs[5];
+
 void release_total_packet_buf()
 {
     if (av_packet_buf._capacity > 0 && av_packet_buf._data != NULL) {
@@ -38,6 +57,7 @@ rfbBool realloc_total_packet_buf(AVPacketBuf * packetBuf, size_t size)
             return FALSE;
         }
         packetBuf->_capacity = total_new_size;
+        memset(packetBuf->_data, 0, packetBuf->_capacity);
         atexit(release_total_packet_buf);
         return TRUE;
     }
@@ -51,6 +71,7 @@ rfbBool realloc_total_packet_buf(AVPacketBuf * packetBuf, size_t size)
         rfbErr("Error to allocate buffer with size=%ul\n", total_new_size);
         return FALSE;
     }
+    memset(packetBuf->_data, 0, packetBuf->_capacity);
     packetBuf->_capacity = total_new_size;
 
     return TRUE;
@@ -93,7 +114,7 @@ AVCodecContext * openCodec(const char * codec_name, int w, int h)
      */
     c->gop_size = 10;
     c->max_b_frames = 1;
-    c->pix_fmt = AV_PIX_FMT_YUV420P;
+    c->pix_fmt = current_codec->pix_format;
 
     if ((ret=avcodec_open2(c, codec, NULL)) < 0) {
         rfbErr("Could not open codec: %s\n", av_err2str(ret));
@@ -115,7 +136,7 @@ AVPacket * get_packet(int size)
 struct SwsContext * get_yuv420_ctx(int w, int h, enum AVPixelFormat src_format)
 {
     return sws_getContext(w, h, src_format,
-                          w, h, AV_PIX_FMT_YUV420P,
+                          w, h, current_codec->pix_format,
                           SWS_BICUBIC, NULL,NULL,NULL);
 }
 
@@ -158,6 +179,7 @@ AVFrame * alloc_avframe(AVFrame * src, int w, int h, enum AVPixelFormat format)
     frame->width  = w;
     frame->height = h;
 
+    frame->pts = 0;
     if (av_frame_get_buffer(frame, 0) < 0) {
         rfbErr("Could not allocate the video frame data\n");
         return NULL;

@@ -718,6 +718,11 @@ typedef struct _rfbClientRec {
     rfbBool useExtDesktopSize;
     int requestedDesktopSizeChange;
     int lastDesktopSizeChangeError;
+
+    /**
+     * For extension of ffmpeg_encoder
+     */
+    void * ffmpeg_encoder;    /* encoder_decoder_t type to ffmpeg encoding */
 } rfbClientRec, *rfbClientPtr;
 
 /**

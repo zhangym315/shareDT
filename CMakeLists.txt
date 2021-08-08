@@ -69,6 +69,7 @@ target_link_libraries(${START_CLIENT}
     ${SHAREDT_CLIENT_QT_LIBS}
     ${FFMPEG_REQUIRED_LIBS}
     ${LZMA_LIBRARIES}
+    ${X265_LIBRARIES}
 )
 
 ### Installing
@@ -80,7 +81,7 @@ install(DIRECTORY DESTINATION server/var/run/)
 # ShareDTClient
 install(TARGETS ${START_CLIENT} DESTINATION client/bin)
 
-#### Testing
+#### Testing #### Can't link gtest on Win32, skip win testing
 if(NOT WIN32)
 add_subdirectory( testing )
 endif()

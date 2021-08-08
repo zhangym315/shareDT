@@ -348,6 +348,11 @@ rfbClient* rfbGetClient(int bitsPerSample,int samplesPerPixel,
   client->listen6Address = NULL;
   client->clientAuthSchemes = NULL;
 
+  /* ffmpeg extension */
+  client->_si = NULL;
+  client->_fetcher = NULL;
+  client->_ffmpeg_decoder = NULL;
+
 #ifdef LIBVNCSERVER_HAVE_SASL
   client->GetSASLMechanism = NULL;
   client->GetUser = NULL;

@@ -29,6 +29,7 @@ target_link_libraries(ffmpeg_encode_decode vncserver vncclient
                       ${FFMPEG_REQUIRED_LIBS}
                       ${LZMA_LIBRARIES}
                       ${BZIP2_LIBRARIES}
+                      ${X265_LIBRARIES}
 #                      ${${PROJECT_NAME}_PLATFORM_LIBS}
 #                      ${X265_LIBRARIES}
                       )

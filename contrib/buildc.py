@@ -176,7 +176,7 @@ def buildAndInstall(kernel, component):
         if kernel == "windows" :
             ret=os.system('cmake -A x64 -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../')
         else:
-            ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../')
+            ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../' )
 
         if ret != 0:
             return 1
@@ -249,19 +249,21 @@ else:
         return v.rstrip('\n')
     kernel = normalize_kernel(backtick("uname -s"))
 
+x265Dir = "x265_3.3/source/";
 components = [["SDL2-2.0.12", "CMAKE"],
               ["libjpeg-turbo-2.0.5", "CMAKE"],
               ["zlib", "CMAKE"],\
               ["libpng-1.6.37", "CMAKE"],
               ["lzo-2.10", "CMAKE"],
-              ["x265_3.3/source/", "CMAKE"],\
+              [x265Dir, "CMAKE"],\
               ["openssl", "Configure"],\
               ["qt515", "configure"],\
-              ["ffmpeg", "configure --disable-iconv"],\
+              ["ffmpeg", "configure --disable-iconv --enable-libx265 --enable-gpl"],\
               ["liblzma", "configure"],\
               ["bzip2", "configure"]\
               ]
 
+os.environ["PKG_CONFIG_PATH"] = PWD + x265Dir + INS + "/lib/pkgconfig/"
 for component in components :
     buildRet=buildAndInstall(kernel, component)
     if buildRet == 1 or buildRet == 2:

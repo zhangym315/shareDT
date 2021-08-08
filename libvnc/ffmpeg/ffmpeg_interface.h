@@ -1,6 +1,7 @@
 #ifndef SHAREDT_FFMPEG_INTERFACE_H
 #define SHAREDT_FFMPEG_INTERFACE_H
 
+#include <libavutil/pixfmt.h>
 #include <libavcodec/avcodec.h>
 #include <rfb/rfb.h>
 
@@ -13,6 +14,11 @@ typedef struct {
     size_t   _capacity;    /* total alloc buffer size        */
     unsigned char * _data; /* buffer                         */
 } AVPacketBuf;
+
+typedef struct {
+    const char * codec_name;
+    enum AVPixelFormat pix_format;
+} encoder_decoder_t;
 
 extern AVCodecContext * openCodec(const char * codec_name, int w, int h);
 
@@ -34,11 +40,11 @@ typedef union {
     } HEADER;
 } FFMPEG_HEADER_T;
 
-const static char * FFMPEG_HEADER_KEY = "FFMPEGHEADER";
-const static int FFMPEG_HEADER_KEY_LEN = 12;
-const static int FFMPEG_HEADER_LEN = sizeof(FFMPEG_HEADER_T);
-static AVPacketBuf av_packet_buf = { 0 };
-
-static const char * codec_name  = "mpeg1video";
+extern const char * FFMPEG_HEADER_KEY;
+extern const int FFMPEG_HEADER_KEY_LEN;
+extern const int FFMPEG_HEADER_LEN;
+extern AVPacketBuf av_packet_buf;
+extern const encoder_decoder_t supported_codecs[];
+extern const encoder_decoder_t * current_codec;
 
 #endif //SHAREDT_FFMPEG_INTERFACE_H
