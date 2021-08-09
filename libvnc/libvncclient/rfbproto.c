@@ -1811,7 +1811,7 @@ HandleRFBServerMessage(rfbClient* client)
 
               case rfbEncodingFFMPEG:
               {
-                rfbSendRectEncodingFFMPEG(client, &rect);
+                rfbReceiveRectEncodingFFMPEG(client, &rect);
                 break;
               }
 

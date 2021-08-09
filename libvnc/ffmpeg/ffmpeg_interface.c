@@ -224,3 +224,25 @@ void write_RGB32_image(const char * path, unsigned char *buffer, size_t w, size_
     png_destroy_write_struct(&png, &info);
 
 }
+
+void write_YUV_image(char  * path, AVFrame * av_frame)
+{
+    struct SwsContext * sws_ctx;
+    AVFrame * rgbFrame;
+    if ((sws_ctx = sws_getContext(av_frame->width, av_frame->height, av_frame->format,
+                                       av_frame->width, av_frame->height, AV_PIX_FMT_RGB32,
+                                       SWS_BICUBIC, NULL,NULL,NULL)) == NULL ) {
+        rfbErr("Could get sws_getContext\n");
+        return;
+    }
+    if (NULL == (rgbFrame=alloc_avframe(NULL, av_frame->width, av_frame->height, AV_PIX_FMT_RGB32))) {
+        rfbErr("Could not allocate video frame, rect->r.w=%d, rect->r.h=%d\n",
+                av_frame->width, av_frame->height);
+        return;
+    }
+
+    convert_to_avframeRGB32(sws_ctx, av_frame, (char *) rgbFrame->data[0], av_frame->width, av_frame->height);
+
+    write_RGB32_image(path, rgbFrame->data[0], av_frame->width, av_frame->height);
+    av_frame_free(&rgbFrame);
+}

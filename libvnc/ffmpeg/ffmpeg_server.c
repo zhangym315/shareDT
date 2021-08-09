@@ -1,17 +1,16 @@
 #include "ffmpeg_server.h"
 #include "ffmpeg_server_interface.h"
 #include "ffmpeg_interface.h"
+#include "TimeUtil.h"
 
 static int writer_counter = 0;
-
-static struct SwsContext * sws_ctx = NULL;
-static AVCodecContext * codec_ctx  = NULL;
-static AVFrame *  av_frame  = NULL;
 
 static ffmpeg_server_ctx_t * get_server_ctxs(int w, int h)
 {
     ffmpeg_server_ctx_t * ret   = NULL;
     struct SwsContext * sws_ctx = NULL;
+    AVCodecContext * codec_ctx  = NULL;
+    AVFrame *  av_frame  = NULL;
 
     if ((codec_ctx=openCodec(current_codec->codec_name, w, h)) == NULL) {
         rfbErr("Failed to open codec in ffmpeg\n");
@@ -52,7 +51,7 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
 
     /* initialize */
     if (cl->ffmpeg_encoder == NULL) {
-//        cl->ffmpeg_encoder = get_server_ctxs(w, h);
+        cl->ffmpeg_encoder = get_server_ctxs(w, h);
     }
 
     ffmpeg_server_ctx_t * server_ctx = (ffmpeg_server_ctx_t *) cl->ffmpeg_encoder;
@@ -63,21 +62,7 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
     }
 
     rfbFramebufferUpdateRectHeader rect;
-    int bytesPerLine = w * 3;
-
-    if (codec_ctx == NULL && (codec_ctx=openCodec(current_codec->codec_name, w, h)) == NULL) {
-        rfbErr("Failed to open codec in ffmpeg\n");
-        return FALSE;
-    }
-
-    if (sws_ctx == NULL && (sws_ctx=get_yuv420_ctx(w, h, AV_PIX_FMT_RGB32)) == NULL) {
-        fprintf(stderr, "Failed to alloac avframe for width=%d height=%d format=%d\n", w, h, AV_PIX_FMT_RGB32);
-        return FALSE;
-    }
-    if (av_frame == NULL && (av_frame=alloc_avframe(av_frame, w, h, current_codec->pix_format)) == NULL) {
-        rfbErr("Failed to alloac avframe for width=%d height=%d format=%d\n", w, h, current_codec->pix_format);
-        return FALSE;
-    }
+    int bytesPerLine = w * 4;
 
     /* Flush the buffer to guarantee correct alignment for translateFn(). */
     if (cl->ublen > 0) {
@@ -95,16 +80,17 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
 
     if (!rfbSendUpdateBuf(cl))
         return FALSE;
-
-/*    char path[128] = {'\0'};
+/*
+    char path[128] = {'\0'};
     sprintf(path,  "output_%d_.png", writer_counter++);
-//    write_RGB32_image(path, (unsigned char * )cl->scaledScreen->frameBuffer, w, h);
-rfbErr("write to output file:%s\n", path);
+    write_RGB32_image(path, cl->scaledScreen->frameBuffer, w, h);
+    rfbErr("write to output file:%s\n", path);
 */
     /* encode avframe */
-    av_frame->pts++;
-    convert_to_avframeYUV420(sws_ctx, av_frame, cl->scaledScreen->frameBuffer, w, h);
-    AVPacketBuf * packet_buf = encode(codec_ctx, av_frame);
+    server_ctx->av_frame->pts++;
+    convert_to_avframeYUV420(server_ctx->sws_ctx, server_ctx->av_frame, cl->scaledScreen->frameBuffer, w, h);
+
+    AVPacketBuf * packet_buf = encode(server_ctx->codec_ctx, server_ctx->av_frame);
 
     if (!packet_buf) {
         rfbErr("encoded avframe, receive zero packet\n");
@@ -120,7 +106,7 @@ rfbErr("write to output file:%s\n", path);
         return FALSE;
     }
 
-    rfbLog("Packet write: %d, total:%d\n", packet_buf->_size, cl->bytesSent);
+    rfbLog("%s Packet write_size=%d, total_size=%d\n", get_current_time_string(), packet_buf->_size, cl->bytesSent);
 
     packet_buf->_size = 0;
 
