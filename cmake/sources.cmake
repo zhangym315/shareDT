@@ -23,6 +23,7 @@ set(SHAREDT_SERVER_SRC
         ${SHAREDT_SRC}/util/ReadWriteFD.cpp
         ${SHAREDT_SRC}/util/Sock.cpp
         ${SHAREDT_SRC}/util/Pid.c
+        ${SHAREDT_SRC}/util/TimeUtil.c
         ${SHAREDT_SRC}/cli/ExportImages.cpp
         ${SHAREDT_SRC}/ffmpeg/ReadWriteVideo.c
         ${SHAREDT_SRC}/ffmpeg/ReadWriteImages.c
@@ -65,6 +66,7 @@ set(SHAREDT_CLIENT_GUI_SRC_FILES
 set(SHAREDT_CLIENT_SRC_FILES
         ${SHAREDT_SRC}/util/Pid.c
         ${SHAREDT_SRC}/util/Buffer.cpp
+        ${SHAREDT_SRC}/util/TimeUtil.c
         ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.cpp
         ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.h
         ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.ui

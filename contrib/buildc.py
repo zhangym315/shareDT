@@ -258,7 +258,8 @@ components = [["SDL2-2.0.12", "CMAKE"],
               [x265Dir, "CMAKE"],\
               ["openssl", "Configure"],\
               ["qt515", "configure"],\
-              ["ffmpeg", "configure --disable-iconv --enable-libx265 --enable-gpl"],\
+#              ["ffmpeg", "configure --disable-iconv --enable-libx265 --enable-gpl"],\
+              ["ffmpeg", "configure --disable-iconv"],\
               ["liblzma", "configure"],\
               ["bzip2", "configure"]\
               ]

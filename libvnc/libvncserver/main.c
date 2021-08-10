@@ -225,6 +225,20 @@ void rfbLogEnable(int enabled) {
   rfbEnableLogging=enabled;
 }
 
+#ifndef LIBVNCSERVER_HAVE_GETTIMEOFDAY
+#include <fcntl.h>
+#include <conio.h>
+#include <sys/timeb.h>
+
+void gettimeofday(struct timeval* tv,char* dummy)
+{
+   SYSTEMTIME t;
+   GetSystemTime(&t);
+   tv->tv_sec=t.wHour*3600+t.wMinute*60+t.wSecond;
+   tv->tv_usec=t.wMilliseconds*1000;
+}
+#endif
+
 /*
  * rfbLog prints a time-stamped message to the log file (stderr).
  */
@@ -235,6 +249,10 @@ rfbDefaultLog(const char *format, ...)
     va_list args;
     char buf[256];
     time_t log_clock;
+    struct timeval currentTime;
+
+    gettimeofday(&currentTime, NULL);
+    log_clock = (time_t)currentTime.tv_sec;
 
     if(!rfbEnableLogging)
       return;
@@ -247,8 +265,8 @@ rfbDefaultLog(const char *format, ...)
     LOCK(logMutex);
     va_start(args, format);
 
-    time(&log_clock);
-    strftime(buf, 255, "%d/%m/%Y %X ", localtime(&log_clock));
+    strftime(buf, 255, "%d/%m/%Y %X", localtime(&log_clock));
+    sprintf(buf+strlen(buf), ".%.3d ", currentTime.tv_usec/1000);
     fprintf(stderr, "%s", buf);
 
     vfprintf(stderr, format, args);
@@ -1169,20 +1187,6 @@ void rfbShutdownServer(rfbScreenInfoPtr screen,rfbBool disconnectClients) {
   rfbShutdownSockets(screen);
   rfbHttpShutdownSockets(screen);
 }
-
-#ifndef LIBVNCSERVER_HAVE_GETTIMEOFDAY
-#include <fcntl.h>
-#include <conio.h>
-#include <sys/timeb.h>
-
-void gettimeofday(struct timeval* tv,char* dummy)
-{
-   SYSTEMTIME t;
-   GetSystemTime(&t);
-   tv->tv_sec=t.wHour*3600+t.wMinute*60+t.wSecond;
-   tv->tv_usec=t.wMilliseconds*1000;
-}
-#endif
 
 rfbBool
 rfbProcessEvents(rfbScreenInfoPtr screen,long usec)

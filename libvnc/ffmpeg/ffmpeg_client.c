@@ -4,6 +4,7 @@
 #include "ffmpeg_client.h"
 #include "ffmpeg_interface.h"
 #include "ffmpeg_client_interface.h"
+#include "TimeUtil.h"
 
 static uint64_t total_received_bytes = 0;
 
@@ -44,7 +45,7 @@ static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h)
     }
     memset(ret, 0, sizeof(ffmpeg_client_ctx_t));
 
-    char * codec_name = current_codec->codec_name;
+    const char * codec_name = current_codec->codec_name;
     /* find the mpeg1video encoder */
     if (strcmp(current_codec->codec_name, "libx265") == 0) {
         codec_name = "hevc";
@@ -97,7 +98,7 @@ failed:
  * TODO, if return FALSE. Exiting the program or consume the buffer and waiting for next loop.
  */
 rfbBool
-rfbSendRectEncodingFFMPEG(rfbClient* client,
+rfbReceiveRectEncodingFFMPEG(rfbClient* client,
                           rfbFramebufferUpdateRectHeader * rect)
 {
     FFMPEG_HEADER_T av_header = { 0 };
@@ -117,6 +118,15 @@ rfbSendRectEncodingFFMPEG(rfbClient* client,
         return FALSE;
     av_header.HEADER.ffmpeg_body_len = rfbClientSwap32IfLE(av_header.HEADER.ffmpeg_body_len);
 
+    rfbLog("%s received data_size=%d\n", get_current_time_string(), av_header.HEADER.ffmpeg_body_len + sizeof(av_header));
+
+    /* No body data, just return */
+    if (av_header.HEADER.ffmpeg_body_len == 0) {
+        client->_available_frame = 0;
+        return TRUE;
+    }
+
+    /* make sure buffer is big enough */
     if (!realloc_total_packet_buf(&av_packet_buf, av_header.HEADER.ffmpeg_body_len)) {
         rfbErr("Error to reallocate buffer, size=%d\n", av_header.HEADER.ffmpeg_body_len);
         return FALSE;
@@ -129,48 +139,60 @@ rfbSendRectEncodingFFMPEG(rfbClient* client,
     }
     av_packet_buf._size = av_header.HEADER.ffmpeg_body_len;
 
-    if (av_parser_parse2(decoder_ctx->parser, decoder_ctx->codec_ctx, &decoder_ctx->av_packet->data,
-                         &decoder_ctx->av_packet->size,
-                         av_packet_buf._data, (int) av_packet_buf._size,
-                         AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0) < 0) {
-        fprintf(stderr, "Error while parsing\n");
-        return FALSE;
-    }
-
+    int parsed;
+    uint8_t *data = av_packet_buf._data;
+    size_t   data_size = av_packet_buf._size;
     client->_available_frame = 0;
+    /*
+     * Send packet to decode.
+     * If multi-frames returned, send the last frame.
+     */
+    while(data_size > 0) {
+        parsed = av_parser_parse2(decoder_ctx->parser, decoder_ctx->codec_ctx, &decoder_ctx->av_packet->data,
+                                  &decoder_ctx->av_packet->size,
+                                  data, (int) data_size,
+                                  AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
 
-    total_received_bytes += av_packet_buf._size + sizeof(av_header);
-
-    /* get av_frame */
-    if (rect->r.w == 0 ||  rect->r.h == 0 ||
-        NULL == (decoder_ctx->av_frame=alloc_avframe(decoder_ctx->av_frame, rect->r.w,
-                                                     rect->r.h, current_codec->pix_format))) {
-        fprintf(stderr, "Could not allocate video frame, rect->r.w=%d, rect->r.h=%d\n",
-                rect->r.w, rect->r.h);
-        return FALSE;
-    }
-
-    if (decoder_ctx->av_packet->size) {
-        if (decode(decoder_ctx->codec_ctx, decoder_ctx->av_frame, decoder_ctx->av_packet) ||
-                fetch_frame(decoder_ctx->codec_ctx, decoder_ctx->av_frame)) {
-            client->_available_frame = 1;
-            convert_to_avframeRGB32(decoder_ctx->sws_ctx,decoder_ctx-> av_frame, (char * )client->frameBuffer,
-                                    client->width, client->height);
-            rfbLog("Recevied packet size: %lu, av_packet_buf._size:%lu, av_frame->width:%d, av_frame->height:%d "
-                   "total_received_bytes:%llu\n",
-                   decoder_ctx->av_packet->size, av_packet_buf._size, decoder_ctx->av_frame->width,
-                   decoder_ctx->av_frame->height, total_received_bytes);
-
-
-            char path[128] = {'\0'};
-            sprintf(path,  "output_%d_.png", writer_counter++);
-//            write_RGB32_image(path, (unsigned char * )client->frameBuffer, client->width, client->height);
-
-            rfbLog("Recevied frame size linesize[0]: %lu, linesize[1]: %lu\n",
-                   decoder_ctx->av_frame->linesize[0], decoder_ctx->av_frame->linesize[1]);
+        if (parsed < 0) {
+            fprintf(stderr, "Error while parsing\n");
+            return FALSE;
         }
-        else
-            client->_available_frame = 0;
+        data      += parsed;
+        data_size -= parsed;
+
+        total_received_bytes += av_packet_buf._size + sizeof(av_header);
+
+        /* get av_frame */
+        if (rect->r.w == 0 ||  rect->r.h == 0 ||
+            NULL == (decoder_ctx->av_frame=alloc_avframe(decoder_ctx->av_frame, rect->r.w,
+                                                         rect->r.h, current_codec->pix_format))) {
+            fprintf(stderr, "Could not allocate video frame, rect->r.w=%d, rect->r.h=%d\n",
+                    rect->r.w, rect->r.h);
+            return FALSE;
+        }
+
+        if (decoder_ctx->av_packet->size &&
+            (decode(decoder_ctx->codec_ctx, decoder_ctx->av_frame, decoder_ctx->av_packet) ||
+                    fetch_frame(decoder_ctx->codec_ctx, decoder_ctx->av_frame))) {
+            client->_available_frame = 1;
+
+/*
+            char path[128] = {'\0'};
+            sprintf(path,  "receive_output_%d_.png", writer_counter++);
+            write_YUV_image(path, decoder_ctx->av_frame);
+            rfbLog("write to file:%s\n", path);
+*/
+
+            convert_to_avframeRGB32(decoder_ctx->sws_ctx, decoder_ctx->av_frame,
+                                    (char * ) client->frameBuffer,
+                                    client->width, client->height);
+
+            rfbLog("%s Recevied frame packet_size=%lu, frame_pts=%llu, total_received_bytes=%llu\n",
+                   get_current_time_string(),
+                   decoder_ctx->av_packet->size,
+                   decoder_ctx->av_frame->pts,
+                   total_received_bytes);
+        }
     }
 
     return TRUE;

@@ -9,9 +9,6 @@ AVPacketBuf * encode(AVCodecContext *enc_ctx, AVFrame *frame)
     AVPacket pkt = { 0 };
 
     if (!enc_ctx || !frame ) return NULL;
-    /* send the frame to the encoder */
-    if (frame)
-        rfbLog("Send frame %3"PRId64"\n", frame->pts);
 
     ret = avcodec_send_frame(enc_ctx, frame);
     if (ret < 0) {
@@ -61,12 +58,12 @@ AVPacketBuf * encode(AVCodecContext *enc_ctx, AVFrame *frame)
 
         memcpy(av_packet_buf._data+av_packet_buf._size, pkt.data, pkt.size);
         av_packet_buf._size += pkt.size;
-        rfbLog("Write packet %3"PRId64" (size=%5d)\n", pkt.pts, pkt.size);
+        rfbLog("Write packet %3"PRId64" (size=%5d), frame=%"PRId64"\n", pkt.pts, pkt.size, frame->pts);
         av_packet_unref(&pkt);
     }
 
     header->HEADER.ffmpeg_body_len = Swap32IfLE(av_packet_buf._size - FFMPEG_HEADER_LEN);
-    rfbErr("Body size: %lu\n", av_packet_buf._size);
+//    rfbErr("Body size: %lu\n", av_packet_buf._size);
 
     return &av_packet_buf;
 }
