@@ -43,10 +43,12 @@ class ShareDTClientWin : public QWidget {
     Ui::ShareDTClientWin   * ui;
     FetchingDataFromServer * _fetcher;
     MainWindowResized        _winResize;
+    bool                     _closed;  // windows is closed
 
   public slots:
     void putImage(rfbClient* client);
     void actionAdjustToOriginSize();
+    void serverConnectionClosed();
 };
 
 #endif //_SHAREDTCLIENTWIN_H_

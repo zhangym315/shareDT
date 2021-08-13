@@ -2,6 +2,7 @@
 #include <QObject>
 #include <QColorSpace>
 #include <qevent.h>
+#include <QMessageBox>
 
 #include <chrono>
 #include "ShareDTClientWin.h"
@@ -10,7 +11,7 @@
 
 ShareDTClientWin::ShareDTClientWin (int argc, char ** argv,
                                     QWidget *parent)
-    :
+    : _closed(false),
      QWidget (parent), ui (new Ui::ShareDTClientWin)
 {
     ui->setupUi (this);
@@ -23,6 +24,9 @@ ShareDTClientWin::ShareDTClientWin (int argc, char ** argv,
                       this, SLOT(putImage(rfbClient*)));
     QObject::connect (ui->actionAdjust_to_original_size, SIGNAL(triggered()),
                       this, SLOT(actionAdjustToOriginSize()));
+
+    QObject::connect (_fetcher, SIGNAL(serverConnectionClosedSend()),
+                      this, SLOT(serverConnectionClosed()));
 
 }
 
@@ -97,6 +101,7 @@ static void writeToFile(const char * file, int x, int y, int w, int h, uint8_t *
 
 void ShareDTClientWin::putImage (rfbClient* client)
 {
+    if (_closed) return;
     auto * fetcher = (FetchingDataFromServer *) client->_fetcher;
 
     if (fetcher->isShutDown()) return;
@@ -166,6 +171,7 @@ void ShareDTClientWin::startVNC ()
 
 void ShareDTClientWin::closeEvent (QCloseEvent *event)
 {
+    _closed = true;
     // make sure fetcher thread is shutdown
     while(!_fetcher->isShutDown()) {
         _fetcher->stop();
@@ -174,4 +180,12 @@ void ShareDTClientWin::closeEvent (QCloseEvent *event)
     delete _fetcher;
 
     event->accept();
+}
+
+void ShareDTClientWin::serverConnectionClosed()
+{
+    this->close();
+    QMessageBox msgBox;
+    msgBox.setText("ShareDTServer closed the connection!");
+    msgBox.exec();
 }

@@ -50,7 +50,7 @@ char * get_current_time_string()
             timeptr->tm_hour,
             timeptr->tm_min,
             timeptr->tm_sec,
-            currentTime.tv_usec/1000);
+            (int) currentTime.tv_usec/1000);
 
     return result;
 }

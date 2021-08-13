@@ -352,6 +352,7 @@ rfbClient* rfbGetClient(int bitsPerSample,int samplesPerPixel,
   client->_si = NULL;
   client->_fetcher = NULL;
   client->_ffmpeg_decoder = NULL;
+  client->_serverClosed = FALSE;
 
 #ifdef LIBVNCSERVER_HAVE_SASL
   client->GetSASLMechanism = NULL;

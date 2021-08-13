@@ -165,6 +165,11 @@ static int mainRestart (const char ** cmdArg, const struct cmdConf * conf)
  */
 static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
+    StartCapture cap;
+    char ** argv = const_cast<char **>(conf->argv);
+    if (cap.initParsing(conf->argc, argv) == RETURN_CODE_INVALID_ARG)
+        return RETURN_CODE_INVALID_ARG;
+
 #ifdef __SHAREDT_WIN__
     String commandPath;
     TCHAR szPath[MAX_PATH];
