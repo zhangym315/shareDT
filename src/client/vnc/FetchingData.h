@@ -33,6 +33,7 @@ class FetchingDataFromServer : public SDThread {
 
   signals:
     void sendRect(rfbClient* client);
+    void serverConnectionClosedSend();
 
   private:
     rfbClient* _client;

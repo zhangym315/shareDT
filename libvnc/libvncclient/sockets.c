@@ -187,6 +187,7 @@ ReadFromRFBServer(rfbClient* client, char *out, unsigned int n)
             } else {
               if (errorMessageOnReadFailure) {
                 rfbClientLog("VNC server closed connection\n");
+                client->_serverClosed = TRUE;
               }
               return FALSE;
             }
@@ -230,6 +231,7 @@ ReadFromRFBServer(rfbClient* client, char *out, unsigned int n)
         } else {
             if (errorMessageOnReadFailure) {
                 rfbClientLog("VNC server closed connection\n");
+                client->_serverClosed = TRUE;
             }
             return FALSE;
         }

@@ -1,98 +1,147 @@
-# Linux(Ubuntu) & MacOS Build
-### Linux Required package(Ubuntu)
-* Build essential package
-```
-sudo apt-get install build-essential
-sudo apt-get install libgtk2.0-dev
-sudo apt-get install libgtk-3-dev
-sudo apt-get install cmake python
-```
-* libx11 related package
-```
-sudo apt-get install "^libxcb.*" libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxkbcommon-x11-dev
-sudo apt-get install libxtst-dev
-sudo apt-get install nasm
-```
-### MacOS
-* Required package: xcode, python, pkg-config
-* Install nasm
-```
-brew install nasm
-brew install pkg-config
-```
+# Overview
+## About ShareDT
+* This project is aimed to share and control desktop among different platform (MacOS, Windows, and Linux).
+* The shared desktop can be the whole screen, a part region of screen and or a particular window of an App.
+* ShareDT internally continuously captures screens, compress the frames captured through ```ffmpeg```, then send it to client through ```libvnc```.
 
-### CMD To Build
-* 1. git clone code
-```
-git clone https://github.com/zhangym315/shareDT.git
-cd shareDT
-git submodule init
-git submodule update
-```
-* 2. Build contrib
-```
-cd contrib && buildc.py
-```
-* 3. Build source code
-```
-mkdir && cd shareDT/build/
-cmake --build ../
-cmake .
-```
-* 4. Install
-```
-cmake --install . --prefix=./install/
-```
+### NOTES
+* Please note that this project is still under development, currently only finished on screen sharing. Windows control will be delivered in future.
+* Please note that ```ServerGui``` is not completed, so all of existing function is required to execute through command line.
+* Please note that ```libvnc``` transaction currently is not support encryption and authentication, which will be delivered in future.
 
-# Windows Build
-### Requirted Package
-* 1. Install Visual Studio 2019 community(Select Desktop C++)
-* 2. Install msys2 and install to ```C:``` root directory. After finished installation, run following to install package:
-```
-pacman -S make gcc diffutils python
+## Build
+* Please refer to ```Build.md```
 
-rename link.exe to others
-mv /usr/bin/link.exe /usr/bin/link-origin.exe
+## Usage
+### Start Server (ShareDTServer) on the host you want to share screen.
+* Start main server
 ```
-* 3. Download flex and add bin to path environment, rename ```win_flex.exe``` to ```flex.exe``` and ```win_bison.exe``` to ```bison.exe```
+$ ./server/bin/ShareDTServer start
+Starting shareDTServer
+ShareDTServer Started
 ```
-https://sourceforge.net/projects/winflexbison/files/win_flex_bison-2.5.5.zip/download
+* Show the windows id or montor id you intend to share
 ```
-* 4. Install ```python3``` and ```Strawberry Perl``` and add executable to ```path``` environment
-* 5. Download ```yasm``` from following link and add it to path
-```
-https://github.com/yasm/yasm/releases/tag/v1.3.0
-```
-* 6. Download and install Microsoft Visual C++ 2010 Redistributable Package x64
-
-
-### Build
-* 1. Start cmd from VS2019
-* 2. Run following to set multi processors
-```
-set CL=/MP
-```
-* 3. clone source code
-```
-git clone https://github.com/zhangym315/shareDT.git
-cd shareDT
-git submodule init
-git submodule update
+$ ./server/bin/ShareDTServer show
+Windows Lists:
+...
+Handle: 603	Pid: 6091	Window name: Menubar
+Handle: 3523	Pid: 3177	Window name: shareDT – README.md
+Handle: 88	Pid: 795	Window name: Desktop Picture - michael-rogers-1156531-unsplash.jpg
+...
+Monitor Lists:
+Name: Display-0	id: 478241811	index: 0	offset: { 0, 0 }	size: { 3840, 2160 }	OriginalOffset: { 0, 0 }	OriginalSize : { 1920, 1080 }	scale: 2.000
+Name: Display-1	id: 69734662	index: 1	offset: { 1920, 0 }	size: { 4096, 2560 }	OriginalOffset: { 1920, 0 }	OriginalSize : { 2048, 1280 }	scale: 2.000
 
 ```
-* 3. Build contrib
+* Capture the Monitor id ```69734662```, and share it:
 ```
-cd contrib
-python buildc.py
+$ ./server/bin/ShareDTServer capture -c mon -i 69734662 --wid test
+Starting Capture ID(CID) = test
+Status: Successfully created Capture Server on port: 5900
 ```
-* 4. Build source code
+* Capture the bounds of window
 ```
-mkdir build
-cd build/
-cmake ../
-cmake --build . --config Release
+$ ./server/bin/ShareDTServer capture -c part -b 0,0,1400,800 --wid testbond
+Starting Capture ID(CID) = testbond
+Status: Successfully created Capture Server on port: 5901
 ```
-* 5. Install
+* Capture windows with handle 3523(```Window name: shareDT – README.md``` in above show command)
 ```
-cmake --install . --prefix=./install/
+$ ./server/bin/ShareDTServer capture -c win -h 3523 --wid testwin
+Starting Capture ID(CID) = testwin
+Status: Successfully created Capture Server on port: 5904
 ```
+* Status of all of the started server
+```
+$ ./server/bin/ShareDTServer status
+Capture Server status:
+Capture Server on port: 5900	 Status: Started	 WID: test
+Capture Server on port: 5901	 Status: Started	 WID: testbond
+Capture Server on port: 5904	 Status: Started	 WID: testwin
+```
+* Server side process tree(```26034``` is ShareDT main server, ```26043``` and ```26131``` are capture server)
+```
+$ pstree
+-+= 00001 root /sbin/launchd
+...
+ |-+- 26034 yimingz ./server/bin/ShareDTServer start
+ | |--- 26043 yimingz /Users/yimingz/X/source/shareDT/cmake-build-debug/install/server//bin/ShareDTServer newCapture -c mon -i 69734662 --wid test --daemon -rfbport 5900
+ | |--- 26131 yimingz /Users/yimingz/X/source/shareDT/cmake-build-debug/install/server//bin/ShareDTServer newCapture -c win -h 3523 --wid testwin --daemon -rfbport 5904
+...
+```
+* Usage of Capture command
+```
+$ ./server/bin/ShareDTServer capture --help
+--help                       Help message
+
+The following options related with StartServer option
+-c or --capture win/mon/part Capture method(single windows, monitor or partial)
+-n or --name    capture-name Capture name for window or monitor(only applied to win and mon capture
+                             For window capture (-capture win), name is the handler of win,
+                             you can find the handler by -s/-showhandler option
+-h or --handler handler      The handler for windows capture
+-b or --bounds  t,l,r,b      Capture bounds for partial, top left right and bottom
+-s [window/win mon/monitor]  Show the window(default) or monitor if [mon/montior] specified
+                             If show window, window that doesn't have name would not be printed
+-showall                     Show all of the window even without window names
+-i or --id ID                For monitor capture, capture the specific monitor id
+-p or --process pid          For window capture (-capture win), capture the specific process id's window
+                             This option can overwrite -n/-name
+--daemon                     Running in daemon mode
+
+
+The following options related with rfb
+-rfbport port          TCP port for RFB protocol
+-rfbportv6 port        TCP6 port for RFB protocol
+-rfbwait time          max time in ms to wait for RFB client
+-rfbauth passwd-file   use authentication on RFB protocol
+                       (use 'storepasswd' to create a password file)
+-rfbversion 3.x        Set the version of the RFB we choose to advertise
+-permitfiletransfer    permit file transfer support
+-passwd plain-password use authentication
+                       (use plain-password as password, USE AT YOUR RISK)
+-deferupdate time      time in ms to defer updates (default 40)
+-deferptrupdate time   time in ms to defer pointer updates (default none)
+-desktop name          VNC desktop name (default "LibVNCServer")
+-alwaysshared          always treat new clients as shared
+-nevershared           never treat new clients as shared
+-dontdisconnect        don't disconnect existing clients when a new non-shared
+                       connection comes in (refuse new connection instead)
+-sslkeyfile path       set path to private key file for encrypted WebSockets connections
+-sslcertfile path      set path to certificate file for encrypted WebSockets connections
+-httpdir dir-path      enable http server using dir-path home
+-httpport portnum      use portnum for http connection
+-httpportv6 portnum    use portnum for IPv6 http connection
+-enablehttpproxy       enable http proxy support
+-progressive height    enable progressive updating for slow links
+-listen ipaddr         listen for connections only on network interface with
+                       addr ipaddr. '-listen localhost' and hostname work too.
+-listenv6 ipv6addr     listen for IPv6 connections only on network interface with
+                       addr ipv6addr. '-listen localhost' and hostname work too.
+```
+* Stop capture server
+```
+$ ./server/bin/ShareDTServer stop --wid testbond
+Stopping Capture Server
+Capture Server Stopped: testbond
+
+$ ./server/bin/ShareDTServer status
+Capture Server status:
+Capture Server on port: 5900	 Status: Started	 WID: test
+Capture Server on port: 5901	 Status: Stopped	 WID: testbond
+Capture Server on port: 5904	 Status: Started	 WID: testwin
+```
+* Stop all capture server
+```
+$ ./server/bin/ShareDTServer stop
+Stopping ShareDTServer
+ShareDTServer Stopped
+```
+### ShareDTClient
+* Connect to ShareDT Server
+```
+$ ./client/bin/ShareDTClient --encodings ffmpeg 127.0.0.1:0
+```
+* ServerGui
+...

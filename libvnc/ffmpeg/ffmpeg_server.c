@@ -80,12 +80,13 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
 
     if (!rfbSendUpdateBuf(cl))
         return FALSE;
-/*
-    char path[128] = {'\0'};
+
+/*    char path[128] = {'\0'};
     sprintf(path,  "output_%d_.png", writer_counter++);
     write_RGB32_image(path, cl->scaledScreen->frameBuffer, w, h);
     rfbErr("write to output file:%s\n", path);
 */
+
     /* encode avframe */
     server_ctx->av_frame->pts++;
     convert_to_avframeYUV420(server_ctx->sws_ctx, server_ctx->av_frame, cl->scaledScreen->frameBuffer, w, h);

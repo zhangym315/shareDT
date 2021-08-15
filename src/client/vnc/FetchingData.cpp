@@ -64,6 +64,7 @@ FetchingDataFromServer::FetchingDataFromServer (int argc, char **argv) :
     _shutdown = false;
 
     _client->_fetcher = this;
+    _client->_serverClosed = 0;
 }
 
 FetchingDataFromServer::~FetchingDataFromServer ()
@@ -78,7 +79,7 @@ void FetchingDataFromServer::run ()
         return;
     }
 
-    while (!_stopped) {
+    while (!_stopped && !_client->_serverClosed) {
         /* After each idle second, send a message */
         if(WaitForMessage(_client,1000000)>0) {
             HandleRFBServerMessage(_client);
@@ -87,6 +88,11 @@ void FetchingDataFromServer::run ()
         {
             std::cout << "Hanlding senindg server message" << std::endl;
         }
+    }
+
+    if (_client->_serverClosed) {
+        std::cout << "server connection closed, start to emit message" << std::endl;
+        emit serverConnectionClosedSend(); 
     }
 
     std::cout << "Shutdown FetchingDataFromServer" << std::endl;

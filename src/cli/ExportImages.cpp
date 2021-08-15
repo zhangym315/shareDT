@@ -121,7 +121,7 @@ int ExportImages::startExportImages()
         i++;
     }
 
-    std::cout << "Images are exported to " << getCapServerPath();
+    std::cout << "Images are exported to " << getCapServerPath() << std::endl;
     return RETURN_CODE_SUCCESS;
 }
 
