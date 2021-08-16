@@ -182,6 +182,7 @@ ReadFromRFBServer(rfbClient* client, char *out, unsigned int n)
                 i = 0;
               } else {
                 rfbClientErr("read (%d: %s)\n",errno,strerror(errno));
+                client->_serverClosed = TRUE;
                 return FALSE;
               }
             } else {

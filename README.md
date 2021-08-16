@@ -13,7 +13,7 @@
 * Please refer to ```Build.md```
 
 ## Usage
-### Start Server (ShareDTServer) on the host you want to share screen.
+### Start Server (```ShareDTServer```) on the host you want to share screen.
 * Start main server
 ```
 $ ./server/bin/ShareDTServer start
@@ -89,6 +89,8 @@ The following options related with StartServer option
 -p or --process pid          For window capture (-capture win), capture the specific process id's window
                              This option can overwrite -n/-name
 --daemon                     Running in daemon mode
+--wid                        Specify the working id (wid) of the capture server. If not
+                             sepcified, ShareDTServer will generate a random wid for it.
 
 
 The following options related with rfb
@@ -145,3 +147,8 @@ $ ./client/bin/ShareDTClient --encodings ffmpeg 127.0.0.1:0
 ```
 * ServerGui
 ...
+
+### Example of ShareDTClient and ShareDTServer
+* A simple example that shows the ```ShareDTClient```(Left Image) connected to server and represents the images captured by ```ShareDTserver```(Right Image).
+![Alt text](image/Example-client-server.png?raw=true "ShareDTServer and ShareDTClient")
+* Noted above, there is lose of resolution compared to original server side, this is expected to reduce the network bandwidth.
