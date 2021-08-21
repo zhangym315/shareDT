@@ -30,6 +30,7 @@ class FetchingDataFromServer : public SDThread {
     static void HandleRectFromServer(rfbClient* client, int x, int y, int w, int h);
     void HandleRect(rfbClient* client);
     FramePerInfo & getFrame() { return _frame; }
+    [[nodiscard]] rfbClient * getRfbClient() const { return _client ;}
 
   signals:
     void sendRect(rfbClient* client);

@@ -43,6 +43,7 @@
 static void Dummy(rfbClient* client) {
 }
 static rfbBool DummyPoint(rfbClient* client, int x, int y) {
+fprintf(stderr, "DummyPoint: x=%d, y=%d\n", x, y);
   return TRUE;
 }
 static void DummyRect(rfbClient* client, int x, int y, int w, int h) {

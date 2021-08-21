@@ -118,7 +118,7 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
         return FALSE;
     av_header.HEADER.ffmpeg_body_len = rfbClientSwap32IfLE(av_header.HEADER.ffmpeg_body_len);
 
-    rfbLog("%s received data_size=%d\n", get_current_time_string(), av_header.HEADER.ffmpeg_body_len + sizeof(av_header));
+//    rfbLog("%s received data_size=%d\n", get_current_time_string(), av_header.HEADER.ffmpeg_body_len + sizeof(av_header));
 
     /* No body data, just return */
     if (av_header.HEADER.ffmpeg_body_len == 0) {
@@ -187,11 +187,12 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
                                     (char * ) client->frameBuffer,
                                     client->width, client->height);
 
-            rfbLog("%s Recevied frame packet_size=%lu, frame_pts=%llu, total_received_bytes=%llu\n",
+/*            rfbLog("%s Recevied frame packet_size=%lu, frame_pts=%llu, total_received_bytes=%llu\n",
                    get_current_time_string(),
                    decoder_ctx->av_packet->size,
                    decoder_ctx->av_frame->pts,
                    total_received_bytes);
+*/
         }
     }
 

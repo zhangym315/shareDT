@@ -5,9 +5,10 @@
 #include <QMessageBox>
 
 #include <chrono>
+#include <png.h>
+
 #include "ShareDTClientWin.h"
 #include "ui_ShareDTClientWin.h"
-#include <png.h>
 
 ShareDTClientWin::ShareDTClientWin (int argc, char ** argv,
                                     QWidget *parent)
@@ -17,22 +18,24 @@ ShareDTClientWin::ShareDTClientWin (int argc, char ** argv,
     ui->setupUi (this);
 
     ui->imageLabel->setText (QString("hello from ShareDTClientWin::ShareDTClientWin"));
-
     _fetcher = new FetchingDataFromServer(argc, argv);
 
     QObject::connect (_fetcher, SIGNAL(sendRect(rfbClient*)),
                       this, SLOT(putImage(rfbClient*)));
     QObject::connect (ui->actionAdjust_to_original_size, SIGNAL(triggered()),
                       this, SLOT(actionAdjustToOriginSize()));
-
     QObject::connect (_fetcher, SIGNAL(serverConnectionClosedSend()),
                       this, SLOT(serverConnectionClosed()));
 
+    setMouseTracking(true);
+    setAttribute(Qt::WA_Hover);
 }
 
 ShareDTClientWin::~ShareDTClientWin ()
 {
     delete ui;
+    if (_fetcher)
+        delete _fetcher;
 }
 
 bool ShareDTClientWin::isInited ()
@@ -53,7 +56,6 @@ std::cout << "resize Event: new size width=" << e->size().width()
     _winResize.curSize = e->size();
     QWidget::resizeEvent(e);
 }
-
 
 static void writeToFile(const char * file, int x, int y, int w, int h, uint8_t * frame)
 {
@@ -188,4 +190,127 @@ void ShareDTClientWin::serverConnectionClosed()
     QMessageBox msgBox;
     msgBox.setText("ShareDTServer closed the connection!");
     msgBox.exec();
+}
+
+void ShareDTClientWin::mousePressEvent(QMouseEvent *event)
+{
+    const QPoint & locPoint = event->pos();
+//    const QPoint & winPoint = event->windowPos();
+    const QPoint & gloPoint = event->globalPos();
+    std::cout << "ShareDTClientWin::mousePressEvent event"
+        << " local QPointF:" << locPoint.x() << " y:" << locPoint.y()
+//        << " win QPointF:" << winPoint.x() << " y:" << winPoint.y()
+        << " glo QPointF:" << gloPoint.x() << " y:" << gloPoint.y()
+        << " button: " << event->button() << std::endl;
+
+    SendPointerEvent(_fetcher->getRfbClient(), locPoint.x(), locPoint.y(), event->button());
+    ShareDTClientWin::mouseReleaseEvent(event);
+}
+
+void ShareDTClientWin::mouseReleaseEvent(QMouseEvent *event)
+{
+    const QPointF & locPoint = event->localPos();
+    const QPointF & winPoint = event->windowPos();
+    const QPointF & gloPoint = event->globalPos();
+    std::cout << "ShareDTClientWin::mouseReleaseEvent event"
+        << " local QPointF:" << locPoint.x() << " y:" << locPoint.y()
+        << " win QPointF:" << winPoint.x() << " y:" << winPoint.y()
+        << " glo QPointF:" << gloPoint.x() << " y:" << gloPoint.y()
+        << " button: " << event->button() << std::endl;
+
+    QWidget::mouseReleaseEvent(event);
+}
+
+void ShareDTClientWin::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    const QPointF & locPoint = event->localPos();
+    const QPointF & winPoint = event->windowPos();
+    const QPointF & gloPoint = event->globalPos();
+
+    std::cout << "ShareDTClientWin::mouseDoubleClickEvent event"
+            << " local QPointF:" << locPoint.x() << " y:" << locPoint.y()
+            << " win QPointF:" << winPoint.x() << " y:" << winPoint.y()
+            << " glo QPointF:" << gloPoint.x() << " y:" << gloPoint.y() << std::endl;
+    QWidget::mouseDoubleClickEvent(event);
+}
+
+void ShareDTClientWin::mouseMoveEvent(QMouseEvent *event)
+{
+    const QPointF & locPoint = event->localPos();
+    const QPointF & winPoint = event->windowPos();
+    const QPointF & gloPoint = event->globalPos();
+    std::cout << "ShareDTClientWin::mouseMoveEvent event"
+            << " local QPointF:" << locPoint.x() << " y:" << locPoint.y()
+            << " win QPointF:" << winPoint.x() << " y:" << winPoint.y()
+            << " glo QPointF:" << gloPoint.x() << " y:" << gloPoint.y() << std::endl;
+
+    QWidget::mouseMoveEvent(event);
+}
+
+void ShareDTClientWin::wheelEvent(QWheelEvent *event) {
+    const QPoint & delta = event->pixelDelta();
+    const QPoint & angle = event->angleDelta();
+
+    std::cout << "ShareDTClientWin::wheelEvent event"
+            << " delta QPoint:" << delta.x() << " delta QPoint:" << delta.y()
+            << " angle QPoint:" << angle.x() << " angle QPoint:" << angle.y()
+            << std::endl;
+    QWidget::wheelEvent(event);
+}
+
+bool ShareDTClientWin::event(QEvent * e)
+{
+    switch(e->type())
+    {
+        case QEvent::HoverEnter:
+            hoverEnter(static_cast<QHoverEvent*>(e));
+            break;
+        case QEvent::HoverLeave:
+            hoverLeave(static_cast<QHoverEvent*>(e));
+            break;
+        case QEvent::HoverMove:
+            hoverMove(static_cast<QHoverEvent*>(e));
+            break;
+        default:
+            break;
+    }
+    return QWidget::event(e);
+}
+
+void ShareDTClientWin::enterEvent(QEvent * e)
+{
+    std::cout << Q_FUNC_INFO << e->type() << std::endl;
+}
+
+void ShareDTClientWin::leaveEvent(QEvent * e)
+{
+    std::cout << Q_FUNC_INFO << e->type() << std::endl;
+}
+
+
+void ShareDTClientWin::hoverEnter(QHoverEvent * event)
+{
+    std::cout << Q_FUNC_INFO << event->type()
+            << " event, old=" << event->oldPos().x() << ", " << event->oldPos().y()
+            << " event, pos=" << event->pos().x() << ", " << event->pos().y() << std::endl;
+}
+
+void ShareDTClientWin::hoverLeave(QHoverEvent * event)
+{
+//    m_count = 0;
+    std::cout << Q_FUNC_INFO << event->type()
+            << " event, old=" << event->oldPos().x() << ", " << event->oldPos().y()
+            << " event, pos=" << event->pos().x() << ", " << event->pos().y() << std::endl;
+
+//    this->setText(QString::number(m_count));
+}
+
+void ShareDTClientWin::hoverMove(QHoverEvent * event)
+{
+//    m_count++;
+    std::cout << Q_FUNC_INFO << event->type()
+            << " event, old=" << event->oldPos().x() << ", " << event->oldPos().y()
+            << " event, pos=" << event->pos().x() << ", " << event->pos().y() << std::endl;
+
+//    this->setText(QString::number(m_count));
 }

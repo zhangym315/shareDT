@@ -149,6 +149,6 @@ $ ./client/bin/ShareDTClient --encodings ffmpeg 127.0.0.1:0
 ...
 
 ### Example of ShareDTClient and ShareDTServer
-* A simple example that shows the ```ShareDTClient```(Left Image) connected to server and represents the images captured by ```ShareDTserver```(Right Image).
+* A simple example that shows the ```ShareDTClient```(Left Image) connected to server and displays the images captured by ```ShareDTserver```(Right Image).
 ![Alt text](image/Example-client-server.png?raw=true "ShareDTServer and ShareDTClient")
 * Noted above, there is lose of resolution compared to original server side, this is expected to reduce the network bandwidth.
