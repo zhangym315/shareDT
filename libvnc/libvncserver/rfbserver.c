@@ -2462,8 +2462,8 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
         return;
 
 
-    case rfbPointerEvent:
-
+	case rfbPointerEvent:
+rfbLog("rfbPointerEvent\n");
 	if ((n = rfbReadExact(cl, ((char *)&msg) + 1,
 			   sz_rfbPointerEventMsg - 1)) <= 0) {
 	    if (n != 0)

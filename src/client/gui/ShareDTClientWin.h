@@ -7,6 +7,9 @@
 
 #include <QEvent>
 #include <QWidget>
+#include <QMouseEvent>
+#include <QHoverEvent>
+
 #include "FetchingData.h"
 
 QT_BEGIN_NAMESPACE
@@ -23,7 +26,7 @@ struct MainWindowResized {
     QSize vncSize;
 };
 
-class ShareDTClientWin : public QWidget {
+class ShareDTClientWin : public QWidget{
     Q_OBJECT
 
   public:
@@ -38,6 +41,21 @@ class ShareDTClientWin : public QWidget {
     void closeEvent ( QCloseEvent *event ) override;
 
     void resizeToNewVNC(int w, int h);
+
+    /* mouse handle */
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
+    bool event(QEvent * e) override;
+
+    void enterEvent(QEvent * e) override;
+    void leaveEvent(QEvent * e) override;
+
+    void hoverEnter(QHoverEvent * event);
+    void hoverLeave(QHoverEvent * event);
+    void hoverMove(QHoverEvent * event);
 
   private:
     Ui::ShareDTClientWin   * ui;

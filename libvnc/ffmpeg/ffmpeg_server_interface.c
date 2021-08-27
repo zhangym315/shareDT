@@ -58,7 +58,7 @@ AVPacketBuf * encode(AVCodecContext *enc_ctx, AVFrame *frame)
 
         memcpy(av_packet_buf._data+av_packet_buf._size, pkt.data, pkt.size);
         av_packet_buf._size += pkt.size;
-        rfbLog("Write packet %3"PRId64" (size=%5d), frame=%"PRId64"\n", pkt.pts, pkt.size, frame->pts);
+//        rfbLog("Write packet %3"PRId64" (size=%5d), frame=%"PRId64"\n", pkt.pts, pkt.size, frame->pts);
         av_packet_unref(&pkt);
     }
 
