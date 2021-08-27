@@ -55,7 +55,6 @@ if(WIN32)
             ${CMAKE_SOURCE_DIR}/src/capture/win/WinGetWindows.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/win/WinGetMonitors.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/win/GDIWindowProcessor.cpp
-            ${CMAKE_SOURCE_DIR}/src/capture/win/GDIWindowProcessor.cpp
             ${CMAKE_SOURCE_DIR}/src/MainWindowsService.cpp
             ${CMAKE_SOURCE_DIR}/src/util/WindowsProcess.cpp
             )
@@ -96,6 +95,7 @@ elseif(APPLE)
             ${CMAKE_SOURCE_DIR}/src/capture/ios/CGGetMonitors.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/ios/NSFrame.mm
             ${CMAKE_SOURCE_DIR}/src/capture/ios/CGWindowsFrame.cpp
+            ${CMAKE_SOURCE_DIR}/src/input/ios/MouseEvents.mm
             ${CMAKE_SOURCE_DIR}/src/MainNixService.cpp
             )
 
@@ -114,7 +114,8 @@ elseif(UNIX)
     add_definitions(-D__SHAREDT_LINUX__)
     find_package(X11 REQUIRED)
     if(!X11_XTest_FOUND)
-        message(FATAL_ERROR "X11 extensions are required, but not found!")
+        message(FATAL_ERROR "X11 extensions are required, but not f.
+        ound!")
     endif()
     if(!X11_Xfixes_LIB)
         message(FATAL_ERROR "X11 fixes extension is required, but not found!")

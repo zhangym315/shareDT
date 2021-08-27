@@ -14,6 +14,7 @@
 #include "Logger.h"
 #include "Enum.h"
 #include "MainConsole.h"
+#include "InputInterface.h"
 
 #include <iomanip>
 #include <iostream>
@@ -627,6 +628,7 @@ void StartCapture::startCaptureServer()
     rfbMarkRectAsModified(_rfbserver, 0, 0,
                          _sp->getWidth(), _sp->getHeight());
 
+    _rfbserver->ptrAddEvent = ptrServerMouseEvent;
     LOGGER.info() << "Started CaptureServer" ;
     while (rfbIsActive(_rfbserver) && _isServerRunning)
     {

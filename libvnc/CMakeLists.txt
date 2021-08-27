@@ -36,6 +36,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${LIBSOURCE_FFMPEG_DIR}
                     ${FFMPEG_INCLUDE_DIR}
                     ${CMAKE_SOURCE_DIR}/src/util/
+                    ${CMAKE_SOURCE_DIR}/src/input/
                     /usr/local/include)
 
 # all the build configuration switches
@@ -341,6 +342,7 @@ set(LIBVNCSERVER_SOURCES
     ${LIBVNCSERVER_DIR}/scale.c
     ${LIBSOURCE_FFMPEG_DIR}/ffmpeg_server.c
     ${LIBSOURCE_FFMPEG_DIR}/ffmpeg_server_interface.c
+    ${SHARDT_LIBVNCSERVER_SOURCES}
 )
 
 set(LIBVNCCLIENT_SOURCES

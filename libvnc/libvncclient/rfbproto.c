@@ -1559,15 +1559,18 @@ SendPointerEvent(rfbClient* client,int x, int y, int buttonMask)
 {
   rfbPointerEventMsg pe;
 
+  memset(&pe, 0, sizeof(sz_rfbPointerEventMsg));
+
   if (!SupportsClient2Server(client, rfbPointerEvent)) return TRUE;
 
   pe.type = rfbPointerEvent;
-  pe.buttonMask = buttonMask;
-  if (x < 0) x = 0;
-  if (y < 0) y = 0;
+  pe.buttonMask = rfbClientSwap32IfLE(buttonMask);
 
-  pe.x = rfbClientSwap16IfLE(x);
-  pe.y = rfbClientSwap16IfLE(y);
+
+  pe.x = rfbClientSwap32IfLE(x);
+  pe.y = rfbClientSwap32IfLE(y);
+printf("button:0x%x, x:%x, y:%x, pe.x:%x, pe.y:%x\n", pe.buttonMask, x, y, pe.x, pe.y);
+
   return WriteToRFBServer(client, (char *)&pe, sz_rfbPointerEventMsg);
 }
 
