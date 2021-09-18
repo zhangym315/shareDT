@@ -1569,7 +1569,6 @@ SendPointerEvent(rfbClient* client,int x, int y, int buttonMask)
 
   pe.x = rfbClientSwap32IfLE(x);
   pe.y = rfbClientSwap32IfLE(y);
-printf("button:0x%x, x:%x, y:%x, pe.x:%x, pe.y:%x\n", pe.buttonMask, x, y, pe.x, pe.y);
 
   return WriteToRFBServer(client, (char *)&pe, sz_rfbPointerEventMsg);
 }

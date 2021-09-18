@@ -151,15 +151,33 @@
 void InputMousePlatform::mouseClickAtCordinate(Cordinate c, MouseButton b, int count)
 {
     if ((b & MouseButtonMask) == LeftButton) {
-        [MouseInputIOS leftClickAt:CGPointMake(c._x, c._y) clickCount:count];
+        if ((b & MousePressMask) == ButtonDown) {
+            [MouseInputIOS leftMouseDownAt:CGPointMake(c._x, c._y)];
+        } else if ((b & MousePressMask) == ButtonUp) {
+            [MouseInputIOS leftMouseUpAt:CGPointMake(c._x, c._y)];
+        } else {
+            [MouseInputIOS leftClickAt:CGPointMake(c._x, c._y) clickCount:count];
+        }
     }
 
     if ((b & MouseButtonMask) == RightButton) {
-        [MouseInputIOS rightClickAt:CGPointMake(c._x, c._y) clickCount:count];
+        if ((b & MousePressMask) == ButtonDown) {
+            [MouseInputIOS rightMouseDownAt:CGPointMake(c._x, c._y)];
+        } else if ((b & MousePressMask) == ButtonUp) {
+            [MouseInputIOS rightMouseUpAt:CGPointMake(c._x, c._y)];
+        } else {
+            [MouseInputIOS rightClickAt:CGPointMake(c._x, c._y) clickCount:count];
+        }
     }
 
     if ((b & MouseButtonMask) == MiddleButton) {
-        [MouseInputIOS centerClickAt:CGPointMake(c._x, c._y) clickCount:count];
+        if ((b & MousePressMask) == ButtonDown) {
+            [MouseInputIOS centerMouseDownAt:CGPointMake(c._x, c._y)];
+        } else if ((b & MousePressMask) == ButtonUp) {
+            [MouseInputIOS centerMouseUpAt:CGPointMake(c._x, c._y)];
+        } else {
+            [MouseInputIOS centerClickAt:CGPointMake(c._x, c._y) clickCount:count];
+        }
     }
 
     if ((b & ~MouseButtonMask) == WheeleMoved) {
