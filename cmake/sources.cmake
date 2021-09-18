@@ -27,6 +27,7 @@ set(SHAREDT_SERVER_SRC
         ${SHAREDT_SRC}/cli/ExportImages.cpp
         ${SHAREDT_SRC}/ffmpeg/ReadWriteVideo.c
         ${SHAREDT_SRC}/ffmpeg/ReadWriteImages.c
+        ${SHAREDT_SRC}/input/InputInterface.cpp
         ${SHAREDT_SERVER_SRC}
 )
 
@@ -39,6 +40,7 @@ set(SHAREDT_SERVER_INCLUDE
         ${CMAKE_SOURCE_DIR}/contrib/libwxWidgets/include/
         ${CMAKE_BINARY_DIR}/lib/
         ${SHAREDT_SRC}/ffmpeg/
+        ${SHAREDT_SRC}/input/
         ${CMAKE_BINARY_DIR}/lib/wx/include/osx_cocoa-unicode-static-3.1/
 )
 

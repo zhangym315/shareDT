@@ -2459,11 +2459,10 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
 	    cl->screen->kbdAddEvent(msg.ke.down, (rfbKeySym)Swap32IfLE(msg.ke.key), cl);
 	}
 
-        return;
+    return;
 
 
 	case rfbPointerEvent:
-rfbLog("rfbPointerEvent\n");
 	if ((n = rfbReadExact(cl, ((char *)&msg) + 1,
 			   sz_rfbPointerEventMsg - 1)) <= 0) {
 	    if (n != 0)
@@ -2482,17 +2481,20 @@ rfbLog("rfbPointerEvent\n");
 	else
 	    cl->screen->pointerClient = cl;
 
+    msg.pe.buttonMask = Swap32IfLE(msg.pe.buttonMask);
+
+rfbLog("received msg.pe.button:%x, msg.pe.x:%x, msg.pe.y:%x\n", msg.pe.buttonMask, msg.pe.x, msg.pe.y);
 	if(!cl->viewOnly) {
 	    if (msg.pe.buttonMask != cl->lastPtrButtons ||
 		    cl->screen->deferPtrUpdateTime == 0) {
 		cl->screen->ptrAddEvent(msg.pe.buttonMask,
-			ScaleX(cl->scaledScreen, cl->screen, Swap16IfLE(msg.pe.x)), 
-			ScaleY(cl->scaledScreen, cl->screen, Swap16IfLE(msg.pe.y)),
+			ScaleX(cl->scaledScreen, cl->screen, Swap32IfLE(msg.pe.x)),
+			ScaleY(cl->scaledScreen, cl->screen, Swap32IfLE(msg.pe.y)),
 			cl);
 		cl->lastPtrButtons = msg.pe.buttonMask;
 	    } else {
-		cl->lastPtrX = ScaleX(cl->scaledScreen, cl->screen, Swap16IfLE(msg.pe.x));
-		cl->lastPtrY = ScaleY(cl->scaledScreen, cl->screen, Swap16IfLE(msg.pe.y));
+		cl->lastPtrX = ScaleX(cl->scaledScreen, cl->screen, Swap32IfLE(msg.pe.x));
+		cl->lastPtrY = ScaleY(cl->scaledScreen, cl->screen, Swap32IfLE(msg.pe.y));
 		cl->lastPtrButtons = msg.pe.buttonMask;
 	    }
       }      
@@ -3817,7 +3819,7 @@ rfbProcessUDPInput(rfbScreenInfoPtr rfbScreen)
 	    return;
 	}
 	cl->screen->ptrAddEvent(msg.pe.buttonMask,
-		    Swap16IfLE(msg.pe.x), Swap16IfLE(msg.pe.y), cl);
+		    Swap32IfLE(msg.pe.x), Swap32IfLE(msg.pe.y), cl);
 	break;
 
     default:

@@ -1399,9 +1399,15 @@ typedef struct {
 
 typedef struct {
     uint8_t type;			/* always rfbPointerEvent */
-    uint8_t buttonMask;		/* bits 0-7 are buttons 1-8, 0=up, 1=down */
-    uint16_t x;
-    uint16_t y;
+    uint8_t pad1;
+    uint8_t pad2;
+    uint8_t pad3;
+
+    uint32_t  buttonMask;   /* bits 0-7 are buttons 1-8, 0=up, 1=down
+                             * change to 32 bits to support extention mouse click
+                             */
+    int32_t x;
+    int32_t y;
 } rfbPointerEventMsg;
 
 #define rfbButton1Mask 1
@@ -1413,7 +1419,7 @@ typedef struct {
 #define rfbWheelUpMask rfbButton4Mask
 #define rfbWheelDownMask rfbButton5Mask
 
-#define sz_rfbPointerEventMsg 6
+#define sz_rfbPointerEventMsg 16
 
 
 

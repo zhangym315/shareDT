@@ -706,7 +706,7 @@ rfbDefaultPtrAddEvent(int buttonMask, int x, int y, rfbClientPtr cl)
     iterator = rfbGetClientIterator(s);
     while ((other_client = rfbClientIteratorNext(iterator)) != NULL) {
       if (other_client != cl && other_client->enableCursorPosUpdates) {
-	other_client->cursorWasMoved = TRUE;
+        other_client->cursorWasMoved = TRUE;
       }
     }
     rfbReleaseClientIterator(iterator);
