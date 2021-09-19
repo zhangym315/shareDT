@@ -84,10 +84,6 @@ void FetchingDataFromServer::run ()
         if(WaitForMessage(_client,1000000)>0) {
             HandleRFBServerMessage(_client);
         }
-        else// if(rfbClientGetClientData(client, sendMessage))
-        {
-            std::cout << "Hanlding senindg server message" << std::endl;
-        }
     }
 
     if (_client->_serverClosed) {

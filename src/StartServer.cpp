@@ -629,7 +629,8 @@ void StartCapture::startCaptureServer()
                          _sp->getWidth(), _sp->getHeight());
 
     _rfbserver->ptrAddEvent = ptrServerMouseEvent;
-    LOGGER.info() << "Started CaptureServer" ;
+    LOGGER.info() << "Started CaptureServer with width=" <<  _sp->getWidth()
+                    << " height=" << _sp->getHeight();
     while (rfbIsActive(_rfbserver) && _isServerRunning)
     {
         std::this_thread::sleep_for(50ms);

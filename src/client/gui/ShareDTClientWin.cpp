@@ -53,6 +53,9 @@ std::cout << "resize Event: new size width=" << e->size().width()
     // send a different size window(resized on server sid).
     _winResize.oldSize = _winResize.curSize;
     _winResize.curSize = e->size();
+
+    resetRatioWindow();
+
     QWidget::resizeEvent(e);
 }
 
@@ -148,6 +151,14 @@ void ShareDTClientWin::putImage (rfbClient* client)
     frame.frame.setUsed();
 }
 
+void ShareDTClientWin::resetRatioWindow()
+{
+    if ( _winResize.curSize.width() && _winResize.curSize.height()) {
+        _winResize.ratioX = _winResize.vncSize.width() * RATIO_PRECISION/ _winResize.curSize.width();
+        _winResize.ratioY = _winResize.vncSize.height() * RATIO_PRECISION/ _winResize.curSize.height();
+    }
+}
+
 void ShareDTClientWin::resizeToNewVNC(int w, int h)
 {
     _winResize.oldSize = _winResize.curSize;
@@ -156,6 +167,7 @@ void ShareDTClientWin::resizeToNewVNC(int w, int h)
     _winResize.vncSize.setWidth (w);
     _winResize.vncSize.setHeight (h);
     _winResize.isResized = true;
+    resetRatioWindow();
 }
 
 void ShareDTClientWin::actionAdjustToOriginSize()
@@ -163,6 +175,9 @@ void ShareDTClientWin::actionAdjustToOriginSize()
     std::cout << "actionAdjustToOriginSize" << std::endl;
     _winResize.curSize = _winResize.vncSize;
     _winResize.isResized = true;
+
+    _winResize.ratioX = RATIO_PRECISION;
+    _winResize.ratioY = RATIO_PRECISION;
 }
 
 void ShareDTClientWin::startVNC ()
@@ -192,23 +207,18 @@ void ShareDTClientWin::serverConnectionClosed()
     msgBox.exec();
 }
 
+/* Mouse events started */
 void ShareDTClientWin::mousePressEvent(QMouseEvent *event)
 {
     const QPoint & locPoint = event->pos();
-//    const QPoint & winPoint = event->windowPos();
     const QPoint & gloPoint = event->globalPos();
     int b = (int) event->button() | MouseButton::ButtonDown;
 
-    std::cout << "ShareDTClientWin::mousePressEvent event"
-        << " local QPointF:" << locPoint.x() << " y:" << locPoint.y()
-//        << " win QPointF:" << winPoint.x() << " y:" << winPoint.y()
-        << " glo QPointF:" << gloPoint.x() << " y:" << gloPoint.y()
-        << " button: " << b << std::endl;
-
-    SendPointerEvent(_fetcher->getRfbClient(), locPoint.x(), locPoint.y(), b);
+    SendPointerEvent(_fetcher->getRfbClient(),
+                     locPoint.x() * _winResize.ratioX / RATIO_PRECISION,
+                     locPoint.y() * _winResize.ratioY / RATIO_PRECISION,
+                     b);
     QWidget::mousePressEvent(event);
-
-//    ShareDTClientWin::mouseReleaseEvent(event);
 }
 
 void ShareDTClientWin::mouseReleaseEvent(QMouseEvent *event)
@@ -218,26 +228,20 @@ void ShareDTClientWin::mouseReleaseEvent(QMouseEvent *event)
     const QPointF & gloPoint = event->globalPos();
     int b = (int) event->button() | MouseButton::ButtonUp;
 
-    std::cout << "ShareDTClientWin::mouseReleaseEvent event"
-        << " local QPointF:" << locPoint.x() << " y:" << locPoint.y()
-        << " win QPointF:" << winPoint.x() << " y:" << winPoint.y()
-        << " glo QPointF:" << gloPoint.x() << " y:" << gloPoint.y()
-        << " button: " << b << std::endl;
-
-    SendPointerEvent(_fetcher->getRfbClient(), locPoint.x(), locPoint.y(), b);
+    SendPointerEvent(_fetcher->getRfbClient(),
+                     locPoint.x() * _winResize.ratioX / RATIO_PRECISION,
+                     locPoint.y() * _winResize.ratioY / RATIO_PRECISION,
+                     b);
     QWidget::mouseReleaseEvent(event);
 }
 
 void ShareDTClientWin::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    const QPointF & locPoint = event->localPos();
-    const QPointF & winPoint = event->windowPos();
-    const QPointF & gloPoint = event->globalPos();
-
-    std::cout << "ShareDTClientWin::mouseDoubleClickEvent event"
-            << " local QPointF:" << locPoint.x() << " y:" << locPoint.y()
-            << " win QPointF:" << winPoint.x() << " y:" << winPoint.y()
-            << " glo QPointF:" << gloPoint.x() << " y:" << gloPoint.y() << std::endl;
+    /*
+     * Double mouse click would not send to client
+     * since the mouse press/release event will send
+     * to client separately.
+     */
     QWidget::mouseDoubleClickEvent(event);
 }
 
@@ -246,12 +250,11 @@ void ShareDTClientWin::mouseMoveEvent(QMouseEvent *event)
     const QPointF & locPoint = event->localPos();
     const QPointF & winPoint = event->windowPos();
     const QPointF & gloPoint = event->globalPos();
-    std::cout << "ShareDTClientWin::mouseMoveEvent event"
-            << " local QPointF:" << locPoint.x() << " y:" << locPoint.y()
-            << " win QPointF:" << winPoint.x() << " y:" << winPoint.y()
-            << " glo QPointF:" << gloPoint.x() << " y:" << gloPoint.y() << std::endl;
 
-    SendPointerEvent(_fetcher->getRfbClient(), locPoint.x(), locPoint.y(), MouseButton::NoButton);
+    SendPointerEvent(_fetcher->getRfbClient(),
+                     locPoint.x() * _winResize.ratioX / RATIO_PRECISION,
+                     locPoint.y() * _winResize.ratioY / RATIO_PRECISION,
+                     MouseButton::NoButton);
     QWidget::mouseMoveEvent(event);
 }
 
@@ -259,13 +262,10 @@ void ShareDTClientWin::wheelEvent(QWheelEvent *event) {
     const QPoint & delta = event->pixelDelta();
     const QPoint & angle = event->angleDelta();
 
-    std::cout << "ShareDTClientWin::wheelEvent event"
-            << " delta QPoint:" << delta.x() << " delta QPoint:" << delta.y()
-            << " angle QPoint:" << angle.x() << " angle QPoint:" << angle.y()
-            << std::endl;
-
-    SendPointerEvent(_fetcher->getRfbClient(), delta.x(), delta.y(), MouseButton::WheeleMoved);
-
+    SendPointerEvent(_fetcher->getRfbClient(),
+                     delta.x(),
+                     delta.y(),
+                     MouseButton::WheeleMoved);
     QWidget::wheelEvent(event);
 }
 
@@ -288,42 +288,41 @@ bool ShareDTClientWin::event(QEvent * e)
     return QWidget::event(e);
 }
 
-/* TODO following function needs to be done */
 void ShareDTClientWin::enterEvent(QEvent * e)
 {
-//    std::cout << Q_FUNC_INFO << e->type() << std::endl;
 }
 
 void ShareDTClientWin::leaveEvent(QEvent * e)
 {
-//    std::cout << Q_FUNC_INFO << e->type() << std::endl;
 }
-
 
 void ShareDTClientWin::hoverEnter(QHoverEvent * event)
 {
-/*    std::cout << Q_FUNC_INFO << event->type()
-            << " event, old=" << event->oldPos().x() << ", " << event->oldPos().y()
-            << " event, pos=" << event->pos().x() << ", " << event->pos().y() << std::endl;
-*/
+    const QPoint & locPoint = event->pos();
+
+    SendPointerEvent(_fetcher->getRfbClient(),
+                     locPoint.x() * _winResize.ratioX / RATIO_PRECISION,
+                     locPoint.y() * _winResize.ratioY / RATIO_PRECISION,
+                     MouseButton::NoButton);
 }
 
 void ShareDTClientWin::hoverLeave(QHoverEvent * event)
 {
-//    m_count = 0;
-/*    std::cout << Q_FUNC_INFO << event->type()
-            << " event, old=" << event->oldPos().x() << ", " << event->oldPos().y()
-            << " event, pos=" << event->pos().x() << ", " << event->pos().y() << std::endl;
-*/
-//    this->setText(QString::number(m_count));
+    const QPoint & locPoint = event->pos();
+
+    SendPointerEvent(_fetcher->getRfbClient(),
+                     locPoint.x() * _winResize.ratioX / RATIO_PRECISION,
+                     locPoint.y() * _winResize.ratioY / RATIO_PRECISION,
+                     MouseButton::NoButton);
 }
 
 void ShareDTClientWin::hoverMove(QHoverEvent * event)
 {
-//    m_count++;
-/*    std::cout << Q_FUNC_INFO << event->type()
-            << " event, old=" << event->oldPos().x() << ", " << event->oldPos().y()
-            << " event, pos=" << event->pos().x() << ", " << event->pos().y() << std::endl;
-*/
-//    this->setText(QString::number(m_count));
+    const QPoint & locPoint = event->pos();
+
+    SendPointerEvent(_fetcher->getRfbClient(),
+                     locPoint.x() * _winResize.ratioX / RATIO_PRECISION,
+                     locPoint.y() * _winResize.ratioY / RATIO_PRECISION,
+                     MouseButton::NoButton);
 }
+/* Mouse events ended   */

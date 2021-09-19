@@ -36,7 +36,8 @@ typedef enum MouseButton {
     MouseButtonMask  = 0x0fffffff,
     ButtonDown       = 0x10000000,
     ButtonUp         = 0x20000000,
-    WheeleMoved      = 0x40000000
+    WheeleMoved      = 0x40000000,
+    MousePressMask   = 0xf0000000
 } MouseButton;
 
 typedef enum ScrollDirection {

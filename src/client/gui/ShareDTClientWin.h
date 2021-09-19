@@ -19,11 +19,16 @@ class ShareDTClientWin;
 }
 QT_END_NAMESPACE
 
+#define RATIO_PRECISION 1000
+
 struct MainWindowResized {
     bool isResized = false;
-    QSize curSize;
-    QSize oldSize;
-    QSize vncSize;
+    QSize curSize;    /* current shareDTClient window size */
+    QSize oldSize;    /* last shareDTClient window size    */
+    QSize vncSize;    /* original window size on shareDTServer */
+
+    int ratioX = RATIO_PRECISION;     /* Ratio of original to X */
+    int ratioY = RATIO_PRECISION;     /* Ratio of original to Y */
 };
 
 class ShareDTClientWin : public QWidget{
@@ -58,6 +63,8 @@ class ShareDTClientWin : public QWidget{
     void hoverMove(QHoverEvent * event);
 
   private:
+    void resetRatioWindow();
+
     Ui::ShareDTClientWin   * ui;
     FetchingDataFromServer * _fetcher;
     MainWindowResized        _winResize;
