@@ -55,6 +55,7 @@ if(WIN32)
             ${CMAKE_SOURCE_DIR}/src/capture/win/WinGetWindows.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/win/WinGetMonitors.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/win/GDIWindowProcessor.cpp
+            ${CMAKE_SOURCE_DIR}/src/input/win/MouseEvents.cpp
             ${CMAKE_SOURCE_DIR}/src/MainWindowsService.cpp
             ${CMAKE_SOURCE_DIR}/src/util/WindowsProcess.cpp
             )
@@ -125,6 +126,7 @@ elseif(UNIX)
             ${CMAKE_SOURCE_DIR}/src/capture/linux/XGetWindows.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/linux/XGetMonitors.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/linux/XFrameProcessor.cpp
+            ${CMAKE_SOURCE_DIR}/src/input/linux/MouseEvents.cpp
             ${CMAKE_SOURCE_DIR}/src/MainNixService.cpp
             )
 
