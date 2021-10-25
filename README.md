@@ -143,7 +143,7 @@ ShareDTServer Stopped
 ### ShareDTClient
 * Connect to ShareDT Server
 ```
-$ ./client/bin/ShareDTClient --encodings ffmpeg 127.0.0.1:0
+$ ./client/bin/ShareDTClient -encodings ffmpeg 127.0.0.1:0
 ```
 * ServerGui
 ...
