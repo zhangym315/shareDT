@@ -45,6 +45,11 @@
 
 QT_BEGIN_NAMESPACE
 
+#ifndef QPAINTENGINE_MAC_P_H
+// defined in qpaintengine_mac_p.h
+typedef struct CGColorSpace *CGColorSpaceRef;
+#endif
+
 class QIOSurfaceGraphicsBuffer : public QPlatformGraphicsBuffer
 {
 public:
