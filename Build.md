@@ -14,7 +14,7 @@ sudo apt-get install libxtst-dev
 sudo apt-get install nasm
 ```
 ### MacOS
-* Required package: xcode, python, pkg-config
+* Required package: XCode 13+, python, pkg-config
 * Install nasm
 ```
 brew install nasm

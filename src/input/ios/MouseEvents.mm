@@ -1,3 +1,4 @@
+#import <CoreGraphics/CGEvent.h>
 #import "MouseEvents.h"
 #include "InputInterface.h"
 
