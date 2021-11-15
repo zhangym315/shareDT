@@ -96,6 +96,7 @@ elseif(APPLE)
             ${CMAKE_SOURCE_DIR}/src/capture/ios/CGGetMonitors.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/ios/NSFrame.mm
             ${CMAKE_SOURCE_DIR}/src/capture/ios/CGWindowsFrame.cpp
+            ${CMAKE_SOURCE_DIR}/src/input/ios/KeyboardEvents.mm
             ${CMAKE_SOURCE_DIR}/src/input/ios/MouseEvents.mm
             ${CMAKE_SOURCE_DIR}/src/MainNixService.cpp
             )
@@ -111,6 +112,7 @@ elseif(APPLE)
             )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DwxUSE_THREADS=1 -DWXUSINGDLL -D__WXOSX_COCOA__ -D__WXMAC__ -D__WXOSX__ -pthread ")
 
+    set(KeyCode ${CMAKE_SOURCE_DIR}/src/input/ios/KeyCode.txt)
 elseif(UNIX)
     add_definitions(-D__SHAREDT_LINUX__)
     find_package(X11 REQUIRED)

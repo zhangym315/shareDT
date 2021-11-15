@@ -4,11 +4,11 @@
 #include <assert.h>
 #include "SamplesProvider.h"
 
-FrameProcessorWrap* FrameProcessorWrap::_instance = 0;
+FrameProcessorWrap* FrameProcessorWrap::_instance = nullptr;
 
 FrameProcessorWrap::FrameProcessorWrap() :
                 _duration(std::chrono::microseconds(MICROSECONDS_PER_SECOND/DEFAULT_SAMPLE_PROVIDER)),
-                _fpi(0),
+                _fpi(nullptr),
                 _isPause(true),
                 _isReady(false),
                 _imgType(SPImageType::SP_IMAGE_RGBA)
@@ -31,7 +31,7 @@ bool FrameProcessorWrap::isYUVType ()
 
 FrameProcessorWrap * FrameProcessorWrap::instance ()
 {
-    if(_instance == 0) {
+    if(_instance == nullptr) {
         _instance = new FrameProcessorWrap();
     }
     return _instance;

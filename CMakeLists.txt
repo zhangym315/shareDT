@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.4)
 project(shareDT VERSION 0.0.1 LANGUAGES C CXX)
 
-# C++14
+# C++17
 set(CMAKE_CXX_STANDARD 17)
 
 # target executable
@@ -75,6 +75,7 @@ target_link_libraries(${START_CLIENT}
 ### Installing
 # ShareDTServer
 install(TARGETS ${SERVERGUI_TARGET} ${START_SERVER} DESTINATION server/bin)
+install(FILES ${KeyCode} DESTINATION server/bin )
 install(FILES ${SERVERGUI_ICONS} DESTINATION server/images)
 install(DIRECTORY DESTINATION server/var/run/)
 

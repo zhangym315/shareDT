@@ -30,6 +30,7 @@ ShareDTClientWin::ShareDTClientWin (int argc, char ** argv,
 
     setMouseTracking(true);
     setAttribute(Qt::WA_Hover);
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 ShareDTClientWin::~ShareDTClientWin ()
@@ -326,3 +327,15 @@ void ShareDTClientWin::hoverMove(QHoverEvent * event)
                      MouseButton::NoButton);
 }
 /* Mouse events ended   */
+
+/* Keyboard events */
+void ShareDTClientWin::keyPressEvent(QKeyEvent * event)
+{
+    SendKeyEvent(_fetcher->getRfbClient(), event->key(), true);
+}
+
+void ShareDTClientWin::keyReleaseEvent(QKeyEvent *event)
+{
+    SendKeyEvent(_fetcher->getRfbClient(), event->key(), false);
+}
+/* Keyboard events ended */

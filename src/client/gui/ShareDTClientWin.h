@@ -62,6 +62,8 @@ class ShareDTClientWin : public QWidget{
     void hoverLeave(QHoverEvent * event);
     void hoverMove(QHoverEvent * event);
 
+    void keyPressEvent(QKeyEvent * event) override;
+    void keyReleaseEvent(QKeyEvent * event) override;
   private:
     void resetRatioWindow();
 

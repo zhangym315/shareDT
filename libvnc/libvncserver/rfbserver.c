@@ -2444,20 +2444,19 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
     }
 
     case rfbKeyEvent:
+        if ((n = rfbReadExact(cl, ((char *)&msg) + 1,
+                   sz_rfbKeyEventMsg - 1)) <= 0) {
+            if (n != 0)
+            rfbLogPerror("rfbProcessClientNormalMessage: read");
+            rfbCloseClient(cl);
+            return;
+        }
 
-	if ((n = rfbReadExact(cl, ((char *)&msg) + 1,
-			   sz_rfbKeyEventMsg - 1)) <= 0) {
-	    if (n != 0)
-		rfbLogPerror("rfbProcessClientNormalMessage: read");
-	    rfbCloseClient(cl);
-	    return;
-	}
+        rfbStatRecordMessageRcvd(cl, msg.type, sz_rfbKeyEventMsg, sz_rfbKeyEventMsg);
 
-	rfbStatRecordMessageRcvd(cl, msg.type, sz_rfbKeyEventMsg, sz_rfbKeyEventMsg);
-
-	if(!cl->viewOnly) {
-	    cl->screen->kbdAddEvent(msg.ke.down, (rfbKeySym)Swap32IfLE(msg.ke.key), cl);
-	}
+        if(!cl->viewOnly) {
+            cl->screen->kbdAddEvent(msg.ke.down, (rfbKeySym)Swap32IfLE(msg.ke.key), cl);
+        }
 
     return;
 
@@ -2483,22 +2482,21 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
 
     msg.pe.buttonMask = Swap32IfLE(msg.pe.buttonMask);
 
-rfbLog("received msg.pe.button:%x, msg.pe.x:%x, msg.pe.y:%x\n", msg.pe.buttonMask, msg.pe.x, msg.pe.y);
 	if(!cl->viewOnly) {
 	    if (msg.pe.buttonMask != cl->lastPtrButtons ||
 		    cl->screen->deferPtrUpdateTime == 0) {
-		cl->screen->ptrAddEvent(msg.pe.buttonMask,
-			ScaleX(cl->scaledScreen, cl->screen, Swap32IfLE(msg.pe.x)),
-			ScaleY(cl->scaledScreen, cl->screen, Swap32IfLE(msg.pe.y)),
-			cl);
-		cl->lastPtrButtons = msg.pe.buttonMask;
+	        cl->screen->ptrAddEvent(msg.pe.buttonMask,
+                                    ScaleX(cl->scaledScreen, cl->screen, Swap32IfLE(msg.pe.x)),
+                                    ScaleY(cl->scaledScreen, cl->screen, Swap32IfLE(msg.pe.y)),
+                                    cl);
+            cl->lastPtrButtons = msg.pe.buttonMask;
 	    } else {
-		cl->lastPtrX = ScaleX(cl->scaledScreen, cl->screen, Swap32IfLE(msg.pe.x));
-		cl->lastPtrY = ScaleY(cl->scaledScreen, cl->screen, Swap32IfLE(msg.pe.y));
-		cl->lastPtrButtons = msg.pe.buttonMask;
+            cl->lastPtrX = ScaleX(cl->scaledScreen, cl->screen, Swap32IfLE(msg.pe.x));
+            cl->lastPtrY = ScaleY(cl->scaledScreen, cl->screen, Swap32IfLE(msg.pe.y));
+            cl->lastPtrButtons = msg.pe.buttonMask;
 	    }
-      }      
-      return;
+    }
+    return;
 
 
     case rfbFileTransfer:
