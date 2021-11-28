@@ -629,6 +629,8 @@ void StartCapture::startCaptureServer()
                          _sp->getWidth(), _sp->getHeight());
 
     _rfbserver->ptrAddEvent = ptrServerMouseEvent;
+    _rfbserver->kbdAddEvent = kbdServerKeyEvent;
+
     LOGGER.info() << "Started CaptureServer with width=" <<  _sp->getWidth()
                     << " height=" << _sp->getHeight();
     while (rfbIsActive(_rfbserver) && _isServerRunning)

@@ -1,6 +1,9 @@
 #ifndef SHAREDT_INPUTINTERFACE_H
 #define SHAREDT_INPUTINTERFACE_H
 #include <rfb/rfb.h>
+#include <map>
+
+#include <StringTools.h>
 
 typedef enum MouseButton {
     NoButton         = 0x00000000,
@@ -56,10 +59,29 @@ typedef struct Cordinate {
 
 
 extern void ptrServerMouseEvent(int buttonMask, int x, int y, rfbClientPtr cl);
+extern void kbdServerKeyEvent(rfbBool down, rfbKeySym keySym, struct _rfbClientRec* cl);
+
+typedef std::map<uint32_t, String> KeycodeString;
+
+class KeyCodeSingleton {
+public:
+    static KeyCodeSingleton * instance() ;
+    ~KeyCodeSingleton();
+    const String & getKeyString(uint32_t key);
+
+private:
+    KeyCodeSingleton();
+    void init();
+    void parseLine(const String & line, KeycodeString & c);
+
+    static KeyCodeSingleton * _instance;
+    KeycodeString _codeMap;
+};
 
 class InputMousePlatform {
 public:
     static void mouseClickAtCordinate(Cordinate c, MouseButton b, int clickCount);
-
+    static void keyboardClick(int isDown, const String  & key);
 };
+
 #endif //SHAREDT_INPUTINTERFACE_H
