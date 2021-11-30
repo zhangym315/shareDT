@@ -90,9 +90,9 @@ const String & KeyCodeSingleton::getKeyString(uint32_t key)
  *
  * # Key code for MAC
  * # Key = Code(Client)
- * A                    = 0x00
- * B                    = 0x00
- * C                    = 0x00
+ * A                    = 65
+ * B                    = 66
+ * C                    = 67
  * ....
  *
  */

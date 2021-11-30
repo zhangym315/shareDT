@@ -82,3 +82,5 @@ set(SHAREDT_CLIENT_INCLUDE
         ${SHAREDT_SRC_CLIENT}/vnc/
         ${SHAREDT_SRC_CLIENT}/qt/
 )
+
+set(KeyCode ${CMAKE_SOURCE_DIR}/src/input/KeyCode.txt)
