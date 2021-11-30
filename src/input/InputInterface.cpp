@@ -121,8 +121,7 @@ void KeyCodeSingleton::parseLine(const String & line, KeycodeString & c)
     while(*q == ' ' || *q == '\t') q++;
 
     p = q;
-    while(*q!=' ' && *q!='\t' &&
-          *q!='\0' && *q!='\n') q++;
+    while(*q <= '9' && *q >= '0') q++;
 
     if (p == q) {
         LOGGER.warn() << "Invalid KeyCode.txt line:" << line;

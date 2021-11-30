@@ -16,7 +16,7 @@ INS="/build/install/"
 BLD="/build/"
 DONE_FILE="/.INSTALLED_DONE"
 cpuCount = multiprocessing.cpu_count()
-cpuToBuild = str(cpuCount-2 if (cpuCount > 3) else cpuCount)
+cpuToBuild = str(cpuCount-1 if (cpuCount > 2) else cpuCount)
 
 #"""Check whether `name` is on PATH and marked as executable."""
 def is_tool(name):
@@ -50,7 +50,7 @@ def buildQT(k):
     if k.lower() == "windows":
         ret=os.system('nmake')
     else:
-        ret=os.system('make -j6')
+        ret=os.system('make -j ' + cpuToBuild)
     if ret != 0:
         return 1
 

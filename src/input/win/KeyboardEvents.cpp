@@ -24,7 +24,7 @@ typedef std::map<String, WORD> KeyCode;
  * Windows key code
  * https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
  */
-KeyCode WINKEYCODE = {
+static KeyCode WINKEYCODE = {
         {"A", 0x41},
         {"B", 0x42},
         {"C", 0x43},
@@ -160,6 +160,8 @@ KeyCode WINKEYCODE = {
 
 void InputMousePlatform::keyboardClick(int isDown, const String  & key)
 {
+    if (key.empty() || WINKEYCODE.find(key)==WINKEYCODE.end()) return;
+
     sendKey(WINKEYCODE[key], isDown);
 }
 
