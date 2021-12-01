@@ -38,23 +38,30 @@ Z                    = 90
 9                    = 57
 Minus                = 45
 Equal                = 61
-RightBracket         = 93
-LeftBracket          = 91
+RightBracket         = 93  # [
+LeftBracket          = 91  # ]
+QuotedBl             = 34  # "
 Quote                = 39
+Colon                = 58
 Semicolon            = 59
 Backslash            = 92
 Comma                = 44
 Slash                = 47
 Period               = 46
+Less                 = 60
+Greater              = 62
+Question             = 63
+At                   = 64
+VerticalBar          = 124
 #Grave                =
 KeypadDecimal        =
 KeypadMultiply       = 42
 KeypadPlus           = 43
 KeypadNumLk          = 16777253
 #KeypadClear          =
-KeypadDivide         = 47
+#KeypadDivide         = 47
 KeypadEnter          = 16777221
-KeypadMinus          = 45
+#KeypadMinus          = 45
 #KeypadEquals         =
 Keypad0              = 48
 Keypad1              = 49
@@ -85,6 +92,7 @@ RightShift           = 16777248
 #VolumeUp             =
 #VolumeDown           =
 #Mute                 =
+
 F1                   = 16777264
 F2                   = 16777265
 F3                   = 16777266
@@ -115,3 +123,22 @@ LeftArrow            = 16777234
 RightArrow           = 16777236
 DownArrow            = 16777237
 UpArrow              = 16777235
+
+#Clear               =
+#Pause
+#ScrollLck
+#SysReq
+Exclam               = 33
+#QuotedBl
+NumberSign           = 35
+Dollar               = 36
+Percent              = 37
+Ampersand            = 38
+#Apostrophe
+#QuoteRight
+ParenLeft            = 40
+ParenRight           = 41
+Asterisk             = 42
+Plus                 = 43
+Asciicircum          = 94
+UnderScore           = 95
