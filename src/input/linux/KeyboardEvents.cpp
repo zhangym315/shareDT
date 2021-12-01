@@ -86,6 +86,17 @@ static KeyCodeLinux LINUXKEYCODE = {
         XK(L8)
         XK(L9)
 
+         {"Keypad0",      XK_0   },
+         {"Keypad1",      XK_1   },
+         {"Keypad2",      XK_2   },
+         {"Keypad3",      XK_3   },
+         {"Keypad4",      XK_4   },
+         {"Keypad5",      XK_5   },
+         {"Keypad6",      XK_6   },
+         {"Keypad7",      XK_7   },
+         {"Keypad8",      XK_8   },
+         {"Keypad9",      XK_9   },
+
         {"Delete",        XK_BackSpace  },
         {"Tab",           XK_Tab        },
         {"Linefeed",      XK_Linefeed   },
@@ -104,40 +115,45 @@ static KeyCodeLinux LINUXKEYCODE = {
         {"Option",        XK_Alt_L      },   // left ALT
         {"CapsLock",      XK_Caps_Lock  },
         {"Command",       XK_Meta_L     },
-
         {"Space",        XK_space       },
-        {"Exclam",       XK_exclam      },
-        {"QuotedBl",     XK_quotedbl    },
-        {"NumberSign",   XK_numbersign  },
-        {"Dollar",       XK_dollar      },
-        {"Percent",      XK_percent     },
-        {"Ampersand",    XK_ampersand   },
+
+        {"Exclam",       XK_1   },
+        {"NumberSign",   XK_3   },
+        {"Dollar",       XK_4   },
+        {"Percent",      XK_5   },
+        {"Asciicircum",  XK_6   },
+        {"Ampersand",    XK_7   },
+        {"Asterisk",     XK_8   },
+        {"ParenLeft",    XK_9   },
+        {"ParenRight",   XK_0   },
+
         {"Quote",        XK_apostrophe  },
+        {"QuotedBl",     XK_apostrophe  },  // Shift + quote
         {"QuoteRight",   XK_quoteright  },
-        {"ParenLeft",    XK_parenleft   },
-        {"ParenRight",   XK_parenright  },
-        {"Asterisk",     XK_asterisk    },
         {"KeypadPlus",   XK_plus        },
         {"Comma",        XK_comma       },
         {"Minus",        XK_minus       },
         {"Period",       XK_period      },
         {"Slash",        XK_slash       },
-        {"VerticalBar",  XK_bar         },
+        {"VerticalBar",  XK_backslash   },   // | = shift + \
 
-        {"Colon",        XK_colon       },
+        {"Colon",        XK_semicolon   },   // : = shift + ;
         {"Semicolon",    XK_semicolon   },
-        {"Less",         XK_less        },
+        {"Less",         XK_comma       },   // < = shift + ,
         {"Equal",        XK_equal       },
-        {"Greater",      XK_greater     },
-        {"Question",     XK_question    },
-        {"At",           XK_at          },
+        {"Greater",      XK_period      },   // > = shift + .
+        {"Question",     XK_slash       },   // ? = shift + /
+        {"At",           XK_2           },
 
         {"LeftBracket",  XK_bracketleft },   // [
         {"Backslash",    XK_backslash   },
         {"RightBracket", XK_bracketright},   // ]
-        {"Asciicircum",  XK_asciicircum },
-        {"UnderScore",   XK_underscore  },
+        {"LeftCurlyBkt", XK_bracketleft },
+        {"RightCurlyBkt",XK_bracketright},
+        {"Plus",         XK_equal       },   // + = shift + =
+        {"UnderScore",   XK_minus       },   // _ = shift + -
         {"Grave",        XK_grave       },
+        {"Tilde",        XK_grave       },   // ~ = shift + grave
 
         {"Home",         XK_Home        },
         {"LeftArrow",    XK_Left        },
@@ -154,8 +170,10 @@ static KeyCodeLinux LINUXKEYCODE = {
 
 void InputMousePlatform::keyboardClick(int isDown, const String  & key)
 {
-    if (key.empty() || LINUXKEYCODE.find(key)==LINUXKEYCODE.end()) return;
-
+    if (key.empty() || LINUXKEYCODE.find(key)==LINUXKEYCODE.end()){
+        LOGGER.error() << "Can't get code for key=" << key ;
+        return;
+    }
     if (!display) display = XOpenDisplay(0);
 
     KeyCode code;
