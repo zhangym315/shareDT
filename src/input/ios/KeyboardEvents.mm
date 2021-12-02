@@ -168,7 +168,7 @@ static KeyCode IOSKEYCODE = {
 void InputMousePlatform::keyboardClick(int isDown, const String & k)
 {
     if (k.empty() || (IOSKEYCODE.find(k)==IOSKEYCODE.end())) {
-        LOGGER.info() << "Can't get code for key=" << key ;
+        LOGGER.info() << "Can't get code for key=" << k ;
         return;
     }
 
