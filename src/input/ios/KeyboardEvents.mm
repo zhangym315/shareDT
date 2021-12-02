@@ -139,13 +139,38 @@ static KeyCode IOSKEYCODE = {
         {"Function"      , kVK_Function       },
         {"VolumeUp"      , kVK_VolumeUp       },
         {"VolumeDown"    , kVK_VolumeDown     },
-        {"Underscore"    , kVK_JIS_Underscore },
+
+        {"Grave"         , kVK_ANSI_Grave     },   // `
+        {"Tilde"         , kVK_ANSI_Grave     },   // Shift+`
+        {"Exclam"        , kVK_ANSI_1         },   // Shift+1
+        {"At"            , kVK_ANSI_2         },   // Shift+2
+        {"NumberSign"    , kVK_ANSI_3         },   // Shift+3
+        {"Dollar"        , kVK_ANSI_4         },   // Shift+4
+        {"Percent"       , kVK_ANSI_5         },   // Shift+5
+        {"Asciicircum"   , kVK_ANSI_6         },   // Shift+6
+        {"Ampersand"     , kVK_ANSI_7         },   // Shift+7
+        {"Asterisk"      , kVK_ANSI_8         },   // Shift+8
+        {"ParenLeft"     , kVK_ANSI_9         },   // Shift+9
+        {"ParenRight"    , kVK_ANSI_0         },   // Shift+0
+        {"RightCurlyBkt" , kVK_ANSI_RightBracket },   // Shift+BaskSlash
+        {"LeftCurlyBkt"  , kVK_ANSI_LeftBracket  },   // Shift+BaskSlash
+        {"VerticalBar"   , kVK_ANSI_Backslash },   // Shift+BaskSlash
+        {"QuotedBl"      , kVK_ANSI_Quote     },   // Shift+Quote
+        {"Colon"         , kVK_ANSI_Semicolon },   // Shift+Semicolon
+        {"Plus"          , kVK_ANSI_Equal     },   // Shift+Equal (=)
+        {"UnderScore"    , kVK_ANSI_Minus     },   // Shift+Minus (-)
+        {"Less"          , kVK_ANSI_Comma     },   // Shift+Comma (,)
+        {"Greater"       , kVK_ANSI_Period    },   // Shift+Period(.)
+        {"Question"      , kVK_ANSI_Slash     },   // Shift+Slash(/)
         {"Mute"          , kVK_Mute           }
 };
 
 void InputMousePlatform::keyboardClick(int isDown, const String & k)
 {
-    if (k.empty() || (IOSKEYCODE.find(k)==IOSKEYCODE.end())) return;
+    if (k.empty() || (IOSKEYCODE.find(k)==IOSKEYCODE.end())) {
+        LOGGER.info() << "Can't get code for key=" << key ;
+        return;
+    }
 
     CGKeyCode code = IOSKEYCODE[k];
 

@@ -65,8 +65,8 @@ static KeyCode WINKEYCODE = {
 
         {"Minus",        VK_OEM_MINUS},
         {"Equal",        VK_OEM_PLUS},
-        {"RightBracket", VK_OEM_4},
-        {"LeftBracket",  VK_OEM_5},
+        {"RightBracket", VK_OEM_6},
+        {"LeftBracket",  VK_OEM_4},
         {"Quote",        VK_OEM_7},
         {"Semicolon",    VK_OEM_1},
 
@@ -114,12 +114,36 @@ static KeyCode WINKEYCODE = {
         {"F19", VK_F19},
         {"F20", VK_F20},
 
-        {"Backslash"     , VK_OEM_102     },
+        {"Backslash"     , VK_OEM_5       },
         {"Comma"         , VK_OEM_COMMA   },
         {"Slash"         , VK_OEM_2       },
         {"Period"        , VK_OEM_PERIOD  },
-        {"Sleep",        VK_SLEEP         },
-//        {"Grave"         , Grave        },
+        {"Sleep"         , VK_SLEEP       },
+        {"Grave"         , VK_OEM_3       },
+
+        {"Tilde"         , VK_OEM_3       },
+        {"Exclam"        , 0x31           }, // shift + 1
+        {"At"            , 0x32           },
+        {"NumberSign"    , 0x33           },
+        {"Dollar"        , 0x34           },
+        {"Percent"       , 0x35           },
+        {"Asciicircum"   , 0x36           },
+        {"Ampersand"     , 0x37           },   // Shift+7
+        {"Asterisk"      , 0x38           },   // Shift+8
+        {"ParenLeft"     , 0x39           },   // Shift+9
+        {"ParenRight"    , 0x30           },   // Shift+0
+        {"Plus"          , VK_OEM_PLUS    },   // Shift+Equal (=)
+        {"UnderScore"    , VK_OEM_MINUS   },   // Shift+Minus (-)
+
+        {"RightCurlyBkt" , VK_OEM_6       },   // Shift+BaskSlash
+        {"LeftCurlyBkt"  , VK_OEM_4       },   // Shift+BaskSlash
+        {"VerticalBar"   , VK_OEM_5       },   // Shift+BaskSlash
+        {"QuotedBl"      , VK_OEM_7       },   // Shift+Quote
+        {"Colon"         , VK_OEM_1       },   // Shift+Semicolon
+        {"Less"          , VK_OEM_COMMA   },   // Shift+Comma (,)
+        {"Greater"       , VK_OEM_PERIOD  },   // Shift+Period(.)
+        {"Question"      , VK_OEM_2       },   // Shift+Slash(/)
+
         {"KeypadDecimal" , VK_DECIMAL     },
         {"KeypadMultiply", VK_MULTIPLY    },
         {"KeypadPlus"    , VK_ADD         },
@@ -160,7 +184,10 @@ static KeyCode WINKEYCODE = {
 
 void InputMousePlatform::keyboardClick(int isDown, const String  & key)
 {
-    if (key.empty() || WINKEYCODE.find(key)==WINKEYCODE.end()) return;
+    if (key.empty() || WINKEYCODE.find(key)==WINKEYCODE.end()) {
+        LOGGER.info() << "Can't get code for key=" << key ;
+        return;
+    }
 
     sendKey(WINKEYCODE[key], isDown);
 }
