@@ -18,6 +18,7 @@ const encoder_decoder_t supported_codecs[] = {
         {"libx265", AV_PIX_FMT_YUV420P},
         {"libx265", AV_PIX_FMT_YUV422P},
         {"libx265", AV_PIX_FMT_YUV444P},
+        {"libx265", AV_PIX_FMT_GBRP},
         {"mpeg2video", AV_PIX_FMT_YUV420P},
         {"mpeg2video", AV_PIX_FMT_YUV422P},
         {"png"  , AV_PIX_FMT_RGB24},    /* TODO new fix picture misleading */
@@ -25,7 +26,7 @@ const encoder_decoder_t supported_codecs[] = {
         {NULL, AV_PIX_FMT_NONE}
 };
 
-const encoder_decoder_t * current_codec = &supported_codecs[5];
+const encoder_decoder_t * current_codec = &supported_codecs[3];
 
 void release_total_packet_buf()
 {

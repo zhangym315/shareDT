@@ -81,7 +81,7 @@ void FetchingDataFromServer::run ()
 
     while (!_stopped && !_client->_serverClosed) {
         /* After each idle second, send a message */
-        if(WaitForMessage(_client,1000000)>0) {
+        if(WaitForMessage(_client, 1000) > 0) {
             HandleRFBServerMessage(_client);
         }
     }
