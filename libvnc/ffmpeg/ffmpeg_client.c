@@ -45,12 +45,14 @@ static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h)
     }
     memset(ret, 0, sizeof(ffmpeg_client_ctx_t));
 
-    const char * codec_name = current_codec->codec_name;
+    const char * codec_name = strcmp("libx265", current_codec->codec_name) == 0 ?
+                                "hevc" : current_codec->codec_name;
 
-    if ((ret->codec=avcodec_find_decoder_by_name(codec_name)) == NULL) {
+    if ((ret->codec=avcodec_find_decoder_by_name("hevc")) == NULL) {
         rfbErr("Codec '%s' not found\n", codec_name);
         goto failed;
-    }
+    } else
+    rfbErr("Codec '%s' indeed found\n", codec_name);
 
     if ((ret->parser = av_parser_init(ret->codec->id)) == NULL)
     {
