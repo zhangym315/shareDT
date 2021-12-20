@@ -1,4 +1,5 @@
 #include "InputInterface.h"
+#include "Logger.h"
 #include <WinUser.h>
 
 bool sendKey(WORD code, bool isDown)
