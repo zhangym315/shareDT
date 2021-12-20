@@ -81,6 +81,7 @@ elseif(APPLE)
     find_library(CoreVideo_LIB CoreVideo REQUIRED)
     find_library(VideoToolbox_LIB VideoToolbox REQUIRED)
     find_library(VideoToolbox_Security Security REQUIRED)
+
     set(FFMPEG_REQUIRED_LIBS
             ${FFMPEG_LIBRARIES}
             ${AudioToolbox_LIB}
