@@ -26,7 +26,7 @@ const encoder_decoder_t supported_codecs[] = {
         {NULL, AV_PIX_FMT_NONE}
 };
 
-const encoder_decoder_t * current_codec = &supported_codecs[3];
+const encoder_decoder_t * current_codec = &supported_codecs[6];
 
 void release_total_packet_buf()
 {
