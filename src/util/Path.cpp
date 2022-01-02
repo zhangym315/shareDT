@@ -242,3 +242,9 @@ bool Path::checkAndWait(String & path, int waitSeconds)
 
     return (waitSeconds == count);
 }
+
+void Path::removeContent(const String & path)
+{
+    for (const auto& entry : std::filesystem::directory_iterator(path)) 
+        std::filesystem::remove_all(entry.path());
+}

@@ -4,6 +4,7 @@
 import sys
 import os
 import multiprocessing
+import shutil
 
 try:
     import subprocess
@@ -148,6 +149,9 @@ def buildAndInstall(kernel, component):
         return buildQT(kernel)
     if component[0] == "bzip2":
         return buildBZip2()
+    if component[0] == "ffmpeg":
+        shutil.copyfile(PWD+"./x265_3.3/source/build/install/include/x265.h", PWD+"./ffmpeg/x265.h")
+        shutil.copyfile(PWD+"./x265_3.3/source/build/install/include/x265_config.h", PWD+"./ffmpeg/x265_config.h")
 
     ## windows build component
     if kernel == "windows" or kernel.startswith("cygwin") or kernel.startswith("msys"):
@@ -181,7 +185,7 @@ def buildAndInstall(kernel, component):
         if ret != 0:
             return 1
 
-        ret=os.system('cmake --build . --target install --config Release')
+        ret=os.system('cmake --build . --target install --config Release --parallel ' + cpuToBuild)
         if ret != 0:
             return 1
     ## normal Makefile build

@@ -21,6 +21,8 @@ rfbUsage(void)
 {
     rfbProtocolExtension* extension;
 
+    fprintf(stderr, "The following options related with rfb\n");
+
     fprintf(stderr, "-rfbport port          TCP port for RFB protocol\n");
 #ifdef LIBVNCSERVER_IPv6
     fprintf(stderr, "-rfbportv6 port        TCP6 port for RFB protocol\n");

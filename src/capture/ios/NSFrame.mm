@@ -115,10 +115,10 @@
 @end
 
 class FrameProcessorImpl{
-  private:
+private:
     CapFrameProcessor* ptr=nullptr;
 
-  public:
+public:
     FrameProcessorImpl(){
         ptr = [[CapFrameProcessor alloc] init];
     }
@@ -127,11 +127,6 @@ class FrameProcessorImpl{
         if(ptr) {
             [ptr Stop];
             [ptr release];
-            auto r = CFGetRetainCount(ptr);
-            while(r!=1){
-                    r = CFGetRetainCount(ptr);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                }
             ptr = nullptr;
         }
     }
@@ -148,18 +143,24 @@ class FrameProcessorImpl{
         }
     }
 
+    void stop(){
+        if(ptr) {
+            [ptr Stop];
+        }
+    }
+
     void setMinFrameDuration(const std::chrono::microseconds& duration){
         if(duration.count()>1){
             auto microsecondsinsec = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::seconds(1));
             auto secs =std::chrono::duration_cast<std::chrono::seconds>(duration);
             if(secs.count()>0){//more than 1 second duration. Im not going to do the math right now for that
-                    [ptr setFrameRate:CMTimeMake(1, 1)];
-                } else {
-                    auto f =duration.count();
-                    auto f1 =microsecondsinsec.count();
-                    auto interv = f1/f;
-                    [ptr setFrameRate:CMTimeMake(1, interv)];
-                }
+                [ptr setFrameRate:CMTimeMake(1, 1)];
+            } else {
+                auto f =duration.count();
+                auto f1 =microsecondsinsec.count();
+                auto interv = f1/f;
+                [ptr setFrameRate:CMTimeMake(1, interv)];
+            }
         } else {
             [ptr setFrameRate:CMTimeMake(1, 100)];
         }
@@ -170,13 +171,13 @@ class FrameProcessorImpl{
             auto microsecondsinsec = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::seconds(1));
             auto secs =std::chrono::duration_cast<std::chrono::seconds>(duration);
             if(secs.count()>0){//more than 1 second duration. Im not going to do the math right now for that
-                    return [ptr Init:parent second:CMTimeMake(1, 1)];
-                } else {
-                    auto f =duration.count();
-                    auto f1 =microsecondsinsec.count();
-                    auto interv = f1/f;
-                    return [ptr Init:parent second:CMTimeMake(1, interv)];
-                }
+                return [ptr Init:parent second:CMTimeMake(1, 1)];
+            } else {
+                auto f =duration.count();
+                auto f1 =microsecondsinsec.count();
+                auto interv = f1/f;
+                return [ptr Init:parent second:CMTimeMake(1, interv)];
+            }
         } else {
             return [ptr Init:parent second:CMTimeMake(1, 1000)];
         }
@@ -184,7 +185,8 @@ class FrameProcessorImpl{
 };
 
 void FrameProcessorWrap::init() {
-    if(_fpi) return;
+    if (_fpi && _isReInited) delete _fpi;
+    else if (_fpi) return;
 
     _fpi = new FrameProcessorImpl();
     _fpi->init (FrameProcessorWrap::instance(), _duration);
@@ -203,4 +205,7 @@ void FrameProcessorWrap::resume() {
     _isPause = false;
 }
 
+void FrameProcessorWrap::stop() {
+    _fpi->stop();
+}
 void CircleWriteThread::init() { }

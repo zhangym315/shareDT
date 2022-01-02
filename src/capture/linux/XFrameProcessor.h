@@ -30,7 +30,7 @@ class X11FrameProcessor {
             _win->setInvalid();
     }
 
-    ~X11FrameProcessor();
+    ~X11FrameProcessor() { }
 
     bool init();
     bool ProcessFrame(FrameBuffer * fb);

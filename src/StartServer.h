@@ -76,6 +76,7 @@ class StartCapture {
 
     String & setAndGetWID();
     const String & getWID() { return _wID; }
+    void setWID(const String & wid) { _wID = wid ; }
 
     const String & getAlivePath() { return _alivePath; }
     StartCapture::CType getCType();

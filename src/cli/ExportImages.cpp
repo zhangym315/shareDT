@@ -1,5 +1,17 @@
+#include <unordered_set>
 #include "ExportImages.h"
+#include "ExportAll.h"
 #include "x265.h"
+
+const static String ALL_EXPORT_NAME="EXPORT_ALL";
+
+#ifdef __SHAREDT_IOS__
+const static std::unordered_set<String> PROCESS_FILTER{"Menubar", "Fullscreen Backdrop", "Desktop"};
+const static std::unordered_set<String> PROCESS_FILTER_CONTAINS {"Desktop Picture"};
+#else
+const static std::unordered_set<String> PROCESS_FILTER {};
+const static std::unordered_set<String> PROCESS_FILTER_CONTAINS {};
+#endif
 
 extern "C" {
 #include "ReadWriteVideo.h"
@@ -11,73 +23,94 @@ int mainExport(const char ** cmdArg, const struct cmdConf * conf)
     ExportImages ei;
     char ** argv = const_cast<char **>(conf->argv);
     int ret;
-    if ( (ret = ei.initOptions(conf->argc, argv)) != RETURN_CODE_SUCCESS ||
-         (ret = ei.initSrceenProvider()) != RETURN_CODE_SUCCESS )
-    {
-        if(ret == RETURN_CODE_INVALID_ARG) {
-            ei.exportUsage();
-            return ret;
-        } else {
-            std::cout << "Failed to init ExportImages for: " << ei.getWID() << std::endl;
-            return RETURN_CODE_INTERNAL_ERROR;
-        }
+    if ((ret = ei.initOptions(conf->argc, argv)) == RETURN_CODE_SUCCESS &&
+        (ei.action() == ExportImages::EXPORT_ALL ||  // ei.action get pased in ei.initOptions()
+        (ret = ei.initSrceenProvider()) == RETURN_CODE_SUCCESS)) {
+
+        std::cout << "Starting to export images for: " << ei.getWID() << std::endl;
+
+        return ei.start();
     }
 
-    std::cout << "Starting to export images for: " << ei.getWID() << std::endl;
-
-    return ei.start();
+    if (ret == RETURN_CODE_INVALID_ARG) {
+        ei.exportUsage();
+        return ret;
+    } else {
+        std::cerr << "Failed to init ExportImages for: " << ei.getWID() << std::endl;
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
 }
 
 int ExportImages::start ()
 {
-    if(_mp4) {
-        return startExportH265Video();
-    } else {
-        return startExportImages();
+    switch (_action) {
+        case EXPORT_MP4:
+            return startExportH265Video();
+        case EXPORT_ALL:
+            return startExportAll();
+        case EXPORT_IMAGES:
+            return startExportImages();
+        default:
+            std::cerr << "Invalid action found action=" << _action << std::endl;
+            return RETURN_CODE_INVALID_ARG;
     }
 }
 
 int ExportImages::initOptions(int argc, char ** argv)
 {
     int ret;
-    if((ret = StartCapture::initParsing(argc,  argv)) != RETURN_CODE_SUCCESS ||
-        (ret = parseExportImagesOptions()) != RETURN_CODE_SUCCESS )
-    {
+
+    if ((ret = parseExportImagesOptions(argc, argv)) != RETURN_CODE_SUCCESS) {
         return ret;
     }
-    return RETURN_CODE_SUCCESS;
+
+    if (action() == EXPORT_ALL)
+        setWID(ALL_EXPORT_NAME);
+
+    if ((ret = StartCapture::initParsing(argc, argv)) == RETURN_CODE_SUCCESS)
+        return RETURN_CODE_SUCCESS;
+
+    return ret;
 }
 
 void ExportImages::exportUsage()
 {
-    std::cerr << "\n";
     std::cerr << "The following options related with export command option"  << std::endl;
     std::cerr << "--format                     Format of exported image, supported RGB and YUV" << std::endl;
     std::cerr << "--total                      Total number of images that export command can capture" << std::endl;
     std::cerr << "--mp4                        Export images as mp4 video" << std::endl;
-    std::cerr << "\n";
+    std::cerr << "--all                        Export all windows and monitors images to working directory=\""<<
+                                                getCapServerPath() << "\"" << std::endl;
     std::cerr << "\n";
 }
 
-int ExportImages::parseExportImagesOptions()
+int ExportImages::parseExportImagesOptions(int argc, char ** argv)
 {
-    const StringVec & options = getUnrecognizedOptions();
-    for (auto i = options.begin(); i != options.end(); ++i) {
-        if ( (*i) == "--format" ) {
-            if( *(++i) == "RGB" || *i == "rgb" )
+    for (int i=0; i< argc; i++) {
+        String cur = argv[i];
+        if ( cur == "--all") {
+            _action = EXPORT_ALL;
+        } else if ( cur == "--format" ) {
+            if (i >= argc) return RETURN_CODE_INVALID_ARG;
+
+            String val = argv[++i];
+            if( val == "RGB" || val == "rgb" )
                 _format = ExportImages::EXPORT_RGB;
-            else if ( *i == "YUV" || *i == "yuv" )
+            else if ( val == "YUV" || val == "yuv" )
                 _format = ExportImages::EXPORT_YUV;
             else
                 return RETURN_CODE_INVALID_ARG;
-        } else if ( (*i) == "--total" ) {
-            _total = stoi(*(++i));
-        } else if ( (*i) == "--mp4" ) {
+
+        } else if ( cur == "--total" ) {
+            if (i >= argc) return RETURN_CODE_INVALID_ARG;
+
+            String val = argv[++i];
+            if (val.find_first_not_of("0123456789") == string::npos)
+                return RETURN_CODE_INVALID_ARG;
+            _total = std::stoi(val.c_str());
+        } else if ( cur == "--mp4" ) {
             FrameProcessorWrap::instance()->setImageTypeToRGB();
-            _mp4 = true;
-        } else {
-            std::cerr << "Invalid options: " << (*i);
-            return RETURN_CODE_INVALID_ARG;
+            _action = EXPORT_MP4;
         }
     }
 
@@ -123,6 +156,62 @@ int ExportImages::startExportImages()
 
     std::cout << "Images are exported to " << getCapServerPath() << std::endl;
     return RETURN_CODE_SUCCESS;
+}
+
+int ExportImages::startExportAll()
+{
+    LOGGER.info() << "Starting to export images for all windows and monitoes";
+
+    CircWRBuf<FrameBuffer>  cwb(2);
+    MonitorVectorProvider mvp;
+    CapPoint cp(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+
+    Path::removeContent(getCapServerPath());
+    for (auto & m : mvp.get()) {
+        ExportAll ea(SP_MONITOR, m.getId());
+        if ((_fb=ea.getFrameBuffer(cwb)) == nullptr) continue;
+
+        writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_ALL_M" +
+                    std::to_string(m.getId()) + ".png");
+        LOGGER.info() << "SampleProvider data wrote for monitor_id=" << m.getId();
+
+        //set smallest width and height
+        if (cp.getX() > _fb->getWidth() && cp.getY() > _fb->getHeight()) {
+            cp.setX((int) _fb->getWidth());
+            cp.setY((int) _fb->getHeight());
+        }
+    }
+
+    WindowVectorProvider wvp(-1);
+
+    for (const auto & w : wvp.get()) {
+        ExportAll ea(SP_WINDOW, w.getHandler());
+
+        // filter out the unnecessary window
+        if ((_fb=ea.getFrameBuffer(cwb)) == nullptr ||
+            _fb->getWidth() < cp.getX()/8 ||
+            _fb->getHeight() < cp.getY()/8 ||
+            filterExportWinName(w.getName()))  continue;
+
+        writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_ALL_H" +
+                    std::to_string(w.getHandler()) + ".png");
+        LOGGER.info() << "SampleProvider data wrote for handler=" << w.getHandler();
+    }
+
+    LOGGER.info() << "Finished exporting all images to " << getCapServerPath();
+
+    return RETURN_CODE_SUCCESS;
+}
+
+bool ExportImages::filterExportWinName(const String & w)
+{
+    if (PROCESS_FILTER.find(w) != PROCESS_FILTER.end()) return true;
+    auto it = find_if(PROCESS_FILTER_CONTAINS.begin(), PROCESS_FILTER_CONTAINS.end(),
+                      [&](const String & name) -> bool {
+        return w.find(name) != std::string::npos;
+    });
+
+    return it != PROCESS_FILTER_CONTAINS.end();
 }
 
 int ExportImages::startExportH265Video()
@@ -174,7 +263,7 @@ int ExportImages::startExportH265Video()
         ffmpegFrame.frame_index = i;
         ffmpegFrame.format = AV_PIX_FMT_RGB24;
         ffmpegFrame.data0 = _fb->getData();
-        ffmpegFrame.data0_len = _fb->getPacity();
+        ffmpegFrame.data0_len = _fb->getCapacity();
 
         std::cout << "Getting data for : " << i << ", gettingTime=" <<
                   (std::chrono::system_clock::now()-start).count()/1000 << "ms" <<
@@ -192,8 +281,8 @@ int ExportImages::startExportH265Video()
 
 void ExportImages::writeToFile(const String & file)
 {
-    unsigned int width = _sp->getWidth();
-    unsigned int height = _sp->getHeight();
+    unsigned int width = _fb->getWidth();
+    unsigned int height = _fb->getHeight();
     FILE *fp = fopen(file.c_str(), "wb");
     if(!fp) return ;
 

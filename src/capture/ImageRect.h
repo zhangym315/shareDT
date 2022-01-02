@@ -145,6 +145,8 @@ class CapWindow {
     void setWinType(SPWinType wintype) { _winType = wintype; }
     SPWinType getWinType() { return _winType; }
 
+    static CapWindow getWinById(size_t h);
+
   private:
     size_t    _handler;
     SPWinType _winType;
@@ -200,8 +202,8 @@ class CapMonitor {
     const CapPoint& getSize () const  { return _size ; }
     const CapPoint& getOrgOffset() const { return _orgOffset; }
     const CapPoint& getOrgSize () const { return _orgSize; }
-    int   getOrgHeight() { return _orgSize.getY(); }
-    int   getOrgWidth()  { return _orgSize.getX(); }
+    int   getOrgHeight() const { return _orgSize.getY(); }
+    int   getOrgWidth()  const { return _orgSize.getX(); }
     int   getWidth() { return _size.getX (); }
     int   getHeight() { return _size.getY (); }
     bool  isValid() const { return _isValid; }
@@ -220,6 +222,8 @@ class CapMonitor {
         _orgSize  = other.getOrgSize();
         _isValid  = other.isValid ();
     }
+
+    static CapMonitor getById(int id);
 
   private:
     int _index;

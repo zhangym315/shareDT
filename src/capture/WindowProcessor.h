@@ -34,9 +34,14 @@ class WindowVectorProvider : public Thread {
     void mainImp() override;
 
     const WindowVector & get() { return _wins; }
-
+    void emplace(const CapWindow & win) { _wins.emplace_back(win); }
     void getWinByPid(Pid pid, CapWindow & win) ;
     void getWinByHandler(size_t hd, CapWindow & win);
+
+    WindowVectorProvider & operator=(WindowVectorProvider & other) {
+        this->_wins = other.get();
+        return *this;
+    }
 
   private:
     /*
@@ -60,8 +65,7 @@ class MonitorVectorProvider : public Thread {
            _callOnce(callOnce) { init(); }
     MonitorVectorProvider(bool callOnce, bool isJoin) : Thread(isJoin),
            _callOnce(callOnce) { init(); }
-
-    MonitorVectorProvider() : MonitorVectorProvider (false) { }
+    MonitorVectorProvider() : MonitorVectorProvider (true) { }
     ~MonitorVectorProvider () { }
 
     void init();

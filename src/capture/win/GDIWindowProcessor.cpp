@@ -1,6 +1,8 @@
 #include "SamplesProvider.h"
 #include "GDIWindowProcessor.h"
+#include "WindowProcessor.h"
 #include "Logger.h"
+#include "ScopedPrt.h"
 
 static GDIFrameProcessor * gdiFP = NULL;
 
@@ -56,6 +58,7 @@ bool GDIFrameProcessor::ProcessFrame(FrameBuffer * fb) {
             height = _bounds->getHeight();
         }
 
+        fb->setWidthHeight(width, height);
         auto originalBmp = SelectObject(CaptureDC.DC, CaptureBMP.Bitmap);
 
         if (_type == SP_MONITOR && BitBlt(CaptureDC.DC, 0, 0, width,
@@ -98,6 +101,7 @@ bool GDIFrameProcessor::ProcessFrame(FrameBuffer * fb) {
         auto originalBmp = SelectObject(CaptureDC.DC, CaptureBMP.Bitmap);
         auto left = -windowrect.ClientBorder.left;
         auto top = -windowrect.ClientBorder.top;
+        fb->setWidthHeight(width, height);
 
         if (BitBlt(CaptureDC.DC, left, top, r, b, MonitorDC.DC, 0, 0, SRCCOPY) == FALSE) {
             LOGGER.error() << "Failed on BitBlt: " << l << "  " << t << " " << r << " " << b << " " ;
@@ -136,11 +140,41 @@ void CircleWriteThread::init() {
     }
 }
 
-bool CircleWriteThread::WindowsFrame(FrameBuffer * fb) {
+bool FrameGetter::WindowsFrame(FrameBuffer * fb, SPType type, size_t handler) {
+    (void) type; (void) handler;
     if(gdiFP)
         return gdiFP->ProcessFrame(fb);
     else {
-        LOGGER.error() << "CircleWriteThread::WindowsFrame gdiFP is NULL" ;
+        LOGGER.error() << "FrameGetter::WindowsFrame gdiFP is NULL" ;
         return false;
     }
+}
+
+bool FrameGetter::ExportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler)
+{
+    ScopedPtr<GDIFrameProcessor> fp;
+    CapMonitor cm;
+    CapWindow  cw;
+
+    if (type == SP_MONITOR)
+    {
+        cm = CapMonitor::getById((int)handler);
+        if (!cm.isValid()) {
+            LOGGER.error() << "FrameGetter::ExportAllFrameGetter failed to get CapMonitor for monitor id=" << handler;
+            return false;
+        }
+        fp.reset(new GDIFrameProcessor(&cm));
+    } else if  (type == SP_WINDOW) {
+        cw = CapWindow::getWinById(handler);
+        if (!cw.isValid()) {
+            LOGGER.error() << "FrameGetter::ExportAllFrameGetter failed to get CapWindow for window handler=" << handler;
+            return false;
+        }
+        fp.reset(new GDIFrameProcessor(&cw));
+    } else {
+        LOGGER.error() << "FrameGetter::ExportAllFrameGetter doesnot support capture type=" << type;
+        return false;
+    }
+
+    return fp->ProcessFrame(fb);
 }

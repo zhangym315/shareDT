@@ -19,7 +19,6 @@ void WindowVectorProvider::init()
 
     /* create new thread and call mainImpl */
     go();
-    return;
 }
 
 /*
@@ -59,7 +58,6 @@ void WindowVectorProvider::getWinByPid(Pid pid, CapWindow & win)
     win.setSize(sizeX, sizeY);
 
     win.setWinType(SP_WIN_PROCESS);
-    return;
 }
 
 void WindowVectorProvider::getWinByHandler(size_t hd, CapWindow & win)
@@ -74,7 +72,6 @@ void WindowVectorProvider::getWinByHandler(size_t hd, CapWindow & win)
     }
 
     win.setWinType(SP_WIN_HANDLER);
-    return;
 }
 
 void MonitorVectorProvider::init()
@@ -90,7 +87,6 @@ void MonitorVectorProvider::init()
 
     /* create new thread and call mainImpl */
     go();
-    return;
 }
 
 /*

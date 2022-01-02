@@ -4,8 +4,9 @@
  * Include CapPoint, Rect, ImageRect class               *
  *                                                       *
  *********************************************************/
+#include <algorithm>
 #include "ImageRect.h"
-
+#include "WindowProcessor.h"
 
 bool CapPoint::isEqual(const CapPoint& a)
 {
@@ -50,4 +51,24 @@ void CapImageRect::set(int l, int t, int r, int b)
     _size.setX(r-l);
     _size.setY(b-t);
     _isValid = true;
+}
+
+CapMonitor CapMonitor::getById(int id)
+{
+    MonitorVectorProvider mvp;
+    auto result = std::find_if(mvp.get().begin(), mvp.get().end(), [=](const CapMonitor & mon) -> bool {
+        return mon.getId() == id;
+    });
+
+    return (result == mvp.get().end()) ? CapMonitor() : *result;
+}
+
+CapWindow CapWindow::getWinById(size_t h)
+{
+    WindowVectorProvider wvp(-1);
+    auto result = std::find_if(wvp.get().begin(), wvp.get().end(), [=](const CapWindow & win) -> bool {
+        return win.getHandler() == h;
+    });
+
+    return (result == wvp.get().end()) ? CapWindow() : *result;
 }

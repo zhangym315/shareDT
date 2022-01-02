@@ -26,7 +26,7 @@ class GDIFrameProcessor {
     GDIFrameProcessor(CapWindow * win) : _win(win) {
         _type = SP_WINDOW;
         if(!init())
-         _win->setInvalid();
+          _win->setInvalid();
     }
 
     bool init();

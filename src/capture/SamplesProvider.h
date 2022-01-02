@@ -6,6 +6,7 @@
 #include "WindowProcessor.h"
 #include "Thread.h"
 #include "Buffer.h"
+#include "ScopedPrt.h"
 
 /* define platform specific */
 enum PLATFORM_STATUS { SHAREDT_WIN, SHAREDT_IOS, SHAREDT_LINUX, SHAREDT_UNKNOWN };
@@ -27,10 +28,17 @@ enum THREAD_STATUS { STOP, START, PAUSE, CONTI, NONE };
 
 class FrameProcessorImpl;
 
+/* platform spedific */
+class FrameGetter {
+public:
+    static bool WindowsFrame(FrameBuffer * fb, SPType type, size_t handler);
+    static bool ExportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler);
+};
+
 /*
- * FrameProcessorWrap is singleton
+ * FrameProcessorWrap is singleton.
  * This will be used when system capture the screenshot
- *     and get called back by _fpi
+ * and get called back by _fpi.
  */
 class FrameProcessorWrap {
   public:
@@ -39,7 +47,8 @@ class FrameProcessorWrap {
     void setCFB(CircWRBuf<FrameBuffer> * fb) ;
     void pause();
     void resume();
-    bool isPause() { return _isPause; }
+    void stop();
+    bool isPause() const { return _isPause; }
     void setMinFrameDuration(const std::chrono::microseconds & duration);
     void convert();
     void setMV(CapMonitor * mon, unsigned int frequency);
@@ -48,7 +57,9 @@ class FrameProcessorWrap {
     bool isPartial();
     void writeBuf(CapMonitor * mon, unsigned char * buf, int bpr, size_t bufSize=0) ; /* write buffer */
     void writeBuf(CapImageRect * bd, unsigned char * buf, int bpr, size_t bufSize=0);
-    bool isReady() { return _isReady; }
+    bool isReady() const { return _isReady; }
+    bool isReInitiated() const { return _isReInited; }
+    void setReInitiated() { _isReInited = true; }
     CapImageRect * getBounds() { return _bounds; }
 
     void debug(char * array []);
@@ -60,20 +71,21 @@ class FrameProcessorWrap {
   private:
     FrameProcessorWrap();
     static FrameProcessorWrap * _instance;
-    CircWRBuf<FrameBuffer>     * _fb;
-    class  FrameProcessorImpl * _fpi;
+    CircWRBuf<FrameBuffer>    * _fb;
+    FrameProcessorImpl        * _fpi;
     CapMonitor                * _monitor;
     CapImageRect              * _bounds;
     std::chrono::microseconds   _duration;
     bool                        _isPause;
     bool                        _isReady;
+    bool                        _isReInited;  // used by export all monitors
     std::mutex                  _mtx;
     SPType                      _type;
     SPImageType                 _imgType;
  };
 
 /*
- * Write thread to write to the circle buffer
+ * CircleWriteThread to write to the circle buffer
  * Will have a new thread to capture screenshot
  */
 class CircleWriteThread : public Thread {
@@ -135,9 +147,6 @@ class CircleWriteThread : public Thread {
 
     void mainImp();
     void startFPW() ; /* start frame processor */
-
-    /* platform spedific */
-    bool WindowsFrame(FrameBuffer * fb);
 
     bool isReady() ;
 

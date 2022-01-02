@@ -48,6 +48,8 @@ void FrameBuffer::setDataPerRow(unsigned char * data, int w, int h, int bytesrow
 {
     size_t total, perRow, dstPerRow;
 
+    setWidthHeight(w, h);
+
     switch (type) {
     case SPImageType::SP_IMAGE_RGBA:
         total = w * h * 4;
@@ -195,4 +197,10 @@ bool FrameBuffer::set (unsigned char *data, uint64_t size)
     _size = size;
     _isUsed = true;
     return true;
+}
+
+void FrameBuffer::setWidthHeight(size_t w, size_t h)
+{
+    _width = w;
+    _height = h;
 }

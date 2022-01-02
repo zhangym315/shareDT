@@ -7,7 +7,7 @@ template<typename T> class ScopedPtr {
     }
     ~ScopedPtr()
     {
-        delete _p;
+        if (_p) delete _p;
     }
     bool valid() const
     {
@@ -51,9 +51,9 @@ template<typename T> class ScopedPtr {
     void reset(T *p)
     {
         if (p != _p) {
-                delete _p;
-                _p = p;
-            }
+            if (_p) delete _p;
+            _p = p;
+        }
     }
 
     void reset()

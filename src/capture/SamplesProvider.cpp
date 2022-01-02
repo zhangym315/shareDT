@@ -11,6 +11,7 @@ FrameProcessorWrap::FrameProcessorWrap() :
                 _fpi(nullptr),
                 _isPause(true),
                 _isReady(false),
+                _isReInited(false),
                 _imgType(SPImageType::SP_IMAGE_RGBA)
 { }
 
@@ -47,6 +48,7 @@ void FrameProcessorWrap::setMV(CapMonitor * mon, unsigned int frequency)
     _type = SP_MONITOR;
     _monitor = mon;
     _duration = std::chrono::microseconds(MICROSECONDS_PER_SECOND/frequency);
+    init();
 }
 
 void FrameProcessorWrap::setBD(CapImageRect * bd)
@@ -129,12 +131,14 @@ void CircleWriteThread::mainImp()
     } else {
         _isReady = true;
         FrameBuffer * fb;
+        int id = _type == SP_WINDOW ? _win->getHandler() : _mon->getId();
+
         while ( true )
         {
             auto start = std::chrono::system_clock::now();
             fb = _fb->getToWrite();
             if(fb) {
-                if(!WindowsFrame(fb)) { fb->setInvalid(); }
+                if(!FrameGetter::WindowsFrame(fb, _type, id)) { fb->setInvalid(); }
             } else {
 //                std::cout << "queu is full, pause..." << std::endl;
                 std::this_thread::sleep_for(5ms);
@@ -145,8 +149,6 @@ void CircleWriteThread::mainImp()
             }
         }
     }
-
-    return;
 }
 
 FrameBuffer * SamplesProvider::getFrameBuffer() {
