@@ -423,6 +423,7 @@ static void Usage()
         "                     show\n"
         "                     nodaemon\n"
         "                     status\n"
+        "                     export\n"
         );
 }
 

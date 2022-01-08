@@ -103,6 +103,8 @@ class Path
     String readAll();
     static bool checkAndWait(String & path, int seconds);
 
+    static void removeContent(const String & path);
+
   private:
     std::fstream _ffs;
 };

@@ -10,14 +10,7 @@
  */
 rfbBool fetch_frame(AVCodecContext *dec_ctx, AVFrame *frame)
 {
-    int ret = avcodec_receive_frame(dec_ctx, frame);
-    if (ret > 0) {
-        return FALSE;
-    } else if (ret < 0) {
-        return FALSE;
-    } else {
-        return TRUE;
-    }
+    return (avcodec_receive_frame(dec_ctx, frame) == 0) ? TRUE : FALSE;
 }
 
 rfbBool decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt)

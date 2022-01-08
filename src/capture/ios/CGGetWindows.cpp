@@ -96,5 +96,4 @@ void WindowVectorProvider::CapGetWindows()
         }
         ret.clear();
     }
-    return;
 }

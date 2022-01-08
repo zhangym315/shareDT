@@ -1,14 +1,9 @@
 #include <ApplicationServices/ApplicationServices.h>
 #include <iostream>
 #include "SamplesProvider.h"
-#include <iostream>
 
-bool CircleWriteThread::WindowsFrame(FrameBuffer * fb)
+bool FrameGetter::WindowsFrame(FrameBuffer * fb, SPType type, size_t handler)
 {
-
-    CFArrayRef windows ;
-//    windows->append(100);
-//    auto cfArray = CFArrayCreate(kCFAllocatorDefault, windows, windows->count, nullptr)
     CFMutableArrayRef array;
     array = CFArrayCreateMutable(kCFAllocatorDefault,
                                  0,
@@ -16,18 +11,23 @@ bool CircleWriteThread::WindowsFrame(FrameBuffer * fb)
     CFArrayAppendValue(array, CFSTR("1000"));
     CFArrayAppendValue(array, CFSTR("257"));
     CFArrayAppendValue(array, CFSTR("628"));
+
+    // TODO implement for all window of same PID.
+/*
     std::vector<size_t>::iterator  it;
     for(it = _win->getAll().begin (); it < _win->getAll().end(); it++)
     {
 //        std::cout << " it: " << *it << std::endl;
 //        CFArrayAppendValue(array, CFSTR(std::to_string(*it)));
     }
+*/
 
     CGImageRef imageRef;
-    if (_win->getWinType () == SP_WIN_HANDLER)
-        imageRef = CGWindowListCreateImage (CGRectNull, kCGWindowListOptionIncludingWindow,
-            static_cast<uint32_t>(_win->getHandler ()), kCGWindowImageBoundsIgnoreFraming);
-    else imageRef = CGWindowListCreateImageFromArray(CGRectNull, (CFArrayRef)array, kCGWindowImageBoundsIgnoreFraming);
+//    if (type == SP_WIN_HANDLER)
+    imageRef = CGWindowListCreateImage (CGRectNull, kCGWindowListOptionIncludingWindow,
+                                        static_cast<uint32_t>(handler),
+                                        kCGWindowImageBoundsIgnoreFraming);
+//    else imageRef = CGWindowListCreateImageFromArray(CGRectNull, (CFArrayRef)array, kCGWindowImageBoundsIgnoreFraming);
 
 
     if (!imageRef) {
@@ -36,12 +36,13 @@ bool CircleWriteThread::WindowsFrame(FrameBuffer * fb)
     auto width = CGImageGetWidth(imageRef);
     auto height = CGImageGetHeight(imageRef);
 
+/*
     if (width != _win->getWidth () || height != _win->getHeight ()) {
         CGImageRelease(imageRef);
         std::cout << "get Windows width and height not match " << std::endl;
         return false;
     }
-
+*/
     auto prov = CGImageGetDataProvider(imageRef);
     if (!prov) {
         CGImageRelease(imageRef);
@@ -56,10 +57,15 @@ bool CircleWriteThread::WindowsFrame(FrameBuffer * fb)
     auto rawdatas = CGDataProviderCopyData(prov);
     auto buf = CFDataGetBytePtr(rawdatas);
 
-    fb->setDataPerRow((unsigned char *)buf, _win->getWidth(), _win->getHeight(),
-                      bytesperrow, FrameProcessorWrap::instance()->getImageType());
+    fb->setDataPerRow((unsigned char *)buf, width, height, bytesperrow,
+                      FrameProcessorWrap::instance()->getImageType());
 
     CFRelease(rawdatas);
     CGImageRelease(imageRef);
     return true;
+}
+
+bool FrameGetter::ExportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler)
+{
+    return FrameGetter::WindowsFrame(fb, type, handler);
 }

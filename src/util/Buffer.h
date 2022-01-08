@@ -30,8 +30,8 @@ class FrameBuffer {
     ~FrameBuffer() { reSet(0); resetSubData(0); }
 
     [[nodiscard]] size_t getSize() const   { return _size ; }
-    [[nodiscard]] size_t getPacity() const { return _capacity; }
-    unsigned char * getData() { return _data; }
+    [[nodiscard]] size_t getCapacity() const { return _capacity; }
+    unsigned char * getData() const { return _data; }
 
     void setData(unsigned char * data, size_t w, size_t h, SPImageType type=SPImageType::SP_IMAGE_RGBA);
     void setDataPerRow(unsigned char * data, int w, int h,
@@ -62,6 +62,11 @@ class FrameBuffer {
 
     void setInvalid() {_isValid = false;}
 
+    void setWidthHeight(size_t w, size_t h);
+
+    size_t getWidth() const { return _width; }
+    size_t getHeight() const { return _height; }
+
   private:
     size_t   _size;
     size_t   _capacity;
@@ -70,10 +75,14 @@ class FrameBuffer {
     unsigned char * _subData;
     bool     _isValid;
     bool     _isUsed;
+    size_t   _width;
+    size_t   _height;
 };
 
 /*
  *  Circular buffer for reading and writting
+ *  At least 2 framebuffer would be used in the circle to
+ *  differentiate the start and end pointer.
  */
 template<typename T>
 class CircWRBuf {
@@ -84,9 +93,10 @@ class CircWRBuf {
 
     bool empty() const { return read == write; }
     bool full () const { return read == ((write+1) % size); }
+    void setEmpty() { read = write; }
 
     T * getToWrite();
-    const T * getToRead () ;
+    T * getToRead () ;
     const int getSize () const { return size; }
 
     void clear();
@@ -106,7 +116,7 @@ template<typename T> CircWRBuf<T>::CircWRBuf(int sz): size(sz) {
 }
 
 template<typename T> CircWRBuf<T>::~CircWRBuf() {
-    delete data;
+    delete[] data;
 }
 
 /* returns true if write was successful, false if the buffer is already full */
@@ -121,7 +131,7 @@ template<typename T> T * CircWRBuf<T>::getToWrite() {
 }
 
 /* returns true if there is something to remove, false otherwise */
-template<typename T> const T * CircWRBuf<T>::getToRead() {
+template<typename T> T * CircWRBuf<T>::getToRead() {
     if ( empty() ) {
         return nullptr;
     } else {

@@ -98,8 +98,6 @@ void StartCapture::Usage ()
     std::cerr << "--wid                        Specify the working id (wid) of the capture server. If not" << std::endl;
     std::cerr << "                             sepcified, ShareDTServer will generate a random wid for it." << std::endl;
     std::cerr << "\n";
-    std::cerr << "\n";
-    std::cerr << "The following options related with rfb" << std::endl;
 }
 
 StartCapture::CType StartCapture::getCType()
@@ -292,6 +290,7 @@ bool StartCapture::setWorkingDirectory()
 #else
     wPath.append("/var/run/");
 #endif
+
     // _wID passed as an argument
     String & cid = (_wID.length() > 0) ? _wID : setAndGetWID();
     wPath.append(cid);
@@ -314,8 +313,7 @@ String & StartCapture::setAndGetWID()
     }
 
     _wID.append (ENUM_TO_STR(_type, SPTypePrefix) +
-                 "_" +
-                 std::to_string (std::time (nullptr)));
+                 "_" + std::to_string (std::time (nullptr)));
 
     if (_type == SP_PARTIAL)
     {
@@ -451,7 +449,8 @@ int StartCapture::initSrceenProvider()
     }
     else if (_type == SP_NULL) {
         Usage();
-        rfbUsage();
+
+        if (_ctype != StartCapture::C_EXPORT) rfbUsage();
         return RETURN_CODE_INVALID_ARG;
     }
 
@@ -480,10 +479,10 @@ int StartCapture::initRFBServer(int argc, char *argv[])
 
 int  StartCapture::parseType ()
 {
-    if(_type == SP_PARTIAL && !parseBounds ())
+    if ((_type == SP_PARTIAL && !parseBounds()) ||
+        (_type == SP_WINDOW && !parseWindows()))
         return RETURN_CODE_INVALID_ARG;
-    if(_type == SP_WINDOW && !parseWindows())
-        return RETURN_CODE_INVALID_ARG;
+
     return RETURN_CODE_SUCCESS;
 }
 
@@ -507,7 +506,9 @@ bool StartCapture::parseBounds()
     {
         if(isNumber(token))
             b[i] = stoi(token);
-        if (++i >= 4) break;
+        else return false;
+
+        if (++i >= 4) return false;
     }
 
     /* update rect values */
@@ -547,7 +548,7 @@ void StartCapture::show()
          */
         WindowVectorProvider wvp(_pid);
         std::cout << "Windows Lists:" << std::endl;
-        for (CapWindow win : wvp.get())
+        for (const CapWindow& win : wvp.get())
         {
             std::cout << "Handle: " << win.getHandler()
                       << "\tPid: "<< win.getPid ()
@@ -560,7 +561,7 @@ void StartCapture::show()
     {
         MonitorVectorProvider mvp(true);
         std::cout << "\nMonitor Lists:" << std::endl;
-        for (CapMonitor mon : mvp.get())
+        for (const CapMonitor& mon : mvp.get())
         {
             std::cout << std::fixed << std::setprecision(3)   /* for scale float cout */
                       << "Name: " << mon.getName()
@@ -573,8 +574,6 @@ void StartCapture::show()
                       << "\tscale: " << mon.getScale() << std::endl;
         }
     }
-
-    return;
 }
 
 int StartCapture::getVNCClientCount(struct _rfbClientRec* head)
@@ -619,9 +618,12 @@ void StartCapture::startCaptureServer()
     /* init rfb server to listen on */
     rfbInitServer(_rfbserver);
 
-    while(!_sp->isSampleReady()) {
+    int indicator = 0;
+    while(!_sp->isSampleReady() && ++indicator < 100) {
         std::this_thread::sleep_for(50ms);
     }
+    if (!_sp->isSampleReady()) return;
+
     FrameBuffer * fb;
 
     /* loop through events */
