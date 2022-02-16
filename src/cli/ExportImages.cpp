@@ -18,13 +18,13 @@ extern "C" {
 #include "libswscale/swscale.h"
 }
 
-int mainExport(const char ** cmdArg, const struct cmdConf * conf)
+int mainExport(const char ** , const struct cmdConf * conf)
 {
     ExportImages ei;
     char ** argv = const_cast<char **>(conf->argv);
     int ret;
     if ((ret = ei.initOptions(conf->argc, argv)) == RETURN_CODE_SUCCESS &&
-        (ei.action() == ExportImages::EXPORT_ALL ||  // ei.action get pased in ei.initOptions()
+        (ei.action() == ExportImages::EXPORT_ALL ||  // ei.action get passed through ei.initOptions()
         (ret = ei.initSrceenProvider()) == RETURN_CODE_SUCCESS)) {
 
         std::cout << "Starting to export images for: " << ei.getWID() << std::endl;
