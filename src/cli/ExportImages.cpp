@@ -79,8 +79,7 @@ void ExportImages::exportUsage()
     std::cerr << "--format                     Format of exported image, supported RGB and YUV" << std::endl;
     std::cerr << "--total                      Total number of images that export command can capture" << std::endl;
     std::cerr << "--mp4                        Export images as mp4 video" << std::endl;
-    std::cerr << "--all                        Export all windows and monitors images to working directory=\""<<
-                                                getCapServerPath() << "\"" << std::endl;
+    std::cerr << "--all                        Export all windows and monitors images to working directory=$SERVER_PATH/var/run/EXPORT_ALL" << std::endl;
     std::cerr << "\n";
 }
 
