@@ -445,7 +445,7 @@ int main(int argc, char** argv)
             { "newCapture", &mainNewCapture },  /* new capture process   */
             { "show",       &mainShow    },     /* command show win      */
             { "nodaemon",   &noDaemon    },     /* run in no daemon mode */
-            { "status",     &status      },     /* run in no daemon mode */
+            { "status",     &status      },     /* status of current pro */
             { "export",     &mainExport  }      /* cli to export images  */
 #ifdef  __SHAREDT_WIN__
            ,{ "install",    &installService },  /* install service       */

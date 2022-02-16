@@ -332,7 +332,7 @@ void ShareDTClientWin::hoverMove(QHoverEvent * event)
 void ShareDTClientWin::keyPressEvent(QKeyEvent * event)
 {
     std::cout << "key pressed: " << event->key() << std::endl;
-//    SendKeyEvent(_fetcher->getRfbClient(), event->key(), true);
+    SendKeyEvent(_fetcher->getRfbClient(), event->key(), true);
 }
 
 void ShareDTClientWin::keyReleaseEvent(QKeyEvent *event)
