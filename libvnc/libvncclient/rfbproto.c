@@ -1558,7 +1558,7 @@ rfbBool
 SendPointerEvent(rfbClient* client,int x, int y, int buttonMask)
 {
   rfbPointerEventMsg pe;
-
+rfbLog("SendPointerEvent x=%d, y=%d, buttonMask=%x\n", x, y, buttonMask);
   memset(&pe, 0, sizeof(sz_rfbPointerEventMsg));
 
   if (!SupportsClient2Server(client, rfbPointerEvent)) return TRUE;
