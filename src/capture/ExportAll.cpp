@@ -35,7 +35,7 @@ FrameBuffer * ExportAll::getFrameBuffer(CircWRBuf<FrameBuffer> & cwf)
 #endif
 
     fb = cwf.getToWrite();
-    return FrameGetter::ExportAllFrameGetter(fb, _type, _captureId) ? fb : nullptr;
+    return FrameGetter::exportAllFrameGetter(fb, _type, _captureId) ? fb : nullptr;
 }
 
 

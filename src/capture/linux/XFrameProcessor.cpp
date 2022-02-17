@@ -137,17 +137,17 @@ void CircleWriteThread::init() {
     }
 }
 
-bool FrameGetter::WindowsFrame(FrameBuffer * fb, SPType type, size_t handler) {
+bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler) {
     (void) type; (void) handler;
     if(x11FP)
         return x11FP->ProcessFrame(fb);
     else {
-        std::cerr << "FrameGetter::WindowsFrame x11FB is NULL" << std::endl;
+        std::cerr << "FrameGetter::windowsFrame x11FB is NULL" << std::endl;
         return false;
     }
 }
 
-bool FrameGetter::ExportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler)
+bool FrameGetter::exportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler)
 {
     ScopedPtr<X11FrameProcessor> fp;
     CapMonitor cm;
@@ -157,7 +157,7 @@ bool FrameGetter::ExportAllFrameGetter(FrameBuffer * fb, SPType type, size_t han
     {
         cm = CapMonitor::getById((int)handler);
         if (!cm.isValid()) {
-            LOGGER.error() << "FrameGetter::ExportAllFrameGetter failed to get CapMonitor for monitor id=" << handler;
+            LOGGER.error() << "FrameGetter::exportAllFrameGetter failed to get CapMonitor for monitor id=" << handler;
             return false;
         }
         fp.reset(new X11FrameProcessor(&cm));
@@ -165,13 +165,13 @@ bool FrameGetter::ExportAllFrameGetter(FrameBuffer * fb, SPType type, size_t han
     } else if  (type == SP_WINDOW) {
         cw = CapWindow::getWinById(handler);
         if (!cw.isValid()) {
-            LOGGER.error() << "FrameGetter::ExportAllFrameGetter failed to get CapWindow for window handler=" << handler;
+            LOGGER.error() << "FrameGetter::exportAllFrameGetter failed to get CapWindow for window handler=" << handler;
             return false;
         }
         fp.reset(new X11FrameProcessor(&cw));
         fb->setWidthHeight(cw.getWidth(), cw.getHeight());
     } else {
-        LOGGER.error() << "FrameGetter::ExportAllFrameGetter doesnot support capture type=" << type;
+        LOGGER.error() << "FrameGetter::exportAllFrameGetter doesnot support capture type=" << type;
         return false;
     }
 

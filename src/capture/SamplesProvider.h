@@ -31,8 +31,8 @@ class FrameProcessorImpl;
 /* platform spedific */
 class FrameGetter {
 public:
-    static bool WindowsFrame(FrameBuffer * fb, SPType type, size_t handler);
-    static bool ExportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler);
+    static bool windowsFrame(FrameBuffer * fb, SPType type, size_t handler);
+    static bool exportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler);
 };
 
 /*

@@ -9,7 +9,7 @@ const static String CODEKEY_EMPTY = "";
 
 void ptrServerMouseEvent(int buttonMask, int x, int y, rfbClientPtr cl)
 {
-//LOGGER.info("received button: %x, x:%d, y:%d", buttonMask, x, y);
+LOGGER.info("received mouse event button: %x, x:%d, y:%d", buttonMask, x, y);
     rfbClientIteratorPtr iterator;
     rfbClientPtr other_client;
     rfbScreenInfoPtr s = cl->screen;

@@ -1,5 +1,6 @@
 #include "ScreenProvider.h"
 #include "SamplesProvider.h"
+#include "CaptureInfo.h"
 #include "Enum.h"
 #include "Path.h"
 
@@ -89,6 +90,7 @@ void ScreenProviderMonitor::init(unsigned int frequency)
 {
     MonitorVectorProvider mvp(true, true);
     mvp.getMonByID(_id, _monitor);
+    CaptureInfo::instance()->setCapMonitor(_monitor);
     _samp = new SamplesProvider(_monitor, frequency);
     setBounds(0, _monitor.getOrgWidth(), 0, _monitor.getOrgHeight());
 }
