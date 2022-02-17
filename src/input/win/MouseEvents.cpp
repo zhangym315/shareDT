@@ -8,7 +8,6 @@ static void initMouse(INPUT* buffer)
 {
     buffer->type = INPUT_MOUSE;
     buffer->mi.mouseData = 0;
-    buffer->mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
     buffer->mi.time = 0;
     buffer->mi.dwExtraInfo = 0;
 }
@@ -23,12 +22,13 @@ void InputMousePlatform::mouseClickAtCordinate(Cordinate c, MouseButton b, int c
     // first handle wheel action
     if ((b&~MouseButtonMask) == WheeleMoved) {
         inputMouse.mi.dwFlags = MOUSEEVENTF_WHEEL;
-        inputMouse.mi.mouseData = c._x;
+        inputMouse.mi.mouseData = c._y;
 
         SendInput(1, &inputMouse, sizeof(INPUT));
         return;
     }
 
+    inputMouse.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
     inputMouse.type = INPUT_MOUSE;
     inputMouse.mi.dx = c._x * (0xFFFF / CaptureInfo::instance()->getCapMonitor().getWidth());
     inputMouse.mi.dy = c._y * (0xFFFF / CaptureInfo::instance()->getCapMonitor().getHeight());
