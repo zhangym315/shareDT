@@ -280,6 +280,8 @@ void ShareDTClientWin::wheelEvent(QWheelEvent *event) {
     const QPoint & delta = event->pixelDelta();
     const QPoint & angle = event->angleDelta();
 
+    if (delta.x() == 0 && delta.y() == 0) return;
+
     SendPointerEvent(_fetcher->getRfbClient(),
                      delta.x(),
                      delta.y(),
