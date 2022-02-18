@@ -106,7 +106,6 @@
 void InputMousePlatform::mouseClickAtCordinate(Cordinate c, MouseButton b, int count)
 {
     if ((b & ~MouseButtonMask) == WheeleMoved) {
-        LOGGER.info() << "InputMousePlatform::mouseClickAtCordinate WheeleMoved";
         [MouseInputIOS scrollDownVerticalLines:c._y];
         [MouseInputIOS scrollLeftHorizontalLines:(c._x)];
     } else if ((b & MouseButtonMask) == NoButton) {

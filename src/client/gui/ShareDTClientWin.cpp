@@ -47,9 +47,6 @@ bool ShareDTClientWin::isInited ()
 
 void ShareDTClientWin::resizeEvent( QResizeEvent * e )
 {
-cout << "resize Event: new size width=" << e->size().width()
-            << " height=" << e->size().height() << " old size width="
-            << e->oldSize().width() << " height=" << e->oldSize().height() << endl;
     _winResize.isResized = true;
 
     // resize can happened when user resize windows or VNCServer
@@ -147,10 +144,6 @@ void ShareDTClientWin::putImage (rfbClient* client)
         _winResize.isResized = false;
     }
 
-//    using namespace chrono;
-//    uint64_t nowCu = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
-//    cout << "time=" << nowCu << " ShareDTClientWin::putImage new w=" << frame.w << " h=" << frame.h <<endl ;
-
     frame.frame.setUsed();
 }
 
@@ -175,7 +168,6 @@ void ShareDTClientWin::resizeToNewVNC(int w, int h)
 
 void ShareDTClientWin::actionAdjustToOriginSize()
 {
-    cout << "actionAdjustToOriginSize" << endl;
     _winResize.curSize = _winResize.vncSize;
     _winResize.isResized = true;
 
@@ -253,7 +245,6 @@ bool ShareDTClientWin::checkShouldSendMouseMove()
 {
 
     auto elapsed = chrono::high_resolution_clock::now() - _mouseMoved;
-cout << "checkShouldSendMouseMove entered elapsed=" << chrono::duration_cast<chrono::microseconds>(elapsed).count() << endl;
 
     if (chrono::duration_cast<chrono::microseconds>(elapsed).count() < 30000) {
         return false;
@@ -351,7 +342,6 @@ void ShareDTClientWin::hoverMove(QHoverEvent * event)
 /* Keyboard events */
 void ShareDTClientWin::keyPressEvent(QKeyEvent * event)
 {
-    cout << "key pressed: " << event->key() << endl;
     SendKeyEvent(_fetcher->getRfbClient(), event->key(), true);
 }
 
