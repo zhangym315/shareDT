@@ -12,7 +12,7 @@ void InputMousePlatform::mouseClickAtCordinate(Cordinate c, MouseButton b, int c
     
     // handle wheele move first
     if ((b&~MouseButtonMask) == WheeleMoved) {
-        int upOrdown = (c._x > 0) ? Button4 : Button5;
+        int upOrdown = (c._y > 0) ? Button4 : Button5;
         XTestFakeButtonEvent(display, upOrdown, true, CurrentTime);
         XSync(display, false);
         XTestFakeButtonEvent(display, upOrdown, false, CurrentTime);
