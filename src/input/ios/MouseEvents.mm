@@ -6,14 +6,11 @@
 @implementation MouseInputIOS
 
 +(void) moveMouseTo:(CGPoint)coordinate {
-    CGEventRef ourEvent = CGEventCreate(NULL);
-
     [MouseInputIOS setMouse:CGPointMake(coordinate.x, coordinate.y)];
-    CFRelease(ourEvent);
 }
 
 +(void) setMouse:(CGPoint)coordinate {
-    CGEventRef move = CGEventCreateMouseEvent(NULL, kCGEventMouseMoved, coordinate, kCGMouseButtonLeft);
+    CGEventRef move = CGEventCreateMouseEvent(NULL, kCGEventLeftMouseDragged, coordinate, kCGMouseButtonLeft);
     CGEventPost(kCGHIDEventTap, move);
     CFRelease(move);
 }
