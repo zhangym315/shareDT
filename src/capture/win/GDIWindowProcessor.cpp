@@ -140,17 +140,17 @@ void CircleWriteThread::init() {
     }
 }
 
-bool FrameGetter::WindowsFrame(FrameBuffer * fb, SPType type, size_t handler) {
+bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler) {
     (void) type; (void) handler;
     if(gdiFP)
         return gdiFP->ProcessFrame(fb);
     else {
-        LOGGER.error() << "FrameGetter::WindowsFrame gdiFP is NULL" ;
+        LOGGER.error() << "FrameGetter::windowsFrame gdiFP is NULL" ;
         return false;
     }
 }
 
-bool FrameGetter::ExportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler)
+bool FrameGetter::exportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler)
 {
     ScopedPtr<GDIFrameProcessor> fp;
     CapMonitor cm;
@@ -160,19 +160,19 @@ bool FrameGetter::ExportAllFrameGetter(FrameBuffer * fb, SPType type, size_t han
     {
         cm = CapMonitor::getById((int)handler);
         if (!cm.isValid()) {
-            LOGGER.error() << "FrameGetter::ExportAllFrameGetter failed to get CapMonitor for monitor id=" << handler;
+            LOGGER.error() << "FrameGetter::exportAllFrameGetter failed to get CapMonitor for monitor id=" << handler;
             return false;
         }
         fp.reset(new GDIFrameProcessor(&cm));
     } else if  (type == SP_WINDOW) {
         cw = CapWindow::getWinById(handler);
         if (!cw.isValid()) {
-            LOGGER.error() << "FrameGetter::ExportAllFrameGetter failed to get CapWindow for window handler=" << handler;
+            LOGGER.error() << "FrameGetter::exportAllFrameGetter failed to get CapWindow for window handler=" << handler;
             return false;
         }
         fp.reset(new GDIFrameProcessor(&cw));
     } else {
-        LOGGER.error() << "FrameGetter::ExportAllFrameGetter doesnot support capture type=" << type;
+        LOGGER.error() << "FrameGetter::exportAllFrameGetter doesnot support capture type=" << type;
         return false;
     }
 

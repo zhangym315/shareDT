@@ -89,6 +89,7 @@ class ScreenProviderMonitor final : public ScreenProvider {
     void init(unsigned int frequency);
 
     bool isValid() override { return _monitor.isValid(); }
+    const CapMonitor & get() const { return _monitor; }
 
   private:
     int           _id;      /* monitor id */

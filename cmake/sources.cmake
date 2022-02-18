@@ -5,6 +5,7 @@ set(SHAREDT_SERVER_SRC
         ${CMAKE_SOURCE_DIR}/src/capture/WindowProcessor.cpp
         ${CMAKE_SOURCE_DIR}/src/capture/SamplesProvider.cpp
         ${CMAKE_SOURCE_DIR}/src/capture/ExportAll.cpp
+        ${CMAKE_SOURCE_DIR}/src/capture/CaptureInfo.cpp
 )
 
 set(SHAREDT_SERVER_SRC

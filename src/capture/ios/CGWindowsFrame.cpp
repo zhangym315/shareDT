@@ -2,7 +2,7 @@
 #include <iostream>
 #include "SamplesProvider.h"
 
-bool FrameGetter::WindowsFrame(FrameBuffer * fb, SPType type, size_t handler)
+bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler)
 {
     CFMutableArrayRef array;
     array = CFArrayCreateMutable(kCFAllocatorDefault,
@@ -65,7 +65,7 @@ bool FrameGetter::WindowsFrame(FrameBuffer * fb, SPType type, size_t handler)
     return true;
 }
 
-bool FrameGetter::ExportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler)
+bool FrameGetter::exportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler)
 {
-    return FrameGetter::WindowsFrame(fb, type, handler);
+    return FrameGetter::windowsFrame(fb, type, handler);
 }

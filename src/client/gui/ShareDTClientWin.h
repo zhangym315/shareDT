@@ -9,8 +9,11 @@
 #include <QWidget>
 #include <QMouseEvent>
 #include <QHoverEvent>
+#include <chrono>
 
 #include "FetchingData.h"
+
+using namespace std;
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -64,6 +67,9 @@ class ShareDTClientWin : public QWidget{
 
     void keyPressEvent(QKeyEvent * event) override;
     void keyReleaseEvent(QKeyEvent * event) override;
+
+    bool checkShouldSendMouseMove();
+
   private:
     void resetRatioWindow();
 
@@ -71,6 +77,7 @@ class ShareDTClientWin : public QWidget{
     FetchingDataFromServer * _fetcher;
     MainWindowResized        _winResize;
     bool                     _closed;  // windows is closed
+    chrono::time_point<chrono::high_resolution_clock>  _mouseMoved;
 
   public slots:
     void putImage(rfbClient* client);

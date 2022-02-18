@@ -14,7 +14,9 @@
 ShareDTClientWin::ShareDTClientWin (int argc, char ** argv,
                                     QWidget *parent)
     : _closed(false),
-     QWidget (parent), ui (new Ui::ShareDTClientWin)
+     QWidget (parent), 
+     ui (new Ui::ShareDTClientWin),
+     _mouseMoved(chrono::high_resolution_clock::now())
 {
     ui->setupUi (this);
 
@@ -45,9 +47,6 @@ bool ShareDTClientWin::isInited ()
 
 void ShareDTClientWin::resizeEvent( QResizeEvent * e )
 {
-std::cout << "resize Event: new size width=" << e->size().width()
-            << " height=" << e->size().height() << " old size width="
-            << e->oldSize().width() << " height=" << e->oldSize().height() << std::endl;
     _winResize.isResized = true;
 
     // resize can happened when user resize windows or VNCServer
@@ -145,10 +144,6 @@ void ShareDTClientWin::putImage (rfbClient* client)
         _winResize.isResized = false;
     }
 
-//    using namespace std::chrono;
-//    uint64_t nowCu = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-//    std::cout << "time=" << nowCu << " ShareDTClientWin::putImage new w=" << frame.w << " h=" << frame.h <<std::endl ;
-
     frame.frame.setUsed();
 }
 
@@ -173,7 +168,6 @@ void ShareDTClientWin::resizeToNewVNC(int w, int h)
 
 void ShareDTClientWin::actionAdjustToOriginSize()
 {
-    std::cout << "actionAdjustToOriginSize" << std::endl;
     _winResize.curSize = _winResize.vncSize;
     _winResize.isResized = true;
 
@@ -246,8 +240,22 @@ void ShareDTClientWin::mouseDoubleClickEvent(QMouseEvent *event)
     QWidget::mouseDoubleClickEvent(event);
 }
 
+// for mouse movement without button clicked, only send event every 3000ms
+bool ShareDTClientWin::checkShouldSendMouseMove()
+{
+
+    auto elapsed = chrono::high_resolution_clock::now() - _mouseMoved;
+
+    if (chrono::duration_cast<chrono::microseconds>(elapsed).count() < 30000) {
+        return false;
+    }
+    _mouseMoved = chrono::high_resolution_clock::now();
+    return true;
+}
+
 void ShareDTClientWin::mouseMoveEvent(QMouseEvent *event)
 {
+    if (!checkShouldSendMouseMove()) return;
     const QPointF & locPoint = event->localPos();
     const QPointF & winPoint = event->windowPos();
     const QPointF & gloPoint = event->globalPos();
@@ -262,6 +270,8 @@ void ShareDTClientWin::mouseMoveEvent(QMouseEvent *event)
 void ShareDTClientWin::wheelEvent(QWheelEvent *event) {
     const QPoint & delta = event->pixelDelta();
     const QPoint & angle = event->angleDelta();
+
+    if (delta.x() == 0 && delta.y() == 0) return;
 
     SendPointerEvent(_fetcher->getRfbClient(),
                      delta.x(),
@@ -319,6 +329,7 @@ void ShareDTClientWin::hoverLeave(QHoverEvent * event)
 
 void ShareDTClientWin::hoverMove(QHoverEvent * event)
 {
+    if (!checkShouldSendMouseMove()) return;
     const QPoint & locPoint = event->pos();
 
     SendPointerEvent(_fetcher->getRfbClient(),
@@ -331,7 +342,6 @@ void ShareDTClientWin::hoverMove(QHoverEvent * event)
 /* Keyboard events */
 void ShareDTClientWin::keyPressEvent(QKeyEvent * event)
 {
-    std::cout << "key pressed: " << event->key() << std::endl;
     SendKeyEvent(_fetcher->getRfbClient(), event->key(), true);
 }
 

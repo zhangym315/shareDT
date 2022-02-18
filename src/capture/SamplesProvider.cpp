@@ -122,7 +122,7 @@ void CircleWriteThread::mainImp()
     /*
      * start a singleton to receive the capture from kernel's call back
      * For IOS and (Monitor or Partial) capture, start new thread to capture.
-     * Otherwise, do while loop to call CircleWriteThread::WindowsFrame to get frame
+     * Otherwise, do while loop to call CircleWriteThread::windowsFrame to get frame
      */
     if( PLATFORM == SHAREDT_IOS && (_type == SP_MONITOR
         || _type == SP_PARTIAL) ) {
@@ -138,7 +138,7 @@ void CircleWriteThread::mainImp()
             auto start = std::chrono::system_clock::now();
             fb = _fb->getToWrite();
             if(fb) {
-                if(!FrameGetter::WindowsFrame(fb, _type, id)) { fb->setInvalid(); }
+                if(!FrameGetter::windowsFrame(fb, _type, id)) { fb->setInvalid(); }
             } else {
 //                std::cout << "queu is full, pause..." << std::endl;
                 std::this_thread::sleep_for(5ms);

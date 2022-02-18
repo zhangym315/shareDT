@@ -9,10 +9,6 @@
 +(void) moveMouseTo:(CGPoint)coordinate;
 +(void) setMouse:(CGPoint)coordinate;
 
-+(void) leftClick:(int)count;
-+(void) rightClick:(int)count;
-+(void) centerClick:(int)count;
-
 +(void) leftClickAt:(CGPoint)coordinate clickCount:(int)count;
 +(void) rightClickAt:(CGPoint)coordinate clickCount:(int)count;
 +(void) centerClickAt:(CGPoint)coordinate clickCount:(int)count;
@@ -26,9 +22,7 @@
 +(void) rightMouseUpAt:(CGPoint)coordinate;
 +(void) centerMouseUpAt:(CGPoint)coordinate;
 
-+(void) scrollRightHorizontalLines:(int)numberOfLine;
 +(void) scrollLeftHorizontalLines:(int)numberOfLine;
-+(void) scrollUpVerticalLines:(int)numberOfLine;
 +(void) scrollDownVerticalLines:(int)numberOfLine;
 
 @end
