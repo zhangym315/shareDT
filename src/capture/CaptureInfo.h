@@ -16,6 +16,4 @@ class CaptureInfo {
 
     SPType _type;
     CapMonitor * _monPtr;
-    std::unique_ptr<CapWindow>  _winPtr;
-    std::unique_ptr<CapImageRect> _partPtr;
 };
