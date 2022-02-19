@@ -347,6 +347,6 @@ void ShareDTClientWin::keyPressEvent(QKeyEvent * event)
 
 void ShareDTClientWin::keyReleaseEvent(QKeyEvent *event)
 {
-//    SendKeyEvent(_fetcher->getRfbClient(), event->key(), false);
+    SendKeyEvent(_fetcher->getRfbClient(), event->key(), false);
 }
 /* Keyboard events ended */
