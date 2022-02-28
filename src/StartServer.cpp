@@ -21,10 +21,6 @@
 #include <ctime>
 #include <fcntl.h>
 
-extern "C" {
-#include "TimeUtil.h"
-}
-
 #ifdef __SHAREDT_WIN__
 #include <direct.h>
 #endif
@@ -662,18 +658,15 @@ void StartCapture::startCaptureServer()
         }
         if(currentConnected == 0) continue;
 
-std::cout << get_current_time_string() << " 2getting new frame line=" << __LINE__ << std::endl;
         /* get frame buffer and sync to clients */
         fb = _sp->getFrameBuffer();
         if(!fb) {
             continue;
         }
         _rfbserver->frameBuffer = (char *) fb->getData();
-std::cout << get_current_time_string() << " 3getting new frame line=" << __LINE__ << std::endl;
 
         rfbMarkRectAsModified(_rfbserver, 0, 0,
                             _sp->getWidth(), _sp->getHeight());
-std::cout << get_current_time_string() << " 4getting new frame line=" << __LINE__ << std::endl;
     }
 
     removeAlivePath();

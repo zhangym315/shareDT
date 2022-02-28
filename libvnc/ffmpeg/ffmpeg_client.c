@@ -6,11 +6,11 @@
 #include "ffmpeg_client_interface.h"
 #include "TimeUtil.h"
 
-#include "TimeUtil.h"
+//#include "TimeUtil.h"
 
 static uint64_t total_received_bytes = 0;
 
-static writer_counter = 0;
+//static writer_counter = 0;
 static void
 rfbDefaultLogStd(const char *format, ...)
 {
@@ -118,7 +118,7 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
         return FALSE;
     av_header.HEADER.ffmpeg_body_len = rfbClientSwap32IfLE(av_header.HEADER.ffmpeg_body_len);
 
-    rfbLog("%s received data_size=%d\n", get_current_time_string(), av_header.HEADER.ffmpeg_body_len + sizeof(av_header));
+//    rfbLog("%s received data_size=%d\n", get_current_time_string(), av_header.HEADER.ffmpeg_body_len + sizeof(av_header));
 
     /* No body data, just return */
     if (av_header.HEADER.ffmpeg_body_len == 0) {
@@ -180,14 +180,14 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
             fetch_frame(decoder_ctx->codec_ctx,
                         decoder_ctx->av_frame))) {
             client->_available_frame = 1;
-/*
+/* TESTING
             char path[128] = {'\0'};
             sprintf(path,  "receive_output_%d_.png", writer_counter++);
             write_YUV_image(path, decoder_ctx->av_frame);
-*/
             writer_counter++;
             printf("%s get new frame with frame_number=%d\n", get_current_time_string(), writer_counter);
-//            memset(client->frameBuffer, 0, 1000);
+            memset(client->frameBuffer, 0, 1000);
+*/
             convert_to_avframeRGB32(decoder_ctx->sws_ctx, decoder_ctx->av_frame,
                                     (char * ) client->frameBuffer,
                                     client->width, client->height);

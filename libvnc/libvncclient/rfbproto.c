@@ -1557,8 +1557,6 @@ rfbBool SendXvpMsg(rfbClient* client, uint8_t version, uint8_t code)
 rfbBool
 SendPointerEvent(rfbClient* client,int x, int y, int buttonMask)
 {
-    return TRUE; // ignore SenKeyEvent for testing, needs to remove before merging
-
     rfbPointerEventMsg pe;
     memset(&pe, 0, sizeof(sz_rfbPointerEventMsg));
 
@@ -1582,8 +1580,6 @@ SendPointerEvent(rfbClient* client,int x, int y, int buttonMask)
 rfbBool
 SendKeyEvent(rfbClient* client, uint32_t key, rfbBool down)
 {
-    return TRUE; // ignore SenKeyEvent for testing, needs to remove before merging
-
     rfbKeyEventMsg ke;
 
     if (!SupportsClient2Server(client, rfbKeyEvent)) return TRUE;
