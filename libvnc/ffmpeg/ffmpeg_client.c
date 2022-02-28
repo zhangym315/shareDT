@@ -4,9 +4,6 @@
 #include "ffmpeg_client.h"
 #include "ffmpeg_interface.h"
 #include "ffmpeg_client_interface.h"
-#include "TimeUtil.h"
-
-//#include "TimeUtil.h"
 
 static uint64_t total_received_bytes = 0;
 
