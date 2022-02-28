@@ -6,6 +6,8 @@
 #include "ffmpeg_client_interface.h"
 #include "TimeUtil.h"
 
+#include "TimeUtil.h"
+
 static uint64_t total_received_bytes = 0;
 
 static writer_counter = 0;
@@ -79,8 +81,8 @@ static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h)
     }
 
     if ((ret->sws_ctx = sws_getContext(w, h, current_codec->pix_format,
-                                  w, h, AV_PIX_FMT_RGB32,
-                                  SWS_BICUBIC, NULL,NULL,NULL)) == NULL ) {
+                                       w, h, AV_PIX_FMT_RGB32,
+                                       SWS_BICUBIC, NULL,NULL,NULL)) == NULL ) {
         rfbErr("Could get sws_getContext\n");
         goto failed;
     }
@@ -116,7 +118,7 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
         return FALSE;
     av_header.HEADER.ffmpeg_body_len = rfbClientSwap32IfLE(av_header.HEADER.ffmpeg_body_len);
 
-//    rfbLog("%s received data_size=%d\n", get_current_time_string(), av_header.HEADER.ffmpeg_body_len + sizeof(av_header));
+    rfbLog("%s received data_size=%d\n", get_current_time_string(), av_header.HEADER.ffmpeg_body_len + sizeof(av_header));
 
     /* No body data, just return */
     if (av_header.HEADER.ffmpeg_body_len == 0) {
@@ -146,7 +148,9 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
      * If multi-frames returned, send the last frame.
      */
     while(data_size > 0) {
-        parsed = av_parser_parse2(decoder_ctx->parser, decoder_ctx->codec_ctx, &decoder_ctx->av_packet->data,
+        parsed = av_parser_parse2(decoder_ctx->parser,
+                                  decoder_ctx->codec_ctx,
+                                  &decoder_ctx->av_packet->data,
                                   &decoder_ctx->av_packet->size,
                                   data, (int) data_size,
                                   AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
@@ -170,17 +174,20 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
         }
 
         if (decoder_ctx->av_packet->size &&
-            (decode(decoder_ctx->codec_ctx, decoder_ctx->av_frame, decoder_ctx->av_packet) ||
-                    fetch_frame(decoder_ctx->codec_ctx, decoder_ctx->av_frame))) {
+            (decode(decoder_ctx->codec_ctx,
+                    decoder_ctx->av_frame,
+                    decoder_ctx->av_packet) ||
+            fetch_frame(decoder_ctx->codec_ctx,
+                        decoder_ctx->av_frame))) {
             client->_available_frame = 1;
-
 /*
             char path[128] = {'\0'};
             sprintf(path,  "receive_output_%d_.png", writer_counter++);
             write_YUV_image(path, decoder_ctx->av_frame);
-            rfbLog("write to file:%s\n", path);
 */
-
+            writer_counter++;
+            printf("%s get new frame with frame_number=%d\n", get_current_time_string(), writer_counter);
+//            memset(client->frameBuffer, 0, 1000);
             convert_to_avframeRGB32(decoder_ctx->sws_ctx, decoder_ctx->av_frame,
                                     (char * ) client->frameBuffer,
                                     client->width, client->height);

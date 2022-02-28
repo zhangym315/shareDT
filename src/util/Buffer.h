@@ -89,7 +89,7 @@ class CircWRBuf {
   public:
     CircWRBuf(int);
     ~CircWRBuf();
-    CircWRBuf() : CircWRBuf (10) { }
+    CircWRBuf() : CircWRBuf (4) { }
 
     bool empty() const { return read == write; }
     bool full () const { return read == ((write+1) % size); }

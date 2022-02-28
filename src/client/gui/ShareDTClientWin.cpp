@@ -158,8 +158,8 @@ void ShareDTClientWin::resetRatioWindow()
 void ShareDTClientWin::resizeToNewVNC(int w, int h)
 {
     _winResize.oldSize = _winResize.curSize;
-    _winResize.curSize.setWidth (w);
-    _winResize.curSize.setHeight (h);
+    _winResize.curSize.setWidth (w*2/3);
+    _winResize.curSize.setHeight (h*2/3);
     _winResize.vncSize.setWidth (w);
     _winResize.vncSize.setHeight (h);
     _winResize.isResized = true;
