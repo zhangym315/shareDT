@@ -1557,19 +1557,19 @@ rfbBool SendXvpMsg(rfbClient* client, uint8_t version, uint8_t code)
 rfbBool
 SendPointerEvent(rfbClient* client,int x, int y, int buttonMask)
 {
-  rfbPointerEventMsg pe;
-  memset(&pe, 0, sizeof(sz_rfbPointerEventMsg));
+    rfbPointerEventMsg pe;
+    memset(&pe, 0, sizeof(sz_rfbPointerEventMsg));
 
-  if (!SupportsClient2Server(client, rfbPointerEvent)) return TRUE;
+    if (!SupportsClient2Server(client, rfbPointerEvent)) return TRUE;
 
-  pe.type = rfbPointerEvent;
-  pe.buttonMask = rfbClientSwap32IfLE(buttonMask);
+    pe.type = rfbPointerEvent;
+    pe.buttonMask = rfbClientSwap32IfLE(buttonMask);
 
 
-  pe.x = rfbClientSwap32IfLE(x);
-  pe.y = rfbClientSwap32IfLE(y);
+    pe.x = rfbClientSwap32IfLE(x);
+    pe.y = rfbClientSwap32IfLE(y);
 
-  return WriteToRFBServer(client, (char *)&pe, sz_rfbPointerEventMsg);
+    return WriteToRFBServer(client, (char *)&pe, sz_rfbPointerEventMsg);
 }
 
 
@@ -1580,15 +1580,15 @@ SendPointerEvent(rfbClient* client,int x, int y, int buttonMask)
 rfbBool
 SendKeyEvent(rfbClient* client, uint32_t key, rfbBool down)
 {
-  rfbKeyEventMsg ke;
+    rfbKeyEventMsg ke;
 
-  if (!SupportsClient2Server(client, rfbKeyEvent)) return TRUE;
+    if (!SupportsClient2Server(client, rfbKeyEvent)) return TRUE;
 
-  memset(&ke, 0, sizeof(ke));
-  ke.type = rfbKeyEvent;
-  ke.down = down ? 1 : 0;
-  ke.key = rfbClientSwap32IfLE(key);
-  return WriteToRFBServer(client, (char *)&ke, sz_rfbKeyEventMsg);
+    memset(&ke, 0, sizeof(ke));
+    ke.type = rfbKeyEvent;
+    ke.down = down ? 1 : 0;
+    ke.key = rfbClientSwap32IfLE(key);
+    return WriteToRFBServer(client, (char *)&ke, sz_rfbKeyEventMsg);
 }
 
 

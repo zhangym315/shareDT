@@ -5,7 +5,6 @@
 #include <QMessageBox>
 
 #include <chrono>
-#include <png.h>
 
 #include "ShareDTClientWin.h"
 #include "ui_ShareDTClientWin.h"
@@ -59,50 +58,6 @@ void ShareDTClientWin::resizeEvent( QResizeEvent * e )
     QWidget::resizeEvent(e);
 }
 
-static void writeToFile(const char * file, int x, int y, int w, int h, uint8_t * frame)
-{
-    unsigned int width = w;
-    unsigned int height = h;
-    FILE *fp = fopen(file, "wb");
-    if(!fp) return ;
-
-    png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-    if (!png) abort();
-
-    png_infop info = png_create_info_struct(png);
-    if (!info) abort();
-
-    if (setjmp(png_jmpbuf(png))) abort();
-
-    png_init_io(png, fp);
-
-    png_set_IHDR(png,
-                 info,
-                 width, height,
-                 8,
-                 PNG_COLOR_TYPE_RGBA,
-                 PNG_INTERLACE_NONE,
-                 PNG_COMPRESSION_TYPE_DEFAULT,
-                 PNG_FILTER_TYPE_DEFAULT
-    );
-    png_write_info(png, info);
-
-    for ( int i=0 ; i<height ; i++) {
-            uint8_t * ptr = frame + i*width*4;
-            for ( int j=0; j<width*4; ) {
-                    *(ptr+j+3) = 0xff;
-                    j += 4;
-                }
-            png_write_row(png, (png_bytep)(ptr));
-        }
-
-    png_write_end(png, nullptr);
-    fclose(fp);
-
-    png_destroy_write_struct(&png, &info);
-
-}
-
 void ShareDTClientWin::putImage (rfbClient* client)
 {
     if (_closed) return;
@@ -126,14 +81,7 @@ void ShareDTClientWin::putImage (rfbClient* client)
         im = im.scaled(_winResize.curSize.width(), _winResize.curSize.height());
     }
 
-    char path[128] = { 0 };
-    sprintf(path, "File_after_sentHandleRect.%llu.png", client->_sequence);
     ui->imageLabel->setPixmap(QPixmap::fromImage(im));
-
-// for debug
-//    writeToFile(path, 0, 0, frame.w, frame.h, frame.frame.getData());
-//    im.save(QString::asprintf ("File_after_QT_file.%llu.png", client->_sequence));
-
 
     if (_winResize.isResized) {
         int w = _winResize.curSize.width();
@@ -158,8 +106,8 @@ void ShareDTClientWin::resetRatioWindow()
 void ShareDTClientWin::resizeToNewVNC(int w, int h)
 {
     _winResize.oldSize = _winResize.curSize;
-    _winResize.curSize.setWidth (w);
-    _winResize.curSize.setHeight (h);
+    _winResize.curSize.setWidth (w*2/3);
+    _winResize.curSize.setHeight (h*2/3);
     _winResize.vncSize.setWidth (w);
     _winResize.vncSize.setHeight (h);
     _winResize.isResized = true;
@@ -240,13 +188,16 @@ void ShareDTClientWin::mouseDoubleClickEvent(QMouseEvent *event)
     QWidget::mouseDoubleClickEvent(event);
 }
 
-// for mouse movement without button clicked, only send event every 3000ms
+/*
+ * For mouse movement without button clicked, only send event every 30ms, if there
+ * are performances requirement, we can reduce the latency.
+ */
 bool ShareDTClientWin::checkShouldSendMouseMove()
 {
 
     auto elapsed = chrono::high_resolution_clock::now() - _mouseMoved;
 
-    if (chrono::duration_cast<chrono::microseconds>(elapsed).count() < 30000) {
+    if (chrono::duration_cast<chrono::microseconds>(elapsed).count() < MOUSEMOVEMENT_LATENCY) {
         return false;
     }
     _mouseMoved = chrono::high_resolution_clock::now();

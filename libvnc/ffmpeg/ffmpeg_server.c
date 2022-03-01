@@ -107,7 +107,8 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
         return FALSE;
     }
 
-//    rfbLog("%s Packet write_size=%d, total_size=%d\n", get_current_time_string(), packet_buf->_size, cl->bytesSent);
+//    rfbLog("%s Packet write_size=%d, total_size=%d frame_pks=%d\n",
+//           get_current_time_string(), packet_buf->_size, cl->bytesSent, server_ctx->av_frame->pts);
 
     packet_buf->_size = 0;
 

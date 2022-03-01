@@ -15,6 +15,9 @@
 
 using namespace std;
 
+/* 30ms (millisecons) */
+#define MOUSEMOVEMENT_LATENCY 30000
+
 QT_BEGIN_NAMESPACE
 namespace Ui
 {

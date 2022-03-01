@@ -26,7 +26,6 @@ class FetchingDataFromServer : public SDThread {
     void run();
     bool isInited() { return _isInited; }
 
-    static void writeToFile(const char * file, int x, int y, int w, int h, uint8_t * frame);
     static void HandleRectFromServer(rfbClient* client, int x, int y, int w, int h);
     void HandleRect(rfbClient* client);
     FramePerInfo & getFrame() { return _frame; }

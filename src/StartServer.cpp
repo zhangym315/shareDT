@@ -15,7 +15,6 @@
 #include "Enum.h"
 #include "MainConsole.h"
 #include "InputInterface.h"
-
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -637,7 +636,6 @@ void StartCapture::startCaptureServer()
                     << " height=" << _sp->getHeight();
     while (rfbIsActive(_rfbserver) && _isServerRunning)
     {
-        std::this_thread::sleep_for(50ms);
         rfbProcessEvents(_rfbserver, 10000);
 
         /*
