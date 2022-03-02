@@ -40,14 +40,13 @@ static ffmpeg_server_ctx_t * get_server_ctxs(int w, int h)
 }
 
 rfbBool
-rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
-                          int x,
-                          int y,
-                          int w,
-                          int h)
+rfbSendRectEncodingFFMPEG(rfbClientPtr cl)
 {
 
     if (cl->sock < 0) return FALSE;
+
+    int w = cl->screen->width;
+    int h = cl->screen->height;
 
     /* initialize */
     if (cl->ffmpeg_encoder == NULL) {
@@ -55,11 +54,6 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
     }
 
     ffmpeg_server_ctx_t * server_ctx = (ffmpeg_server_ctx_t *) cl->ffmpeg_encoder;
-
-    if (x || y) {
-        rfbErr("Start point is not at (0, 0), current is with x=%d, y=%d\n", x, y);
-        return FALSE;
-    }
 
     rfbFramebufferUpdateRectHeader rect;
     int bytesPerLine = w * 4;
@@ -70,8 +64,12 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
             return FALSE;
     }
 
-    rect.r.x = Swap16IfLE(x);
-    rect.r.y = Swap16IfLE(y);
+    /*
+     * send the whole screen update
+     * start point is from (0, 0)
+     */
+    rect.r.x = Swap16IfLE(0);
+    rect.r.y = Swap16IfLE(0);
     rect.r.w = Swap16IfLE(w);
     rect.r.h = Swap16IfLE(h);
     rect.encoding = Swap32IfLE(rfbEncodingFFMPEG);

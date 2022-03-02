@@ -950,7 +950,7 @@ rfbScreenInfoPtr rfbGetScreen(int* argc,char** argv,
 
    screen->listenInterface = htonl(INADDR_ANY);
 
-   screen->deferUpdateTime=5;
+   screen->deferUpdateTime=1;
    screen->maxRectsPerUpdate=50;
 
    screen->handleEventsEagerly = FALSE;
