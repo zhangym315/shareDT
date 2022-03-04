@@ -4,10 +4,6 @@
 
 
 extern rfbBool
-rfbSendRectEncodingFFMPEG(rfbClientPtr cl,
-                          int x,
-                          int y,
-                          int w,
-                          int h);
+rfbSendRectEncodingFFMPEG(rfbClientPtr cl);
 
 #endif //SHAREDT_FFMPEG_SERVER_H

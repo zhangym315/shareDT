@@ -3234,7 +3234,8 @@ rfbSendFramebufferUpdate(rfbClientPtr cl,
         case -1:
         case rfbEncodingFFMPEG:
         {
-            if (!rfbSendRectEncodingFFMPEG (cl, x, y, w, h))
+            /* ignore the range as we will send the entire frame */
+            if (!rfbSendRectEncodingFFMPEG (cl))
                 goto updateFailed;
             break;
         }
