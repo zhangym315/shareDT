@@ -16,13 +16,14 @@ AVPacketBuf av_packet_buf = { 0 };
 const encoder_decoder_t supported_codecs[] = {
         {"h263", AV_PIX_FMT_YUV422P},
         {"libx265", AV_PIX_FMT_YUV420P},
-        {"libx265", AV_PIX_FMT_YUV422P},
-        {"libx265", AV_PIX_FMT_YUV444P},
+        {"libx265", AV_PIX_FMT_YUV422P},     /* 2 */
+        {"libx265", AV_PIX_FMT_YUV444P},     /* 3 */
         {"libx265", AV_PIX_FMT_GBRP},
-        {"mpeg2video", AV_PIX_FMT_YUV420P},
-        {"mpeg2video", AV_PIX_FMT_YUV422P},
+        {"mpeg2video", AV_PIX_FMT_YUV420P},  /* 5 */
+        {"mpeg2video", AV_PIX_FMT_YUV422P},  /* 6 */
         {"png"  , AV_PIX_FMT_RGB24},    /* TODO new fix picture misleading */
         {"ppm"  , AV_PIX_FMT_RGB24},
+        {"mpeg4"  , AV_PIX_FMT_YUV420P},     /* 11 */
         {NULL, AV_PIX_FMT_NONE}
 };
 
@@ -97,15 +98,12 @@ AVCodecContext * openCodec(const char * codec_name, int w, int h)
         return NULL;
     }
 
-    /* put sample parameters */
-    c->bit_rate = 400000;
-    /* resolution must be a multiple of two */
     c->width = w;
     c->height = h;
 
     /* frames per second */
-    c->time_base = (AVRational){1, 25};
-    c->framerate = (AVRational){25, 1};
+    c->time_base = (AVRational){1, 60};
+    c->framerate = (AVRational){60, 1};
 
     /* emit one intra frame every ten frames
      * check frame pict_type before passing frame
@@ -113,7 +111,7 @@ AVCodecContext * openCodec(const char * codec_name, int w, int h)
      * then gop_size is ignored and the output of encoder
      * will always be I frame irrespective to gop_size
      */
-    c->gop_size = 10;
+    c->gop_size = 1;
     c->max_b_frames = 1;
     c->pix_fmt = current_codec->pix_format;
 
