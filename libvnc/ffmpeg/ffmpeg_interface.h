@@ -16,10 +16,16 @@ typedef struct {
 } AVPacketBuf;
 
 typedef struct {
-    const char * codec_name;
-    enum AVPixelFormat pix_format;
-} encoder_decoder_t;
+    const char * encoding_name;      /* used to negotiate between server and client */
+    const char * codec_name;         /* ffmpeg codec name                           */
+    const char * decodec_name;       /* ffmpeg codec name                           */
+    enum AVPixelFormat pix_format;   /* ffmpeg pix format                           */
+    void * ctx;                      /* context for codec of client and server      */
+    int  code;                       /* encoding code for communication between c s */
+    AVPacketBuf buf;                 /* buffer for encode / decode                  */
+} EncoderDecoderContext;
 
+extern EncoderDecoderContext * getEncoderDecoderContextByName(const char * encoding);
 extern AVCodecContext * openCodec(const char * codec_name, int w, int h);
 
 extern AVFrame * alloc_avframe(AVFrame * src, int w, int h, enum AVPixelFormat format);
@@ -41,11 +47,11 @@ typedef union {
     } HEADER;
 } FFMPEG_HEADER_T;
 
-extern const char * FFMPEG_HEADER_KEY;
-extern const int FFMPEG_HEADER_KEY_LEN;
-extern const int FFMPEG_HEADER_LEN;
+extern const char FFMPEG_HEADER_KEY[];
+extern const int  FFMPEG_HEADER_KEY_LEN;
+extern const int  FFMPEG_HEADER_LEN;
 extern AVPacketBuf av_packet_buf;
-extern const encoder_decoder_t supported_codecs[];
-extern const encoder_decoder_t * current_codec;
+extern const EncoderDecoderContext codecsContext[];
+extern const EncoderDecoderContext * current_codec;
 
 #endif //SHAREDT_FFMPEG_INTERFACE_H

@@ -70,6 +70,8 @@
 #  define snprintf _snprintf /* MSVC went straight to the underscored syntax */
 #endif
 
+#include "ffmpeg_interface.h"
+
 /*
  * rfbClientLog prints a time-stamped message to the log file (stderr).
  */
@@ -1195,6 +1197,7 @@ SetFormatAndEncodings(rfbClient* client)
   if (client->appData.encodingsString) {
     const char *encStr = client->appData.encodingsString;
     int encStrLen;
+    EncoderDecoderContext * encode;
     do {
       const char *nextEncStr = strchr(encStr, ' ');
       if (nextEncStr) {
@@ -1204,7 +1207,9 @@ SetFormatAndEncodings(rfbClient* client)
         encStrLen = strlen(encStr);
       }
 
-      if (strncasecmp(encStr,"raw",encStrLen) == 0) {
+      if ((encode=getEncoderDecoderContextByName(encStr)) != NULL) {
+          encs[se->nEncodings++] = rfbClientSwap32IfLE(encode->code);
+      } else if (strncasecmp(encStr,"raw",encStrLen) == 0) {
 	    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingRaw);
       } else if (strncasecmp(encStr,"copyrect",encStrLen) == 0) {
 	    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingCopyRect);
@@ -1268,19 +1273,28 @@ SetFormatAndEncodings(rfbClient* client)
     }
   }
   else {
+    /* same machine prefering raw encoding */
     if (SameMachine(client->sock)) {
-      /* TODO:
-      if (!tunnelSpecified) {
-      */
       rfbClientLog("Same machine: preferring raw encoding\n");
       encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingRaw);
-      /*
-      } else {
-	    rfbClientLog("Tunneling active: preferring tight encoding\n");
-      }
-      */
     }
 
+    /* preferred encoding order */
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_X265_422);
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_X265_420);
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncondigFFMPEG_MPEG2_422);
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncondigFFMPEG_MPEG4_420);
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_X265_444);
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG);
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_MPEG2_420);
+
+    /** Following are not tested TODO **/
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_H263);
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_X265_GBRP);
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncondigFFMPEG_PNG_RGB);
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncondigFFMPEG_PPG_RGB);
+
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG);
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingCopyRect);
 #ifdef LIBVNCSERVER_HAVE_LIBZ
 #ifdef LIBVNCSERVER_HAVE_LIBJPEG
@@ -1298,7 +1312,6 @@ SetFormatAndEncodings(rfbClient* client)
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingUltraZip);
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingCoRRE);
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingRRE);
-    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG);
 
     if (client->appData.compressLevel >= 0 && client->appData.compressLevel <= 9) {
       encs[se->nEncodings++] = rfbClientSwap32IfLE(client->appData.compressLevel +
@@ -1629,30 +1642,6 @@ HandleRFBServerMessage(rfbClient* client)
   switch (msg.type) {
       case rfbSetColourMapEntries:
       {
-        /* TODO:
-        int i;
-        uint16_t rgb[3];
-        XColor xc;
-
-        if (!ReadFromRFBServer(client, ((char *)&msg) + 1,
-                   sz_rfbSetColourMapEntriesMsg - 1))
-          return FALSE;
-
-        msg.scme.firstColour = rfbClientSwap16IfLE(msg.scme.firstColour);
-        msg.scme.nColours = rfbClientSwap16IfLE(msg.scme.nColours);
-
-        for (i = 0; i < msg.scme.nColours; i++) {
-          if (!ReadFromRFBServer(client, (char *)rgb, 6))
-        return FALSE;
-          xc.pixel = msg.scme.firstColour + i;
-          xc.red = rfbClientSwap16IfLE(rgb[0]);
-          xc.green = rfbClientSwap16IfLE(rgb[1]);
-          xc.blue = rfbClientSwap16IfLE(rgb[2]);
-          xc.flags = DoRed|DoGreen|DoBlue;
-          XStoreColor(dpy, cmap, &xc);
-        }
-        */
-
         break;
       }
 
@@ -1810,9 +1799,19 @@ HandleRFBServerMessage(rfbClient* client)
 
           switch (rect.encoding) {
 
+              case rfbEncodingFFMPEG_H263:
+              case rfbEncodingFFMPEG_X265_420:
+              case rfbEncodingFFMPEG_X265_422:
+              case rfbEncodingFFMPEG_X265_444:
+              case rfbEncodingFFMPEG_X265_GBRP:
+              case rfbEncodingFFMPEG_MPEG2_420:
+              case rfbEncondigFFMPEG_MPEG2_422:
+              case rfbEncondigFFMPEG_PNG_RGB:
+              case rfbEncondigFFMPEG_PPG_RGB:
+              case rfbEncondigFFMPEG_MPEG4_420:
               case rfbEncodingFFMPEG:
               {
-                rfbReceiveRectEncodingFFMPEG(client, &rect);
+                rfbReceiveRectEncodingFFMPEG(client, &rect, rect.encoding);
                 break;
               }
 

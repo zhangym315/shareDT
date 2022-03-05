@@ -2,32 +2,45 @@
 #include <libavutil/imgutils.h>
 #include <libavutil/pixfmt.h>
 #include <libswscale/swscale.h>
-
+#include <rfb/rfbproto.h>
 #include "ffmpeg_interface.h"
 #include "Size.h"
 
 #include <png.h>
 
-const char * FFMPEG_HEADER_KEY = "FFMPEGHEADER";
-const int FFMPEG_HEADER_KEY_LEN = 12;
-const int FFMPEG_HEADER_LEN = sizeof(FFMPEG_HEADER_T);
+const char FFMPEG_HEADER_KEY[] = "FFMPEGHEADER";
+const int  FFMPEG_HEADER_KEY_LEN = 12;
+const int  FFMPEG_HEADER_LEN = sizeof(FFMPEG_HEADER_T);
 AVPacketBuf av_packet_buf = { 0 };
 
-const encoder_decoder_t supported_codecs[] = {
-        {"h263", AV_PIX_FMT_YUV422P},
-        {"libx265", AV_PIX_FMT_YUV420P},
-        {"libx265", AV_PIX_FMT_YUV422P},     /* 2 */
-        {"libx265", AV_PIX_FMT_YUV444P},     /* 3 */
-        {"libx265", AV_PIX_FMT_GBRP},
-        {"mpeg2video", AV_PIX_FMT_YUV420P},  /* 5 */
-        {"mpeg2video", AV_PIX_FMT_YUV422P},  /* 6 */
-        {"png"  , AV_PIX_FMT_RGB24},    /* TODO new fix picture misleading */
-        {"ppm"  , AV_PIX_FMT_RGB24},
-        {"mpeg4"  , AV_PIX_FMT_YUV420P},     /* 11 */
-        {NULL, AV_PIX_FMT_NONE}
+const EncoderDecoderContext codecsContext[] = {
+    /* -encodings,  en-codec name, de-codec name, pix-format,         ctx,  ffmpeg code,                 buffer  */
+    {"h263",        "h263",       "h263",         AV_PIX_FMT_YUV422P, NULL, rfbEncodingFFMPEG_H263     , {0, 0, NULL}},
+    {"x265_420",    "libx265",    "hevc",         AV_PIX_FMT_YUV420P, NULL, rfbEncodingFFMPEG_X265_420 , {0, 0, NULL}},
+    {"x265_422",    "libx265",    "hevc",         AV_PIX_FMT_YUV422P, NULL, rfbEncodingFFMPEG_X265_422 , {0, 0, NULL}},
+    {"x265_444",    "libx265",    "hevc",         AV_PIX_FMT_YUV444P, NULL, rfbEncodingFFMPEG_X265_444 , {0, 0, NULL}},
+    {"x265_GBRP",   "libx265",    "hevc",         AV_PIX_FMT_GBRP,    NULL, rfbEncodingFFMPEG_X265_GBRP, {0, 0, NULL}},
+    {"mpeg2_420",   "mpeg2video", "mpeg2video",   AV_PIX_FMT_YUV420P, NULL, rfbEncodingFFMPEG_MPEG2_420, {0, 0, NULL}},
+    {"mpeg2_422",   "mpeg2video", "mpeg2video",   AV_PIX_FMT_YUV422P, NULL, rfbEncondigFFMPEG_MPEG2_422, {0, 0, NULL}},
+    {"png_RGB",     "png",        "png",          AV_PIX_FMT_RGB24,   NULL, rfbEncondigFFMPEG_PNG_RGB  , {0, 0, NULL}},
+    {"ppg_RGB",     "ppm",        "ppm",          AV_PIX_FMT_RGB24,   NULL, rfbEncondigFFMPEG_PPG_RGB  , {0, 0, NULL}},
+    {"mpeg4_420",   "mpeg4",      "mpeg4",        AV_PIX_FMT_YUV420P, NULL, rfbEncondigFFMPEG_MPEG4_420, {0, 0, NULL}},
+    {NULL, NULL, NULL, AV_PIX_FMT_NONE, NULL}
 };
 
-const encoder_decoder_t * current_codec = &supported_codecs[6];
+const EncoderDecoderContext * current_codec = &codecsContext[6];
+
+EncoderDecoderContext * getEncoderDecoderContextByName(const char * encoding)
+{
+    const EncoderDecoderContext * ptr = codecsContext;
+    size_t len = strlen(encoding);
+    while (ptr->encoding_name) {
+        if (strncasecmp(encoding, ptr->encoding_name, len) == 0)
+            return ptr;
+        ptr++;
+    }
+    return NULL;
+}
 
 void release_total_packet_buf()
 {

@@ -1490,7 +1490,7 @@ char *rfbProcessFileTransferReadBuffer(rfbClientPtr cl, uint32_t length)
        that might wrap on platforms with a 32-bit int type if length is bigger
        than 0X7FFFFFFF.
     */
-    if(length == SIZE_MAX || length > INT_MAX) {
+    if(length == (uint32_t)SIZE_MAX || length > INT_MAX) {
 	rfbErr("rfbProcessFileTransferReadBuffer: too big file transfer length requested: %u", (unsigned int)length);
 	rfbCloseClient(cl);
 	return NULL;

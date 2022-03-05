@@ -449,7 +449,19 @@ typedef struct {
 #define rfbEncodingTRLE 15
 #define rfbEncodingZRLE 16
 #define rfbEncodingZYWRLE 17
-#define rfbEncodingFFMPEG 18
+
+/* customized encodings methods */
+#define rfbEncodingFFMPEG           18
+#define rfbEncodingFFMPEG_H263      19
+#define rfbEncodingFFMPEG_X265_420  20
+#define rfbEncodingFFMPEG_X265_422  21
+#define rfbEncodingFFMPEG_X265_444  22
+#define rfbEncodingFFMPEG_X265_GBRP 23
+#define rfbEncodingFFMPEG_MPEG2_420 24
+#define rfbEncondigFFMPEG_MPEG2_422 25
+#define rfbEncondigFFMPEG_PNG_RGB   26
+#define rfbEncondigFFMPEG_PPG_RGB   27
+#define rfbEncondigFFMPEG_MPEG4_420 28
 
 #define rfbEncodingH264               0x48323634
 

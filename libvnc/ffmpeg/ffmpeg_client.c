@@ -33,9 +33,10 @@ rfbDefaultLogError(const char *format, ...)
 rfbLogProc rfbLog=rfbDefaultLogStd;
 rfbLogProc rfbErr=rfbDefaultLogError;
 
-static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h)
+static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h, uint32_t encode)
 {
     ffmpeg_client_ctx_t * ret   = NULL;
+    const EncoderDecoderContext * ctx = &codecsContext[encode - rfbEncodingFFMPEG_H263];
 
     ret = (ffmpeg_client_ctx_t * ) malloc(sizeof(ffmpeg_client_ctx_t));
     if (ret == NULL) {
@@ -44,14 +45,11 @@ static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h)
     }
     memset(ret, 0, sizeof(ffmpeg_client_ctx_t));
 
-    const char * codec_name = strcmp("libx265", current_codec->codec_name) == 0 ?
-                                "hevc" : current_codec->codec_name;
-
-    if ((ret->codec=avcodec_find_decoder_by_name(codec_name)) == NULL) {
-        rfbErr("Codec '%s' not found\n", codec_name);
+    if ((ret->codec=avcodec_find_decoder_by_name(ctx->decodec_name)) == NULL) {
+        rfbErr("Codec '%s' not found\n", ctx->decodec_name);
         goto failed;
     } else
-    rfbErr("Codec '%s' indeed found\n", codec_name);
+    rfbErr("Codec '%s' indeed found\n", ctx->decodec_name);
 
     if ((ret->parser = av_parser_init(ret->codec->id)) == NULL)
     {
@@ -77,7 +75,7 @@ static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h)
         goto failed;
     }
 
-    if ((ret->sws_ctx = sws_getContext(w, h, current_codec->pix_format,
+    if ((ret->sws_ctx = sws_getContext(w, h, ctx->pix_format,
                                        w, h, AV_PIX_FMT_RGB32,
                                        SWS_BICUBIC, NULL,NULL,NULL)) == NULL ) {
         rfbErr("Could get sws_getContext\n");
@@ -96,19 +94,23 @@ failed:
  */
 rfbBool
 rfbReceiveRectEncodingFFMPEG(rfbClient* client,
-                          rfbFramebufferUpdateRectHeader * rect)
+                             rfbFramebufferUpdateRectHeader * rect,
+                             uint32_t encode)
 {
     FFMPEG_HEADER_T av_header = { 0 };
+    ffmpeg_client_ctx_t * decoder_ctx = (ffmpeg_client_ctx_t *) client->_ffmpeg_decoder;
+    AVPacketBuf * av_packet_buf;
+
 
     if (client->_ffmpeg_decoder == NULL) {
-        client->_ffmpeg_decoder = get_client_ctxs(rect->r.w, rect->r.h);
+        client->_ffmpeg_decoder = get_client_ctxs(rect->r.w, rect->r.h, encode);
         if (client->_ffmpeg_decoder == NULL) {
             rfbErr("Error to get client ffmpeg ctxs\n");
             return FALSE;
         }
     }
 
-    ffmpeg_client_ctx_t * decoder_ctx = (ffmpeg_client_ctx_t *) client->_ffmpeg_decoder;
+    decoder_ctx = (ffmpeg_client_ctx_t *) client->_ffmpeg_decoder;
 
     /* Read header */
     if (!ReadFromRFBServer(client, (char *) av_header.header, sizeof(av_header)))
@@ -124,21 +126,21 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
     }
 
     /* make sure buffer is big enough */
-    if (!realloc_total_packet_buf(&av_packet_buf, av_header.HEADER.ffmpeg_body_len)) {
+    if (!realloc_total_packet_buf(av_packet_buf, av_header.HEADER.ffmpeg_body_len)) {
         rfbErr("Error to reallocate buffer, size=%d\n", av_header.HEADER.ffmpeg_body_len);
         return FALSE;
     }
 
     /* Read pakcet content */
-    if (!ReadFromRFBServer(client, (char *) av_packet_buf._data, av_header.HEADER.ffmpeg_body_len)) {
+    if (!ReadFromRFBServer(client, (char *) av_packet_buf->_data, av_header.HEADER.ffmpeg_body_len)) {
         rfbErr("Failed to read data for data_len=%d\n", av_header.HEADER.ffmpeg_body_len);
         return FALSE;
     }
-    av_packet_buf._size = av_header.HEADER.ffmpeg_body_len;
+    av_packet_buf->_size = av_header.HEADER.ffmpeg_body_len;
 
     int parsed;
-    uint8_t *data = av_packet_buf._data;
-    size_t   data_size = av_packet_buf._size;
+    uint8_t *data = av_packet_buf->_data;
+    size_t   data_size = av_packet_buf->_size;
     client->_available_frame = 0;
     /*
      * Send packet to decode.
@@ -159,7 +161,7 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
         data      += parsed;
         data_size -= parsed;
 
-        total_received_bytes += av_packet_buf._size + sizeof(av_header);
+        total_received_bytes += av_packet_buf->_size + sizeof(av_header);
 
         /* get av_frame */
         if (rect->r.w == 0 ||  rect->r.h == 0 ||
