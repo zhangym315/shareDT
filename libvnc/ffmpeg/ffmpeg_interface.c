@@ -11,26 +11,23 @@
 const char FFMPEG_HEADER_KEY[] = "FFMPEGHEADER";
 const int  FFMPEG_HEADER_KEY_LEN = 12;
 const int  FFMPEG_HEADER_LEN = sizeof(FFMPEG_HEADER_T);
-AVPacketBuf av_packet_buf = { 0 };
 
 const EncoderDecoderContext codecsContext[] = {
-    /* -encodings,  en-codec name, de-codec name, pix-format,         ctx,  ffmpeg code,                 buffer  */
-    {"h263",        "h263",       "h263",         AV_PIX_FMT_YUV422P, NULL, rfbEncodingFFMPEG_H263     , {0, 0, NULL}},
-    {"x265_420",    "libx265",    "hevc",         AV_PIX_FMT_YUV420P, NULL, rfbEncodingFFMPEG_X265_420 , {0, 0, NULL}},
-    {"x265_422",    "libx265",    "hevc",         AV_PIX_FMT_YUV422P, NULL, rfbEncodingFFMPEG_X265_422 , {0, 0, NULL}},
-    {"x265_444",    "libx265",    "hevc",         AV_PIX_FMT_YUV444P, NULL, rfbEncodingFFMPEG_X265_444 , {0, 0, NULL}},
-    {"x265_GBRP",   "libx265",    "hevc",         AV_PIX_FMT_GBRP,    NULL, rfbEncodingFFMPEG_X265_GBRP, {0, 0, NULL}},
-    {"mpeg2_420",   "mpeg2video", "mpeg2video",   AV_PIX_FMT_YUV420P, NULL, rfbEncodingFFMPEG_MPEG2_420, {0, 0, NULL}},
-    {"mpeg2_422",   "mpeg2video", "mpeg2video",   AV_PIX_FMT_YUV422P, NULL, rfbEncondigFFMPEG_MPEG2_422, {0, 0, NULL}},
-    {"png_RGB",     "png",        "png",          AV_PIX_FMT_RGB24,   NULL, rfbEncondigFFMPEG_PNG_RGB  , {0, 0, NULL}},
-    {"ppg_RGB",     "ppm",        "ppm",          AV_PIX_FMT_RGB24,   NULL, rfbEncondigFFMPEG_PPG_RGB  , {0, 0, NULL}},
-    {"mpeg4_420",   "mpeg4",      "mpeg4",        AV_PIX_FMT_YUV420P, NULL, rfbEncondigFFMPEG_MPEG4_420, {0, 0, NULL}},
+    /* -encodings,  en-codec name, de-codec name, pix-format,         ctx,  ffmpeg code,               */
+    {"h263",        "h263",       "h263",         AV_PIX_FMT_YUV422P, NULL, rfbEncodingFFMPEG_H263      },
+    {"x265_420",    "libx265",    "hevc",         AV_PIX_FMT_YUV420P, NULL, rfbEncodingFFMPEG_X265_420  },
+    {"x265_422",    "libx265",    "hevc",         AV_PIX_FMT_YUV422P, NULL, rfbEncodingFFMPEG_X265_422  },
+    {"x265_444",    "libx265",    "hevc",         AV_PIX_FMT_YUV444P, NULL, rfbEncodingFFMPEG_X265_444  },
+    {"x265_GBRP",   "libx265",    "hevc",         AV_PIX_FMT_GBRP,    NULL, rfbEncodingFFMPEG_X265_GBRP },
+    {"mpeg2_420",   "mpeg2video", "mpeg2video",   AV_PIX_FMT_YUV420P, NULL, rfbEncodingFFMPEG_MPEG2_420 },
+    {"mpeg2_422",   "mpeg2video", "mpeg2video",   AV_PIX_FMT_YUV422P, NULL, rfbEncondigFFMPEG_MPEG2_422 },
+    {"png_RGB",     "png",        "png",          AV_PIX_FMT_RGB24,   NULL, rfbEncondigFFMPEG_PNG_RGB   },
+    {"ppg_RGB",     "ppm",        "ppm",          AV_PIX_FMT_RGB24,   NULL, rfbEncondigFFMPEG_PPG_RGB   },
+    {"mpeg4_420",   "mpeg4",      "mpeg4",        AV_PIX_FMT_YUV420P, NULL, rfbEncondigFFMPEG_MPEG4_420 },
     {NULL, NULL, NULL, AV_PIX_FMT_NONE, NULL}
 };
 
-const EncoderDecoderContext * current_codec = &codecsContext[6];
-
-EncoderDecoderContext * getEncoderDecoderContextByName(const char * encoding)
+const EncoderDecoderContext * getEncoderDecoderContextByName(const char * encoding)
 {
     const EncoderDecoderContext * ptr = codecsContext;
     size_t len = strlen(encoding);
@@ -40,15 +37,6 @@ EncoderDecoderContext * getEncoderDecoderContextByName(const char * encoding)
         ptr++;
     }
     return NULL;
-}
-
-void release_total_packet_buf()
-{
-    if (av_packet_buf._capacity > 0 && av_packet_buf._data != NULL) {
-        free(av_packet_buf._data);
-        av_packet_buf._capacity = 0;
-        av_packet_buf._size = 0;
-    }
 }
 
 /*
@@ -73,7 +61,7 @@ rfbBool realloc_total_packet_buf(AVPacketBuf * packetBuf, size_t size)
         }
         packetBuf->_capacity = total_new_size;
         memset(packetBuf->_data, 0, packetBuf->_capacity);
-        atexit(release_total_packet_buf);
+//        atexit(release_total_packet_buf, packetBuf);  // TODO free buffer !!
         return TRUE;
     }
 
@@ -93,15 +81,15 @@ rfbBool realloc_total_packet_buf(AVPacketBuf * packetBuf, size_t size)
 }
 
 
-AVCodecContext * openCodec(const char * codec_name, int w, int h)
+AVCodecContext * openCodec(const EncoderDecoderContext * ctx, int w, int h)
 {
     int ret;
     AVCodecContext * c;
 
     /* find the mpeg1video encoder */
-    const AVCodec * codec = avcodec_find_encoder_by_name(codec_name);
+    const AVCodec * codec = avcodec_find_encoder_by_name(ctx->codec_name);
     if (!codec) {
-        rfbErr("Codec '%s' not found\n", codec_name);
+        rfbErr("Codec '%s' not found\n", ctx->codec_name);
         return NULL;
     }
 
@@ -126,7 +114,7 @@ AVCodecContext * openCodec(const char * codec_name, int w, int h)
      */
     c->gop_size = 1;
     c->max_b_frames = 1;
-    c->pix_fmt = current_codec->pix_format;
+    c->pix_fmt = ctx->pix_format;
 
     if ((ret=avcodec_open2(c, codec, NULL)) < 0) {
         rfbErr("Could not open codec: %s\n", av_err2str(ret));
@@ -145,14 +133,14 @@ AVPacket * get_packet(int size)
     return pkt;
 }
 
-struct SwsContext * get_yuv420_ctx(int w, int h, enum AVPixelFormat src_format)
+struct SwsContext * get_SwsContext(int w, int h, enum AVPixelFormat src_format, enum AVPixelFormat dst_format)
 {
     return sws_getContext(w, h, src_format,
-                          w, h, current_codec->pix_format,
+                          w, h, dst_format,
                           SWS_BICUBIC, NULL,NULL,NULL);
 }
 
-void convert_to_avframeYUV420(struct SwsContext * sws_ctx, AVFrame *pict,
+void convert_to_avframe(struct SwsContext * sws_ctx, AVFrame *pict,
                            const char * data_frame, int w, int h)
 {
     int data[8] = {(int) w * 4, 0, 0, 0, 0, 0, 0, 0};

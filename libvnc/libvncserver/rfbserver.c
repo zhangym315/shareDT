@@ -2156,6 +2156,17 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
                 break;
             case rfbEncodingRaw:
             case rfbEncodingFFMPEG:
+            case rfbEncodingFFMPEG_H263:
+            case rfbEncodingFFMPEG_X265_420:
+            case rfbEncodingFFMPEG_X265_422:
+            case rfbEncodingFFMPEG_X265_444:
+            case rfbEncodingFFMPEG_X265_GBRP:
+            case rfbEncodingFFMPEG_MPEG2_420:
+            case rfbEncondigFFMPEG_MPEG2_422:
+            case rfbEncondigFFMPEG_PNG_RGB:
+            case rfbEncondigFFMPEG_PPG_RGB:
+            case rfbEncondigFFMPEG_MPEG4_420:
+
             case rfbEncodingRRE:
             case rfbEncodingCoRRE:
             case rfbEncodingHextile:
@@ -3230,8 +3241,18 @@ rfbSendFramebufferUpdate(rfbClientPtr cl,
             rfbScaledCorrection(cl->screen, cl->scaledScreen, &x, &y, &w, &h, "rfbSendFramebufferUpdate");
 
         switch (cl->preferredEncoding)
-            {
+        {
         case -1:
+        case rfbEncodingFFMPEG_H263:
+        case rfbEncodingFFMPEG_X265_420:
+        case rfbEncodingFFMPEG_X265_422:
+        case rfbEncodingFFMPEG_X265_444:
+        case rfbEncodingFFMPEG_X265_GBRP:
+        case rfbEncodingFFMPEG_MPEG2_420:
+        case rfbEncondigFFMPEG_MPEG2_422:
+        case rfbEncondigFFMPEG_PNG_RGB:
+        case rfbEncondigFFMPEG_PPG_RGB:
+        case rfbEncondigFFMPEG_MPEG4_420:
         case rfbEncodingFFMPEG:
         {
             /* ignore the range as we will send the entire frame */

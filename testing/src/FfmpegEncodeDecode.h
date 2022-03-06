@@ -30,7 +30,7 @@ public:
         _encodeBuffer.clear();
     }
     FfmpegEncodeDecodeFrameTesting(int w, int h, int totalFrames = 1, AVPixelFormat pixFormat = AV_PIX_FMT_YUV420P,
-                             const String & codecName = current_codec->codec_name);
+                                     const String & codecName = "libx265");
     ~FfmpegEncodeDecodeFrameTesting();
 
     bool getSampleFrame(int framesCnt=0);

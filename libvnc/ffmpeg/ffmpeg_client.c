@@ -5,8 +5,6 @@
 #include "ffmpeg_interface.h"
 #include "ffmpeg_client_interface.h"
 
-static uint64_t total_received_bytes = 0;
-
 //static writer_counter = 0;
 static void
 rfbDefaultLogStd(const char *format, ...)
@@ -49,7 +47,7 @@ static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h, uint32_t encode)
         rfbErr("Codec '%s' not found\n", ctx->decodec_name);
         goto failed;
     } else
-    rfbErr("Codec '%s' indeed found\n", ctx->decodec_name);
+        rfbErr("Codec '%s' found\n", ctx->decodec_name);
 
     if ((ret->parser = av_parser_init(ret->codec->id)) == NULL)
     {
@@ -82,6 +80,12 @@ static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h, uint32_t encode)
         goto failed;
     }
 
+    ret->buf._size = 0;
+    ret->buf._capacity = 0;
+    ret->buf._data = NULL;
+
+    ret->total_received_bytes = 0;
+
     return ret;
 
 failed:
@@ -98,9 +102,6 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
                              uint32_t encode)
 {
     FFMPEG_HEADER_T av_header = { 0 };
-    ffmpeg_client_ctx_t * decoder_ctx = (ffmpeg_client_ctx_t *) client->_ffmpeg_decoder;
-    AVPacketBuf * av_packet_buf;
-
 
     if (client->_ffmpeg_decoder == NULL) {
         client->_ffmpeg_decoder = get_client_ctxs(rect->r.w, rect->r.h, encode);
@@ -110,7 +111,8 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
         }
     }
 
-    decoder_ctx = (ffmpeg_client_ctx_t *) client->_ffmpeg_decoder;
+    ffmpeg_client_ctx_t * decoder_ctx = (ffmpeg_client_ctx_t *) client->_ffmpeg_decoder;
+    AVPacketBuf * cl_av_packet_buf = &decoder_ctx->buf;
 
     /* Read header */
     if (!ReadFromRFBServer(client, (char *) av_header.header, sizeof(av_header)))
@@ -126,21 +128,21 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
     }
 
     /* make sure buffer is big enough */
-    if (!realloc_total_packet_buf(av_packet_buf, av_header.HEADER.ffmpeg_body_len)) {
+    if (!realloc_total_packet_buf(cl_av_packet_buf, av_header.HEADER.ffmpeg_body_len)) {
         rfbErr("Error to reallocate buffer, size=%d\n", av_header.HEADER.ffmpeg_body_len);
         return FALSE;
     }
 
     /* Read pakcet content */
-    if (!ReadFromRFBServer(client, (char *) av_packet_buf->_data, av_header.HEADER.ffmpeg_body_len)) {
+    if (!ReadFromRFBServer(client, (char *) cl_av_packet_buf->_data, av_header.HEADER.ffmpeg_body_len)) {
         rfbErr("Failed to read data for data_len=%d\n", av_header.HEADER.ffmpeg_body_len);
         return FALSE;
     }
-    av_packet_buf->_size = av_header.HEADER.ffmpeg_body_len;
+    cl_av_packet_buf->_size = av_header.HEADER.ffmpeg_body_len;
 
     int parsed;
-    uint8_t *data = av_packet_buf->_data;
-    size_t   data_size = av_packet_buf->_size;
+    uint8_t *data = cl_av_packet_buf->_data;
+    size_t   data_size = cl_av_packet_buf->_size;
     client->_available_frame = 0;
     /*
      * Send packet to decode.
@@ -161,12 +163,12 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
         data      += parsed;
         data_size -= parsed;
 
-        total_received_bytes += av_packet_buf->_size + sizeof(av_header);
+        decoder_ctx->total_received_bytes += cl_av_packet_buf->_size + sizeof(av_header);
 
         /* get av_frame */
         if (rect->r.w == 0 ||  rect->r.h == 0 ||
-            NULL == (decoder_ctx->av_frame=alloc_avframe(decoder_ctx->av_frame, rect->r.w,
-                                                         rect->r.h, current_codec->pix_format))) {
+            NULL == (decoder_ctx->av_frame=alloc_avframe(decoder_ctx->av_frame, rect->r.w, rect->r.h,
+                                                         codecsContext[encode - rfbEncodingFFMPEG_H263].pix_format))) {
             fprintf(stderr, "Could not allocate video frame, rect->r.w=%d, rect->r.h=%d\n",
                     rect->r.w, rect->r.h);
             return FALSE;
@@ -191,11 +193,11 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
                                     (char * ) client->frameBuffer,
                                     client->width, client->height);
 
-/*            rfbLog("%s Recevied frame packet_size=%lu, frame_pts=%llu, total_received_bytes=%llu\n",
+/*            rfbLog("%s Recevied frame packet_size=%lu, frame_pts=%llu, decoder_ctx->total_received_bytes=%llu\n",
                    get_current_time_string(),
                    decoder_ctx->av_packet->size,
                    decoder_ctx->av_frame->pts,
-                   total_received_bytes);
+                   decoder_ctx->total_received_bytes);
 */
         }
     }

@@ -195,13 +195,14 @@ bool FfmpegEncodeDecodeFrameTesting::encodeToBuffer()
 {
     for(int i=0; i<_originalFrames.size() ; i++) {
         AVPacketBuf buffer = { 0 };
-        AVPacketBuf * bufSrc = encode(_encCtx, _originalFrames[i]);
+        AVPacketBuf bufSrc = { 0 };
+        if (!encode(_encCtx, _originalFrames[i], &bufSrc)) return false;
 
-        if (!realloc_total_packet_buf(&buffer, bufSrc->_size))
+        if (!realloc_total_packet_buf(&buffer, bufSrc._size))
             return false;
 
-        memcpy(buffer._data, bufSrc->_data, bufSrc->_size);
-        buffer._size = bufSrc->_size;
+        memcpy(buffer._data, bufSrc._data, bufSrc._size);
+        buffer._size = bufSrc._size;
         _encodeBuffer.emplace_back(buffer);
     }
 

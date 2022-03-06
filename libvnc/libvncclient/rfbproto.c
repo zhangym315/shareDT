@@ -1197,7 +1197,7 @@ SetFormatAndEncodings(rfbClient* client)
   if (client->appData.encodingsString) {
     const char *encStr = client->appData.encodingsString;
     int encStrLen;
-    EncoderDecoderContext * encode;
+    const EncoderDecoderContext * encode;
     do {
       const char *nextEncStr = strchr(encStr, ' ');
       if (nextEncStr) {

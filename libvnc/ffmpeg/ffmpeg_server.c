@@ -5,25 +5,25 @@
 
 static int writer_counter = 0;
 
-static ffmpeg_server_ctx_t * get_server_ctxs(int w, int h)
+static ffmpeg_server_ctx_t * get_server_ctxs(int w, int h, int encoding)
 {
     ffmpeg_server_ctx_t * ret   = NULL;
     struct SwsContext * sws_ctx = NULL;
     AVCodecContext * codec_ctx  = NULL;
     AVFrame *  av_frame  = NULL;
 
-    if ((codec_ctx=openCodec(current_codec->codec_name, w, h)) == NULL) {
+    if ((codec_ctx=openCodec(&codecsContext[encoding - rfbEncodingFFMPEG_H263], w, h)) == NULL) {
         rfbErr("Failed to open codec in ffmpeg\n");
         return ret;
     }
 
-    if ((av_frame=alloc_avframe(av_frame, w, h, current_codec->pix_format)) == NULL) {
-        rfbErr("Failed to alloac avframe for width=%d height=%d format=%d\n", w, h, current_codec->pix_format);
+    if ((av_frame=alloc_avframe(av_frame, w, h, codecsContext[encoding - rfbEncodingFFMPEG_H263].pix_format)) == NULL) {
+        rfbErr("Failed to alloac avframe for width=%d height=%d format=%d\n", w, h, codecsContext[encoding - rfbEncodingFFMPEG_H263].pix_format);
         return ret;
     }
     rfbLog("frame size: w=%d, h=%d, av_frame.size:%lu\n", w, h, av_frame->buf[0]->size);
 
-    if ((sws_ctx=get_yuv420_ctx(w, h, AV_PIX_FMT_RGB32)) == NULL) {
+    if ((sws_ctx=get_SwsContext(w, h, AV_PIX_FMT_RGB32, codecsContext[encoding - rfbEncodingFFMPEG_H263].pix_format)) == NULL) {
         fprintf(stderr, "Failed to alloac avframe for width=%d height=%d format=%d\n", w, h, AV_PIX_FMT_RGB32);
         return ret;
     }
@@ -35,6 +35,10 @@ static ffmpeg_server_ctx_t * get_server_ctxs(int w, int h)
     ret->codec_ctx = codec_ctx;
     ret->av_frame  = av_frame;
     ret->sws_ctx   = sws_ctx;
+
+    ret->buf._size = 0;
+    ret->buf._capacity = 0;
+    ret->buf._data = NULL;
 
     return ret;
 }
@@ -48,15 +52,17 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl)
     int w = cl->screen->width;
     int h = cl->screen->height;
 
+    int encoding = cl->preferredEncoding;
     /* initialize */
     if (cl->ffmpeg_encoder == NULL) {
-        cl->ffmpeg_encoder = get_server_ctxs(w, h);
+        cl->ffmpeg_encoder = get_server_ctxs(w, h, encoding);
     }
 
     ffmpeg_server_ctx_t * server_ctx = (ffmpeg_server_ctx_t *) cl->ffmpeg_encoder;
 
     rfbFramebufferUpdateRectHeader rect;
     int bytesPerLine = w * 4;
+    AVPacketBuf * output_buf = &server_ctx->buf;
 
     /* Flush the buffer to guarantee correct alignment for translateFn(). */
     if (cl->ublen > 0) {
@@ -72,7 +78,7 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl)
     rect.r.y = Swap16IfLE(0);
     rect.r.w = Swap16IfLE(w);
     rect.r.h = Swap16IfLE(h);
-    rect.encoding = Swap32IfLE(rfbEncodingFFMPEG);
+    rect.encoding = Swap32IfLE(encoding);
     memcpy(&cl->updateBuf[cl->ublen], (char *)&rect, sz_rfbFramebufferUpdateRectHeader);
     cl->ublen += sz_rfbFramebufferUpdateRectHeader;
 
@@ -87,28 +93,26 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl)
 
     /* encode avframe */
     server_ctx->av_frame->pts++;
-    convert_to_avframeYUV420(server_ctx->sws_ctx, server_ctx->av_frame, cl->scaledScreen->frameBuffer, w, h);
+    convert_to_avframe(server_ctx->sws_ctx, server_ctx->av_frame, cl->scaledScreen->frameBuffer, w, h);
 
-    AVPacketBuf * packet_buf = encode(server_ctx->codec_ctx, server_ctx->av_frame);
-
-    if (!packet_buf) {
+    if (!encode(server_ctx->codec_ctx, server_ctx->av_frame, output_buf)) {
         rfbErr("encoded avframe, receive zero packet\n");
         return TRUE;
     }
 
-    rfbStatRecordEncodingSent(cl, rfbEncodingFFMPEG, packet_buf->_size,
+    rfbStatRecordEncodingSent(cl, encoding, (int)output_buf->_size,
                               sz_rfbFramebufferUpdateRectHeader + bytesPerLine * h);
 
-    if (rfbWriteExact(cl, (const char *) packet_buf->_data, packet_buf->_size) < 0) {
+    if (rfbWriteExact(cl, (const char *) output_buf->_data, (int)output_buf->_size) < 0) {
         rfbLogPerror("rfbSendUpdateBuf: write");
         rfbCloseClient(cl);
         return FALSE;
     }
 
 //    rfbLog("%s Packet write_size=%d, total_size=%d frame_pks=%d\n",
-//           get_current_time_string(), packet_buf->_size, cl->bytesSent, server_ctx->av_frame->pts);
+//           get_current_time_string(), output_buf->_size, cl->bytesSent, server_ctx->av_frame->pts);
 
-    packet_buf->_size = 0;
+    output_buf->_size = 0;
 
     return TRUE;
 }
