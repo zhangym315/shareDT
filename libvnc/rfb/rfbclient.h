@@ -389,42 +389,42 @@ typedef struct _rfbClient {
 	char *destHost;
 	int destPort;
 
-        /** the QoS IP DSCP for this client */
-        int QoS_DSCP;
+    /** the QoS IP DSCP for this client */
+    int QoS_DSCP;
 
-        /** hook to handle xvp server messages */
+    /** hook to handle xvp server messages */
 	HandleXvpMsgProc           HandleXvpMsg;
 
 	/* listen.c */
-        rfbSocket listenSock;
+    rfbSocket listenSock;
 
 	FinishedFrameBufferUpdateProc FinishedFrameBufferUpdate;
 
 	char *listenAddress;
-        /* IPv6 listen socket, address and port*/
-        rfbSocket listen6Sock;
-        char* listen6Address;
-        int listen6Port;
+    /* IPv6 listen socket, address and port*/
+    rfbSocket listen6Sock;
+    char* listen6Address;
+    int listen6Port;
 
-        /* Output Window ID. When set, client application enables libvncclient to perform direct rendering in its window */
-        unsigned long outputWindow;
+    /* Output Window ID. When set, client application enables libvncclient to perform direct rendering in its window */
+    unsigned long outputWindow;
 
 	/** Hooks for optional protection WriteToTLS() by mutex */
 	LockWriteToTLSProc LockWriteToTLS;
 	UnlockWriteToTLSProc UnlockWriteToTLS;
 
-        /** Hooks for custom rendering
-         *
-         * VNC rendering boils down to 3 activities:
-         * - GotCopyRect: copy an area of the framebuffer
-         * - GotFillRect: fill an area of the framebuffer with a solid color
-         * - GotBitmap: copy the bitmap in the buffer into the framebuffer
-         * The client application should either set all three of these or none!
-         */
-        GotFillRectProc GotFillRect;
-        GotBitmapProc GotBitmap;
-        /** Hook for custom JPEG decoding and rendering */
-        GotJpegProc GotJpeg;
+    /** Hooks for custom rendering
+     *
+     * VNC rendering boils down to 3 activities:
+     * - GotCopyRect: copy an area of the framebuffer
+     * - GotFillRect: fill an area of the framebuffer with a solid color
+     * - GotBitmap: copy the bitmap in the buffer into the framebuffer
+     * The client application should either set all three of these or none!
+     */
+    GotFillRectProc GotFillRect;
+    GotBitmapProc GotBitmap;
+    /** Hook for custom JPEG decoding and rendering */
+    GotJpegProc GotJpeg;
 
 #ifdef LIBVNCSERVER_HAVE_SASL
         sasl_conn_t *saslconn;
