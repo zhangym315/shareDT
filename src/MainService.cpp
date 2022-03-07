@@ -480,15 +480,15 @@ int infoServiceToAction(const char * execCmd)
     int port;
     try {
         port = aliveReader.readLineAsInt();
+        SocketClient sc(LOCALHOST, port);
+        sc.SendBytes(execCmd);
+
+        String receive = sc.ReceiveBytes();
+        fprintf(stdout, ("%s\n"), receive.c_str() );
     } catch (...) {
         fprintf(stderr, "Failed to connect server process.");
         return RETURN_CODE_INTERNAL_ERROR;
     }
-    SocketClient sc(LOCALHOST, port);
-    sc.SendBytes(execCmd);
-
-    String receive = sc.ReceiveBytes();
-    fprintf(stdout, ("%s\n"), receive.c_str() );
 
     return RETURN_CODE_SUCCESS;
 }
