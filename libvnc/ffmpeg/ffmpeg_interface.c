@@ -121,16 +121,8 @@ AVCodecContext * openCodec(const EncoderDecoderContext * ctx, int w, int h)
         return NULL;
     }
 
+    rfbLog("Opened Codec with codec_name=%s pix_format=%d\n", ctx->codec_name, ctx->pix_format);
     return c;
-}
-
-AVPacket * get_packet(int size)
-{
-    AVPacket  * pkt = av_packet_alloc();
-    if (!pkt)
-        return NULL;
-
-    return pkt;
 }
 
 struct SwsContext * get_SwsContext(int w, int h, enum AVPixelFormat src_format, enum AVPixelFormat dst_format)
