@@ -1280,9 +1280,9 @@ SetFormatAndEncodings(rfbClient* client)
     }
 
     /* preferred encoding order */
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncondigFFMPEG_MPEG2_422);
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_X265_422);
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_X265_420);
-    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncondigFFMPEG_MPEG2_422);
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncondigFFMPEG_MPEG4_420);
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_X265_444);
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG);

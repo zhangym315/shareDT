@@ -2,15 +2,15 @@
 ## About ShareDT
 * This project is aimed to share and control desktop among different platform (MacOS, Windows, and Linux).
 * The shared desktop can be the whole screen, a part region of screen and or a particular window of an App.
-* ShareDT internally continuously captures screens, compress the frames captured through ```ffmpeg```, then send it to client through ```libvnc```.
+* ShareDT internally continuously captures screens, compress the frames captured through ```ffmpeg```, then send to client through ```libvnc```.
+* Inputs including keyboard and mouse are supported. Client can control remote desktop through keyboard and mouse.
 
 ### NOTES
-* Please note that this project is still under development, currently only finished on screen sharing. Windows control will be delivered in future.
-* Please note that ```ServerGui``` is not completed, so all of existing function is required to execute through command line.
 * Please note that ```libvnc``` transaction currently is not support encryption and authentication, which will be delivered in future.
+* Audio capturing is not supported for now. Server cannot send audio data to client.
 
 ## Build
-* Please refer to ```Build.md```
+* Please refer to [Build.md](Build.md)
 
 ## Usage
 ### Start Server (```ShareDTServer```) on the host you want to share screen.
@@ -93,34 +93,7 @@ The following options related with StartServer option
                              sepcified, ShareDTServer will generate a random wid for it.
 
 
-The following options related with rfb
--rfbport port          TCP port for RFB protocol
--rfbportv6 port        TCP6 port for RFB protocol
--rfbwait time          max time in ms to wait for RFB client
--rfbauth passwd-file   use authentication on RFB protocol
-                       (use 'storepasswd' to create a password file)
--rfbversion 3.x        Set the version of the RFB we choose to advertise
--permitfiletransfer    permit file transfer support
--passwd plain-password use authentication
-                       (use plain-password as password, USE AT YOUR RISK)
--deferupdate time      time in ms to defer updates (default 40)
--deferptrupdate time   time in ms to defer pointer updates (default none)
--desktop name          VNC desktop name (default "LibVNCServer")
--alwaysshared          always treat new clients as shared
--nevershared           never treat new clients as shared
--dontdisconnect        don't disconnect existing clients when a new non-shared
-                       connection comes in (refuse new connection instead)
--sslkeyfile path       set path to private key file for encrypted WebSockets connections
--sslcertfile path      set path to certificate file for encrypted WebSockets connections
--httpdir dir-path      enable http server using dir-path home
--httpport portnum      use portnum for http connection
--httpportv6 portnum    use portnum for IPv6 http connection
--enablehttpproxy       enable http proxy support
--progressive height    enable progressive updating for slow links
--listen ipaddr         listen for connections only on network interface with
-                       addr ipaddr. '-listen localhost' and hostname work too.
--listenv6 ipv6addr     listen for IPv6 connections only on network interface with
-                       addr ipv6addr. '-listen localhost' and hostname work too.
+...
 ```
 * Stop capture server
 ```
@@ -141,14 +114,21 @@ Stopping ShareDTServer
 ShareDTServer Stopped
 ```
 ### ShareDTClient
-* Connect to ShareDT Server
+* Help message:
 ```
-$ ./client/bin/ShareDTClient -encodings ffmpeg 127.0.0.1:0
+Usage:
+    ./client/bin/ShareDTClient [options] <serveraddr:vncport>
+
+Options:
+    -encodings <mpeg2_422, mpeg4_420, x265_420, x265_422, x265_444, zlib, raw>
+
+Example:
+    ./client/bin/ShareDTClient -encodings mpeg2_422 192.168.56.110:0
 ```
-* ServerGui
-...
+* Encoding name is seperated to ```<codec name>```_```<pix format(YUV420, YUV422 or YUV444)>```
+* Default encoding is ```mpeg2_422```. If client and server are on the same machine, default is ```raw```.
 
 ### Example of ShareDTClient and ShareDTServer
 * A simple example that shows the ```ShareDTClient```(Left Image) connected to server and displays the images captured by ```ShareDTserver```(Right Image).
 ![Alt text](image/Example-client-server.png?raw=true "ShareDTServer and ShareDTClient")
-* Noted above, there is lose of resolution compared to original server side, this is expected to reduce the network bandwidth.
+* Noted above, there is lose of resolution compared to original server side with ```mpeg2_422```, this is expected to reduce the network bandwidth.
