@@ -21,7 +21,7 @@ main(int argc, char **argv)
     ShareDTClientWin gui(argc, argv);
 
     if (!gui.isInited()) {
-        std::cerr << "Failed to start connect to server" << std::endl;
+        std::cerr << "Failed to connect to server" << std::endl;
         std::cerr << std::endl;
         showUages(argv);
         return -1;
