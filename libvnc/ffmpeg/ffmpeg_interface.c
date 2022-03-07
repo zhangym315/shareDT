@@ -2,40 +2,41 @@
 #include <libavutil/imgutils.h>
 #include <libavutil/pixfmt.h>
 #include <libswscale/swscale.h>
-
+#include <rfb/rfbproto.h>
 #include "ffmpeg_interface.h"
 #include "Size.h"
 
 #include <png.h>
 
-const char * FFMPEG_HEADER_KEY = "FFMPEGHEADER";
-const int FFMPEG_HEADER_KEY_LEN = 12;
-const int FFMPEG_HEADER_LEN = sizeof(FFMPEG_HEADER_T);
-AVPacketBuf av_packet_buf = { 0 };
+const char FFMPEG_HEADER_KEY[] = "FFMPEGHEADER";
+const int  FFMPEG_HEADER_KEY_LEN = 12;
+const int  FFMPEG_HEADER_LEN = sizeof(FFMPEG_HEADER_T);
 
-const encoder_decoder_t supported_codecs[] = {
-        {"h263", AV_PIX_FMT_YUV422P},
-        {"libx265", AV_PIX_FMT_YUV420P},
-        {"libx265", AV_PIX_FMT_YUV422P},     /* 2 */
-        {"libx265", AV_PIX_FMT_YUV444P},     /* 3 */
-        {"libx265", AV_PIX_FMT_GBRP},
-        {"mpeg2video", AV_PIX_FMT_YUV420P},  /* 5 */
-        {"mpeg2video", AV_PIX_FMT_YUV422P},  /* 6 */
-        {"png"  , AV_PIX_FMT_RGB24},    /* TODO new fix picture misleading */
-        {"ppm"  , AV_PIX_FMT_RGB24},
-        {"mpeg4"  , AV_PIX_FMT_YUV420P},     /* 11 */
-        {NULL, AV_PIX_FMT_NONE}
+const EncoderDecoderContext codecsContext[] = {
+    /* -encodings,  en-codec name, de-codec name, pix-format,         ctx,  ffmpeg code,               */
+    {"h263",        "h263",       "h263",         AV_PIX_FMT_YUV422P, NULL, rfbEncodingFFMPEG_H263      },
+    {"x265_420",    "libx265",    "hevc",         AV_PIX_FMT_YUV420P, NULL, rfbEncodingFFMPEG_X265_420  },
+    {"x265_422",    "libx265",    "hevc",         AV_PIX_FMT_YUV422P, NULL, rfbEncodingFFMPEG_X265_422  },
+    {"x265_444",    "libx265",    "hevc",         AV_PIX_FMT_YUV444P, NULL, rfbEncodingFFMPEG_X265_444  },
+    {"x265_GBRP",   "libx265",    "hevc",         AV_PIX_FMT_GBRP,    NULL, rfbEncodingFFMPEG_X265_GBRP },
+    {"mpeg2_420",   "mpeg2video", "mpeg2video",   AV_PIX_FMT_YUV420P, NULL, rfbEncodingFFMPEG_MPEG2_420 },
+    {"mpeg2_422",   "mpeg2video", "mpeg2video",   AV_PIX_FMT_YUV422P, NULL, rfbEncondigFFMPEG_MPEG2_422 },
+    {"png_RGB",     "png",        "png",          AV_PIX_FMT_RGB24,   NULL, rfbEncondigFFMPEG_PNG_RGB   },
+    {"ppg_RGB",     "ppm",        "ppm",          AV_PIX_FMT_RGB24,   NULL, rfbEncondigFFMPEG_PPG_RGB   },
+    {"mpeg4_420",   "mpeg4",      "mpeg4",        AV_PIX_FMT_YUV420P, NULL, rfbEncondigFFMPEG_MPEG4_420 },
+    {NULL, NULL, NULL, AV_PIX_FMT_NONE, NULL}
 };
 
-const encoder_decoder_t * current_codec = &supported_codecs[6];
-
-void release_total_packet_buf()
+const EncoderDecoderContext * getEncoderDecoderContextByName(const char * encoding)
 {
-    if (av_packet_buf._capacity > 0 && av_packet_buf._data != NULL) {
-        free(av_packet_buf._data);
-        av_packet_buf._capacity = 0;
-        av_packet_buf._size = 0;
+    const EncoderDecoderContext * ptr = codecsContext;
+    size_t len = strlen(encoding);
+    while (ptr->encoding_name) {
+        if (strncasecmp(encoding, ptr->encoding_name, len) == 0)
+            return ptr;
+        ptr++;
     }
+    return NULL;
 }
 
 /*
@@ -60,7 +61,7 @@ rfbBool realloc_total_packet_buf(AVPacketBuf * packetBuf, size_t size)
         }
         packetBuf->_capacity = total_new_size;
         memset(packetBuf->_data, 0, packetBuf->_capacity);
-        atexit(release_total_packet_buf);
+//        atexit(release_total_packet_buf, packetBuf);  // TODO free buffer !!
         return TRUE;
     }
 
@@ -80,15 +81,15 @@ rfbBool realloc_total_packet_buf(AVPacketBuf * packetBuf, size_t size)
 }
 
 
-AVCodecContext * openCodec(const char * codec_name, int w, int h)
+AVCodecContext * openCodec(const EncoderDecoderContext * ctx, int w, int h)
 {
     int ret;
     AVCodecContext * c;
 
     /* find the mpeg1video encoder */
-    const AVCodec * codec = avcodec_find_encoder_by_name(codec_name);
+    const AVCodec * codec = avcodec_find_encoder_by_name(ctx->codec_name);
     if (!codec) {
-        rfbErr("Codec '%s' not found\n", codec_name);
+        rfbErr("Codec '%s' not found\n", ctx->codec_name);
         return NULL;
     }
 
@@ -113,33 +114,25 @@ AVCodecContext * openCodec(const char * codec_name, int w, int h)
      */
     c->gop_size = 1;
     c->max_b_frames = 1;
-    c->pix_fmt = current_codec->pix_format;
+    c->pix_fmt = ctx->pix_format;
 
     if ((ret=avcodec_open2(c, codec, NULL)) < 0) {
         rfbErr("Could not open codec: %s\n", av_err2str(ret));
         return NULL;
     }
 
+    rfbLog("Opened Codec with codec_name=%s pix_format=%d\n", ctx->codec_name, ctx->pix_format);
     return c;
 }
 
-AVPacket * get_packet(int size)
-{
-    AVPacket  * pkt = av_packet_alloc();
-    if (!pkt)
-        return NULL;
-
-    return pkt;
-}
-
-struct SwsContext * get_yuv420_ctx(int w, int h, enum AVPixelFormat src_format)
+struct SwsContext * get_SwsContext(int w, int h, enum AVPixelFormat src_format, enum AVPixelFormat dst_format)
 {
     return sws_getContext(w, h, src_format,
-                          w, h, current_codec->pix_format,
+                          w, h, dst_format,
                           SWS_BICUBIC, NULL,NULL,NULL);
 }
 
-void convert_to_avframeYUV420(struct SwsContext * sws_ctx, AVFrame *pict,
+void convert_to_avframe(struct SwsContext * sws_ctx, AVFrame *pict,
                            const char * data_frame, int w, int h)
 {
     int data[8] = {(int) w * 4, 0, 0, 0, 0, 0, 0, 0};

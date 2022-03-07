@@ -1490,7 +1490,7 @@ char *rfbProcessFileTransferReadBuffer(rfbClientPtr cl, uint32_t length)
        that might wrap on platforms with a 32-bit int type if length is bigger
        than 0X7FFFFFFF.
     */
-    if(length == SIZE_MAX || length > INT_MAX) {
+    if(length == (uint32_t)SIZE_MAX || length > INT_MAX) {
 	rfbErr("rfbProcessFileTransferReadBuffer: too big file transfer length requested: %u", (unsigned int)length);
 	rfbCloseClient(cl);
 	return NULL;
@@ -2156,6 +2156,17 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
                 break;
             case rfbEncodingRaw:
             case rfbEncodingFFMPEG:
+            case rfbEncodingFFMPEG_H263:
+            case rfbEncodingFFMPEG_X265_420:
+            case rfbEncodingFFMPEG_X265_422:
+            case rfbEncodingFFMPEG_X265_444:
+            case rfbEncodingFFMPEG_X265_GBRP:
+            case rfbEncodingFFMPEG_MPEG2_420:
+            case rfbEncondigFFMPEG_MPEG2_422:
+            case rfbEncondigFFMPEG_PNG_RGB:
+            case rfbEncondigFFMPEG_PPG_RGB:
+            case rfbEncondigFFMPEG_MPEG4_420:
+
             case rfbEncodingRRE:
             case rfbEncodingCoRRE:
             case rfbEncodingHextile:
@@ -3230,8 +3241,18 @@ rfbSendFramebufferUpdate(rfbClientPtr cl,
             rfbScaledCorrection(cl->screen, cl->scaledScreen, &x, &y, &w, &h, "rfbSendFramebufferUpdate");
 
         switch (cl->preferredEncoding)
-            {
+        {
         case -1:
+        case rfbEncodingFFMPEG_H263:
+        case rfbEncodingFFMPEG_X265_420:
+        case rfbEncodingFFMPEG_X265_422:
+        case rfbEncodingFFMPEG_X265_444:
+        case rfbEncodingFFMPEG_X265_GBRP:
+        case rfbEncodingFFMPEG_MPEG2_420:
+        case rfbEncondigFFMPEG_MPEG2_422:
+        case rfbEncondigFFMPEG_PNG_RGB:
+        case rfbEncondigFFMPEG_PPG_RGB:
+        case rfbEncondigFFMPEG_MPEG4_420:
         case rfbEncodingFFMPEG:
         {
             /* ignore the range as we will send the entire frame */

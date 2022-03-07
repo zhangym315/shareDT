@@ -5,6 +5,7 @@
 
 extern rfbBool
 rfbReceiveRectEncodingFFMPEG(rfbClient* cl,
-                             rfbFramebufferUpdateRectHeader * rect);
+                             rfbFramebufferUpdateRectHeader * rect,
+                             uint32_t encode);
 
 #endif //SHAREDT_FFMPEG_CLIENT_H

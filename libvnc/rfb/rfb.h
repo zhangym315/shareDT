@@ -722,7 +722,7 @@ typedef struct _rfbClientRec {
     /**
      * For extension of ffmpeg_encoder
      */
-    void * ffmpeg_encoder;    /* encoder_decoder_t type to ffmpeg encoding */
+    void * ffmpeg_encoder;    /* EncoderDecoderContext type to ffmpeg encoding */
 } rfbClientRec, *rfbClientPtr;
 
 /**

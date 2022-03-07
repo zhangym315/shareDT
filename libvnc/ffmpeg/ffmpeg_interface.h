@@ -16,16 +16,21 @@ typedef struct {
 } AVPacketBuf;
 
 typedef struct {
-    const char * codec_name;
-    enum AVPixelFormat pix_format;
-} encoder_decoder_t;
+    const char * encoding_name;      /* used to negotiate between server and client */
+    const char * codec_name;         /* ffmpeg codec name                           */
+    const char * decodec_name;       /* ffmpeg codec name                           */
+    enum AVPixelFormat pix_format;   /* ffmpeg pix format                           */
+    void * ctx;                      /* context for codec of client and server      */
+    int  code;                       /* encoding code for communication between c s */
+} EncoderDecoderContext;
 
-extern AVCodecContext * openCodec(const char * codec_name, int w, int h);
+extern const EncoderDecoderContext * getEncoderDecoderContextByName(const char * encoding);
+extern AVCodecContext * openCodec(const EncoderDecoderContext * ctx, int w, int h);
 
 extern AVFrame * alloc_avframe(AVFrame * src, int w, int h, enum AVPixelFormat format);
 
-extern struct SwsContext * get_yuv420_ctx(int w, int h, enum AVPixelFormat src_format);
-extern void convert_to_avframeYUV420(struct SwsContext * sws_ctx, AVFrame *pict,
+extern struct SwsContext * get_SwsContext(int w, int h, enum AVPixelFormat src_format, enum AVPixelFormat dst_format);
+extern void convert_to_avframe(struct SwsContext * sws_ctx, AVFrame *pict,
                                      const char * data_frame, int w, int h);
 extern void convert_to_avframeRGB32(struct SwsContext * sws_ctx, AVFrame * srcFrame,
                                      char * data_frame, int w, int h);
@@ -41,11 +46,9 @@ typedef union {
     } HEADER;
 } FFMPEG_HEADER_T;
 
-extern const char * FFMPEG_HEADER_KEY;
-extern const int FFMPEG_HEADER_KEY_LEN;
-extern const int FFMPEG_HEADER_LEN;
-extern AVPacketBuf av_packet_buf;
-extern const encoder_decoder_t supported_codecs[];
-extern const encoder_decoder_t * current_codec;
+extern const char FFMPEG_HEADER_KEY[];
+extern const int  FFMPEG_HEADER_KEY_LEN;
+extern const int  FFMPEG_HEADER_LEN;
+extern const EncoderDecoderContext codecsContext[];
 
 #endif //SHAREDT_FFMPEG_INTERFACE_H

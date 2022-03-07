@@ -25,6 +25,7 @@
  */
 
 #include <rfb/rfb.h>
+#include "ffmpeg_interface.h"
 
 #ifdef _MSC_VER
 #define snprintf _snprintf /* Missing in MSVC */
@@ -158,6 +159,17 @@ char *encodingName(uint32_t type, char *buf, int len) {
 
         /* customized */
         case rfbEncodingFFMPEG: snprintf(buf, len, "ffmpeg"); break;
+        case rfbEncodingFFMPEG_H263:
+        case rfbEncodingFFMPEG_X265_420:
+        case rfbEncodingFFMPEG_X265_422:
+        case rfbEncodingFFMPEG_X265_444:
+        case rfbEncodingFFMPEG_X265_GBRP:
+        case rfbEncodingFFMPEG_MPEG2_420:
+        case rfbEncondigFFMPEG_MPEG2_422:
+        case rfbEncondigFFMPEG_PNG_RGB:
+        case rfbEncondigFFMPEG_PPG_RGB:
+        case rfbEncondigFFMPEG_MPEG4_420:
+            snprintf(buf, len, "%s", codecsContext[type-rfbEncodingFFMPEG_H263].encoding_name); break;
 
         default:
             snprintf(buf, len, "Enc(0x%08X)", type);
