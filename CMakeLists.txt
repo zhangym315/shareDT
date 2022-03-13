@@ -74,7 +74,7 @@ target_link_libraries(${START_CLIENT}
 
 ### Installing
 # ShareDTServer
-#install(TARGETS ${SERVERGUI_TARGET} ${START_SERVER} DESTINATION server/bin)  disable this now
+install(TARGETS ${START_SERVER} DESTINATION server/bin)
 install(FILES ${KeyCode} DESTINATION server/bin )
 install(FILES ${SERVERGUI_ICONS} DESTINATION server/images)
 install(DIRECTORY DESTINATION server/var/run/)
