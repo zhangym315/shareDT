@@ -452,7 +452,7 @@ typedef struct {
 
 /* customized encodings methods */
 #define rfbEncodingFFMPEG           18
-#define rfbEncodingFFMPEG_H263      19
+#define rfbEncodingFFMPEG_H264      19
 #define rfbEncodingFFMPEG_X265_420  20
 #define rfbEncodingFFMPEG_X265_422  21
 #define rfbEncodingFFMPEG_X265_444  22

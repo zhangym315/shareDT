@@ -2156,7 +2156,7 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
                 break;
             case rfbEncodingRaw:
             case rfbEncodingFFMPEG:
-            case rfbEncodingFFMPEG_H263:
+            case rfbEncodingFFMPEG_H264:
             case rfbEncodingFFMPEG_X265_420:
             case rfbEncodingFFMPEG_X265_422:
             case rfbEncodingFFMPEG_X265_444:
@@ -3243,7 +3243,7 @@ rfbSendFramebufferUpdate(rfbClientPtr cl,
         switch (cl->preferredEncoding)
         {
         case -1:
-        case rfbEncodingFFMPEG_H263:
+        case rfbEncodingFFMPEG_H264:
         case rfbEncodingFFMPEG_X265_420:
         case rfbEncodingFFMPEG_X265_422:
         case rfbEncodingFFMPEG_X265_444:

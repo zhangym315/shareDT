@@ -51,6 +51,7 @@ set(SHAREDT_LIBS_INCLUDE
         ${X265_INCLUDE_DIR}
         ${PNG_INCLUDE_DIR}
         ${FFMPEG_INCLUDE_DIR}
+        ${X264_INCLUDE_DIR}
 )
 
 ##### ShareDTServer Gui source

@@ -12,25 +12,28 @@ static ffmpeg_server_ctx_t * get_server_ctxs(int w, int h, int encoding)
     AVCodecContext * codec_ctx  = NULL;
     AVFrame *  av_frame  = NULL;
 
-    if ((codec_ctx=openCodec(&codecsContext[encoding - rfbEncodingFFMPEG_H263], w, h)) == NULL) {
+    if ((codec_ctx=openCodec(&codecsContext[encoding - rfbEncodingFFMPEG_H264], w, h)) == NULL) {
         rfbErr("Failed to open codec in ffmpeg\n");
         return ret;
     }
 
-    if ((av_frame=alloc_avframe(av_frame, w, h, codecsContext[encoding - rfbEncodingFFMPEG_H263].pix_format)) == NULL) {
-        rfbErr("Failed to alloac avframe for width=%d height=%d format=%d\n", w, h, codecsContext[encoding - rfbEncodingFFMPEG_H263].pix_format);
+    if ((av_frame=alloc_avframe(av_frame, w, h, codecsContext[encoding - rfbEncodingFFMPEG_H264].pix_format)) == NULL) {
+        rfbErr("Failed to alloac avframe for width=%d height=%d format=%d\n", w, h, codecsContext[encoding - rfbEncodingFFMPEG_H264].pix_format);
         return ret;
     }
     rfbLog("frame size: w=%d, h=%d, av_frame.size:%lu\n", w, h, av_frame->buf[0]->size);
 
-    if ((sws_ctx=get_SwsContext(w, h, AV_PIX_FMT_RGB32, codecsContext[encoding - rfbEncodingFFMPEG_H263].pix_format)) == NULL) {
+    if ((sws_ctx=get_SwsContext(w, h, AV_PIX_FMT_RGB32, codecsContext[encoding - rfbEncodingFFMPEG_H264].pix_format)) == NULL) {
         fprintf(stderr, "Failed to alloac avframe for width=%d height=%d format=%d\n", w, h, AV_PIX_FMT_RGB32);
         return ret;
     }
 
     ret = (ffmpeg_server_ctx_t *) malloc (sizeof(ffmpeg_server_ctx_t)); /* TODO: needs to release while clientPtr is freed */
 
-    if (ret == NULL) return NULL;
+    if (ret == NULL) {
+        fprintf(stderr, "Failed to alloc ffmpeg_server_ctx\n");
+        return NULL;
+    }
 
     ret->codec_ctx = codec_ctx;
     ret->av_frame  = av_frame;
@@ -42,7 +45,7 @@ static ffmpeg_server_ctx_t * get_server_ctxs(int w, int h, int encoding)
 
     return ret;
 }
-
+static int globalFirst = 0;
 rfbBool
 rfbSendRectEncodingFFMPEG(rfbClientPtr cl)
 {
@@ -55,7 +58,10 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl)
     int encoding = cl->preferredEncoding;
     /* initialize */
     if (cl->ffmpeg_encoder == NULL) {
-        cl->ffmpeg_encoder = get_server_ctxs(w, h, encoding);
+        if ((cl->ffmpeg_encoder = get_server_ctxs(w, h, encoding)) == NULL) {
+            rfbErr("Failed to get_server_ctxs for w=%d, h=%d, encoding=%d\n", w, h, encoding);
+            return FALSE;
+        }
     }
 
     ffmpeg_server_ctx_t * server_ctx = (ffmpeg_server_ctx_t *) cl->ffmpeg_encoder;
@@ -92,9 +98,8 @@ rfbSendRectEncodingFFMPEG(rfbClientPtr cl)
 */
 
     /* encode avframe */
-    server_ctx->av_frame->pts++;
     convert_to_avframe(server_ctx->sws_ctx, server_ctx->av_frame, cl->scaledScreen->frameBuffer, w, h);
-
+    server_ctx->av_frame->pts++;
     if (!encode(server_ctx->codec_ctx, server_ctx->av_frame, output_buf)) {
         rfbErr("encoded avframe, receive zero packet\n");
         return TRUE;

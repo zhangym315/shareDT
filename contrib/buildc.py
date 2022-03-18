@@ -19,11 +19,12 @@ DONE_FILE="/.INSTALLED_DONE"
 cpuCount = multiprocessing.cpu_count()
 cpuToBuild = str(cpuCount-1 if (cpuCount > 2) else cpuCount)
 
-#"""Check whether `name` is on PATH and marked as executable."""
-def is_tool(name):
-    # from whichcraft import which
-    from shutil import which
-    return which(name) is not None
+
+x265Dir = "x265_3.3/source/";
+os.environ["PKG_CONFIG_PATH"] = PWD + x265Dir + INS + "/lib/pkgconfig/"
+x264Include=PWD + "x264" + INS + "/include/"
+x264Lib=PWD + "x264" + INS + "/lib/"
+os.environ["PKG_CONFIG_PATH"] += ":" + x264Lib + "/pkgconfig"
 
 def buildQT(k):
     pathBLD = PWD + component[0]
@@ -109,13 +110,18 @@ def buildOnWinMSYS(component):
     os.chdir(pathBLD)
 
     if component[0] == "ffmpeg":
-        print('Running ffmpeg configure, this may take several mins, please wait...')
+        os.system('ln -s ' + x264Lib + 'libx264.a ' + x264Lib + 'libx264.lib')
         cmd = 'unset CL && ./' + component[1] +' --toolchain=msvc --enable-swscale --enable-asm --enable-yasm --target-os=win64 --arch=x86_64 --disable-shared  --disable-avdevice  --disable-doc  --disable-ffplay  --disable-ffprobe  --disable-ffmpeg  --enable-w32threads --disable-amf --disable-ffnvcodec --disable-mediafoundation --prefix="' + pathINS +'"'
+        print('Running ffmpeg configure, this may take several mins, please wait...')
+        print(cmd)
 
         ret = os.system(cmd)
         if ret != 0:
             return 1
     else:
+        # only copy for windows platform build
+        if component[0] == "x264":
+            shutil.copy2(PWD+'shared/x264-config.guess', pathBLD + '/config.guess')
         os.system('pwd')
         cmd = './' + component[1] +'  --prefix=' + pathINS
         print ("running: " + cmd)
@@ -136,6 +142,31 @@ def buildOnWinMSYS(component):
     open(PWD + component[0] + DONE_FILE, 'w')
 
     return
+
+def cleanBuild(kernel, component):
+    print('Clearning for ' + component[0])
+
+    installFullPath=PWD+component[0]+DONE_FILE
+    if os.path.exists(installFullPath):
+        os.remove(installFullPath)
+
+    ## Normal cmake build
+    if component[1] == "CMAKE" :
+        pathBLD = PWD + component[0] + BLD
+        ret=os.system('cmake --build ' + pathBLD + ' --target clean ')
+        if ret != 0:
+            print("Failed to clean " + component[0])
+    else :
+        pathBLD = PWD + component[0]
+
+        os.chdir(pathBLD)
+        MakeCMD = 'make clean'
+        if kernel == "windows":
+            MakeCMD = 'nmake clean'
+        ret=os.system(MakeCMD)
+        if ret != 0:
+            print("Failed to clean " + component[0])
+            return 1
 
 def buildAndInstall(kernel, component):
     if os.path.exists(PWD + component[0] + DONE_FILE):
@@ -158,7 +189,7 @@ def buildAndInstall(kernel, component):
         if component[0] == "openssl":
             return buildWindowsOpenssl()
 
-        if component[0] == "liblzma" or component[0] == "ffmpeg":
+        if component[0] == "liblzma" or component[0] == "ffmpeg" or component[0] == "x264":
             if (kernel.startswith("msys")):
                 return buildOnWinMSYS(component=component)
             else:
@@ -253,7 +284,6 @@ else:
         return v.rstrip('\n')
     kernel = normalize_kernel(backtick("uname -s"))
 
-x265Dir = "x265_3.3/source/";
 components = [["SDL2-2.0.12", "CMAKE"],
               ["libjpeg-turbo-2.0.5", "CMAKE"],
               ["zlib", "CMAKE"],\
@@ -262,19 +292,22 @@ components = [["SDL2-2.0.12", "CMAKE"],
               [x265Dir, "CMAKE"],\
               ["openssl", "Configure"],\
               ["qt515", "configure"],\
-              ["ffmpeg", "configure --disable-iconv --enable-libx265 --enable-gpl --disable-ffmpeg --disable-ffprobe "],\
-#              ["ffmpeg", "configure --disable-iconv"],\
+              ["x264", "configure --enable-static --disable-asm --disable-cli"],\
+              ["ffmpeg", "configure --disable-iconv --enable-libx265 --enable-gpl --disable-ffmpeg --disable-ffprobe  --enable-libx264 --extra-ldflags=-L" + x264Lib + " --extra-cflags=-I" + x264Include],\
+#              ["ffmpeg", "configure --disable-iconv --enable-libx265 --enable-gpl --disable-ffmpeg --disable-ffprobe  --enable-libx264 "],\
               ["liblzma", "configure"],\
               ["bzip2", "configure"]\
               ]
 
-os.environ["PKG_CONFIG_PATH"] = PWD + x265Dir + INS + "/lib/pkgconfig/"
 for component in components :
-    buildRet=buildAndInstall(kernel, component)
-    if buildRet == 1 or buildRet == 2:
-        if buildRet == 1:
-            print("Failed to build " + component[0])
-        break
+    if len(sys.argv) == 2 and sys.argv[1] == "clean":
+        cleanBuild(kernel, component)
+    else:
+        buildRet=buildAndInstall(kernel, component)
+        if buildRet == 1 or buildRet == 2:
+            if buildRet == 1:
+                print("Failed to build " + component[0])
+            break
 
 if (kernel.startswith("msys")):
     os.system("bash")  ## start bash to avoid exit automatically

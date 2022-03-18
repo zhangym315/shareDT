@@ -4,3 +4,6 @@
 [submodule "contrib/liblzma"]
 	path = contrib/liblzma
 	url = https://github.com/kobolabs/liblzma.git
+[submodule "contrib/x264"]
+	path = contrib/x264
+	url = https://github.com/mirror/x264.git

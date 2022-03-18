@@ -40,6 +40,7 @@ target_link_libraries(${START_SERVER}
     vncserver
     ${${PROJECT_NAME}_PLATFORM_LIBS}
     ${X265_LIBRARIES}
+    ${X264_LIBRARY}
 )
 
 ### ShareDTServer gui
@@ -70,6 +71,7 @@ target_link_libraries(${START_CLIENT}
     ${FFMPEG_REQUIRED_LIBS}
     ${LZMA_LIBRARIES}
     ${X265_LIBRARIES}
+    ${X264_LIBRARY}
 )
 
 ### Installing

@@ -1289,7 +1289,7 @@ SetFormatAndEncodings(rfbClient* client)
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_MPEG2_420);
 
     /** Following are not tested TODO **/
-    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_H263);
+    encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_H264);
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncodingFFMPEG_X265_GBRP);
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncondigFFMPEG_PNG_RGB);
     encs[se->nEncodings++] = rfbClientSwap32IfLE(rfbEncondigFFMPEG_PPG_RGB);
@@ -1799,7 +1799,7 @@ HandleRFBServerMessage(rfbClient* client)
 
           switch (rect.encoding) {
 
-              case rfbEncodingFFMPEG_H263:
+              case rfbEncodingFFMPEG_H264:
               case rfbEncodingFFMPEG_X265_420:
               case rfbEncodingFFMPEG_X265_422:
               case rfbEncodingFFMPEG_X265_444:
