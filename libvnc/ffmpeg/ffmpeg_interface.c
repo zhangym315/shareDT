@@ -14,7 +14,7 @@ const int  FFMPEG_HEADER_LEN = sizeof(FFMPEG_HEADER_T);
 
 const EncoderDecoderContext codecsContext[] = {
     /* -encodings,  en-codec name, de-codec name, pix-format,         ctx,  ffmpeg code,               */
-    {"h263",        "h263",       "h263",         AV_PIX_FMT_YUV422P, NULL, rfbEncodingFFMPEG_H263      },
+    {"h264",        "libx264rgb", "libx264rgb",   AV_PIX_FMT_RGB24,   NULL, rfbEncodingFFMPEG_H264      },
     {"x265_420",    "libx265",    "hevc",         AV_PIX_FMT_YUV420P, NULL, rfbEncodingFFMPEG_X265_420  },
     {"x265_422",    "libx265",    "hevc",         AV_PIX_FMT_YUV422P, NULL, rfbEncodingFFMPEG_X265_422  },
     {"x265_444",    "libx265",    "hevc",         AV_PIX_FMT_YUV444P, NULL, rfbEncodingFFMPEG_X265_444  },
@@ -86,7 +86,6 @@ AVCodecContext * openCodec(const EncoderDecoderContext * ctx, int w, int h)
     int ret;
     AVCodecContext * c;
 
-    /* find the mpeg1video encoder */
     const AVCodec * codec = avcodec_find_encoder_by_name(ctx->codec_name);
     if (!codec) {
         rfbErr("Codec '%s' not found\n", ctx->codec_name);
@@ -142,15 +141,16 @@ void convert_to_avframe(struct SwsContext * sws_ctx, AVFrame *pict,
                 h, pict->data, pict->linesize );
 }
 
-void convert_to_avframeRGB32(struct SwsContext * sws_ctx, AVFrame * srcFrame,
+void convert_to_avframeRGB32(struct SwsContext ** sws_ctx, AVFrame * srcFrame,
                              char * data_frame, int w, int h)
 {
+    *sws_ctx = sws_getCachedContext(*sws_ctx, srcFrame->width, srcFrame->height, srcFrame->format,
+                                    w, h, AV_PIX_FMT_RGB32, SWS_BICUBIC, NULL,NULL,NULL);
+
     int data[8] = {(int) w * 4, 0, 0, 0, 0, 0, 0, 0};
     uint8_t * srcSlice[8] = { (uint8_t *) data_frame, 0, 0, 0, 0, 0, 0, 0 };
-
-    sws_scale ( sws_ctx, (const uint8_t *const *)(srcFrame->data), (const int *)(srcFrame->linesize), 0,
+    sws_scale ( *sws_ctx, (const uint8_t *const *)(srcFrame->data), (const int *)(srcFrame->linesize), 0,
                 h, srcSlice, data );
-
 }
 
 AVFrame * alloc_avframe(AVFrame * src, int w, int h, enum AVPixelFormat format)
@@ -233,7 +233,7 @@ void write_YUV_image(char  * path, AVFrame * av_frame)
         return;
     }
 
-    convert_to_avframeRGB32(sws_ctx, av_frame, (char *) rgbFrame->data[0], av_frame->width, av_frame->height);
+    convert_to_avframeRGB32(&sws_ctx, av_frame, (char *) rgbFrame->data[0], av_frame->width, av_frame->height);
 
     write_RGB32_image(path, rgbFrame->data[0], av_frame->width, av_frame->height);
     av_frame_free(&rgbFrame);

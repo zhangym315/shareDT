@@ -30,6 +30,9 @@ find_package(bzip2 REQUIRED NO_MODULE)
 set(lzma_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
 find_package(lzma REQUIRED NO_MODULE)
 
+set(x264_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
+find_package(x264 REQUIRED NO_MODULE)
+
 #### QT specific
 # QMake specific
 # Instruct CMake to run moc automatically when needed.

@@ -36,12 +36,12 @@ cd contrib && buildc.py
 * 3. Build source code
 ```
 mkdir && cd shareDT/build/
-cmake --build ../
-cmake .
+cmake ../
+cmake --build .  --config Release --parallel
 ```
 * 4. Install
 ```
-cmake --install . --prefix=./install/
+cmake --install .  --prefix install
 ```
 
 # Windows Build
@@ -90,9 +90,9 @@ python buildc.py
 mkdir build
 cd build/
 cmake ../
-cmake --build . --config Release
+cmake --build . --config Release --parallel
 ```
 * 5. Install
 ```
-cmake --install . --prefix=./install/
+cmake --install . --prefix install
 ```

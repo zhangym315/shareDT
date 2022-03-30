@@ -1,0 +1,14 @@
+
+set(X264_INSTALL ${CMAKE_SOURCE_CONTRIB}/x264/build/install/)
+set(X264_INCLUDE_DIR ${X264_INSTALL}/include/)
+
+if(WIN32)
+set(X264_LIBRARIES ${X264_INSTALL}/lib/libx264.lib)
+set(X264_LIBRARY ${X264_LIBRARIES})
+else()
+set(X264_LIBRARIES ${X264_INSTALL}/lib/libx264.a)
+set(X264_LIBRARY ${X264_LIBRARIES})
+endif()
+
+message(STATUS "Found X264 at ${X264_INSTALL}")
+set(X264_FOUND TRUE)

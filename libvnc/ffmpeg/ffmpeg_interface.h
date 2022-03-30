@@ -3,6 +3,7 @@
 
 #include <libavutil/pixfmt.h>
 #include <libavcodec/avcodec.h>
+#include <libswscale/swscale.h>
 #include <rfb/rfb.h>
 
 /*
@@ -32,7 +33,7 @@ extern AVFrame * alloc_avframe(AVFrame * src, int w, int h, enum AVPixelFormat f
 extern struct SwsContext * get_SwsContext(int w, int h, enum AVPixelFormat src_format, enum AVPixelFormat dst_format);
 extern void convert_to_avframe(struct SwsContext * sws_ctx, AVFrame *pict,
                                      const char * data_frame, int w, int h);
-extern void convert_to_avframeRGB32(struct SwsContext * sws_ctx, AVFrame * srcFrame,
+extern void convert_to_avframeRGB32(struct SwsContext ** sws_ctx, AVFrame * srcFrame,
                                      char * data_frame, int w, int h);
 extern rfbBool realloc_total_packet_buf(AVPacketBuf * packetBuf, size_t size);
 extern void write_RGB32_image(const char * path, unsigned char *buffer, size_t w, size_t h);

@@ -5,7 +5,8 @@
 #include "ffmpeg_interface.h"
 #include "ffmpeg_client_interface.h"
 
-//static writer_counter = 0;
+#include "TimeUtil.h"
+static writer_counter = 0;
 static void
 rfbDefaultLogStd(const char *format, ...)
 {
@@ -34,7 +35,7 @@ rfbLogProc rfbErr=rfbDefaultLogError;
 static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h, uint32_t encode)
 {
     ffmpeg_client_ctx_t * ret   = NULL;
-    const EncoderDecoderContext * ctx = &codecsContext[encode - rfbEncodingFFMPEG_H263];
+    const EncoderDecoderContext * ctx = &codecsContext[encode - rfbEncodingFFMPEG_H264];
 
     ret = (ffmpeg_client_ctx_t * ) malloc(sizeof(ffmpeg_client_ctx_t));
     if (ret == NULL) {
@@ -43,11 +44,13 @@ static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h, uint32_t encode)
     }
     memset(ret, 0, sizeof(ffmpeg_client_ctx_t));
 
-    if ((ret->codec=avcodec_find_decoder_by_name(ctx->decodec_name)) == NULL) {
+    ret->codec = (strcmp(ctx->codec_name, "libx264rgb") == 0) ? avcodec_find_decoder(AV_CODEC_ID_H264)
+                                                              : avcodec_find_decoder_by_name(ctx->codec_name);
+    if (ret->codec == NULL) {
         rfbErr("Codec '%s' not found\n", ctx->decodec_name);
         goto failed;
     } else
-        rfbErr("Codec '%s' found\n", ctx->decodec_name);
+        rfbLog("Codec '%s' found\n", ctx->decodec_name);
 
     if ((ret->parser = av_parser_init(ret->codec->id)) == NULL)
     {
@@ -168,7 +171,7 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
         /* get av_frame */
         if (rect->r.w == 0 ||  rect->r.h == 0 ||
             NULL == (decoder_ctx->av_frame=alloc_avframe(decoder_ctx->av_frame, rect->r.w, rect->r.h,
-                                                         codecsContext[encode - rfbEncodingFFMPEG_H263].pix_format))) {
+                                                         codecsContext[encode - rfbEncodingFFMPEG_H264].pix_format))) {
             fprintf(stderr, "Could not allocate video frame, rect->r.w=%d, rect->r.h=%d\n",
                     rect->r.w, rect->r.h);
             return FALSE;
@@ -181,19 +184,19 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
             fetch_frame(decoder_ctx->codec_ctx,
                         decoder_ctx->av_frame))) {
             client->_available_frame = 1;
+
 /* TESTING
             char path[128] = {'\0'};
             sprintf(path,  "receive_output_%d_.png", writer_counter++);
             write_YUV_image(path, decoder_ctx->av_frame);
             writer_counter++;
-            printf("%s get new frame with frame_number=%d\n", get_current_time_string(), writer_counter);
-            memset(client->frameBuffer, 0, 1000);
 */
-            convert_to_avframeRGB32(decoder_ctx->sws_ctx, decoder_ctx->av_frame,
+
+            convert_to_avframeRGB32(&(decoder_ctx->sws_ctx), decoder_ctx->av_frame,
                                     (char * ) client->frameBuffer,
                                     client->width, client->height);
-
-/*            rfbLog("%s Recevied frame packet_size=%lu, frame_pts=%llu, decoder_ctx->total_received_bytes=%llu\n",
+/*
+            rfbLog("%s Recevied frame packet_size=%lu, frame_pts=%llu, decoder_ctx->total_received_bytes=%llu\n",
                    get_current_time_string(),
                    decoder_ctx->av_packet->size,
                    decoder_ctx->av_frame->pts,
