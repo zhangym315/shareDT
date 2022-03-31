@@ -110,7 +110,6 @@ def buildOnWinMSYS(component):
     os.chdir(pathBLD)
 
     if component[0] == "ffmpeg":
-        os.system('ln -s ' + x264Lib + 'libx264.a ' + x264Lib + 'libx264.lib')
         cmd = 'unset CL && ./' + component[1] +' --toolchain=msvc --enable-swscale --enable-asm --enable-yasm --target-os=win64 --arch=x86_64 --disable-shared  --disable-avdevice  --disable-doc  --disable-ffplay  --disable-ffprobe  --disable-ffmpeg  --enable-w32threads --disable-amf --disable-ffnvcodec --disable-mediafoundation --prefix="' + pathINS +'"'
         print('Running ffmpeg configure, this may take several mins, please wait...')
         print(cmd)
@@ -119,11 +118,12 @@ def buildOnWinMSYS(component):
         if ret != 0:
             return 1
     else:
+        cmd = './' + component[1] +'  --prefix=' + pathINS
         # only copy for windows platform build
         if component[0] == "x264":
             shutil.copy2(PWD+'shared/x264-config.guess', pathBLD + '/config.guess')
-        os.system('pwd')
-        cmd = './' + component[1] +'  --prefix=' + pathINS
+            cmd = 'CC=cl ' + cmd
+
         print ("running: " + cmd)
         ret=os.system(cmd)
         if ret != 0:
