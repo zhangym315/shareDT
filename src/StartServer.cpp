@@ -405,11 +405,16 @@ int StartCapture::initParsing(int argc, char * argv[])
     }
 
     /* create working directory */
-    if(!setWorkingDirectory()) {
-        std::cerr << "Failed to create HomePath: " << CapServerHome::instance()->getHome() << std::endl;
+    try {
+        if(!setWorkingDirectory()) {
+            std::cerr << "Failed to create HomePath: " << CapServerHome::instance()->getHome() << std::endl;
+            return RETURN_CODE_INTERNAL_ERROR;
+        }
+        _alivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
+    } catch (...) {
+        LOGGER.error() << "Failed to create working directory at HomePath=" << CapServerHome::instance()->getHome();
         return RETURN_CODE_INTERNAL_ERROR;
     }
-    _alivePath = CapServerHome::instance()->getHome() + PATH_ALIVE_FILE;
 
     return RETURN_CODE_SUCCESS;
 }

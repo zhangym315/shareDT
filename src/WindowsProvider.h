@@ -1,9 +1,9 @@
 #ifndef _WINDOWSPROVIDER_H_
 #define _WINDOWSPROVIDER_H_
 
-#include <iostream>
 #include "Thread.h"
 #include "ImageRect.h"
+#include <iostream>
 
 using namespace std;
 

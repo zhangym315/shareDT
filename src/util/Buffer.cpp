@@ -15,6 +15,8 @@ void FrameBuffer::setData(unsigned char * data, size_t w, size_t h, SPImageType 
 {
     size_t total;
 
+    _width = w;
+    _height = h;
     switch (type) {
     case SPImageType::SP_IMAGE_YUV420:
         total = w * h * 4;

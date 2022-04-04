@@ -1,5 +1,5 @@
-#ifndef _THREAD_H_
-#define _THREAD_H_
+#ifndef _THREAD_LOCAL_H_
+#define _THREAD_LOCAL_H_
 
 #include <thread>
 #include "Compiler.h"
@@ -30,4 +30,4 @@ class Thread : public std::thread {
     bool            _isRunning;
 };
 
-#endif //_THREAD_H_
+#endif //_THREAD_LOCAL_H_
