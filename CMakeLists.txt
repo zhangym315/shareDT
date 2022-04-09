@@ -84,6 +84,31 @@ install(DIRECTORY DESTINATION server/var/run/)
 # ShareDTClient
 install(TARGETS ${START_CLIENT} DESTINATION client/bin)
 
+
+
+##### Local Displayer
+set(SHAREDT_LOCAL_DISPLAYER localDisplayer)
+add_executable(${SHAREDT_LOCAL_DISPLAYER}
+                ${SHAREDT_SRC}/local/LocalDisplayer.cpp
+                ${SHAREDT_SRC}/local/LocalDisplayer.ui
+                ${SHAREDT_SRC_CLIENT}/qt/SDThread.cpp
+                ${SHAREDT_SERVER_SRC_COMMON}
+                )
+
+target_link_libraries(${SHAREDT_LOCAL_DISPLAYER}
+                        ${SHAREDT_CLIENT_QT_LIBS}
+                        ${${PROJECT_NAME}_PLATFORM_LIBS}
+
+                        ### TODO remove following linked libs
+                        ${LZMA_LIBRARIES}
+                        ${BZIP2_LIBRARIES}
+                        ${FFMPEG_REQUIRED_LIBS}
+                        vncserver
+                        ${X265_LIBRARIES}
+                        ${X264_LIBRARY}
+                )
+
+
 #### Testing #### Can't link gtest on Win32, skip win testing
 if(NOT WIN32)
 add_subdirectory( testing )

@@ -38,3 +38,4 @@ target_link_libraries(ffmpeg_encode_decode vncserver vncclient
 
 set(TESTING_CASES ffmpeg_encode_decode
         )
+

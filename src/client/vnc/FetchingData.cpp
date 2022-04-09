@@ -1,6 +1,8 @@
 #include "FetchingData.h"
 #include <png.h>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 #define rfbBackChannel 155
 
@@ -71,6 +73,7 @@ FetchingDataFromServer::~FetchingDataFromServer ()
 {
     rfbClientCleanup(_client);
 }
+using namespace std::chrono_literals;
 
 void FetchingDataFromServer::run ()
 {

@@ -3,6 +3,7 @@
 SDThread::SDThread()
 {
     _stopped = false;
+    _shutdown = false;
 }
 
 void SDThread::stop()

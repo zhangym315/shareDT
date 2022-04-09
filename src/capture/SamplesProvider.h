@@ -191,10 +191,10 @@ class SamplesProvider  {
         }
     }
 
-    /* default 20, should be configured */
-    SamplesProvider(CapMonitor & mon, unsigned int frequency) : SamplesProvider(20, mon, frequency) { }
-    SamplesProvider(CapWindow  & win, unsigned int frequency) : SamplesProvider(20, win, frequency) { }
-    SamplesProvider(CapImageRect & bd, CapMonitor & mon, unsigned int frequency) : SamplesProvider(20, bd, mon, frequency) { }
+    /* default 5, should be configured */
+    SamplesProvider(CapMonitor & mon, unsigned int frequency) : SamplesProvider(5, mon, frequency) { }
+    SamplesProvider(CapWindow  & win, unsigned int frequency) : SamplesProvider(5, win, frequency) { }
+    SamplesProvider(CapImageRect & bd, CapMonitor & mon, unsigned int frequency) : SamplesProvider(5, bd, mon, frequency) { }
 
     ~SamplesProvider () {
         _buffer.clear();

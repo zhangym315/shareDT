@@ -31,3 +31,4 @@ foreach(CASE IN LISTS TESTING_CASES)
   message(STATUS "ADDING TESTING CASE=${CASE}")
   add_test(${CASE} ${CASE})
 endforeach()
+
