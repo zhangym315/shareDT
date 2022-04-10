@@ -5,7 +5,8 @@
  *                                                       *
  *********************************************************/
 
-#include "StartServer.h"
+#include "CaptureServer.h"
+#include "Capture.h"
 #include "TypeDef.h"
 #include "MainConsole.h"
 #include "MainService.h"
@@ -165,7 +166,7 @@ static int mainRestart (const char ** cmdArg, const struct cmdConf * conf)
  */
 static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
-    StartCapture cap;
+    CaptureServer cap;
     char ** argv = const_cast<char **>(conf->argv);
     if (cap.initParsing(conf->argc, argv) == RETURN_CODE_INVALID_ARG)
         return RETURN_CODE_INVALID_ARG;
@@ -213,7 +214,7 @@ static int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 {
     (void) cmdArg;
-    StartCapture cap;
+    CaptureServer cap;
     char ** argv = const_cast<char **>(conf->argv);
     int ret = cap.initParsing(conf->argc, argv) ||
               cap.initSrceenProvider() ||
@@ -251,7 +252,7 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
 static int mainShow (const char ** cmdArg, const struct cmdConf * conf)
 {
     (void) cmdArg;
-    StartCapture cap;
+    Capture cap;
     int ret;
 
     if( (ret=cap.initParsing(conf->argc, const_cast<char **>(conf->argv)) == RETURN_CODE_SUCCESS_SHO) ||
@@ -266,7 +267,7 @@ static int noDaemon (const char ** cmdArg, const struct cmdConf * conf)
 {
     (void) cmdArg;
     int ret;
-    StartCapture cap;
+    CaptureServer cap;
     char ** argv = const_cast<char **>(conf->argv);
     ret = cap.initParsing(conf->argc, argv) ||
           cap.initSrceenProvider() ||

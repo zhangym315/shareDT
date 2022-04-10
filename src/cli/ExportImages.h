@@ -3,11 +3,11 @@
 
 #include <png.h>
 #include "MainConsole.h"
-#include "StartServer.h"
+#include "Capture.h"
 
 extern int mainExport(const char ** cmdArg, const struct cmdConf * conf);
 
-class ExportImages final : public StartCapture {
+class ExportImages final : public Capture {
     enum Format { EXPORT_RGB, EXPORT_YUV, EXPORT_INVALID};
   public:
     enum EXPORTACTION { EXPORT_ALL, EXPORT_IMAGES, EXPORT_MP4 };

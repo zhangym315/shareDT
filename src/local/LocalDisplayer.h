@@ -6,7 +6,7 @@
 #include <QHoverEvent>
 
 #include "Thread.h"
-#include "StartServer.h"
+#include "Capture.h"
 #include "SDThread.h"
 #include "Buffer.h"
 #include "ui_LocalDisplayer.h"
@@ -41,7 +41,7 @@ signals:
 private:
     bool       _isInited;
     FrameBuffer *   _frame{};
-    StartCapture    _capture;
+    Capture    _capture;
 };
 
 class LocalDisplayer : public QWidget{

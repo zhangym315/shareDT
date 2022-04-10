@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 
-#include "StartServer.h"
+#include "Capture.h"
 #include "Sock.h"
 
 #define SERVICE_PIPE_SERVER "\\\\.\\pipe\\SamplePipe\\pipeServer"
@@ -113,7 +113,7 @@ public:
     int     getArgc() { return _argc; }
 
     bool hasWid() { return _hasWid; }
-    StartCapture & getSC() { return _sc; }
+    Capture & getSC() { return _sc; }
 
     bool isDaemon() { return _sc.isDaemon(); }
     void setDaemon() ;
@@ -123,7 +123,7 @@ private:
     char ** _argv;
     int     _argc;
     bool    _hasWid;
-    StartCapture _sc;
+    Capture _sc;
 };
 
 //extern static void setMainProcessServiceHome(const char * execpath);
