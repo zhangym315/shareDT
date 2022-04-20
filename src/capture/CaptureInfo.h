@@ -1,5 +1,5 @@
 #include "WindowProcessor.h"
-
+#include <atomic>
 /*
  * Singleton to provide the capture info
  */
