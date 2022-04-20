@@ -55,11 +55,10 @@ void FetchingDataThread::run()
 
 LocalDisplayer::LocalDisplayer (int argc, char ** argv, QWidget *parent) :
         QWidget (parent),
+        _ui(new Ui::LocalDisplayer),
         _fetcher(new FetchingDataThread(argc, argv))
 {
-    if (_fetcher->isInited()) return;
-
-    _ui = new Ui::LocalDisplayer;
+    if (!_fetcher->isInited()) return;
 
     _ui->setupUi (this);
 
