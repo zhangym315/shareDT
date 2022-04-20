@@ -59,25 +59,28 @@ void CommandChecker::mainImp()
 
 void Capture::Usage ()
 {
+    String instanceName = _ctype == C_LOCALDISPLAYER ? "LocalDisplayer" : "ShareDTServer";
     std::cerr << "--help                       Help message"  << std::endl;
     std::cerr << "\n";
-    std::cerr << "The following options related with StartServer option"  << std::endl;
+    std::cerr << "The following options related with "<< instanceName << " option"  << std::endl;
     std::cerr << "-c or --capture win/mon/part Capture method(single windows, monitor or partial)"  << std::endl;
     std::cerr << "-n or --name    capture-name Capture name for window or monitor(only applied to win and mon capture"  << std::endl;
     std::cerr << "                             For window capture (-capture win), name is the handler of win," << std::endl;
     std::cerr << "                             you can find the handler by -s/-showhandler option" << std::endl;
     std::cerr << "-h or --handler handler      The handler for windows capture" << std::endl;
     std::cerr << "-b or --bounds  t,l,r,b      Capture bounds for partial, top left right and bottom" << std::endl;
-    std::cerr << "-s [window/win mon/monitor]  Show the window(default) or monitor if [mon/montior] specified " << std::endl;
-    std::cerr << "                             If show window, window that doesn't have name would not be printed" << std::endl;
-    std::cerr << "-showall                     Show all of the window even without window names" << std::endl;
     std::cerr << "-i or --id ID                For monitor capture, capture the specific monitor id" << std::endl;
     std::cerr << "-p or --process pid          For window capture (-capture win), capture the specific process id's window" << std::endl;
     std::cerr << "                             This option can overwrite -n/-name" << std::endl;
+    std::cerr << "-s [window/win mon/monitor]  Show the window(default) or monitor if [mon/montior] specified " << std::endl;
+    std::cerr << "                             If show window, window that doesn't have name would not be printed" << std::endl;
+    std::cerr << "--showall                    Show all of the window even without window names" << std::endl;
+if (_ctype != C_LOCALDISPLAYER) {
     std::cerr << "--daemon                     Running in daemon mode" << std::endl;
     std::cerr << "--wid                        Specify the working id (wid) of the capture server. If not" << std::endl;
     std::cerr << "                             sepcified, ShareDTServer will generate a random wid for it." << std::endl;
-    std::cerr << "\n";
+}
+    std::cerr << std::endl;
 }
 
 Capture::CType Capture::getCType()
@@ -143,25 +146,28 @@ int Capture::parseArgs(const vector<String> & args)
 {
     /* parse argument that belongs to StartServer */
     for (auto i = args.begin(); i != args.end(); ++i) {
-        if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
-            _ctype = C_NEWCAPTURE;
-        } else if (*i == SHAREDT_SERVER_COMMAND_STOP) {
-            if((i+1) != args.end() && *(i+1) == "all")
-                _ctype = C_STOP_ALL_SC;
-            else
-                _ctype = C_STOP;
-        } else if (*i == SHAREDT_SERVER_COMMAND_START) {
-            _ctype = C_START;
-        } else if (*i == SHAREDT_SERVER_COMMAND_RESTART) {
-            _ctype = C_RESTART;
-        } else if (*i == SHAREDT_SERVER_COMMAND_SHOW) {
-            _ctype = C_SHOW;
-        } else if (*i == SHAREDT_SERVER_COMMAND_STATUS) {
-            _ctype = C_STATUS;
-        } else if (*i == SHAREDT_SERVER_COMMAND_EXPORT) {
-            _ctype = C_EXPORT;
+        if (_ctype == C_NONE) {
+            if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
+                _ctype = C_NEWCAPTURE;
+            } else if (*i == SHAREDT_SERVER_COMMAND_STOP) {
+                if((i+1) != args.end() && *(i+1) == "all")
+                    _ctype = C_STOP_ALL_SC;
+                else
+                    _ctype = C_STOP;
+            } else if (*i == SHAREDT_SERVER_COMMAND_START) {
+                _ctype = C_START;
+            } else if (*i == SHAREDT_SERVER_COMMAND_RESTART) {
+                _ctype = C_RESTART;
+            } else if (*i == SHAREDT_SERVER_COMMAND_SHOW) {
+                _ctype = C_SHOW;
+            } else if (*i == SHAREDT_SERVER_COMMAND_STATUS) {
+                _ctype = C_STATUS;
+            } else if (*i == SHAREDT_SERVER_COMMAND_EXPORT) {
+                _ctype = C_EXPORT;
+            }
         }
-        else if (*i == "--help") {
+
+        if (*i == "--help") {
             Usage ();
             rfbUsagePrint();
             return RETURN_CODE_INVALID_ARG;
@@ -196,11 +202,12 @@ int Capture::parseArgs(const vector<String> & args)
                 (*(i+1) == "mon" || *(i+1) == "monitor" )) {
                 i++;
                 _show = S_MONITOR;
-            } else {
-                if ((i+1) != args.end() &&
-                    (*(i+1) == "win" || *(i+1) == "windows" ))
+            } else if ((i+1) != args.end() &&
+                    (*(i+1) == "win" || *(i+1) == "windows" )) {
                     i++; /* eat the parameter */
-                _show = S_WIN_NAME; /* default to show the windows with name */
+                    _show = S_WIN_ALL;
+            } else {
+                _show = S_ALL; /* default to show the windows with name */
             }
         }
         /* get the bounds of the captured instance */
@@ -218,7 +225,7 @@ int Capture::parseArgs(const vector<String> & args)
             }
         }
         /* show all of the windows */
-        else if (*i == "-showall") {
+        else if (*i == "--showall") {
             _show = S_WIN_ALL;
         }
         /* monitor id */
@@ -375,8 +382,11 @@ int Capture::initParsing(int argc, char * argv[])
         return RETURN_CODE_SUCCESS_SHO;
     }
 
-    if((ret=parseType()) != RETURN_CODE_SUCCESS) return ret;
     /* Argument parsing is done here */
+    if((ret=parseType()) != RETURN_CODE_SUCCESS) return ret;
+
+    /* no need to setup HomePath for localDisplayer */
+    if (_ctype == C_LOCALDISPLAYER) return RETURN_CODE_SUCCESS;
 
     /* set home path */
     ShareDTHome::instance()->reSet(argv[0]);
@@ -512,7 +522,7 @@ bool Capture::parseWindows ()
 
 void Capture::show()
 {
-    if(_show == S_WIN_ALL || _show == S_WIN_NAME || _ctype == C_SHOW)
+    if(_show == S_WIN_ALL || _show == S_WIN_NAME || _show == S_ALL || _ctype == C_SHOW)
     {
         /*
          * _pid : -1, show all
@@ -528,7 +538,7 @@ void Capture::show()
 
     }
 
-    if (_show == S_MONITOR || _ctype == C_SHOW)
+    if (_show == S_MONITOR || _show == S_ALL || _ctype == C_SHOW)
     {
         MonitorVectorProvider mvp(true);
         std::cout << "\nMonitor Lists:" << std::endl;

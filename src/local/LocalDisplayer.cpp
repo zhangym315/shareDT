@@ -8,11 +8,11 @@ FetchingDataThread::FetchingDataThread(int argc, char **argv) :
         _isInited(false),
         _frame(nullptr)
 {
+    _capture.setCType(Capture::C_LOCALDISPLAYER);
     int ret = _capture.initParsing(argc, argv) ||
               _capture.initSrceenProvider();
 
     if (ret != RETURN_CODE_SUCCESS || _capture.getScreenProvide() == nullptr) {
-        LOGGER.error() << "FetchingDataThread failed to initParsing and initSreenProvider" ;
         return;
     }
 
@@ -55,9 +55,12 @@ void FetchingDataThread::run()
 
 LocalDisplayer::LocalDisplayer (int argc, char ** argv, QWidget *parent) :
         QWidget (parent),
-        _ui (new Ui::LocalDisplayer),
         _fetcher(new FetchingDataThread(argc, argv))
 {
+    if (_fetcher->isInited()) return;
+
+    _ui = new Ui::LocalDisplayer;
+
     _ui->setupUi (this);
 
     _ui->imageLabel->setText (QString("                                      "
@@ -161,8 +164,6 @@ main(int argc, char **argv)
     LocalDisplayer gui(argc, argv);
 
     if (!gui.isInited()) {
-        std::cerr << "Failed init localDisplayer" << std::endl;
-        std::cerr << std::endl;
         return -1;
     }
 

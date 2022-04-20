@@ -48,8 +48,8 @@ class Capture {
     int initSrceenProvider();
     int initParsing(int argc, char * argv[]);
 
-    enum SType { S_NONE, S_WIN_ALL, S_WIN_NAME, S_MONITOR };
-    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_STOP_ALL_SC, C_RESTART, C_SHOW, C_STATUS, C_EXPORT, C_NONE };
+    enum SType { S_NONE, S_WIN_ALL, S_WIN_NAME, S_MONITOR , S_ALL};
+    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_STOP_ALL_SC, C_RESTART, C_SHOW, C_STATUS, C_EXPORT, C_LOCALDISPLAYER, C_NONE };
 
     bool setWorkingDirectory();
     void initDaemon();
@@ -61,6 +61,7 @@ class Capture {
 
     const String & getAlivePath() { return _alivePath; }
     Capture::CType getCType();
+    void setCType(CType c) { _ctype = c; }
     void  removeAlivePath() const;
 
     [[nodiscard]] const String & getUserName() const { return _user; }
