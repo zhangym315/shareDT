@@ -84,7 +84,7 @@ The following options related with StartServer option
 -b or --bounds  t,l,r,b      Capture bounds for partial, top left right and bottom
 -s [window/win mon/monitor]  Show the window(default) or monitor if [mon/montior] specified
                              If show window, window that doesn't have name would not be printed
--showall                     Show all of the window even without window names
+--showall                     Show all of the window even without window names
 -i or --id ID                For monitor capture, capture the specific monitor id
 -p or --process pid          For window capture (-capture win), capture the specific process id's window
                              This option can overwrite -n/-name

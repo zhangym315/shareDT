@@ -1,6 +1,7 @@
 ##### ShareDTServer source
 set(SHAREDT_SERVER_SRC_COMMON
         ${CAPTURE_SRC}
+        ${CMAKE_SOURCE_DIR}/src/capture/Capture.cpp
         ${CMAKE_SOURCE_DIR}/src/capture/ImageRect.cpp
         ${CMAKE_SOURCE_DIR}/src/capture/WindowProcessor.cpp
         ${CMAKE_SOURCE_DIR}/src/capture/SamplesProvider.cpp
@@ -9,7 +10,6 @@ set(SHAREDT_SERVER_SRC_COMMON
 )
 
 set(SHAREDT_SERVER_SRC_COMMON
-        ${SHAREDT_SRC}/StartServer.cpp
         ${SHAREDT_SRC}/ScreenProvider.cpp
         ${SHAREDT_SRC}/MainService.cpp
         ${SHAREDT_SRC}/WindowsProvider.cpp
@@ -26,15 +26,16 @@ set(SHAREDT_SERVER_SRC_COMMON
         ${SHAREDT_SRC}/util/Pid.c
         ${SHAREDT_SRC}/util/TimeUtil.c
         ${SHAREDT_SERVER_SRC_COMMON}
-        ${SHAREDT_SRC}/input/InputInterface.cpp
 )
 
 set(SHAREDT_SERVER_SRC
         ${SHAREDT_SERVER_SRC_COMMON}
+        ${SHAREDT_SRC}/CaptureServer.cpp
         ${SHAREDT_SRC}/ffmpeg/ReadWriteVideo.c
         ${SHAREDT_SRC}/ffmpeg/ReadWriteImages.c
         ${SHAREDT_SRC}/cli/ExportImages.cpp
         ${SHAREDT_SRC}/MainConsole.cpp
+        ${SHAREDT_SRC}/input/InputInterface.cpp
 )
 
 set(SHAREDT_SERVER_INCLUDE

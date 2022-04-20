@@ -67,7 +67,7 @@ int ExportImages::initOptions(int argc, char ** argv)
     if (action() == EXPORT_ALL)
         setWID(ALL_EXPORT_NAME);
 
-    if ((ret = StartCapture::initParsing(argc, argv)) == RETURN_CODE_SUCCESS)
+    if ((ret = Capture::initParsing(argc, argv)) == RETURN_CODE_SUCCESS)
         return RETURN_CODE_SUCCESS;
 
     return ret;

@@ -178,7 +178,7 @@ static void statusAllSC (
 void HandleCommandSocket(Socket * sk, char * buf)
 {
     String wid;
-    StartCapture::CType commandType;
+    Capture::CType commandType;
     /* start handle particular --wid specified or start new capture server */
     HandleCommandLine hcl(buf);
 
@@ -191,17 +191,17 @@ void HandleCommandSocket(Socket * sk, char * buf)
     const String & capServerHome = hcl.getSC().getCapServerPath();
 
     /* 0. check if status command */
-    if( commandType == StartCapture::C_STATUS )
+    if( commandType == Capture::C_STATUS )
     {
         return statusAllSC(sk, hcl);
     }
 
     /* 1. first check stop specific wid */
-    if( commandType == StartCapture::C_STOP )
+    if( commandType == Capture::C_STOP )
     {
         return stopSpecificCaptureServer(sk, hcl);
     }
-    if( commandType == StartCapture::C_STOP_ALL_SC)
+    if( commandType == Capture::C_STOP_ALL_SC)
     {
         stopAllSC();
         sk->send("All Capture Server are stopped.");
@@ -219,7 +219,7 @@ void HandleCommandSocket(Socket * sk, char * buf)
      * 2. Starting capture server
      * 2.1 First make sure there is no "start" and "started" file under it.
      */
-    if( (commandType == StartCapture::C_START || commandType == StartCapture::C_NEWCAPTURE) &&
+    if( (commandType == Capture::C_START || commandType == Capture::C_NEWCAPTURE) &&
         (it == _WIDManager.end() || it->second.status() != MainManagementProcess::STATUS::STARTED) ) {
         String start = capServerHome + String(CAPTURE_SERVER_START);
         String started = capServerHome + String(CAPTURE_SERVER_STARTED);

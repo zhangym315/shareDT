@@ -9,12 +9,13 @@
 #include "WindowProcessor.h"
 #include "ImageRect.h"
 #include "SamplesProvider.h"
-#include "StartServer.h"
+#include "Capture.h"
 #include "Daemon.h"
 #include "Logger.h"
 #include "Enum.h"
 #include "MainConsole.h"
 #include "InputInterface.h"
+#include "CaptureInfo.h"
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -28,8 +29,6 @@
 #define SERVERNAME "SHAREDT SERVER"
 #define MAX_RAND_LENGTH 10
 
-bool _isServerRunning = false;
-
 static const char *SPTypePrefix[] =
 {
     "ALLMONITOR"
@@ -38,24 +37,6 @@ static const char *SPTypePrefix[] =
     , "PARTIAL"
     , "NULL"
 };
-
-void ReadWriteFDThread::mainImp()
-{
-    char * inputBuf;
-    LOGGER.info() << "Waiting request on: '" << _path << "'";
-
-    while(true)
-    {
-        inputBuf = read();
-
-        LOGGER.info() << "Requests: '" << inputBuf << "' received on: '" << _path << "'";
-        if(!strcmp(inputBuf, CAPTURE_STOPPING)) {
-            _isServerRunning = false;
-            LOGGER.info() << "Stopping capture server";
-            break;
-        }
-    }
-}
 
 void CommandChecker::mainImp()
 {
@@ -73,38 +54,41 @@ void CommandChecker::mainImp()
     ofs.close();
 
     LOGGER.info() << "Stopping CaptureServer request recieved";
-    _isServerRunning = false;
+    CaptureInfo::instance()->setIsRunning(false);
 }
 
-void StartCapture::Usage ()
+void Capture::Usage ()
 {
+    String instanceName = _ctype == C_LOCALDISPLAYER ? "LocalDisplayer" : "ShareDTServer";
     std::cerr << "--help                       Help message"  << std::endl;
     std::cerr << "\n";
-    std::cerr << "The following options related with StartServer option"  << std::endl;
+    std::cerr << "The following options related with "<< instanceName << " option"  << std::endl;
     std::cerr << "-c or --capture win/mon/part Capture method(single windows, monitor or partial)"  << std::endl;
     std::cerr << "-n or --name    capture-name Capture name for window or monitor(only applied to win and mon capture"  << std::endl;
     std::cerr << "                             For window capture (-capture win), name is the handler of win," << std::endl;
     std::cerr << "                             you can find the handler by -s/-showhandler option" << std::endl;
     std::cerr << "-h or --handler handler      The handler for windows capture" << std::endl;
     std::cerr << "-b or --bounds  t,l,r,b      Capture bounds for partial, top left right and bottom" << std::endl;
-    std::cerr << "-s [window/win mon/monitor]  Show the window(default) or monitor if [mon/montior] specified " << std::endl;
-    std::cerr << "                             If show window, window that doesn't have name would not be printed" << std::endl;
-    std::cerr << "-showall                     Show all of the window even without window names" << std::endl;
     std::cerr << "-i or --id ID                For monitor capture, capture the specific monitor id" << std::endl;
     std::cerr << "-p or --process pid          For window capture (-capture win), capture the specific process id's window" << std::endl;
     std::cerr << "                             This option can overwrite -n/-name" << std::endl;
+    std::cerr << "-s [window/win mon/monitor]  Show the window(default) or monitor if [mon/montior] specified " << std::endl;
+    std::cerr << "                             If show window, window that doesn't have name would not be printed" << std::endl;
+    std::cerr << "--showall                    Show all of the window even without window names" << std::endl;
+if (_ctype != C_LOCALDISPLAYER) {
     std::cerr << "--daemon                     Running in daemon mode" << std::endl;
     std::cerr << "--wid                        Specify the working id (wid) of the capture server. If not" << std::endl;
     std::cerr << "                             sepcified, ShareDTServer will generate a random wid for it." << std::endl;
-    std::cerr << "\n";
+}
+    std::cerr << std::endl;
 }
 
-StartCapture::CType StartCapture::getCType()
+Capture::CType Capture::getCType()
 {
     return _ctype;
 }
 
-void StartCapture::removeAlivePath() const
+void Capture::removeAlivePath() const
 {
     std::remove(_alivePath.c_str());
     LOGGER.info() << "Removed listening file: " << _alivePath;
@@ -158,31 +142,34 @@ static int getValueWithQuote(vector<String>::const_iterator start,
  * Return 0 for success
  * Others for failure
  */
-int StartCapture::parseArgs(const vector<String> & args)
+int Capture::parseArgs(const vector<String> & args)
 {
     /* parse argument that belongs to StartServer */
     for (auto i = args.begin(); i != args.end(); ++i) {
-        if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
-            _ctype = C_NEWCAPTURE;
-        } else if (*i == SHAREDT_SERVER_COMMAND_STOP) {
-            if((i+1) != args.end() && *(i+1) == "all")
-                _ctype = C_STOP_ALL_SC;
-            else
-                _ctype = C_STOP;
-        } else if (*i == SHAREDT_SERVER_COMMAND_START) {
-            _ctype = C_START;
-        } else if (*i == SHAREDT_SERVER_COMMAND_RESTART) {
-            _ctype = C_RESTART;
-        } else if (*i == SHAREDT_SERVER_COMMAND_SHOW) {
-            _ctype = C_SHOW;
-        } else if (*i == SHAREDT_SERVER_COMMAND_STATUS) {
-            _ctype = C_STATUS;
-        } else if (*i == SHAREDT_SERVER_COMMAND_EXPORT) {
-            _ctype = C_EXPORT;
+        if (_ctype == C_NONE) {
+            if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
+                _ctype = C_NEWCAPTURE;
+            } else if (*i == SHAREDT_SERVER_COMMAND_STOP) {
+                if((i+1) != args.end() && *(i+1) == "all")
+                    _ctype = C_STOP_ALL_SC;
+                else
+                    _ctype = C_STOP;
+            } else if (*i == SHAREDT_SERVER_COMMAND_START) {
+                _ctype = C_START;
+            } else if (*i == SHAREDT_SERVER_COMMAND_RESTART) {
+                _ctype = C_RESTART;
+            } else if (*i == SHAREDT_SERVER_COMMAND_SHOW) {
+                _ctype = C_SHOW;
+            } else if (*i == SHAREDT_SERVER_COMMAND_STATUS) {
+                _ctype = C_STATUS;
+            } else if (*i == SHAREDT_SERVER_COMMAND_EXPORT) {
+                _ctype = C_EXPORT;
+            }
         }
-        else if (*i == "--help") {
+
+        if (*i == "--help") {
             Usage ();
-            rfbUsage();
+            rfbUsagePrint();
             return RETURN_CODE_INVALID_ARG;
         } else if (*i == "--capture" || *i == "-c" || *i == "--cap") {
             if(_type != SP_NULL) {
@@ -215,11 +202,12 @@ int StartCapture::parseArgs(const vector<String> & args)
                 (*(i+1) == "mon" || *(i+1) == "monitor" )) {
                 i++;
                 _show = S_MONITOR;
-            } else {
-                if ((i+1) != args.end() &&
-                    (*(i+1) == "win" || *(i+1) == "windows" ))
+            } else if ((i+1) != args.end() &&
+                    (*(i+1) == "win" || *(i+1) == "windows" )) {
                     i++; /* eat the parameter */
-                _show = S_WIN_NAME; /* default to show the windows with name */
+                    _show = S_WIN_ALL;
+            } else {
+                _show = S_ALL; /* default to show the windows with name */
             }
         }
         /* get the bounds of the captured instance */
@@ -237,7 +225,7 @@ int StartCapture::parseArgs(const vector<String> & args)
             }
         }
         /* show all of the windows */
-        else if (*i == "-showall") {
+        else if (*i == "--showall") {
             _show = S_WIN_ALL;
         }
         /* monitor id */
@@ -280,7 +268,7 @@ int StartCapture::parseArgs(const vector<String> & args)
     return RETURN_CODE_SUCCESS;
 }
 
-bool StartCapture::setWorkingDirectory()
+bool Capture::setWorkingDirectory()
 {
     String wPath; // working path
     wPath.append(ShareDTHome::instance()->getHome());
@@ -303,11 +291,11 @@ bool StartCapture::setWorkingDirectory()
     return true;
 }
 
-String & StartCapture::setAndGetWID()
+String & Capture::setAndGetWID()
 {
     _wID.clear ();
 
-    if ( _ctype == StartCapture::C_EXPORT ) {
+    if ( _ctype == Capture::C_EXPORT ) {
         _wID.append ("EXPORT_");
     }
 
@@ -348,7 +336,7 @@ String & StartCapture::setAndGetWID()
 /*
  * Init variable for daemon mode
  */
-void StartCapture::initDaemon()
+void Capture::initDaemon()
 {
     String captureLog = CapServerHome::instance()->getHome() + PATH_CAPTURE_LOG;
     LOGGER.setLogFile(captureLog.c_str());
@@ -374,7 +362,7 @@ void StartCapture::initDaemon()
 #endif
 }
 
-int StartCapture::initParsing(int argc, char * argv[])
+int Capture::initParsing(int argc, char * argv[])
 {
     if(argc <= 0)
         return RETURN_CODE_INVALID_ARG;
@@ -394,8 +382,11 @@ int StartCapture::initParsing(int argc, char * argv[])
         return RETURN_CODE_SUCCESS_SHO;
     }
 
-    if((ret=parseType()) != RETURN_CODE_SUCCESS) return ret;
     /* Argument parsing is done here */
+    if((ret=parseType()) != RETURN_CODE_SUCCESS) return ret;
+
+    /* no need to setup HomePath for localDisplayer */
+    if (_ctype == C_LOCALDISPLAYER) return RETURN_CODE_SUCCESS;
 
     /* set home path */
     ShareDTHome::instance()->reSet(argv[0]);
@@ -419,17 +410,17 @@ int StartCapture::initParsing(int argc, char * argv[])
     return RETURN_CODE_SUCCESS;
 }
 
-StartCapture::~StartCapture()
+Capture::~Capture()
 {
 }
 
 /*
- * Set parameter to StartCapture
+ * Set parameter to Capture
  * Return code:
  *  RETURN_CODE_SUCCESS: set successfully, needs to continue
  *  Others: Can exit program
  */
-int StartCapture::initSrceenProvider()
+int Capture::initSrceenProvider()
 {
     if( _daemon )
         initDaemon();
@@ -454,7 +445,7 @@ int StartCapture::initSrceenProvider()
     else if (_type == SP_NULL) {
         Usage();
 
-        if (_ctype != StartCapture::C_EXPORT) rfbUsage();
+        if (_ctype != Capture::C_EXPORT) rfbUsagePrint();
         return RETURN_CODE_INVALID_ARG;
     }
 
@@ -465,23 +456,9 @@ int StartCapture::initSrceenProvider()
     }
 
     return RETURN_CODE_SUCCESS;
-}  /* end of StartCapture init/constructor */
+}  /* end of Capture init/constructor */
 
-int StartCapture::initRFBServer(int argc, char *argv[])
-{
-    /* init rfb server */
-    _rfbserver = rfbGetScreen(&argc, argv,
-                              _sp->getBounds ().getWidth (),
-                              _sp->getBounds ().getHeight(), 8, 4, 4);
-    if (!_rfbserver) {
-        LOGGER.error() << "Failed to create RFB server";
-        return RETURN_CODE_INVALID_RFB;
-    }
-    _rfbserver->desktopName = SERVERNAME;
-    return RETURN_CODE_SUCCESS;
-}
-
-int  StartCapture::parseType ()
+int  Capture::parseType ()
 {
     if ((_type == SP_PARTIAL && !parseBounds()) ||
         (_type == SP_WINDOW && !parseWindows()))
@@ -496,7 +473,7 @@ int  StartCapture::parseType ()
  * If the format is not correct, return the default
  *    rect(0, 0, 1024, 1024)
  */
-bool StartCapture::parseBounds()
+bool Capture::parseBounds()
 {
     std::istringstream iss( _name );
 
@@ -527,7 +504,7 @@ bool StartCapture::parseBounds()
  * Return false if win handler can't be found
  *        Or input is NOT int
  */
-bool StartCapture::parseWindows ()
+bool Capture::parseWindows ()
 {
     int handler;
 
@@ -543,9 +520,9 @@ bool StartCapture::parseWindows ()
     return true;
 }
 
-void StartCapture::show()
+void Capture::show()
 {
-    if(_show == S_WIN_ALL || _show == S_WIN_NAME || _ctype == C_SHOW)
+    if(_show == S_WIN_ALL || _show == S_WIN_NAME || _show == S_ALL || _ctype == C_SHOW)
     {
         /*
          * _pid : -1, show all
@@ -561,7 +538,7 @@ void StartCapture::show()
 
     }
 
-    if (_show == S_MONITOR || _ctype == C_SHOW)
+    if (_show == S_MONITOR || _show == S_ALL || _ctype == C_SHOW)
     {
         MonitorVectorProvider mvp(true);
         std::cout << "\nMonitor Lists:" << std::endl;
@@ -578,101 +555,4 @@ void StartCapture::show()
                       << "\tscale: " << mon.getScale() << std::endl;
         }
     }
-}
-
-int StartCapture::getVNCClientCount(struct _rfbClientRec* head)
-{
-    int ret = 0 ;
-    struct _rfbClientRec * ptr = head;
-
-    while (ptr && ptr->next != head)
-    {
-        ret ++;
-        ptr = ptr->next;
-    }
-
-    return ret;
-}
-
-/*
- * Init RFB server
- * Start capture and send data to client
- **/
-void StartCapture::startCaptureServer()
-{
-    int preConnected = 0;
-    int currentConnected = 0;
-
-    if (_sp == NULL) {
-        LOGGER.error() << "Failed to start server";
-        return ;
-    }
-
-    if(!_sp->startSample()) {
-        LOGGER.error() << "Failed to start SampleProvider" ;
-        return ;
-    }
-
-    /* start new thread to get command from MMP(MainManagementProcess)  */
-    _isServerRunning = true;
-
-    CommandChecker cc(CapServerHome::instance()->getHome());
-    cc.go();
-
-    /* init rfb server to listen on */
-    rfbInitServer(_rfbserver);
-
-    int indicator = 0;
-    while(!_sp->isSampleReady() && ++indicator < 100) {
-        std::this_thread::sleep_for(50ms);
-    }
-    if (!_sp->isSampleReady()) return;
-
-    FrameBuffer * fb;
-
-    /* loop through events */
-    rfbMarkRectAsModified(_rfbserver, 0, 0,
-                         _sp->getWidth(), _sp->getHeight());
-
-    _rfbserver->ptrAddEvent = ptrServerMouseEvent;
-    _rfbserver->kbdAddEvent = kbdServerKeyEvent;
-
-    LOGGER.info() << "Started CaptureServer with width=" <<  _sp->getWidth()
-                    << " height=" << _sp->getHeight();
-    while (rfbIsActive(_rfbserver) && _isServerRunning)
-    {
-        rfbProcessEvents(_rfbserver, 10000);
-
-        /*
-         * Check connected client
-         * If no connected client, pause the SamplesProvider
-         * Else, resume SamplesProvider
-         */
-        currentConnected = getVNCClientCount(_rfbserver->clientHead);
-        if(preConnected != currentConnected) {
-            LOGGER.info() << "Current connected clients: " << currentConnected ;
-
-            /* new state, no connected clients */
-            if(currentConnected == 0 && !_sp->isSamplePaused()) {
-                _sp->samplePause ();
-            }
-            /* new state, start sample capturing */
-            else if (preConnected==0 && _sp->isSamplePaused())
-                _sp->sampleResume();
-            preConnected = currentConnected;
-        }
-        if(currentConnected == 0) continue;
-
-        /* get frame buffer and sync to clients */
-        fb = _sp->getFrameBuffer();
-        if(!fb) {
-            continue;
-        }
-        _rfbserver->frameBuffer = (char *) fb->getData();
-
-        rfbMarkRectAsModified(_rfbserver, 0, 0,
-                            _sp->getWidth(), _sp->getHeight());
-    }
-
-    removeAlivePath();
 }

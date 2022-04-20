@@ -96,17 +96,9 @@ add_executable(${SHAREDT_LOCAL_DISPLAYER}
                 )
 
 target_link_libraries(${SHAREDT_LOCAL_DISPLAYER}
-                        ${SHAREDT_CLIENT_QT_LIBS}
-                        ${${PROJECT_NAME}_PLATFORM_LIBS}
-
-                        ### TODO remove following linked libs
-                        ${LZMA_LIBRARIES}
-                        ${BZIP2_LIBRARIES}
-                        ${FFMPEG_REQUIRED_LIBS}
-                        vncserver
-                        ${X265_LIBRARIES}
-                        ${X264_LIBRARY}
-                )
+                      ${SHAREDT_CLIENT_QT_LIBS}
+                      ${${PROJECT_NAME}_PLATFORM_LIBS}
+         )
 
 
 #### Testing #### Can't link gtest on Win32, skip win testing
