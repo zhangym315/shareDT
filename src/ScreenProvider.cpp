@@ -89,7 +89,12 @@ void ScreenProviderWindow::init()
 void ScreenProviderMonitor::init(unsigned int frequency)
 {
     MonitorVectorProvider mvp(true, true);
-    mvp.getMonByID(_id, _monitor);
+    if (_id != -1) {
+        mvp.getMonByID(_id, _monitor);
+    } else {
+        _monitor = *(mvp.get().begin());
+    }
+
     CaptureInfo::instance()->setCapMonitor(_monitor);
     _samp = new SamplesProvider(_monitor, frequency);
     setBounds(0, _monitor.getOrgWidth(), 0, _monitor.getOrgHeight());
@@ -99,6 +104,12 @@ ScreenProviderMonitor::ScreenProviderMonitor(int id, unsigned int frequency)
     : ScreenProvider(SP_MONITOR)
 {
     _id = id;
+    init(frequency);
+}
+
+ScreenProviderMonitor::ScreenProviderMonitor(unsigned frequency)
+    : _id(-1), ScreenProvider(SP_MONITOR)
+{
     init(frequency);
 }
 

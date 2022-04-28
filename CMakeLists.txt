@@ -87,7 +87,7 @@ install(TARGETS ${START_CLIENT} DESTINATION client/bin)
 
 
 ##### Local Displayer
-set(SHAREDT_LOCAL_DISPLAYER localDisplayer)
+set(SHAREDT_LOCAL_DISPLAYER LocalDisplayer)
 add_executable(${SHAREDT_LOCAL_DISPLAYER}
                 ${SHAREDT_SRC}/local/LocalDisplayer.cpp
                 ${SHAREDT_SRC}/local/LocalDisplayer.ui
@@ -100,6 +100,10 @@ target_link_libraries(${SHAREDT_LOCAL_DISPLAYER}
                       ${${PROJECT_NAME}_PLATFORM_LIBS}
          )
 
+
+if(APPLE)
+    install(TARGETS ${SHAREDT_LOCAL_DISPLAYER} DESTINATION LocalDisplayer.app/Contents/MacOS)
+endif()
 
 #### Testing #### Can't link gtest on Win32, skip win testing
 if(NOT WIN32)

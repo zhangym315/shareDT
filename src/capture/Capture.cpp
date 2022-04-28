@@ -442,10 +442,13 @@ int Capture::initSrceenProvider()
     else if (_type == SP_MONITOR) {
         _sp = new ScreenProviderMonitor(_monID, _frequency);
     }
+    else if (_ctype == C_LOCALDISPLAYER && _type == SP_NULL) {
+        _type = SP_MONITOR;
+        _sp = new ScreenProviderMonitor(_frequency);
+    }
     else if (_type == SP_NULL) {
         Usage();
-
-        if (_ctype != Capture::C_EXPORT) rfbUsagePrint();
+        rfbUsagePrint();
         return RETURN_CODE_INVALID_ARG;
     }
 

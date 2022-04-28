@@ -4,6 +4,10 @@
 #include <QObject>
 #include <chrono>
 
+#ifdef __SHAREDT_WIN__
+#include <windows.h>
+#endif
+
 FetchingDataThread::FetchingDataThread(int argc, char **argv) :
         _isInited(false),
         _frame(nullptr)
@@ -67,6 +71,8 @@ LocalDisplayer::LocalDisplayer (int argc, char ** argv, QWidget *parent) :
 
     QObject::connect (_fetcher, SIGNAL(sendRect(FrameBuffer*)),
                       this, SLOT(putImage(FrameBuffer*)));
+    QObject::connect (_ui->actionFix_to_ratio_width_height, SIGNAL(triggered()),
+                      this, SLOT(actionFixRatioWidthHeight()));
     QObject::connect (_ui->actionAdjust_to_original_size, SIGNAL(triggered()),
                       this, SLOT(actionAdjustToOriginSize()));
 
@@ -135,6 +141,15 @@ void LocalDisplayer::actionAdjustToOriginSize()
     _winSize.ratioY = RATIO_PRECISION;
 }
 
+void LocalDisplayer::actionFixRatioWidthHeight()
+{
+    _winSize.curSize = _winSize.oriSize;
+    _winSize.isResized = true;
+
+    _winSize.ratioX = RATIO_PRECISION;
+    _winSize.ratioY = RATIO_PRECISION;
+}
+
 void LocalDisplayer::startFetcher()
 {
     _winSize.oriSize.setWidth(_fetcher->getScreenProvide()->getWidth());
@@ -159,6 +174,10 @@ void LocalDisplayer::closeEvent (QCloseEvent *event)
 int
 main(int argc, char **argv)
 {
+#ifdef __SHAREDT_WIN__
+    ::ShowWindow(::GetConsoleWindow(), SW_HIDE ); //hide console window
+#endif
+
     QApplication app(argc, argv);
     LocalDisplayer gui(argc, argv);
 

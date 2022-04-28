@@ -20,6 +20,7 @@ struct MainWindowResized {
 
     int ratioX = RATIO_PRECISION;     /* Ratio of original to X */
     int ratioY = RATIO_PRECISION;     /* Ratio of original to Y */
+    int ratioX_Y;
 };
 
 class FetchingDataThread : public SDThread {
@@ -68,6 +69,7 @@ private:
 public slots:
     void putImage(FrameBuffer * data);
     void actionAdjustToOriginSize();
+    void actionFixRatioWidthHeight();
 };
 
 #endif //SHAREDT_LOCALDISPLAYER_H
