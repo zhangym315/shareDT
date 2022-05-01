@@ -105,6 +105,19 @@ if(APPLE)
     install(TARGETS ${SHAREDT_LOCAL_DISPLAYER} DESTINATION LocalDisplayer.app/Contents/MacOS)
 endif()
 
+##### ShareDTWindow
+set(SHAREDT_MAIN_WINDOW ShareDT)
+add_executable(${SHAREDT_MAIN_WINDOW}
+        ${SHAREDT_SRC}/main/MainWindow.cpp
+        ${SHAREDT_SERVER_SRC_COMMON}
+        )
+
+target_link_libraries(${SHAREDT_MAIN_WINDOW}
+        ${SHAREDT_CLIENT_QT_LIBS}
+        ${${PROJECT_NAME}_PLATFORM_LIBS}
+        )
+
+
 #### Testing #### Can't link gtest on Win32, skip win testing
 if(NOT WIN32)
 add_subdirectory( testing )
