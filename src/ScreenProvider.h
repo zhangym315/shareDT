@@ -85,6 +85,7 @@ class ScreenProviderWindow final : public ScreenProvider {
 
 class ScreenProviderMonitor final : public ScreenProvider {
   public:
+    ScreenProviderMonitor(unsigned int frequency);
     ScreenProviderMonitor(int id, unsigned int frequency) ;
     void init(unsigned int frequency);
 

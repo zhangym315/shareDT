@@ -71,6 +71,7 @@
                 <property name="title">
                     <string>Window</string>
                 </property>
+                <addaction name="actionFix_to_ratio_width_height"/>
                 <addaction name="actionAdjust_to_original_size"/>
             </widget>
             <widget class="QMenu" name="menuHelp">
@@ -86,6 +87,11 @@
         <action name="actionnew">
             <property name="text">
                 <string>new</string>
+            </property>
+        </action>
+        <action name="actionFix_to_ratio_width_height">
+            <property name="text">
+                <string>Fixed width and height ratio</string>
             </property>
         </action>
         <action name="actionAdjust_to_original_size">
