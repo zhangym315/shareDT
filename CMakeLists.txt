@@ -109,6 +109,7 @@ endif()
 set(SHAREDT_MAIN_WINDOW ShareDT)
 add_executable(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_SRC}/main/MainWindow.cpp
+        ${SHAREDT_SRC}/main/Layout.cpp
         ${SHAREDT_SERVER_SRC_COMMON}
         )
 

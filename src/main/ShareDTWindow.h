@@ -1,6 +1,8 @@
 #ifndef SHAREDT_WINDOW_H
 #define SHAREDT_WINDOW_H
 
+#include "Layout.h"
+
 #include <QtCore/QVariant>
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
@@ -8,23 +10,28 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QWidget>
+#include <QScrollArea>
 
 QT_BEGIN_NAMESPACE
 
 #define MAIN_WIN_W 800
 #define MAIN_WIN_H 600
 
-class Ui_ShareDTWindow
+class UI_ShareDTWindow
 {
 public:
     QAction *actionnew;
     QAction *actionFix_to_ratio_width_height;
     QAction *actionAdjust_to_original_size;
     QAction *actionShow_help;
-    QWidget *horizontalLayoutWidget;
-    QHBoxLayout *horizontalLayout;
+    QWidget *imagesLayout;
+    FlowLayout *horizontalLayout;
     QLabel *imageLabel;
+    QLabel *imageLabel1;
+    QLabel *imageLabel2;
+    QLabel *imageLabel3;
     QMenuBar *menubar;
     QMenu *menuEdit;
     QMenu *menuWindow;
@@ -43,13 +50,13 @@ public:
         actionAdjust_to_original_size->setObjectName(QString::fromUtf8("actionAdjust_to_original_size"));
         actionShow_help = new QAction(ShareDTWindow);
         actionShow_help->setObjectName(QString::fromUtf8("actionShow_help"));
-        horizontalLayoutWidget = new QWidget(ShareDTWindow);
-        horizontalLayoutWidget->setObjectName(QString::fromUtf8("horizontalLayoutWidget"));
-        horizontalLayoutWidget->setGeometry(QRect(0, 0, 800, 600));
-        horizontalLayout = new QHBoxLayout(horizontalLayoutWidget);
-        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
-        horizontalLayout->setContentsMargins(0, 0, 0, 0);
-        imageLabel = new QLabel(horizontalLayoutWidget);
+
+        imagesLayout = new QWidget(ShareDTWindow);
+        imagesLayout->setObjectName(QString::fromUtf8("imagesLayout"));
+        imagesLayout->setGeometry(QRect(0, 0, 400, 300));
+        horizontalLayout = new FlowLayout(ShareDTWindow);
+        horizontalLayout->setObjectName(QString::fromUtf8("FlowLayout"));
+        imageLabel = new QLabel(imagesLayout);
         imageLabel->setObjectName(QString::fromUtf8("imageLabel"));
         QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         sizePolicy.setHorizontalStretch(0);
@@ -58,9 +65,33 @@ public:
         imageLabel->setSizePolicy(sizePolicy);
         imageLabel->setFrameShape(QFrame::Box);
         imageLabel->setFrameShadow(QFrame::Plain);
-        imageLabel->setLineWidth(3);
+        imageLabel->setLineWidth(1);
+
+        imageLabel1 = new QLabel(imagesLayout);
+        imageLabel1->setObjectName(QString::fromUtf8("imageLabel"));
+        imageLabel1->setSizePolicy(sizePolicy);
+        imageLabel1->setFrameShape(QFrame::Box);
+        imageLabel1->setFrameShadow(QFrame::Plain);
+        imageLabel1->setLineWidth(1);
+
+        imageLabel2 = new QLabel(imagesLayout);
+        imageLabel2->setObjectName(QString::fromUtf8("imageLabel"));
+        imageLabel2->setSizePolicy(sizePolicy);
+        imageLabel2->setFrameShape(QFrame::Box);
+        imageLabel2->setFrameShadow(QFrame::Plain);
+        imageLabel2->setLineWidth(1);
+
+        imageLabel3 = new QLabel(imagesLayout);
+        imageLabel3->setObjectName(QString::fromUtf8("imageLabel"));
+        imageLabel3->setSizePolicy(sizePolicy);
+        imageLabel3->setFrameShape(QFrame::Box);
+        imageLabel3->setFrameShadow(QFrame::Plain);
+        imageLabel3->setLineWidth(3);
 
         horizontalLayout->addWidget(imageLabel);
+        horizontalLayout->addWidget(imageLabel1);
+        horizontalLayout->addWidget(imageLabel2);
+        horizontalLayout->addWidget(imageLabel3);
 
         menubar = new QMenuBar(ShareDTWindow);
         menubar->setObjectName(QString::fromUtf8("menubar"));
@@ -84,7 +115,7 @@ public:
         QMetaObject::connectSlotsByName(ShareDTWindow);
     } // setupUi
 
-    void retranslateUi(QWidget *ShareDTWindow)
+    void retranslateUi(QWidget *ShareDTWindow) const
     {
         ShareDTWindow->setWindowTitle(QCoreApplication::translate("ShareDTWindow", "ShareDTWindow", nullptr));
         actionnew->setText(QCoreApplication::translate("ShareDTWindow", "new", nullptr));
@@ -100,7 +131,7 @@ public:
 };
 
 namespace Ui {
-    class ShareDTWindow: public Ui_ShareDTWindow {};
+    class ShareDTWindow: public UI_ShareDTWindow {};
 } // namespace Ui
 
 QT_END_NAMESPACE
