@@ -7,8 +7,6 @@ ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
         _ui(new Ui::ShareDTWindow)
 {
     _ui->setupUi (this);
-
-    unsigned char buf[100*80*4] = { 50 };
 }
 
 ShareDTWindow::~ShareDTWindow()

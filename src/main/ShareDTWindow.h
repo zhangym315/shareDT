@@ -1,6 +1,7 @@
 #ifndef SHAREDT_WINDOW_H
 #define SHAREDT_WINDOW_H
 
+#include "StringTools.h"
 #include "Layout.h"
 #include <vector>
 
@@ -21,9 +22,33 @@ QT_BEGIN_NAMESPACE
 #define MAIN_WIN_W 800
 #define MAIN_WIN_H 600
 
+/*
+ *  GUI Layout:
+ *  =======================================
+ *  | QGROUP_BOX(_localGroupBox)          |
+ *  |  __                                 |
+ *  | |  |(newImageBox())......           |
+ *  |  --                                 |
+ *  |  __    __                           |
+ *  | |  |  |  | ......                   |
+ *  |  --    --                           |
+ *  |                                     |
+ *  |                                     |
+ *  | QGROUP_BOX(remoteGroupBox)          |
+ *  | ......                              |
+ *  |                                     |
+ *  =======================================
+ */
+
+typedef struct qgroup_item {
+    QGroupBox *  item;
+    FlowLayout * layout;
+    String name;
+} QGROUP_BOX;
+
 class UI_ShareDTWindow
 {
-public:
+private:
     QAction *actionnew;
     QAction *actionFix_to_ratio_width_height;
     QAction *actionAdjust_to_original_size;
@@ -38,28 +63,33 @@ public:
     QMenu *menuWindow;
     QMenu *menuHelp;
 
-    QVBoxLayout * mainLayout;
-    QGroupBox * localGroupBox;
-    std::vector<QGroupBox *> groupBoxes;
+    QVBoxLayout * _mainLayout;
+    QGROUP_BOX    _localGroupBox;
+    std::vector<QGroupBox *> _remoteGroupBoxes;
 
+public:
     void newGroupBox()
     {
-        auto * gp = new QGroupBox("192.168.56.113");
-        auto * gpFL = new FlowLayout();
-        gp->setLayout(gpFL);
+        auto * gb = new QGroupBox("192.168.56.113");
+        auto * gbFL = new FlowLayout();
+        gb->setLayout(gbFL);
 
-        gpFL->addWidget(newImageBox());
-        gpFL->addWidget(newImageBox());
-        gpFL->addWidget(newImageBox());
-        gpFL->addWidget(newImageBox());
-        gpFL->addWidget(newImageBox());
-        gpFL->addWidget(newImageBox());
-        gpFL->addWidget(newImageBox());
-        gpFL->addWidget(newImageBox());
+        gbFL->addWidget(newImageBox());
+        gbFL->addWidget(newImageBox());
+        gbFL->addWidget(newImageBox());
+        gbFL->addWidget(newImageBox());
+        gbFL->addWidget(newImageBox());
+        gbFL->addWidget(newImageBox());
+        gbFL->addWidget(newImageBox());
+        gbFL->addWidget(newImageBox());
 
-        mainLayout->addWidget(gp);
-        gp->setFont(QFont({"Arial", 10}));
-        groupBoxes.emplace_back(gp);
+        QScrollArea* scrollArea = new QScrollArea();
+        scrollArea->setWidget(gb);
+        scrollArea->setWidgetResizable( true );
+
+        _mainLayout->addWidget(scrollArea);
+        gb->setFont(QFont({"Arial", 10}));
+        _remoteGroupBoxes.emplace_back(gb);
     }
 
     QWidget * newImageBox()
@@ -94,27 +124,27 @@ public:
 
     void setupMainWindow(QWidget *ShareDTWindow)
     {
+        _mainLayout = new QVBoxLayout(ShareDTWindow);
+        ShareDTWindow->setGeometry(600, 100, 1000, 900);
+        _localGroupBox.layout = new FlowLayout();
+        _localGroupBox.item = new QGroupBox(QString("localhost group box"));
+        _localGroupBox.item->setFont(QFont({"Arial", 22}));
 
-        mainLayout = new QVBoxLayout(ShareDTWindow);
-        ShareDTWindow->resize(800, 600);
+        _localGroupBox.layout->addWidget(newImageBox());
+        _localGroupBox.layout->addWidget(newImageBox());
+        _localGroupBox.layout->addWidget(newImageBox());
+        _localGroupBox.layout->addWidget(newImageBox());
+        _localGroupBox.layout->addWidget(newImageBox());
+        _localGroupBox.layout->addWidget(newImageBox());
+        _localGroupBox.layout->addWidget(newImageBox());
+        _localGroupBox.layout->addWidget(newImageBox());
+        _localGroupBox.layout->addWidget(newImageBox());
 
-        auto * localGBLayout = new FlowLayout();
-        localGroupBox = new QGroupBox(QString("localhost group box"));
-        localGroupBox->setFont(QFont({"Arial", 22}));
+        _localGroupBox.item->setLayout(_localGroupBox.layout);
 
-        localGBLayout->addWidget(newImageBox());
-        localGBLayout->addWidget(newImageBox());
-        localGBLayout->addWidget(newImageBox());
-        localGBLayout->addWidget(newImageBox());
-        localGBLayout->addWidget(newImageBox());
-        localGBLayout->addWidget(newImageBox());
-        localGBLayout->addWidget(newImageBox());
-        localGBLayout->addWidget(newImageBox());
-        localGBLayout->addWidget(newImageBox());
-
-        localGroupBox->setLayout(localGBLayout);
-
-        mainLayout->addWidget(localGroupBox);
+        _mainLayout->addWidget(_localGroupBox.item);
+        newGroupBox();
+        newGroupBox();
         newGroupBox();
     }
 
