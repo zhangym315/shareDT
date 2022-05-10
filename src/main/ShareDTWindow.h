@@ -2,6 +2,7 @@
 #define SHAREDT_WINDOW_H
 
 #include "Layout.h"
+#include <vector>
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QAction>
@@ -13,6 +14,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QWidget>
 #include <QScrollArea>
+#include <QGroupBox>
 
 QT_BEGIN_NAMESPACE
 
@@ -28,91 +30,97 @@ public:
     QAction *actionShow_help;
     QWidget *imagesLayout;
     FlowLayout *horizontalLayout;
-    QLabel *imageLabel;
-    QLabel *imageLabel1;
-    QLabel *imageLabel2;
-    QLabel *imageLabel3;
+    FlowLayout *flTittle;
+    std::vector<QLabel *> images;
+
     QMenuBar *menubar;
     QMenu *menuEdit;
     QMenu *menuWindow;
     QMenu *menuHelp;
 
+    QVBoxLayout * mainLayout;
+    QGroupBox * localGroupBox;
+    std::vector<QGroupBox *> groupBoxes;
+
+    void newGroupBox()
+    {
+        auto * gp = new QGroupBox("192.168.56.113");
+        auto * gpFL = new FlowLayout();
+        gp->setLayout(gpFL);
+
+        gpFL->addWidget(newImageBox());
+        gpFL->addWidget(newImageBox());
+        gpFL->addWidget(newImageBox());
+        gpFL->addWidget(newImageBox());
+        gpFL->addWidget(newImageBox());
+        gpFL->addWidget(newImageBox());
+        gpFL->addWidget(newImageBox());
+        gpFL->addWidget(newImageBox());
+
+        mainLayout->addWidget(gp);
+        gp->setFont(QFont({"Arial", 10}));
+        groupBoxes.emplace_back(gp);
+    }
+
+    QWidget * newImageBox()
+    {
+        auto * w = new QWidget();
+
+        auto * image = new QLabel();
+        auto * text = new QLabel();
+
+        unsigned char buf[100*80*4] = { 50 };
+        QImage im(buf, 100, 80, QImage::Format::Format_RGB32);
+
+        image->setPixmap(QPixmap::fromImage(im));
+
+        image->setObjectName(QString::fromUtf8("imageLabel"));
+        image->setFrameShape(QFrame::Box);
+        image->setFrameShadow(QFrame::Plain);
+        image->setLineWidth(0);
+        image->setFixedWidth(100);
+        image->setFixedHeight(80);
+
+        text->setText("Hello New Images");
+        text->setFont(QFont({"Arial", 10}));
+
+        auto * l = new QVBoxLayout();
+        l->addWidget(image);
+        l->addWidget(text);
+        w->setLayout(l);
+
+        return w;
+    }
+
+    void setupMainWindow(QWidget *ShareDTWindow)
+    {
+
+        mainLayout = new QVBoxLayout(ShareDTWindow);
+        ShareDTWindow->resize(800, 600);
+
+        auto * localGBLayout = new FlowLayout();
+        localGroupBox = new QGroupBox(QString("localhost group box"));
+        localGroupBox->setFont(QFont({"Arial", 22}));
+
+        localGBLayout->addWidget(newImageBox());
+        localGBLayout->addWidget(newImageBox());
+        localGBLayout->addWidget(newImageBox());
+        localGBLayout->addWidget(newImageBox());
+        localGBLayout->addWidget(newImageBox());
+        localGBLayout->addWidget(newImageBox());
+        localGBLayout->addWidget(newImageBox());
+        localGBLayout->addWidget(newImageBox());
+        localGBLayout->addWidget(newImageBox());
+
+        localGroupBox->setLayout(localGBLayout);
+
+        mainLayout->addWidget(localGroupBox);
+        newGroupBox();
+    }
+
     void setupUi(QWidget *ShareDTWindow)
     {
-        if (ShareDTWindow->objectName().isEmpty())
-            ShareDTWindow->setObjectName(QString::fromUtf8("ShareDTWindow"));
-        ShareDTWindow->resize(MAIN_WIN_W, MAIN_WIN_H);
-        actionnew = new QAction(ShareDTWindow);
-        actionnew->setObjectName(QString::fromUtf8("actionnew"));
-        actionFix_to_ratio_width_height = new QAction(ShareDTWindow);
-        actionFix_to_ratio_width_height->setObjectName(QString::fromUtf8("actionFix_to_ratio_width_height"));
-        actionAdjust_to_original_size = new QAction(ShareDTWindow);
-        actionAdjust_to_original_size->setObjectName(QString::fromUtf8("actionAdjust_to_original_size"));
-        actionShow_help = new QAction(ShareDTWindow);
-        actionShow_help->setObjectName(QString::fromUtf8("actionShow_help"));
-
-        imagesLayout = new QWidget(ShareDTWindow);
-        imagesLayout->setObjectName(QString::fromUtf8("imagesLayout"));
-        imagesLayout->setGeometry(QRect(0, 0, 400, 300));
-        horizontalLayout = new FlowLayout(ShareDTWindow);
-        horizontalLayout->setObjectName(QString::fromUtf8("FlowLayout"));
-        imageLabel = new QLabel(imagesLayout);
-        imageLabel->setObjectName(QString::fromUtf8("imageLabel"));
-        QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        sizePolicy.setHorizontalStretch(0);
-        sizePolicy.setVerticalStretch(0);
-        sizePolicy.setHeightForWidth(imageLabel->sizePolicy().hasHeightForWidth());
-        imageLabel->setSizePolicy(sizePolicy);
-        imageLabel->setFrameShape(QFrame::Box);
-        imageLabel->setFrameShadow(QFrame::Plain);
-        imageLabel->setLineWidth(1);
-
-        imageLabel1 = new QLabel(imagesLayout);
-        imageLabel1->setObjectName(QString::fromUtf8("imageLabel"));
-        imageLabel1->setSizePolicy(sizePolicy);
-        imageLabel1->setFrameShape(QFrame::Box);
-        imageLabel1->setFrameShadow(QFrame::Plain);
-        imageLabel1->setLineWidth(1);
-
-        imageLabel2 = new QLabel(imagesLayout);
-        imageLabel2->setObjectName(QString::fromUtf8("imageLabel"));
-        imageLabel2->setSizePolicy(sizePolicy);
-        imageLabel2->setFrameShape(QFrame::Box);
-        imageLabel2->setFrameShadow(QFrame::Plain);
-        imageLabel2->setLineWidth(1);
-
-        imageLabel3 = new QLabel(imagesLayout);
-        imageLabel3->setObjectName(QString::fromUtf8("imageLabel"));
-        imageLabel3->setSizePolicy(sizePolicy);
-        imageLabel3->setFrameShape(QFrame::Box);
-        imageLabel3->setFrameShadow(QFrame::Plain);
-        imageLabel3->setLineWidth(3);
-
-        horizontalLayout->addWidget(imageLabel);
-        horizontalLayout->addWidget(imageLabel1);
-        horizontalLayout->addWidget(imageLabel2);
-        horizontalLayout->addWidget(imageLabel3);
-
-        menubar = new QMenuBar(ShareDTWindow);
-        menubar->setObjectName(QString::fromUtf8("menubar"));
-        menubar->setGeometry(QRect(0, 0, 800, 24));
-        menuEdit = new QMenu(menubar);
-        menuEdit->setObjectName(QString::fromUtf8("menuEdit"));
-        menuWindow = new QMenu(menubar);
-        menuWindow->setObjectName(QString::fromUtf8("menuWindow"));
-        menuHelp = new QMenu(menubar);
-        menuHelp->setObjectName(QString::fromUtf8("menuHelp"));
-
-        menubar->addAction(menuEdit->menuAction());
-        menubar->addAction(menuWindow->menuAction());
-        menubar->addAction(menuHelp->menuAction());
-        menuWindow->addAction(actionFix_to_ratio_width_height);
-        menuWindow->addAction(actionAdjust_to_original_size);
-        menuHelp->addAction(actionShow_help);
-
-        retranslateUi(ShareDTWindow);
-
-        QMetaObject::connectSlotsByName(ShareDTWindow);
+        return setupMainWindow(ShareDTWindow);
     } // setupUi
 
     void retranslateUi(QWidget *ShareDTWindow) const
@@ -122,7 +130,6 @@ public:
         actionFix_to_ratio_width_height->setText(QCoreApplication::translate("ShareDTWindow", "Fixed width and height ratio", nullptr));
         actionAdjust_to_original_size->setText(QCoreApplication::translate("ShareDTWindow", "Adjust to original size", nullptr));
         actionShow_help->setText(QCoreApplication::translate("ShareDTWindow", "Show Help", nullptr));
-        imageLabel->setText(QCoreApplication::translate("ShareDTWindow", "TextLabel", nullptr));
         menuEdit->setTitle(QCoreApplication::translate("ShareDTWindow", "Edit", nullptr));
         menuWindow->setTitle(QCoreApplication::translate("ShareDTWindow", "Window", nullptr));
         menuHelp->setTitle(QCoreApplication::translate("ShareDTWindow", "Help", nullptr));
