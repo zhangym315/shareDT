@@ -23,13 +23,11 @@ class ExportImages final : public Capture {
     int start();
 
     void exportUsage();
-    bool filterExportWinName(const String & w);
 
-    EXPORTACTION action() const { return _action; }
+    [[nodiscard]] EXPORTACTION action() const { return _action; }
 
   private:
     int parseExportImagesOptions(int argc, char ** argv);
-    void writeToFile(const String & file);
     int _startExportH265Video(const String & infile, int width, int height, int type, const String & outfile);
 
     Format       _format;

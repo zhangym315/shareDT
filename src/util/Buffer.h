@@ -31,7 +31,7 @@ class FrameBuffer {
 
     [[nodiscard]] size_t getSize() const   { return _size ; }
     [[nodiscard]] size_t getCapacity() const { return _capacity; }
-    unsigned char * getData() const { return _data; }
+    [[nodiscard]] unsigned char * getData() const { return _data; }
 
     void setData(unsigned char * data, size_t w, size_t h, SPImageType type=SPImageType::SP_IMAGE_RGBA);
     void setDataPerRow(unsigned char * data, int w, int h,
@@ -64,8 +64,8 @@ class FrameBuffer {
 
     void setWidthHeight(size_t w, size_t h);
 
-    size_t getWidth() const { return _width; }
-    size_t getHeight() const { return _height; }
+    [[nodiscard]] size_t getWidth() const { return _width; }
+    [[nodiscard]] size_t getHeight() const { return _height; }
 
   private:
     size_t   _size;

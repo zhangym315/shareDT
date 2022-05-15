@@ -5,14 +5,6 @@
 
 const static String ALL_EXPORT_NAME="EXPORT_ALL";
 
-#ifdef __SHAREDT_IOS__
-const static std::unordered_set<String> PROCESS_FILTER{"Menubar", "Fullscreen Backdrop", "Desktop"};
-const static std::unordered_set<String> PROCESS_FILTER_CONTAINS {"Desktop Picture"};
-#else
-const static std::unordered_set<String> PROCESS_FILTER {};
-const static std::unordered_set<String> PROCESS_FILTER_CONTAINS {};
-#endif
-
 extern "C" {
 #include "ReadWriteVideo.h"
 #include "libswscale/swscale.h"
@@ -146,7 +138,7 @@ int ExportImages::startExportImages()
                   (std::chrono::system_clock::now()-start).count()/1000 << "ms" << std::endl;
 
         start = std::chrono::system_clock::now();
-        writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_" + std::to_string(i) + ".png");
+        ExportAll::writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_" + std::to_string(i) + ".png", _fb);
         std::cout << "SampleProvider returns data: " << i << ", writtingTime=" <<
                    (std::chrono::system_clock::now()-start).count()/1000 << "ms" << std::endl;
 
@@ -170,8 +162,8 @@ int ExportImages::startExportAll()
         ExportAll ea(SP_MONITOR, m.getId());
         if ((_fb=ea.getFrameBuffer(cwb)) == nullptr) continue;
 
-        writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_ALL_M" +
-                    std::to_string(m.getId()) + ".png");
+        ExportAll::writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_ALL_M" +
+                    std::to_string(m.getId()) + ".png", _fb);
         LOGGER.info() << "SampleProvider data wrote for monitor_id=" << m.getId();
 
         //set smallest width and height
@@ -190,27 +182,16 @@ int ExportImages::startExportAll()
         if ((_fb=ea.getFrameBuffer(cwb)) == nullptr ||
             _fb->getWidth() < cp.getX()/8 ||
             _fb->getHeight() < cp.getY()/8 ||
-            filterExportWinName(w.getName()))  continue;
+            ExportAll::filterExportWinName(w.getName()))  continue;
 
-        writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_ALL_H" +
-                    std::to_string(w.getHandler()) + ".png");
+        ExportAll::writeToFile(getCapServerPath() + PATH_SEP_STR + "EXPORTED_ALL_H" +
+                    std::to_string(w.getHandler()) + ".png", _fb);
         LOGGER.info() << "SampleProvider data wrote for handler=" << w.getHandler();
     }
 
     LOGGER.info() << "Finished exporting all images to " << getCapServerPath();
 
     return RETURN_CODE_SUCCESS;
-}
-
-bool ExportImages::filterExportWinName(const String & w)
-{
-    if (PROCESS_FILTER.find(w) != PROCESS_FILTER.end()) return true;
-    auto it = find_if(PROCESS_FILTER_CONTAINS.begin(), PROCESS_FILTER_CONTAINS.end(),
-                      [&](const String & name) -> bool {
-        return w.find(name) != std::string::npos;
-    });
-
-    return it != PROCESS_FILTER_CONTAINS.end();
 }
 
 int ExportImages::startExportH265Video()
@@ -276,45 +257,6 @@ int ExportImages::startExportH265Video()
 
     cout << "Video file write to: " << outfile;
     return RETURN_CODE_SUCCESS;
-}
-
-void ExportImages::writeToFile(const String & file)
-{
-    unsigned int width = _fb->getWidth();
-    unsigned int height = _fb->getHeight();
-    FILE *fp = fopen(file.c_str(), "wb");
-    if(!fp) return ;
-
-    png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-    if (!png) abort();
-
-    png_infop info = png_create_info_struct(png);
-    if (!info) abort();
-
-    if (setjmp(png_jmpbuf(png))) abort();
-
-    png_init_io(png, fp);
-
-    png_set_IHDR(png,
-                 info,
-                 width, height,
-                 8,
-                 PNG_COLOR_TYPE_RGBA,
-                 PNG_INTERLACE_NONE,
-                 PNG_COMPRESSION_TYPE_DEFAULT,
-                 PNG_FILTER_TYPE_DEFAULT
-                );
-    png_write_info(png, info);
-
-    for ( int i=0 ; i<height ; i++) {
-        png_write_row(png, (png_bytep)(_fb->getData() + i*width*4));
-    }
-
-    png_write_end(png, nullptr);
-    fclose(fp);
-
-    png_destroy_write_struct(&png, &info);
-
 }
 
 int ExportImages::_startExportH265Video(const String & infile,
