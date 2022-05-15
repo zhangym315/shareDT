@@ -49,6 +49,8 @@ typedef struct qgroup_item {
 class UI_ShareDTWindow
 {
 private:
+    int _w_unit;
+    int _h_unit;
     QAction *actionnew;
     QAction *actionFix_to_ratio_width_height;
     QAction *actionAdjust_to_original_size;
@@ -68,11 +70,12 @@ private:
     std::vector<QGroupBox *> _remoteGroupBoxes;
 
 public:
-    UI_ShareDTWindow() = default;
+    UI_ShareDTWindow() : _w_unit(140), _h_unit(110) { }
     void newGroupBox();
-    QWidget * newImageBox();
+    QWidget * newImageBox(int w, int h, unsigned char * data, const String & name) const;
     void setupMainWindow(QWidget *ShareDTWindow);
     void setupUi(QWidget *ShareDTWindow);
+    void setLocalWindows(QWidget *ShareDTWindow);
 
     void retranslateUi(QWidget *ShareDTWindow) const
     {

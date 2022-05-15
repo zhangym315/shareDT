@@ -10,6 +10,8 @@ public:
 
     FrameBuffer * getFrameBuffer(CircWRBuf<FrameBuffer> & cwf);
 
+    static void writeToFile(const String & p, const FrameBuffer * f);
+    static bool filterExportWinName(const String & w);
 private:
     SPType _type;
     int    _captureId;

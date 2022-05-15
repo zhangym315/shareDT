@@ -193,20 +193,20 @@ class CapMonitor {
     CapMonitor() : CapMonitor (0, 0, CapPoint(0, 0), CapPoint(0, 0), 0) { _isValid = false; }
     ~CapMonitor() { }
 
-    int   getId()    const { return _id ;   }
-    int   getIndex() const { return _index; }
-    float  getScale() const { return _scale; }
-    int   getAdapter() const { return _adapter; }
-    const String  & getName()  const { return _name ; }
-    const CapPoint& getOffset() const { return _offset; }
-    const CapPoint& getSize () const  { return _size ; }
-    const CapPoint& getOrgOffset() const { return _orgOffset; }
-    const CapPoint& getOrgSize () const { return _orgSize; }
-    int   getOrgHeight() const { return _orgSize.getY(); }
-    int   getOrgWidth()  const { return _orgSize.getX(); }
-    int   getWidth() { return _size.getX (); }
-    int   getHeight() { return _size.getY (); }
-    bool  isValid() const { return _isValid; }
+    [[nodiscard]] int   getId()    const { return _id ;   }
+    [[nodiscard]] int   getIndex() const { return _index; }
+    [[nodiscard]] float  getScale() const { return _scale; }
+    [[nodiscard]] int   getAdapter() const { return _adapter; }
+    [[nodiscard]] const String  & getName()  const { return _name ; }
+    [[nodiscard]] const CapPoint& getOffset() const { return _offset; }
+    [[nodiscard]] const CapPoint& getSize () const  { return _size ; }
+    [[nodiscard]] const CapPoint& getOrgOffset() const { return _orgOffset; }
+    [[nodiscard]] const CapPoint& getOrgSize () const { return _orgSize; }
+    [[nodiscard]] int   getOrgHeight() const { return _orgSize.getY(); }
+    [[nodiscard]] int   getOrgWidth()  const { return _orgSize.getX(); }
+    [[nodiscard]] int   getWidth() { return _size.getX (); }
+    [[nodiscard]] int   getHeight() { return _size.getY (); }
+    [[nodiscard]] bool  isValid() const { return _isValid; }
     void  setInValid() { _isValid = false; }
 
     void operator = (const CapMonitor &other) {
