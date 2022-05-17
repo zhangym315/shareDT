@@ -21,6 +21,7 @@ private:
     Ui::ShareDTWindow   * _ui;
 
 public slots:
+    void actionFreshItems();
 //    void putImage(FrameBuffer * data);
 };
 

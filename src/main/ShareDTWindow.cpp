@@ -4,6 +4,9 @@
 #include "Path.h"
 #include "ExportAll.h"
 
+#include <QObject>
+#include <QMessageBox>
+
 void UI_ShareDTWindow::newGroupBox()
 {
     auto * gb = new QGroupBox("192.168.56.113");
@@ -58,7 +61,7 @@ QWidget * UI_ShareDTWindow::newImageBox(int width, int height, unsigned char * d
     return w;
 }
 
-void UI_ShareDTWindow::setLocalWindows(QWidget *ShareDTWindow)
+void UI_ShareDTWindow::setLocalWindows(QWidget *w)
 {
     _localGroupBox.layout = new FlowLayout();
     _localGroupBox.item = new QGroupBox(QString("Localhost Group Box"));
@@ -69,6 +72,12 @@ void UI_ShareDTWindow::setLocalWindows(QWidget *ShareDTWindow)
     MonitorVectorProvider mvp;
     CapPoint cp(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
     FrameBuffer * fb;
+
+    auto * scrollArea = new QScrollArea();
+    scrollArea->setWidget(_localGroupBox.item);
+    scrollArea->setWidgetResizable( true );
+
+    _mainLayout->addWidget(scrollArea);
 
     for (auto & m : mvp.get()) {
         ExportAll ea(SP_MONITOR, m.getId());
@@ -101,22 +110,69 @@ void UI_ShareDTWindow::setLocalWindows(QWidget *ShareDTWindow)
                                                      w.getName()));
     }
 
-    auto * scrollArea = new QScrollArea();
-    scrollArea->setWidget(_localGroupBox.item);
-    scrollArea->setWidgetResizable( true );
-
-    _mainLayout->addWidget(scrollArea);
-
 }
 
-void UI_ShareDTWindow::setupMainWindow(QWidget *ShareDTWindow)
+void UI_ShareDTWindow::setupMainWindow(QWidget *w)
 {
-    _mainLayout = new QVBoxLayout(ShareDTWindow);
-    ShareDTWindow->setGeometry(600, 100, 1000, 900);
+    _mainLayout = new QVBoxLayout(w);
+    w->setGeometry(600, 100, 1000, 900);
 }
 
-void UI_ShareDTWindow::setupUi(QWidget *ShareDTWindow)
+void UI_ShareDTWindow::actionFreshItems()
 {
-    setupMainWindow(ShareDTWindow);
-    setLocalWindows(ShareDTWindow);
+    QMessageBox msgBox;
+    msgBox.setText("Action to refresh!!!");
+    msgBox.exec();
+}
+
+void UI_ShareDTWindow::setMenu(QWidget * w)
+{
+    _menubar = new QMenuBar(w);
+    _menubar->setObjectName(QString::fromUtf8("menubar"));
+    _menubar->setGeometry(QRect(0, 0, 800, 24));
+
+    /* Edit */
+    _menuEdit = new QMenu(_menubar);
+    _menuEdit->setObjectName(QString::fromUtf8("menuEdit"));
+    _menuEdit->setTitle(QCoreApplication::translate("ShareDTClientWin", "Edit", nullptr));
+    auto * newConnect = new QAction(w);
+    newConnect->setObjectName(QString::fromUtf8("new_connection"));
+    newConnect->setText(QCoreApplication::translate("ShareDTWindow", "New Connection", nullptr));
+    _menuEdit->addAction(newConnect);
+    /* Edit end*/
+
+    /* Window */
+    _menuWindow = new QMenu(_menubar);
+    _menuWindow->setObjectName(QString::fromUtf8("menuWindow"));
+    _menuWindow->setTitle(QCoreApplication::translate("ShareDTWindow", "Window", nullptr));
+
+    _freshWin = new QAction(w);
+    _freshWin->setObjectName(QString::fromUtf8("fresh_itmes"));
+    _freshWin->setText(QCoreApplication::translate("ShareDTWindow", "Refresh Items", nullptr));
+    _menuWindow->addAction(_freshWin);
+    QObject::connect (_freshWin, SIGNAL(triggered()), w, SLOT(actionFreshItems()));
+
+    /* Window end */
+
+    /* Help */
+    _menuHelp = new QMenu(_menubar);
+    _menuHelp->setObjectName(QString::fromUtf8("menuHelp"));
+    _menuHelp->setTitle(QCoreApplication::translate("ShareDTWindow", "Help", nullptr));
+
+    auto * aboutWin = new QAction(w);
+    aboutWin->setObjectName(QString::fromUtf8("about_window"));
+    aboutWin->setText(QCoreApplication::translate("ShareDTWindow", "About", nullptr));
+    _menuHelp->addAction(aboutWin);
+    /* Help  end */
+
+    _menubar->addAction(_menuEdit->menuAction());
+    _menubar->addAction(_menuWindow->menuAction());
+    _menubar->addAction(_menuHelp->menuAction());
+}
+
+void UI_ShareDTWindow::setupUi(QWidget *w)
+{
+    setMenu(w);
+    setupMainWindow(w);
+    setLocalWindows(w);
 }

@@ -52,7 +52,7 @@ private:
     int _w_unit;
     int _h_unit;
     QAction *actionnew;
-    QAction *actionFix_to_ratio_width_height;
+    QAction * _freshWin;  /* Window -> Fresh Items */
     QAction *actionAdjust_to_original_size;
     QAction *actionShow_help;
     QWidget *imagesLayout;
@@ -60,10 +60,10 @@ private:
     FlowLayout *flTittle;
     std::vector<QLabel *> images;
 
-    QMenuBar *menubar;
-    QMenu *menuEdit;
-    QMenu *menuWindow;
-    QMenu *menuHelp;
+    QMenuBar * _menubar;
+    QMenu * _menuEdit;
+    QMenu * _menuWindow;
+    QMenu * _menuHelp;
 
     QVBoxLayout * _mainLayout;
     QGROUP_BOX    _localGroupBox;
@@ -73,13 +73,14 @@ public:
     UI_ShareDTWindow() : _w_unit(140), _h_unit(110) { }
     void newGroupBox();
     QWidget * newImageBox(int w, int h, unsigned char * data, const String & name) const;
-    void setupMainWindow(QWidget *ShareDTWindow);
-    void setupUi(QWidget *ShareDTWindow);
-    void setLocalWindows(QWidget *ShareDTWindow);
-
-    void retranslateUi(QWidget *ShareDTWindow) const
+    void setupMainWindow(QWidget * w);
+    void setupUi(QWidget * w);
+    void setLocalWindows(QWidget * w);
+    void setMenu(QWidget * w);
+/*
+    void retranslateUi(QWidget *w) const
     {
-        ShareDTWindow->setWindowTitle(QCoreApplication::translate("ShareDTWindow", "ShareDTWindow", nullptr));
+        w->setWindowTitle(QCoreApplication::translate("ShareDTWindow", "ShareDTWindow", nullptr));
         actionnew->setText(QCoreApplication::translate("ShareDTWindow", "new", nullptr));
         actionFix_to_ratio_width_height->setText(QCoreApplication::translate("ShareDTWindow", "Fixed width and height ratio", nullptr));
         actionAdjust_to_original_size->setText(QCoreApplication::translate("ShareDTWindow", "Adjust to original size", nullptr));
@@ -88,7 +89,10 @@ public:
         menuWindow->setTitle(QCoreApplication::translate("ShareDTWindow", "Window", nullptr));
         menuHelp->setTitle(QCoreApplication::translate("ShareDTWindow", "Help", nullptr));
     } // retranslateUi
+*/
 
+public slots:
+    void actionFreshItems();
 };
 
 namespace Ui {
