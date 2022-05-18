@@ -1,6 +1,6 @@
 #include <QApplication>
 #include <QImage>
-#include <QMessageBox>
+
 #include "MainWindow.h"
 
 ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
