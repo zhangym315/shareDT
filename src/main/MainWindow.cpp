@@ -17,10 +17,9 @@ ShareDTWindow::~ShareDTWindow()
 
 void ShareDTWindow::actionFreshItems()
 {
-    QMessageBox msgBox;
-    msgBox.setText("Action to refresh!!!");
-    msgBox.exec();
+    _ui->refreshLocalBoxGroup(this);
 }
+
 int
 main(int argc, char **argv)
 {

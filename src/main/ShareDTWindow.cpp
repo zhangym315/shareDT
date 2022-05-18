@@ -68,61 +68,19 @@ void UI_ShareDTWindow::setLocalWindows(QWidget *w)
     _localGroupBox.item->setFont(QFont({"Arial", 22}));
     _localGroupBox.item->setLayout(_localGroupBox.layout);
 
-    CircWRBuf<FrameBuffer>  cwb(2);
-    MonitorVectorProvider mvp;
-    CapPoint cp(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
-    FrameBuffer * fb;
-
     auto * scrollArea = new QScrollArea();
     scrollArea->setWidget(_localGroupBox.item);
     scrollArea->setWidgetResizable( true );
 
     _mainLayout->addWidget(scrollArea);
 
-    for (auto & m : mvp.get()) {
-        ExportAll ea(SP_MONITOR, m.getId());
-        if ((fb=ea.getFrameBuffer(cwb)) == nullptr) continue;
-
-        _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(), fb->getHeight(), fb->getData(), m.getName()));
-        //set smallest width and height
-        if (cp.getX() > fb->getWidth() && cp.getY() > fb->getHeight()) {
-            cp.setX((int) fb->getWidth());
-            cp.setY((int) fb->getHeight());
-        }
-    }
-
-    WindowVectorProvider wvp(-1);
-
-    for (const auto & w : wvp.get()) {
-        ExportAll ea(SP_WINDOW, w.getHandler());
-        if ((fb=ea.getFrameBuffer(cwb)) == nullptr) continue;
-
-        // filter out the unnecessary window
-        if ((fb=ea.getFrameBuffer(cwb)) == nullptr ||
-                fb->getWidth() < cp.getX()/8 ||
-                fb->getHeight() < cp.getY()/8 ||
-            ExportAll::filterExportWinName(w.getName()))
-            continue;
-
-        _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(),
-                                                     fb->getHeight(),
-                                                     fb->getData(),
-                                                     w.getName()));
-    }
-
+    refreshLocalBoxGroupInternal();
 }
 
 void UI_ShareDTWindow::setupMainWindow(QWidget *w)
 {
     _mainLayout = new QVBoxLayout(w);
     w->setGeometry(600, 100, 1000, 900);
-}
-
-void UI_ShareDTWindow::actionFreshItems()
-{
-    QMessageBox msgBox;
-    msgBox.setText("Action to refresh!!!");
-    msgBox.exec();
 }
 
 void UI_ShareDTWindow::setMenu(QWidget * w)
@@ -175,4 +133,71 @@ void UI_ShareDTWindow::setupUi(QWidget *w)
     setMenu(w);
     setupMainWindow(w);
     setLocalWindows(w);
+}
+
+void UI_ShareDTWindow::refreshLocalBoxGroup(QWidget * w)
+{
+    QLayoutItem * child;
+    while ((child = _localGroupBox.layout->itemAt(0)) != nullptr) {
+        _localGroupBox.layout->removeItem(child);
+        removeImageBox(child->widget());  // remove single image box(image widget and label)
+        delete child;
+        _localGroupBox.layout->activate();
+    }
+
+    _localGroupBox.layout->activate();
+
+    refreshLocalBoxGroupInternal();
+}
+
+void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
+{
+    if (_localGroupBox.layout == nullptr) return;
+
+    CircWRBuf<FrameBuffer>  cwb(2);
+    MonitorVectorProvider mvp;
+    CapPoint cp(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+    FrameBuffer * fb;
+    for (auto & m : mvp.get()) {
+        ExportAll ea(SP_MONITOR, m.getId());
+        if ((fb=ea.getFrameBuffer(cwb)) == nullptr) continue;
+
+        _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(), fb->getHeight(), fb->getData(), m.getName()));
+        //set smallest width and height
+        if (cp.getX() > fb->getWidth() && cp.getY() > fb->getHeight()) {
+            cp.setX((int) fb->getWidth());
+            cp.setY((int) fb->getHeight());
+        }
+    }
+
+    WindowVectorProvider wvp(-1);
+    for (const auto & w : wvp.get()) {
+        ExportAll ea(SP_WINDOW, w.getHandler());
+        if ((fb=ea.getFrameBuffer(cwb)) == nullptr) continue;
+
+        // filter out the unnecessary window
+        if ((fb=ea.getFrameBuffer(cwb)) == nullptr ||
+            fb->getWidth() < cp.getX()/8 ||
+            fb->getHeight() < cp.getY()/8 ||
+            ExportAll::filterExportWinName(w.getName()))
+            continue;
+
+        _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(),
+                                                     fb->getHeight(),
+                                                     fb->getData(),
+                                                     w.getName()));
+    }
+}
+
+/* corresponding to newImageBox() to remove box */
+void UI_ShareDTWindow::removeImageBox(QWidget *w) {
+    if (w == nullptr) return;
+
+    auto *l1 = w->layout();
+    QLayoutItem *c1;
+    while ((c1 = l1->itemAt(0)) != nullptr) {
+        l1->removeItem(c1);
+        delete c1;
+        l1->activate();
+    }
 }
