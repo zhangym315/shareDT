@@ -7,21 +7,12 @@
 #include <QObject>
 #include <QMessageBox>
 
-void UI_ShareDTWindow::newGroupBox()
+void UI_ShareDTWindow::newRemoteGroupBox()
 {
     auto * gb = new QGroupBox("192.168.56.113");
     auto * gbFL = new FlowLayout();
     gb->setLayout(gbFL);
-/*
-    gbFL->addWidget(newImageBox());
-    gbFL->addWidget(newImageBox());
-    gbFL->addWidget(newImageBox());
-    gbFL->addWidget(newImageBox());
-    gbFL->addWidget(newImageBox());
-    gbFL->addWidget(newImageBox());
-    gbFL->addWidget(newImageBox());
-    gbFL->addWidget(newImageBox());
-*/
+
     auto* scrollArea = new QScrollArea();
     scrollArea->setWidget(gb);
     scrollArea->setWidgetResizable( true );
@@ -109,7 +100,6 @@ void UI_ShareDTWindow::setMenu(QWidget * w)
     _freshWin->setText(QCoreApplication::translate("ShareDTWindow", "Refresh Items", nullptr));
     _menuWindow->addAction(_freshWin);
     QObject::connect (_freshWin, SIGNAL(triggered()), w, SLOT(actionFreshItems()));
-
     /* Window end */
 
     /* Help */

@@ -19,9 +19,6 @@
 
 QT_BEGIN_NAMESPACE
 
-#define MAIN_WIN_W 800
-#define MAIN_WIN_H 600
-
 /*
  *  GUI Layout:
  *  =======================================
@@ -50,7 +47,7 @@ class UI_ShareDTWindow
 {
 public:
     UI_ShareDTWindow() : _w_unit(140), _h_unit(110) { }
-    void newGroupBox();
+    void newRemoteGroupBox();
     QWidget * newImageBox(int w, int h, unsigned char * data, const String & name) const;
     void setupMainWindow(QWidget * w);
     void setupUi(QWidget * w);
@@ -58,19 +55,6 @@ public:
     void setMenu(QWidget * w);
 
     void refreshLocalBoxGroup(QWidget * w);
-/*
-    void retranslateUi(QWidget *w) const
-    {
-        w->setWindowTitle(QCoreApplication::translate("ShareDTWindow", "ShareDTWindow", nullptr));
-        actionnew->setText(QCoreApplication::translate("ShareDTWindow", "new", nullptr));
-        actionFix_to_ratio_width_height->setText(QCoreApplication::translate("ShareDTWindow", "Fixed width and height ratio", nullptr));
-        actionAdjust_to_original_size->setText(QCoreApplication::translate("ShareDTWindow", "Adjust to original size", nullptr));
-        actionShow_help->setText(QCoreApplication::translate("ShareDTWindow", "Show Help", nullptr));
-        menuEdit->setTitle(QCoreApplication::translate("ShareDTWindow", "Edit", nullptr));
-        menuWindow->setTitle(QCoreApplication::translate("ShareDTWindow", "Window", nullptr));
-        menuHelp->setTitle(QCoreApplication::translate("ShareDTWindow", "Help", nullptr));
-    } // retranslateUi
-*/
 
 private:
     void refreshLocalBoxGroupInternal() const;
@@ -78,15 +62,10 @@ private:
 
     int _w_unit;
     int _h_unit;
-    QAction *actionnew;
-    QAction * _freshWin;  /* Window -> Fresh Items */
-    QAction *actionAdjust_to_original_size;
-    QAction *actionShow_help;
-    QWidget *imagesLayout;
-    FlowLayout *horizontalLayout;
-    FlowLayout *flTittle;
-    std::vector<QLabel *> images;
 
+    QAction * _freshWin;  /* Window -> Fresh Items */
+
+    std::vector<QLabel *> images;
     QMenuBar * _menubar;
     QMenu * _menuEdit;
     QMenu * _menuWindow;
