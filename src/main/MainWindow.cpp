@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QImage>
+
 #include "MainWindow.h"
 
 ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
@@ -12,6 +13,11 @@ ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
 ShareDTWindow::~ShareDTWindow()
 {
     delete _ui;
+}
+
+void ShareDTWindow::actionFreshItems()
+{
+    _ui->refreshLocalBoxGroup(this);
 }
 
 int
