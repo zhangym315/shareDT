@@ -43,6 +43,18 @@ typedef struct qgroup_item {
     String name;
 } QGROUP_BOX;
 
+class ImageItem : public QWidget {
+    Q_OBJECT
+public:
+    explicit ImageItem(const String & name) : _name(name), QWidget() { }
+
+    void keyPressEvent(QKeyEvent * event) override;
+    void keyReleaseEvent(QKeyEvent * event) override;
+
+private:
+    String _name;
+};
+
 class UI_ShareDTWindow
 {
 public:

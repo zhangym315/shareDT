@@ -22,9 +22,21 @@ void UI_ShareDTWindow::newRemoteGroupBox()
     _remoteGroupBoxes.emplace_back(gb);
 }
 
+void ImageItem::keyPressEvent(QKeyEvent * event)
+{
+std::cout << " ChildLineEdit,keyPressEvent , key : " << _name;
+    QWidget::keyPressEvent(event);
+}
+
+void ImageItem::keyReleaseEvent(QKeyEvent * event)
+{
+std::cout << "KeyReleasedEvent" << _name ;
+
+}
+
 QWidget * UI_ShareDTWindow::newImageBox(int width, int height, unsigned char * data, const String & name) const
 {
-    auto * w = new QWidget();
+    auto * w = new ImageItem(name);
 
     auto * image = new QLabel();
     auto * text = new QLabel();
