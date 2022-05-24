@@ -3,6 +3,7 @@
 
 #include "StringTools.h"
 #include "Layout.h"
+#include <utility>
 #include <vector>
 
 #include <QtCore/QVariant>
@@ -43,12 +44,30 @@ typedef struct qgroup_item {
     String name;
 } QGROUP_BOX;
 
+typedef struct {
+    String name;
+    QStringList argument;
+} ItemInfo;
+
+class ImageItem : public QWidget {
+    Q_OBJECT
+public:
+    explicit ImageItem(ItemInfo info) : _info(std::move(info)), QWidget() { }
+
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void enterEvent(QEvent *event) override;
+
+private:
+    ItemInfo _info;
+};
+
 class UI_ShareDTWindow
 {
 public:
     UI_ShareDTWindow() : _w_unit(140), _h_unit(110) { }
     void newRemoteGroupBox();
-    QWidget * newImageBox(int w, int h, unsigned char * data, const String & name) const;
+    QWidget * newImageBox(int w, int h, unsigned char * data, const ItemInfo & info) const;
     void setupMainWindow(QWidget * w);
     void setupUi(QWidget * w);
     void setLocalWindows(QWidget * w);
