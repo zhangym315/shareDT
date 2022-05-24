@@ -6,6 +6,10 @@
 
 #include <QObject>
 #include <QMessageBox>
+#include <QEvent>
+#include <QMouseEvent>
+#include <QProcess>
+#include <QChar>
 
 void UI_ShareDTWindow::newRemoteGroupBox()
 {
@@ -22,21 +26,39 @@ void UI_ShareDTWindow::newRemoteGroupBox()
     _remoteGroupBoxes.emplace_back(gb);
 }
 
-void ImageItem::keyPressEvent(QKeyEvent * event)
+void ImageItem::mousePressEvent(QMouseEvent *event)
 {
-std::cout << " ChildLineEdit,keyPressEvent , key : " << _name;
-    QWidget::keyPressEvent(event);
+    if (event->button() == Qt::MouseButton::RightButton) {
+    } else {
+    }
+    QWidget::mousePressEvent(event);
 }
 
-void ImageItem::keyReleaseEvent(QKeyEvent * event)
+void ImageItem::mouseReleaseEvent(QMouseEvent *event)
 {
-std::cout << "KeyReleasedEvent" << _name ;
+    if (event->button() == Qt::MouseButton::RightButton) {
+    } else {
+        QString program = "./LocalDisplayer";
 
+        std::cout << "Starting display for name=\"" << _info.name << "\" command=\""
+            << qPrintable(program) << " "
+            << qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)) << "\""
+            << std::endl;
+
+        auto * newProcess = new QProcess();
+        newProcess->start(program, _info.argument);
+    }
+    QWidget::mouseReleaseEvent(event);
 }
 
-QWidget * UI_ShareDTWindow::newImageBox(int width, int height, unsigned char * data, const String & name) const
+void ImageItem::enterEvent(QEvent *event)
 {
-    auto * w = new ImageItem(name);
+    QWidget::setCursor(QCursor(Qt::PointingHandCursor));
+}
+
+QWidget * UI_ShareDTWindow::newImageBox(int width, int height, unsigned char * data, const ItemInfo & info) const
+{
+    auto * w = new ImageItem(info);
 
     auto * image = new QLabel();
     auto * text = new QLabel();
@@ -52,7 +74,7 @@ QWidget * UI_ShareDTWindow::newImageBox(int width, int height, unsigned char * d
     image->setFrameShadow(QFrame::Plain);
     image->setLineWidth(0);
 
-    String n = name.size() < 30 ? name : name.substr(0, 25) + String(" ...");
+    String n = info.name.size() < 30 ? info.name : info.name.substr(0, 25) + String(" ...");
     text->setText(QString::fromUtf8(n.c_str()));
     text->setFont(QFont({"Arial", 10}));
 
@@ -162,9 +184,16 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
     FrameBuffer * fb;
     for (auto & m : mvp.get()) {
         ExportAll ea(SP_MONITOR, m.getId());
+        ItemInfo info;
+
         if ((fb=ea.getFrameBuffer(cwb)) == nullptr) continue;
 
-        _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(), fb->getHeight(), fb->getData(), m.getName()));
+        info.name = m.getName();
+        info.argument << "-c" << "mon" <<  "-i" << std::to_string(m.getId()).c_str();
+        _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(),
+                                                     fb->getHeight(),
+                                                     fb->getData(),
+                                                     info));
         //set smallest width and height
         if (cp.getX() > fb->getWidth() && cp.getY() > fb->getHeight()) {
             cp.setX((int) fb->getWidth());
@@ -175,6 +204,8 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
     WindowVectorProvider wvp(-1);
     for (const auto & w : wvp.get()) {
         ExportAll ea(SP_WINDOW, w.getHandler());
+        ItemInfo info;
+
         if ((fb=ea.getFrameBuffer(cwb)) == nullptr) continue;
 
         // filter out the unnecessary window
@@ -184,10 +215,12 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
             ExportAll::filterExportWinName(w.getName()))
             continue;
 
+        info.name = w.getName();
+        info.argument << "-c" <<  "win" <<  "-h" << std::to_string(w.getHandler()).c_str();
         _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(),
                                                      fb->getHeight(),
                                                      fb->getData(),
-                                                     w.getName()));
+                                                     info));
     }
 }
 
