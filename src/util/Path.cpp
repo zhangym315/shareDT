@@ -87,7 +87,7 @@ static String GeParentDir(const String & path, int recur=1) {
     String ret;
     ret = path;
     do {
-        ret = ret.back () == '/' ?
+        ret = ret.back () == PATH_SEP_CHAR ?
               ret.substr (0, ret.rfind (PATH_SEP_CHAR)) : ret;
 #ifdef __SHAREDT_WIN__
         ret = ret.substr(0, ret.rfind(PATH_SEP_CHAR));
@@ -115,6 +115,7 @@ void ShareDTHome::reSet(const char *argv)
     TCHAR path[MAX_PATH];
     GetModuleFileName(NULL, path, MAX_PATH);
 
+    _execPath = path;
     _home = GeParentDir(path, 2);
     _valid = true;
 #else
@@ -147,6 +148,7 @@ void ShareDTHome::reSet(const char *argv)
         return;
     }
 
+    _execPath = path;
     path = path.substr(0, path.rfind(appended));
     _home = GeParentDir(path);
     _valid = true;
@@ -154,6 +156,7 @@ void ShareDTHome::reSet(const char *argv)
 }
 
 String & ShareDTHome::getHome()  { return _home; }
+const String & ShareDTHome::getArgv0() const { return _execPath; }
 ShareDTHome * ShareDTHome::instance()
 {
     if (_instance == nullptr)

@@ -58,12 +58,14 @@ class ShareDTHome {
     void   reSet(const char *argv);
     void   set(const char *argv);
     String & getHome();
+    const String & getArgv0() const;
     bool isValid() const;
 
   private:
     ShareDTHome();
     static ShareDTHome * _instance;
     String _home;
+    String _execPath; /* argv[0] full path */
     bool   _valid;
 };
 

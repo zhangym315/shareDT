@@ -24,6 +24,7 @@ void ShareDTWindow::actionFreshItems()
 int
 main(int argc, char **argv)
 {
+    ShareDTHome::instance()->set(argv[0]);
     QApplication app(argc, argv);
 
     if (argc == 1) {
