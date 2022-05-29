@@ -171,23 +171,3 @@ void LocalDisplayer::closeEvent (QCloseEvent *event)
     event->accept();
 }
 
-int
-main(int argc, char **argv)
-{
-#ifdef __SHAREDT_WIN__
-    ::ShowWindow(::GetConsoleWindow(), SW_HIDE ); //hide console window
-#endif
-
-    QApplication app(argc, argv);
-    LocalDisplayer gui(argc, argv);
-
-    if (!gui.isInited()) {
-        return -1;
-    }
-
-    gui.show();
-    gui.startFetcher();
-
-    return QApplication::exec();
-}
-
