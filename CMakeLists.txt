@@ -88,21 +88,21 @@ install(TARGETS ${START_CLIENT} DESTINATION client/bin)
 
 ##### Local Displayer
 set(SHAREDT_LOCAL_DISPLAYER LocalDisplayer)
-add_executable(${SHAREDT_LOCAL_DISPLAYER}
-                ${SHAREDT_SRC}/local/LocalDisplayer.cpp
-                ${SHAREDT_SRC}/local/LocalDisplayer.ui
-                ${SHAREDT_SRC_CLIENT}/qt/SDThread.cpp
-                ${SHAREDT_SERVER_SRC_COMMON}
-                )
+#add_executable(${SHAREDT_LOCAL_DISPLAYER}
+#                ${SHAREDT_SRC}/local/LocalDisplayer.cpp
+#                ${SHAREDT_SRC}/local/LocalDisplayer.ui
+#                ${SHAREDT_SRC_CLIENT}/qt/SDThread.cpp
+#                ${SHAREDT_SERVER_SRC_COMMON}
+#                )
 
-target_link_libraries(${SHAREDT_LOCAL_DISPLAYER}
-                      ${SHAREDT_CLIENT_QT_LIBS}
-                      ${${PROJECT_NAME}_PLATFORM_LIBS}
-         )
+#target_link_libraries(${SHAREDT_LOCAL_DISPLAYER}
+#                      ${SHAREDT_CLIENT_QT_LIBS}
+#                      ${${PROJECT_NAME}_PLATFORM_LIBS}
+#         )
 
 
 if(APPLE)
-    install(TARGETS ${SHAREDT_LOCAL_DISPLAYER} DESTINATION LocalDisplayer.app/Contents/MacOS)
+#    install(TARGETS ${SHAREDT_LOCAL_DISPLAYER} DESTINATION LocalDisplayer.app/Contents/MacOS)
 endif()
 
 ##### ShareDTWindow
@@ -111,6 +111,9 @@ add_executable(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_SRC}/main/MainWindow.cpp
         ${SHAREDT_SRC}/main/Layout.cpp
         ${SHAREDT_SRC}/main/ShareDTWindow.cpp
+        ${SHAREDT_SRC}/main/LocalDisplayer.cpp
+        ${SHAREDT_SRC}/main/LocalDisplayer.ui
+        ${SHAREDT_SRC_CLIENT}/qt/SDThread.cpp
         ${SHAREDT_SERVER_SRC_COMMON}
         )
 
@@ -118,7 +121,9 @@ target_link_libraries(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_CLIENT_QT_LIBS}
         ${${PROJECT_NAME}_PLATFORM_LIBS}
         )
-
+if(APPLE)
+        install(TARGETS ${SHAREDT_MAIN_WINDOW} DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents/MacOS)
+endif()
 
 #### Testing #### Can't link gtest on Win32, skip win testing
 if(NOT WIN32)

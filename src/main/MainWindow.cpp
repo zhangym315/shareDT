@@ -2,6 +2,7 @@
 #include <QImage>
 
 #include "MainWindow.h"
+#include "LocalDisplayer.h"
 
 ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
         QWidget (parent),
@@ -23,11 +24,22 @@ void ShareDTWindow::actionFreshItems()
 int
 main(int argc, char **argv)
 {
-
     QApplication app(argc, argv);
-    ShareDTWindow gui(argc, argv);
 
-    gui.show();
+    if (argc == 1) {
+        ShareDTWindow gui(argc, argv);
+        gui.show();
+        return QApplication::exec();
+    } else {
+        LocalDisplayer gui(argc, argv);
 
-    return QApplication::exec();
+        if (!gui.isInited()) {
+            return -1;
+        }
+
+        gui.show();
+        gui.startFetcher();
+        return QApplication::exec();
+    }
+
 }

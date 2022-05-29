@@ -38,7 +38,7 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::RightButton) {
     } else {
-        QString program = "./LocalDisplayer";
+        QString program = "./ShareDT";
 
         std::cout << "Starting display for name=\"" << _info.name << "\" command=\""
             << qPrintable(program) << " "

@@ -171,6 +171,7 @@ void LocalDisplayer::closeEvent (QCloseEvent *event)
     event->accept();
 }
 
+/*
 int
 main(int argc, char **argv)
 {
@@ -190,4 +191,4 @@ main(int argc, char **argv)
 
     return QApplication::exec();
 }
-
+*/
