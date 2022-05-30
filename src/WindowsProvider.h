@@ -4,6 +4,7 @@
 #include "Thread.h"
 #include "ImageRect.h"
 #include <iostream>
+#include <memory>
 
 using namespace std;
 

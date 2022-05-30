@@ -34,13 +34,13 @@ include_directories (
 add_executable(${START_SERVER} ${SHAREDT_SERVER_SRC})
 
 target_link_libraries(${START_SERVER}
-    ${LZMA_LIBRARIES}
     ${BZIP2_LIBRARIES}
     ${FFMPEG_REQUIRED_LIBS}
     vncserver
     ${${PROJECT_NAME}_PLATFORM_LIBS}
     ${X265_LIBRARIES}
     ${X264_LIBRARY}
+    ${LZMA_LIBRARIES}
 )
 
 ### ShareDTServer gui
