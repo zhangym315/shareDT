@@ -108,6 +108,7 @@ endif()
 ##### ShareDTWindow
 set(SHAREDT_MAIN_WINDOW ShareDT)
 add_executable(${SHAREDT_MAIN_WINDOW}
+        ${SHAREDT_SRC}/util/TimeUtil.c
         ${SHAREDT_SRC}/main/MainWindow.cpp
         ${SHAREDT_SRC}/main/Layout.cpp
         ${SHAREDT_SRC}/main/ShareDTWindow.cpp

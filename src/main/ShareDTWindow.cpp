@@ -4,6 +4,14 @@
 #include "Path.h"
 #include "ExportAll.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "TimeUtil.h"
+#ifdef __cplusplus
+}
+#endif
+
 #include <QObject>
 #include <QMessageBox>
 #include <QEvent>
@@ -96,23 +104,25 @@ void UI_ShareDTWindow::setLocalWindows(QWidget *w)
     auto * scrollArea = new QScrollArea();
     scrollArea->setWidget(_localGroupBox.item);
     scrollArea->setWidgetResizable( true );
+    scrollArea->setGeometry(QRect(600, 1000, 1000, 900));
 
     _mainLayout->addWidget(scrollArea);
-
+    
     refreshLocalBoxGroupInternal();
 }
 
 void UI_ShareDTWindow::setupMainWindow(QWidget *w)
 {
     _mainLayout = new QVBoxLayout(w);
-    w->setGeometry(600, 100, 1000, 900);
+    w->setGeometry(600, 300, 1000, 900);
 }
 
 void UI_ShareDTWindow::setMenu(QWidget * w)
 {
     _menubar = new QMenuBar(w);
+    _menubar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     _menubar->setObjectName(QString::fromUtf8("menubar"));
-    _menubar->setGeometry(QRect(0, 0, 800, 24));
+    _menubar->setGeometry(QRect(0, 0, 800, 50));
 
     /* Edit */
     _menuEdit = new QMenu(_menubar);
@@ -203,6 +213,10 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
 
     WindowVectorProvider wvp(-1);
     for (const auto & w : wvp.get()) {
+std::cout << get_current_time_string() << " Get new win handler=" << w.getName() << std::endl;
+
+        if (ExportAll::filterExportWinName(w.getName())) continue;
+
         ExportAll ea(SP_WINDOW, w.getHandler());
         ItemInfo info;
 
@@ -211,8 +225,7 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
         // filter out the unnecessary window
         if ((fb=ea.getFrameBuffer(cwb)) == nullptr ||
             fb->getWidth() < cp.getX()/8 ||
-            fb->getHeight() < cp.getY()/8 ||
-            ExportAll::filterExportWinName(w.getName()))
+            fb->getHeight() < cp.getY()/8)
             continue;
 
         info.name = w.getName();

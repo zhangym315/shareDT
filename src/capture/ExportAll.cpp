@@ -44,6 +44,9 @@ FrameBuffer * ExportAll::getFrameBuffer(CircWRBuf<FrameBuffer> & cwf)
 #ifdef __SHAREDT_IOS__
 const static std::unordered_set<String> PROCESS_FILTER{"Menubar", "Fullscreen Backdrop", "Desktop", "Dock"};
 const static std::unordered_set<String> PROCESS_FILTER_CONTAINS {"Desktop Picture"};
+#elif __SHAREDT_WIN__
+const static std::unordered_set<String> PROCESS_FILTER {"default ime", "msctfime ui", "radeonsettings"};
+const static std::unordered_set<String> PROCESS_FILTER_CONTAINS {};
 #else
 const static std::unordered_set<String> PROCESS_FILTER {};
 const static std::unordered_set<String> PROCESS_FILTER_CONTAINS {};
