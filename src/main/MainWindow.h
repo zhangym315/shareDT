@@ -2,21 +2,17 @@
 #define SHAREDT_MAINWINDOW_H
 #include "ShareDTWindow.h"
 #include <QWidget>
+#include <QMainWindow>
 
-class ShareDTWindow : public QWidget{
+class ShareDTWindow : public QMainWindow{
     Q_OBJECT
 
 public:
     explicit ShareDTWindow (int argc, char ** argv,
-                             QWidget *parent = nullptr);
+                             QWidget *parent = new QWidget());
     ~ShareDTWindow () override;
-/*
-    bool isInited() const { return _fetcher->isInited(); }
-    void startFetcher();
 
-    void closeEvent ( QCloseEvent *event ) override;
-    void resizeEvent( QResizeEvent * e ) override;
-*/
+    void setMenu();
 private:
     Ui::ShareDTWindow   * _ui;
 

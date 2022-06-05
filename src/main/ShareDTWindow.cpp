@@ -4,6 +4,14 @@
 #include "Path.h"
 #include "ExportAll.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "TimeUtil.h"
+#ifdef __cplusplus
+}
+#endif
+
 #include <QObject>
 #include <QMessageBox>
 #include <QEvent>
@@ -96,65 +104,21 @@ void UI_ShareDTWindow::setLocalWindows(QWidget *w)
     auto * scrollArea = new QScrollArea();
     scrollArea->setWidget(_localGroupBox.item);
     scrollArea->setWidgetResizable( true );
+    scrollArea->setGeometry(QRect(600, 1000, 1000, 900));
 
     _mainLayout->addWidget(scrollArea);
-
+    
     refreshLocalBoxGroupInternal();
 }
 
 void UI_ShareDTWindow::setupMainWindow(QWidget *w)
 {
     _mainLayout = new QVBoxLayout(w);
-    w->setGeometry(600, 100, 1000, 900);
-}
-
-void UI_ShareDTWindow::setMenu(QWidget * w)
-{
-    _menubar = new QMenuBar(w);
-    _menubar->setObjectName(QString::fromUtf8("menubar"));
-    _menubar->setGeometry(QRect(0, 0, 800, 24));
-
-    /* Edit */
-    _menuEdit = new QMenu(_menubar);
-    _menuEdit->setObjectName(QString::fromUtf8("menuEdit"));
-    _menuEdit->setTitle(QCoreApplication::translate("ShareDTClientWin", "Edit", nullptr));
-    auto * newConnect = new QAction(w);
-    newConnect->setObjectName(QString::fromUtf8("new_connection"));
-    newConnect->setText(QCoreApplication::translate("ShareDTWindow", "New Connection", nullptr));
-    _menuEdit->addAction(newConnect);
-    /* Edit end*/
-
-    /* Window */
-    _menuWindow = new QMenu(_menubar);
-    _menuWindow->setObjectName(QString::fromUtf8("menuWindow"));
-    _menuWindow->setTitle(QCoreApplication::translate("ShareDTWindow", "Window", nullptr));
-
-    _freshWin = new QAction(w);
-    _freshWin->setObjectName(QString::fromUtf8("fresh_itmes"));
-    _freshWin->setText(QCoreApplication::translate("ShareDTWindow", "Refresh Items", nullptr));
-    _menuWindow->addAction(_freshWin);
-    QObject::connect (_freshWin, SIGNAL(triggered()), w, SLOT(actionFreshItems()));
-    /* Window end */
-
-    /* Help */
-    _menuHelp = new QMenu(_menubar);
-    _menuHelp->setObjectName(QString::fromUtf8("menuHelp"));
-    _menuHelp->setTitle(QCoreApplication::translate("ShareDTWindow", "Help", nullptr));
-
-    auto * aboutWin = new QAction(w);
-    aboutWin->setObjectName(QString::fromUtf8("about_window"));
-    aboutWin->setText(QCoreApplication::translate("ShareDTWindow", "About", nullptr));
-    _menuHelp->addAction(aboutWin);
-    /* Help  end */
-
-    _menubar->addAction(_menuEdit->menuAction());
-    _menubar->addAction(_menuWindow->menuAction());
-    _menubar->addAction(_menuHelp->menuAction());
+    w->setGeometry(600, 300, 1000, 900);
 }
 
 void UI_ShareDTWindow::setupUi(QWidget *w)
 {
-    setMenu(w);
     setupMainWindow(w);
     setLocalWindows(w);
 }
@@ -203,6 +167,10 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
 
     WindowVectorProvider wvp(-1);
     for (const auto & w : wvp.get()) {
+std::cout << get_current_time_string() << " Get new win handler=" << w.getName() << std::endl;
+
+        if (ExportAll::filterExportWinName(w.getName())) continue;
+
         ExportAll ea(SP_WINDOW, w.getHandler());
         ItemInfo info;
 
@@ -211,8 +179,7 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
         // filter out the unnecessary window
         if ((fb=ea.getFrameBuffer(cwb)) == nullptr ||
             fb->getWidth() < cp.getX()/8 ||
-            fb->getHeight() < cp.getY()/8 ||
-            ExportAll::filterExportWinName(w.getName()))
+            fb->getHeight() < cp.getY()/8)
             continue;
 
         info.name = w.getName();
