@@ -71,7 +71,6 @@ public:
     void setupMainWindow(QWidget * w);
     void setupUi(QWidget * w);
     void setLocalWindows(QWidget * w);
-    void setMenu(QWidget * w);
 
     void refreshLocalBoxGroup(QWidget * w);
 

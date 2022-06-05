@@ -117,54 +117,8 @@ void UI_ShareDTWindow::setupMainWindow(QWidget *w)
     w->setGeometry(600, 300, 1000, 900);
 }
 
-void UI_ShareDTWindow::setMenu(QWidget * w)
-{
-    _menubar = new QMenuBar(w);
-    _menubar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    _menubar->setObjectName(QString::fromUtf8("menubar"));
-    _menubar->setGeometry(QRect(0, 0, 800, 50));
-
-    /* Edit */
-    _menuEdit = new QMenu(_menubar);
-    _menuEdit->setObjectName(QString::fromUtf8("menuEdit"));
-    _menuEdit->setTitle(QCoreApplication::translate("ShareDTClientWin", "Edit", nullptr));
-    auto * newConnect = new QAction(w);
-    newConnect->setObjectName(QString::fromUtf8("new_connection"));
-    newConnect->setText(QCoreApplication::translate("ShareDTWindow", "New Connection", nullptr));
-    _menuEdit->addAction(newConnect);
-    /* Edit end*/
-
-    /* Window */
-    _menuWindow = new QMenu(_menubar);
-    _menuWindow->setObjectName(QString::fromUtf8("menuWindow"));
-    _menuWindow->setTitle(QCoreApplication::translate("ShareDTWindow", "Window", nullptr));
-
-    _freshWin = new QAction(w);
-    _freshWin->setObjectName(QString::fromUtf8("fresh_itmes"));
-    _freshWin->setText(QCoreApplication::translate("ShareDTWindow", "Refresh Items", nullptr));
-    _menuWindow->addAction(_freshWin);
-    QObject::connect (_freshWin, SIGNAL(triggered()), w, SLOT(actionFreshItems()));
-    /* Window end */
-
-    /* Help */
-    _menuHelp = new QMenu(_menubar);
-    _menuHelp->setObjectName(QString::fromUtf8("menuHelp"));
-    _menuHelp->setTitle(QCoreApplication::translate("ShareDTWindow", "Help", nullptr));
-
-    auto * aboutWin = new QAction(w);
-    aboutWin->setObjectName(QString::fromUtf8("about_window"));
-    aboutWin->setText(QCoreApplication::translate("ShareDTWindow", "About", nullptr));
-    _menuHelp->addAction(aboutWin);
-    /* Help  end */
-
-    _menubar->addAction(_menuEdit->menuAction());
-    _menubar->addAction(_menuWindow->menuAction());
-    _menubar->addAction(_menuHelp->menuAction());
-}
-
 void UI_ShareDTWindow::setupUi(QWidget *w)
 {
-    setMenu(w);
     setupMainWindow(w);
     setLocalWindows(w);
 }
