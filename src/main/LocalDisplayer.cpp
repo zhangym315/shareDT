@@ -3,6 +3,7 @@
 #include "LocalDisplayer.h"
 #include <QObject>
 #include <chrono>
+#include <QScreen>
 
 #ifdef __SHAREDT_WIN__
 #include <windows.h>
@@ -152,8 +153,12 @@ void LocalDisplayer::actionFixRatioWidthHeight()
 
 void LocalDisplayer::startFetcher()
 {
-    _winSize.oriSize.setWidth(_fetcher->getScreenProvide()->getWidth());
-    _winSize.oriSize.setHeight(_fetcher->getScreenProvide()->getHeight());
+    MonitorVectorProvider mvp;
+
+    int scale = static_cast<int>(mvp.get().begin()->getScale() * RATIO_PRECISION);
+    _winSize.oriSize.setWidth(_fetcher->getScreenProvide()->getWidth()*RATIO_PRECISION / scale);
+    _winSize.oriSize.setHeight(_fetcher->getScreenProvide()->getHeight()*RATIO_PRECISION / scale);
+
     actionAdjustToOriginSize();
 
     _fetcher->start();
