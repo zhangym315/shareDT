@@ -50,11 +50,14 @@ if(WIN32)
     set(${PROJECT_NAME}_PLATFORM_LIBS Dwmapi DXGI
         Secur32 Strmiids Mfuuid Bcrypt ### ffmpeg
         crypt32   ### openssl
+        RuntimeObject
+        D3D11
         )
     add_definitions(-DNOMINMAX)
     add_definitions(-D__SHAREDT_WIN__)
 
     set(CAPTURE_SRC
+            ${CMAKE_SOURCE_DIR}/src/capture/win/DirectX3DWindow.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/win/WinGetWindows.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/win/WinGetMonitors.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/win/GDIWindowProcessor.cpp

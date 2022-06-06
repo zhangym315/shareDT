@@ -3,18 +3,41 @@
 #include "WindowProcessor.h"
 #include "Logger.h"
 #include "ScopedPrt.h"
+#include "DirectX3DWindow.h"
 
 static GDIFrameProcessor * gdiFP = NULL;
 
+
 /* nothing to do with windows */
 void FrameGetterSystem::init() {
+//    _fpi = new FrameProcessorImpl(_fb);
+std::cout << "FrameGetterSystem::init started" << _win->getHandler() << std::endl;
+    Direct3DCapture * t = new Direct3DCapture((HWND)_win->getHandler(), _fb);
+    t->StartCapture();
 }
 
 void FrameGetterSystem::pause() {
 }
 
 void FrameGetterSystem::resume() {
+//    _fpi.start();
 }
+
+void FrameGetterSystem::stop() {
+
+}
+
+class FrameProcessorImpl {
+public:
+    FrameProcessorImpl(CircleWRBuf<FrameBuffer> * f) {
+    }
+
+    void start();
+
+private:
+    CircleWRBuf<FrameBuffer> * _fb;
+    Direct3DCapture * _dc;
+};
 
 bool GDIFrameProcessor::init() {
     if(_type == SP_MONITOR || _type == SP_PARTIAL) {

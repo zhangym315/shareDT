@@ -1,5 +1,6 @@
 #include "WindowProcessor.h"
 #include <atomic>
+
 /*
  * Singleton to provide the capture info
  */
@@ -12,6 +13,7 @@ class CaptureInfo {
 
     void setIsRunning(bool isDown);
     bool isRunning() const;
+
   private:
     CaptureInfo();
     static CaptureInfo * _instance;
