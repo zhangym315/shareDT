@@ -1,9 +1,15 @@
 
 #include <QApplication>
-#include "LocalDisplayer.h"
 #include <QObject>
 #include <chrono>
 #include <QScreen>
+#include <QObject>
+#include <QAction>
+#include <QMenuBar>
+#include <QMenu>
+#include <QDesktopWidget>
+
+#include "LocalDisplayer.h"
 
 #ifdef __SHAREDT_WIN__
 #include <windows.h>
@@ -58,30 +64,81 @@ void FetchingDataThread::run()
     _shutdown = true;
 }
 
-LocalDisplayer::LocalDisplayer (int argc, char ** argv, QWidget *parent) :
-        QWidget (parent),
-        _ui(new Ui::LocalDisplayer),
+LocalDisplayer::LocalDisplayer (int argc, char ** argv) :
         _fetcher(new FetchingDataThread(argc, argv))
 {
     if (!_fetcher->isInited()) return;
 
-    _ui->setupUi (this);
-
-    _ui->imageLabel->setText (QString("                                      "
-                                      "Starting Local Displayer..."));
+    setupMenu();
+    setupMain();
 
     QObject::connect (_fetcher, SIGNAL(sendRect(FrameBuffer*)),
                       this, SLOT(putImage(FrameBuffer*)));
-    QObject::connect (_ui->actionFix_to_ratio_width_height, SIGNAL(triggered()),
+    QObject::connect (this->actionFix_to_ratio_width_height, SIGNAL(triggered()),
                       this, SLOT(actionFixRatioWidthHeight()));
-    QObject::connect (_ui->actionAdjust_to_original_size, SIGNAL(triggered()),
+    QObject::connect (this->actionAdjust_to_original_size, SIGNAL(triggered()),
                       this, SLOT(actionAdjustToOriginSize()));
 
 }
 
 LocalDisplayer::~LocalDisplayer()
 {
-    delete _ui;
+}
+
+void LocalDisplayer::setupMain()
+{
+    _imageLabel = new QLabel();
+    _imageLabel->setObjectName(QString::fromUtf8("ImageLabel"));
+    QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    sizePolicy.setHorizontalStretch(0);
+    sizePolicy.setVerticalStretch(0);
+    sizePolicy.setHeightForWidth(_imageLabel->sizePolicy().hasHeightForWidth());
+
+    _imageLabel->setSizePolicy(sizePolicy);
+    _imageLabel->setFrameShape(QFrame::Box);
+    _imageLabel->setFrameShadow(QFrame::Plain);
+    _imageLabel->setLineWidth(0);
+    _imageLabel->setMinimumSize(1, 1);
+
+    _imageLabel->setText(QCoreApplication::translate("LocalDisplayer", "ImageLabel", nullptr));
+
+    setCentralWidget(_imageLabel);
+    resize(QDesktopWidget().availableGeometry(this).size() * 0.5);
+}
+
+void LocalDisplayer::setupMenu()
+{
+    actionFix_to_ratio_width_height = new QAction();
+    actionFix_to_ratio_width_height->setObjectName(QString::fromUtf8("actionFix_to_ratio_width_height"));
+    actionAdjust_to_original_size = new QAction();
+    actionAdjust_to_original_size->setObjectName(QString::fromUtf8("actionAdjust_to_original_size"));
+    actionShow_help = new QAction();
+    actionShow_help->setObjectName(QString::fromUtf8("actionShow_help"));
+
+    _menubar = menuBar();
+    _menubar->setObjectName(QString::fromUtf8("MenuBar"));
+    _menubar->setGeometry(QRect(0, 0, 800, 24));
+    auto * menuEdit = new QMenu(_menubar);
+    menuEdit->setObjectName(QString::fromUtf8("menuEdit"));
+    auto * menuWindow = new QMenu(_menubar);
+    menuWindow->setObjectName(QString::fromUtf8("menuWindow"));
+    auto * menuHelp = new QMenu(_menubar);
+    menuHelp->setObjectName(QString::fromUtf8("menuHelp"));
+
+    _menubar->addAction(menuEdit->menuAction());
+    _menubar->addAction(menuWindow->menuAction());
+    _menubar->addAction(menuHelp->menuAction());
+    menuWindow->addAction(actionFix_to_ratio_width_height);
+    menuWindow->addAction(actionAdjust_to_original_size);
+    menuHelp->addAction(actionShow_help);
+
+    actionFix_to_ratio_width_height->setText(QCoreApplication::translate("LocalDisplayer", "Fixed width and height ratio", nullptr));
+    actionAdjust_to_original_size->setText(QCoreApplication::translate("LocalDisplayer", "Adjust to original size", nullptr));
+    actionShow_help->setText(QCoreApplication::translate("LocalDisplayer", "Show Help", nullptr));
+
+    menuEdit->setTitle(QCoreApplication::translate("LocalDisplayer", "Edit", nullptr));
+    menuWindow->setTitle(QCoreApplication::translate("LocalDisplayer", "Window", nullptr));
+    menuHelp->setTitle(QCoreApplication::translate("LocalDisplayer", "Help", nullptr));
 }
 
 void LocalDisplayer::resetRatioWindow()
@@ -102,7 +159,7 @@ void LocalDisplayer::resizeEvent( QResizeEvent * e )
 
     resetRatioWindow();
 
-    QWidget::resizeEvent(e);
+    QMainWindow::resizeEvent(e);
 }
 
 void LocalDisplayer::putImage (FrameBuffer * frame)
@@ -119,14 +176,15 @@ void LocalDisplayer::putImage (FrameBuffer * frame)
         im = im.scaled(_winSize.curSize.width(), _winSize.curSize.height());
     }
 
-    _ui->imageLabel->setPixmap(QPixmap::fromImage(im));
+    _imageLabel->setPixmap(QPixmap::fromImage(im));
 
     if (_winSize.isResized) {
         int wt = _winSize.curSize.width();
         int ht = _winSize.curSize.height();
-        _ui->imageLabel->resize (wt, ht);
-        _ui->horizontalLayoutWidget->resize(wt, ht);
-        this->resize(wt, ht);
+
+        _imageLabel->resize (wt, ht);
+        resize(wt, ht);
+
         _winSize.isResized = false;
     }
 
@@ -135,6 +193,7 @@ void LocalDisplayer::putImage (FrameBuffer * frame)
 
 void LocalDisplayer::actionAdjustToOriginSize()
 {
+    std::cout << "_winSize.oriSize w=" << _winSize.oriSize.width() << " h=" << _winSize.oriSize.height() << std::endl;
     _winSize.curSize = _winSize.oriSize;
     _winSize.isResized = true;
 

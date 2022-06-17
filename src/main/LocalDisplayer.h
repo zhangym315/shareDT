@@ -4,12 +4,13 @@
 #include <QWidget>
 #include <QMouseEvent>
 #include <QHoverEvent>
+#include <QMainWindow>
+#include <QLabel>
 
 #include "Thread.h"
 #include "Capture.h"
 #include "SDThread.h"
 #include "Buffer.h"
-#include "ui_LocalDisplayer.h"
 
 #define RATIO_PRECISION 1000
 
@@ -45,12 +46,11 @@ private:
     Capture    _capture;
 };
 
-class LocalDisplayer : public QWidget{
+class LocalDisplayer : public QMainWindow {
 Q_OBJECT
 
 public:
-    explicit LocalDisplayer (int argc, char ** argv,
-                               QWidget *parent = nullptr);
+    explicit LocalDisplayer (int argc, char ** argv);
     ~LocalDisplayer () override;
 
     bool isInited() const { return _fetcher->isInited(); }
@@ -59,10 +59,18 @@ public:
     void closeEvent ( QCloseEvent *event ) override;
     void resizeEvent( QResizeEvent * e ) override;
 
+    void setupMenu();
+    void setupMain();
+
+    QAction * actionFix_to_ratio_width_height;
+    QAction * actionAdjust_to_original_size;
+    QAction * actionShow_help;
 private:
     void resetRatioWindow();
 
-    Ui::LocalDisplayer   * _ui;
+    QMenuBar * _menubar;
+    QLabel * _imageLabel;
+
     FetchingDataThread   * _fetcher;
     MainWindowResized     _winSize;
 
