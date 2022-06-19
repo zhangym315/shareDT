@@ -1,9 +1,13 @@
 #include <unordered_set>
+#include <chrono>
+
 #include "ExportAll.h"
 #include <png.h>
 #include "SamplesProvider.h"
 
-FrameBuffer * ExportAll::getFrameBuffer(CircWRBuf<FrameBuffer> & cwf)
+using namespace std::chrono_literals;
+
+FrameBuffer * ExportAll::getFrameBuffer(CircleWRBuf<FrameBuffer> & cwf)
 {
     FrameBuffer * fb;
     cwf.setEmpty();
@@ -13,11 +17,8 @@ FrameBuffer * ExportAll::getFrameBuffer(CircWRBuf<FrameBuffer> & cwf)
         const CapMonitor & cp = CapMonitor::getById(_captureId);
         if (!cp.isValid()) return nullptr;
 
-        FrameProcessorWrap * fpw = FrameProcessorWrap::instance();
+        FrameGetterSystem * fpw = new FrameGetterSystem(&cwf, const_cast<CapMonitor *>(&cp), DEFAULT_SAMPLE_PROVIDER);
         fpw->setReInitiated();
-
-        fpw->setMV(const_cast<CapMonitor *>(&cp), 1);
-        fpw->setCFB(&cwf);
 
         int indicator = 0;
         while(!fpw->isReady() && ++indicator < 100) {

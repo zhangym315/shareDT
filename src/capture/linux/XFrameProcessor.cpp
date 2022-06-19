@@ -8,13 +8,16 @@
 static X11FrameProcessor * x11FP = NULL;
 
 /* nothing to do with linux */
-void FrameProcessorWrap::init() {
+void FrameGetterSystem::init() {
 }
 
-void FrameProcessorWrap::pause() {
+void FrameGetterSystem::pause() {
 }
 
-void FrameProcessorWrap::resume() {
+void FrameGetterSystem::resume() {
+}
+
+void FrameGetterSystem::stop() {
 }
 
 bool X11FrameProcessor::init()
@@ -86,7 +89,7 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
         }
         fb->setDataPerRow((unsigned char*)XImage_->data, _mon->getWidth(),
                           _mon->getHeight(), XImage_->bytes_per_line,
-                          FrameProcessorWrap::instance()->getImageType());
+                          FrameGetterSystem::instance()->getImageType());
     } else if(_type == SP_PARTIAL) {
         if(!XShmGetImage(SelectedDisplay,
                        RootWindow(SelectedDisplay, _mon->getId ()),
@@ -98,7 +101,7 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
         }
         fb->setDataPerRow((unsigned char*)XImage_->data,_bounds->getWidth(),
                           _bounds->getHeight(), XImage_->bytes_per_line,
-                          FrameProcessorWrap::instance()->getImageType());
+                          FrameGetterSystem::instance()->getImageType());
     } else if ( _type == SP_WINDOW ) {
         XWindowAttributes wndattr;
 
@@ -121,13 +124,13 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
         fb->setDataPerRow((unsigned char*)XImage_->data,
                           _win->getWidth(), _win->getHeight(),
                           XImage_->bytes_per_line,
-                          FrameProcessorWrap::instance()->getImageType());
+                          FrameGetterSystem::instance()->getImageType());
     }
 
     return true;
 }
 
-void CircleWriteThread::init() {
+void FrameGetterThread::init() {
     if(_type == SP_MONITOR)
         x11FP = new X11FrameProcessor(_mon);
     else if (_type == SP_PARTIAL)

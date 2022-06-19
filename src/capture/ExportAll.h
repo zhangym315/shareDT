@@ -8,7 +8,7 @@ public:
     ExportAll(SPType type, int id) : _type(type), _captureId(id) { }
     ~ExportAll() { }
 
-    FrameBuffer * getFrameBuffer(CircWRBuf<FrameBuffer> & cwf);
+    FrameBuffer * getFrameBuffer(CircleWRBuf<FrameBuffer> & cwf);
 
     static void writeToFile(const String & p, const FrameBuffer * f);
     static bool filterExportWinName(const String & w);

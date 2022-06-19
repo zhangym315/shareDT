@@ -59,9 +59,9 @@ class CapImageRect {
 
     void set(int l, int t, int r, int b);
 
-    const CapPoint & getLT() const { return _lt; }
-    const CapPoint & getRB() const { return _rb; }
-    const CapPoint & getSZ() const { return _size; }
+    [[nodiscard]] const CapPoint & getLT() const { return _lt; }
+    [[nodiscard]] const CapPoint & getRB() const { return _rb; }
+    [[nodiscard]] const CapPoint & getSZ() const { return _size; }
 
     bool Contains(const CapImageRect &a) const { return _lt.isLess(a.getLT()) && _rb.isGreat (a.getRB()); }
 
@@ -70,10 +70,10 @@ class CapImageRect {
         return _lt.isEqual(a.getLT()) && _rb.isEqual(a.getRB());
     }
 
-    int getWidth() const { return _size.getX(); }
-    int getHeight()const { return _size.getY(); }
-    int getTLX() const { return _lt.getX(); }
-    int getTLY() const { return _lt.getY(); }
+    [[nodiscard]] int getWidth() const { return _size.getX(); }
+    [[nodiscard]] int getHeight()const { return _size.getY(); }
+    [[nodiscard]] int getTLX() const { return _lt.getX(); }
+    [[nodiscard]] int getTLY() const { return _lt.getY(); }
 
     /* overloading = */
     CapImageRect & operator = (const CapImageRect & other) {
@@ -84,7 +84,7 @@ class CapImageRect {
     }
 
     void setInvalid() { _isValid = false; }
-    bool isValid() { return _isValid; }
+    [[nodiscard]] bool isValid() { return _isValid; }
 
     String toString(char * delimiter) {
         return std::to_string(_lt.getX()) + String(delimiter) +
@@ -112,24 +112,36 @@ struct Image {
 
 class CapWindow {
   public:
-    CapWindow(size_t h, CapPoint & o, CapPoint &s, String n, Pid p) : _handler(h),
-            _offset(o),  _size(s), _name(n), _pid(p), _isValid (true)  {  }
-    CapWindow() { _isValid = false; }
-    ~CapWindow () { }
-    size_t getHandler() const { return _handler; }
-    Pid    getPid    () const { return _pid; }
-    bool   isValid   () const { return _isValid; }
+    CapWindow(size_t h,
+              CapPoint & o,
+              CapPoint &s,
+              String & n,
+              Pid p) :
+          _handler(h), _offset(o),  _size(s),
+          _name(n), _pid(p), _isValid (true)  {  }
+
+    CapWindow() : _offset(CapPoint(0,0)),
+          _size(CapPoint(0,0)),
+          _name(""), _pid(0) { _isValid = false; }
+
+    ~CapWindow () = default;
+
+    [[nodiscard]] size_t getHandler() const { return _handler; }
+    [[nodiscard]] Pid    getPid    () const { return _pid; }
+    [[nodiscard]] bool   isValid   () const { return _isValid; }
+    [[nodiscard]] const CapPoint & getOffset() const { return _offset; }
+    [[nodiscard]] const CapPoint & getSize () const { return _size; }
+    [[nodiscard]] const String   & getName () const { return _name; }
+    [[nodiscard]] int   getWidth()  const { return _size.getX (); }
+    [[nodiscard]] int   getHeight() const { return _size.getY (); }
+    [[nodiscard]] std::vector<size_t> getAll() const { return _all; }
+
     void   setInvalid() { _isValid = true; }
-    const CapPoint & getOffset() const { return _offset; }
-    const CapPoint & getSize () const { return _size; }
-    const String   & getName () const { return _name; }
-    int   getWidth()  const { return _size.getX (); }
-    int   getHeight() const { return _size.getY (); }
     void  clear() { _all.clear(); }
     void  push(size_t h) { _all.push_back(h); }
-    std::vector<size_t> getAll() const { return _all; }
 
-    void operator = (const CapWindow &other) {
+
+    CapWindow & operator = (const CapWindow &other) {
         _handler = other.getHandler ();
         _offset    = other.getOffset ();
         _size = other.getSize();
@@ -137,52 +149,61 @@ class CapWindow {
         _pid = other.getPid ();
         _isValid = other.isValid ();
         _all = other.getAll ();
+
+        return *this;
     }
 
     void setOffset(int x, int y) { _offset.setX(x); _offset.setY(y);}
     void setSize (int x, int y) { _size.setX(x); _size.setY(y);}
-
     void setWinType(SPWinType wintype) { _winType = wintype; }
     SPWinType getWinType() { return _winType; }
-
     static CapWindow getWinById(size_t h);
 
   private:
-    size_t    _handler;
+    size_t    _handler{};
     SPWinType _winType;
-    std::vector<size_t>  _all;   /* all handler with the same process id */
     CapPoint  _offset;
     CapPoint  _size;
     String    _name;
-    Pid       _pid;
+    Pid       _pid{};
     bool      _isValid;
+    std::vector<size_t>  _all;   /* all handler with the same process id */
 };
 
 class CapMonitor {
   public:
-    CapMonitor(int idx, int id, CapPoint sz, CapPoint of, float sc) :
-        _index(idx), _id(id), _size(sz), _offset(of), _scale(sc), _isValid(true){
-        _orgSize  = _size;
-        _orgOffset = _offset;
-        _name = String("Display-") + std::to_string(idx);
-    }
-    CapMonitor(int idx, int id, CapPoint sz, CapPoint of, CapPoint os, float sc) :
-        _index(idx), _id(id), _size(sz), _offset(of), _orgSize(os),
-        _scale(sc), _isValid(true){
-         _orgOffset = _offset;
-        _name = String("Display-") + std::to_string(idx);
-    }
+    CapMonitor(int idx, int id,
+               const CapPoint& sz,
+               const CapPoint& of,
+               float sc) :
+        _index(idx), _id(id), _adapter(-1),
+        _offset(of), _size(sz), _orgOffset(of), _orgSize(sz),
+        _name(String("Display-") + std::to_string(idx)),
+        _scale(sc), _isValid(true) { }
+
+    CapMonitor(int idx, int id,
+               const CapPoint& sz,
+               const CapPoint& of,
+               const CapPoint& os,
+               float sc) :
+        _index(idx), _id(id), _adapter(-1),
+        _offset(of), _size(sz), _orgOffset(of), _orgSize(os),
+        _name(String("Display-") + std::to_string(idx)),
+        _scale(sc), _isValid(true) { }
+
     CapMonitor(int idx, int id, int w, int h, int ox, int oy, float sc) :
-        CapMonitor (idx, id, CapPoint(w, h), CapPoint(ox, oy), sc)  { }
+            CapMonitor (idx, id, CapPoint(w, h), CapPoint(ox, oy), sc)  { }
 
     CapMonitor(int idx, int id, int w, int h, int ox, int oy,
                     int ow, int oh, float sc) :
             CapMonitor (idx, id, CapPoint(w, h), CapPoint(ox, oy), CapPoint(ow, oh), sc)  { }
+
     CapMonitor(int idx, int id, int w, int h, int ox, int oy, float sc, int adapter) :
             CapMonitor (idx, id, CapPoint(w, h), CapPoint(ox, oy), sc)  {
         _adapter = adapter;
         _isValid = true;
     }
+
     CapMonitor(String & name, int idx, int id, int w, int h, int ox, int oy, float sc, int adapter) :
             CapMonitor (idx, id, CapPoint(w, h), CapPoint(ox, oy), sc)  {
         _adapter = adapter;
@@ -191,7 +212,7 @@ class CapMonitor {
     }
 
     CapMonitor() : CapMonitor (0, 0, CapPoint(0, 0), CapPoint(0, 0), 0) { _isValid = false; }
-    ~CapMonitor() { }
+    ~CapMonitor() = default;
 
     [[nodiscard]] int   getId()    const { return _id ;   }
     [[nodiscard]] int   getIndex() const { return _index; }
@@ -209,7 +230,7 @@ class CapMonitor {
     [[nodiscard]] bool  isValid() const { return _isValid; }
     void  setInValid() { _isValid = false; }
 
-    void operator = (const CapMonitor &other) {
+    CapMonitor& operator = (const CapMonitor &other) {
         _index = other.getIndex ();
         _id    = other.getId ();
         _adapter = other.getAdapter();
@@ -221,6 +242,8 @@ class CapMonitor {
         _orgOffset = other.getOrgOffset();
         _orgSize  = other.getOrgSize();
         _isValid  = other.isValid ();
+
+        return *this;
     }
 
     static CapMonitor getById(int id);

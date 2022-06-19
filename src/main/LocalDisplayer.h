@@ -41,9 +41,9 @@ signals:
     void sendRect(FrameBuffer* client);
 
 private:
-    bool       _isInited;
-    FrameBuffer *   _frame{};
-    Capture    _capture;
+    bool          _isInited;
+    FrameBuffer * _frame;
+    Capture       _capture;
 };
 
 class LocalDisplayer : public QMainWindow {

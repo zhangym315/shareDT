@@ -42,7 +42,7 @@ void stopAllSC()
             LOGGER.info() << "Sending stopping to WID: " << it->first;
             it->second.stop();
 
-            std::lock_guard<std::mutex> guard(_WIDManagerMutex);
+            std::scoped_lock<std::mutex> guard(_WIDManagerMutex);
             it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
             LOGGER.info() << "Stopped Capture Server WID: " << it->first;
         }
@@ -100,7 +100,7 @@ static void stopSpecificCaptureServer(
     }
 
     /* mark the server as stopped even we don't understand the status */
-    std::lock_guard<std::mutex> guard(_WIDManagerMutex);
+    std::scoped_lock<std::mutex> guard(_WIDManagerMutex);
     it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
 
     /* failed to know the CaptureServer */
@@ -320,12 +320,12 @@ void HandleCommandSocket(Socket * sk, char * buf)
 
         /* add it to global _WIDManager, skip the failed one */
         if(it == _WIDManager.end() && success) {
-            std::lock_guard<std::mutex> guard(_WIDManagerMutex);
+            std::scoped_lock<std::mutex> guard(_WIDManagerMutex);
             _WIDManager.insert(std::pair<String, MainManagementProcess>
                        (wid, MainManagementProcess(alive, capServerHome, capServerPort,
                                                    MainManagementProcess::STATUS::STARTED)));
         } else if (success) {
-            std::lock_guard<std::mutex> guard(_WIDManagerMutex);
+            std::scoped_lock<std::mutex> guard(_WIDManagerMutex);
             it->second.updateStatus(MainManagementProcess::STATUS::STARTED);
         }
     } else {
