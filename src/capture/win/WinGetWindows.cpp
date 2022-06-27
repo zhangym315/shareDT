@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
-
 #include <iostream>
 
 struct srch {
@@ -38,7 +37,7 @@ static BOOL CALLBACK EnumWindowsProc(_In_ HWND hwnd, _In_ LPARAM lParam)
     CapPoint size (windowrect.ClientRect.right - windowrect.ClientRect.left,
                     windowrect.ClientRect.bottom - windowrect.ClientRect.top);
 
-    CapWindow w(reinterpret_cast<size_t>(hwnd), offset, size, Name, pid);
+    CapWindow w(reinterpret_cast<size_t>(hwnd), offset, size, std::string(Name), pid);
 
     s->win->push_back(w);
     return TRUE;

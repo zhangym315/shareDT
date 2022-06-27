@@ -91,7 +91,7 @@ void WindowVectorProvider::CapGetWindows()
     /* if size changed, need to change the window vector */
     if(ret.size() != _wins.size()) {
         {
-            std::lock_guard<std::mutex> lk (_winMtx);
+            std::scoped_lock<std::mutex> lk (_winMtx);
             _wins.swap(ret);
         }
         ret.clear();

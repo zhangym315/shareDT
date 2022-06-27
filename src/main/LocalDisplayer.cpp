@@ -29,18 +29,18 @@ FetchingDataThread::FetchingDataThread(int argc, char **argv) :
 
     auto sp = _capture.getScreenProvide();
 
-    if (!sp->startSample()) {
-        LOGGER.error() << "FetchingDataThread failed to start SampleProvider" ;
-        return ;
-    }
+    if (sp->startSample()) {
 
-    int count = 0;
-    while(!sp->isSampleReady() && ++count < 100) {
-        std::this_thread::sleep_for(50ms);
-    }
-    if (!sp->isSampleReady()) return;
+        int count = 0;
+        while (!sp->isSampleReady() && ++count < 100) {
+            std::this_thread::sleep_for(50ms);
+        }
+        if (!sp->isSampleReady()) return;
 
-    _isInited = true;
+        _isInited = true;
+    } else {
+        LOGGER.error() << "FetchingDataThread failed to start SampleProvider";
+    }
 }
 
 void FetchingDataThread::run()
@@ -193,7 +193,6 @@ void LocalDisplayer::putImage (FrameBuffer * frame)
 
 void LocalDisplayer::actionAdjustToOriginSize()
 {
-    std::cout << "_winSize.oriSize w=" << _winSize.oriSize.width() << " h=" << _winSize.oriSize.height() << std::endl;
     _winSize.curSize = _winSize.oriSize;
     _winSize.isResized = true;
 

@@ -7,13 +7,13 @@
 static GDIFrameProcessor * gdiFP = NULL;
 
 /* nothing to do with windows */
-void FrameProcessorWrap::init() {
+void FrameGetterSystem::init() {
 }
 
-void FrameProcessorWrap::pause() {
+void FrameGetterSystem::pause() {
 }
 
-void FrameProcessorWrap::resume() {
+void FrameGetterSystem::resume() {
 }
 
 bool GDIFrameProcessor::init() {
@@ -130,7 +130,7 @@ bool GDIFrameProcessor::ProcessFrame(FrameBuffer * fb) {
     return true;
 }
 
-void CircleWriteThread::init() {
+void FrameGetterThread::init() {
     if(_type == SP_MONITOR)
         gdiFP = new GDIFrameProcessor(_mon);
     else if (_type == SP_PARTIAL)
@@ -140,8 +140,8 @@ void CircleWriteThread::init() {
     }
 }
 
-bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler) {
-    (void) type; (void) handler;
+bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler, SPImageType imgtype) {
+    (void) type; (void) handler; (void) imgtype;
     if(gdiFP)
         return gdiFP->ProcessFrame(fb);
     else {

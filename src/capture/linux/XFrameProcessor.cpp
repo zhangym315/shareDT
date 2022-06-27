@@ -8,13 +8,16 @@
 static X11FrameProcessor * x11FP = NULL;
 
 /* nothing to do with linux */
-void FrameProcessorWrap::init() {
+void FrameGetterSystem::init() {
 }
 
-void FrameProcessorWrap::pause() {
+void FrameGetterSystem::pause() {
 }
 
-void FrameProcessorWrap::resume() {
+void FrameGetterSystem::resume() {
+}
+
+void FrameGetterSystem::stop() {
 }
 
 bool X11FrameProcessor::init()
@@ -73,7 +76,7 @@ bool X11FrameProcessor::init()
     return ret;
 }
 
-bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
+bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb, SPImageType imgtype)
 {
 
     if(_type == SP_MONITOR) {
@@ -85,8 +88,7 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
             return false;
         }
         fb->setDataPerRow((unsigned char*)XImage_->data, _mon->getWidth(),
-                          _mon->getHeight(), XImage_->bytes_per_line,
-                          FrameProcessorWrap::instance()->getImageType());
+                          _mon->getHeight(), XImage_->bytes_per_line, imgtype);
     } else if(_type == SP_PARTIAL) {
         if(!XShmGetImage(SelectedDisplay,
                        RootWindow(SelectedDisplay, _mon->getId ()),
@@ -97,8 +99,7 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
             return false;
         }
         fb->setDataPerRow((unsigned char*)XImage_->data,_bounds->getWidth(),
-                          _bounds->getHeight(), XImage_->bytes_per_line,
-                          FrameProcessorWrap::instance()->getImageType());
+                          _bounds->getHeight(), XImage_->bytes_per_line, imgtype);
     } else if ( _type == SP_WINDOW ) {
         XWindowAttributes wndattr;
 
@@ -120,14 +121,13 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
         }
         fb->setDataPerRow((unsigned char*)XImage_->data,
                           _win->getWidth(), _win->getHeight(),
-                          XImage_->bytes_per_line,
-                          FrameProcessorWrap::instance()->getImageType());
+                          XImage_->bytes_per_line, imgtype);
     }
 
     return true;
 }
 
-void CircleWriteThread::init() {
+void FrameGetterThread::init() {
     if(_type == SP_MONITOR)
         x11FP = new X11FrameProcessor(_mon);
     else if (_type == SP_PARTIAL)
@@ -137,10 +137,10 @@ void CircleWriteThread::init() {
     }
 }
 
-bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler) {
+bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler, SPImageType imgtype) {
     (void) type; (void) handler;
     if(x11FP)
-        return x11FP->ProcessFrame(fb);
+        return x11FP->ProcessFrame(fb, imgtype);
     else {
         std::cerr << "FrameGetter::windowsFrame x11FB is NULL" << std::endl;
         return false;
@@ -175,5 +175,5 @@ bool FrameGetter::exportAllFrameGetter(FrameBuffer * fb, SPType type, size_t han
         return false;
     }
 
-    return fp->ProcessFrame(fb);
+    return fp->ProcessFrame(fb, SPImageType::SP_IMAGE_RGBA);
 }

@@ -1,11 +1,12 @@
 #include <thread>
 #include <chrono>
 #include "NSFrame.h"
+#include "SamplesProvider.h"
 
 
 @implementation CapFrameProcessor
 
--(WINPROCESSOR_RETURN) Init:(FrameProcessorWrap*) parent second:(CMTime)interval
+-(WINPROCESSOR_RETURN) Init:(FrameGetterSystem*) parent second:(CMTime)interval
 {
     self = [super init];
     if (self) {
@@ -14,7 +15,7 @@
         self.fpw = parent;
         self.avcapturesession = [[AVCaptureSession alloc] init];
 
-        self.avinput = [[[AVCaptureScreenInput alloc] initWithDisplayID:(FrameProcessorWrap::instance())->getMonitor()->getId ()] autorelease];
+        self.avinput = [[[AVCaptureScreenInput alloc] initWithDisplayID:parent->getMonitor()->getId ()] autorelease];
         [self.avcapturesession addInput:self.avinput];
 
         self.output = [[AVCaptureVideoDataOutput alloc] init];
@@ -23,13 +24,6 @@
         videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA], (id)kCVPixelBufferPixelFormatTypeKey, nil];
 
         NSArray<NSNumber *> * availableCode = self.output.availableVideoCVPixelFormatTypes;
-//        NSLog(@"%@",availableCode);
-//      for (NSNumber* code in availableCode)
-//      {
-//          NSString *myString = [NSString stringWithFormat:@"%c", code];
-//          NSLog(@"%@",myString);
-//      }
-//        FrameProcessorWrap::instance()->debug(getArray a_array NSArray:availableCode );
 
         [self.output setVideoSettings:videoSettings];
         [self.output setAlwaysDiscardsLateVideoFrames:true];
@@ -45,7 +39,7 @@
             [self.avinput setCropRect:r];
         }
 
-        CGFloat sc = (CGFloat)((float)1/(float)(parent->getMonitor()->getScale()));
+        auto sc = (CGFloat)((float)1/(float)(parent->getMonitor()->getScale()));
         [self.avinput setScaleFactor:sc];
         [self.avinput setMinFrameDuration:interval];
 
@@ -166,46 +160,33 @@ public:
         }
     }
 
-    WINPROCESSOR_RETURN init(FrameProcessorWrap* parent, const std::chrono::microseconds& duration){
-        if(duration.count()>1){
-            auto microsecondsinsec = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::seconds(1));
-            auto secs =std::chrono::duration_cast<std::chrono::seconds>(duration);
-            if(secs.count()>0){//more than 1 second duration. Im not going to do the math right now for that
-                return [ptr Init:parent second:CMTimeMake(1, 1)];
-            } else {
-                auto f =duration.count();
-                auto f1 =microsecondsinsec.count();
-                auto interv = f1/f;
-                return [ptr Init:parent second:CMTimeMake(1, interv)];
-            }
-        } else {
-            return [ptr Init:parent second:CMTimeMake(1, 1000)];
-        }
+    WINPROCESSOR_RETURN init(FrameGetterSystem* parent, const std::chrono::microseconds& duration){
+        return [ptr Init:parent second:CMTimeMake(1, 1000)];
     }
 };
 
-void FrameProcessorWrap::init() {
+void FrameGetterSystem::init() {
     if (_fpi && _isReInited) delete _fpi;
     else if (_fpi) return;
 
     _fpi = new FrameProcessorImpl();
-    _fpi->init (FrameProcessorWrap::instance(), _duration);
+    _fpi->init (this, _duration);
     _isReady = true;
 }
 
-void FrameProcessorWrap::pause() {
-    std::lock_guard<std::mutex> lk(_mtx);
+void FrameGetterSystem::pause() {
     _fpi->pause();
-    _isPause = true;
+    FrameGetterControl::pause();
 }
 
-void FrameProcessorWrap::resume() {
-    std::lock_guard<std::mutex> lk(_mtx);
+void FrameGetterSystem::resume() {
     _fpi->resume();
-    _isPause = false;
+    FrameGetterControl::resume();
 }
 
-void FrameProcessorWrap::stop() {
+void FrameGetterSystem::stop() {
     _fpi->stop();
+    FrameGetterControl::stop();
 }
-void CircleWriteThread::init() { }
+
+void FrameGetterThread::init() { }

@@ -96,7 +96,6 @@ elseif(APPLE)
             )
 
     set(CAPTURE_SRC
-            ${CMAKE_SOURCE_DIR}/src/capture/ios/CGWindowProcessor.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/ios/CGGetWindows.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/ios/CGGetMonitors.cpp
             ${CMAKE_SOURCE_DIR}/src/capture/ios/NSFrame.mm

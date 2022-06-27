@@ -142,7 +142,7 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
 {
     if (_localGroupBox.layout == nullptr) return;
 
-    CircWRBuf<FrameBuffer>  cwb(2);
+    CircleWRBuf<FrameBuffer>  cwb(2);
     MonitorVectorProvider mvp;
     CapPoint cp(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
     FrameBuffer * fb;

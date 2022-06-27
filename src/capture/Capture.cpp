@@ -16,6 +16,7 @@
 #include "MainConsole.h"
 #include "InputInterface.h"
 #include "CaptureInfo.h"
+
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -412,6 +413,7 @@ int Capture::initParsing(int argc, char * argv[])
 
 Capture::~Capture()
 {
+//    delete _sp;
 }
 
 /*
@@ -428,7 +430,7 @@ int Capture::initSrceenProvider()
     /*
      * Create ScreenProvider
      * The new ScreenProvider will also initialize
-     *    SampleProvider and FrameProcessorWrap
+     *    SampleProvider and FrameGetterSystem
      */
     if (_type == SP_PARTIAL) {
         _sp = new ScreenProviderPartial(_cap._bounds, _frequency);

@@ -1,8 +1,11 @@
 #ifndef _SAMPLESPROVIDER_H_
 #define _SAMPLESPROVIDER_H_
 
+#include <algorithm>
 #include <mutex>
-#include "ScreenProvider.h"
+#include <atomic>
+#include <chrono>
+
 #include "WindowProcessor.h"
 #include "Thread.h"
 #include "Buffer.h"
@@ -21,92 +24,152 @@ const static PLATFORM_STATUS PLATFORM = SHAREDT_LINUX;
 const static PLATFORM_STATUS PLATFORM = SHAREDT_UNKNOWN;
 #endif
 
-#define DEFAULT_SAMPLE_PROVIDER 10
+#define DEFAULT_SAMPLE_PROVIDER 60
 #define MICROSECONDS_PER_SECOND 1000
-
-enum THREAD_STATUS { STOP, START, PAUSE, CONTI, NONE };
 
 class FrameProcessorImpl;
 
 /* platform spedific */
 class FrameGetter {
 public:
-    static bool windowsFrame(FrameBuffer * fb, SPType type, size_t handler);
+    static bool windowsFrame(FrameBuffer * fb, SPType type, size_t handler, SPImageType imgtype);
     static bool exportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler);
 };
 
+class FrameGetterControl {
+public:
+    FrameGetterControl() : _isPause(true), _isReady(false), _isStopped(false) { }
+    ~FrameGetterControl() = default;
+
+    virtual void start()     { resume(); _isStopped.store(false, std::memory_order_relaxed); }
+    virtual void pause()     { _isPause.store(true, std::memory_order_relaxed); }
+    virtual void resume()    { _isPause.store(false, std::memory_order_relaxed); }
+    virtual void stop()      { _isStopped.store(true, std::memory_order_relaxed); }
+    virtual bool isPause()   { return _isPause.load(std::memory_order_relaxed); }
+    virtual bool isReady()   { return _isReady.load(std::memory_order_relaxed); }
+    virtual bool isStopped() { return _isStopped.load(std::memory_order_relaxed); }
+
+protected:
+    std::atomic<bool>  _isPause;
+    std::atomic<bool>  _isReady;
+    std::atomic<bool>  _isStopped;
+};
+
 /*
- * FrameProcessorWrap is singleton.
- * This will be used when system capture the screenshot
- * and get called back by _fpi.
+ * @class FrameGetterSystem
+ *
+ * @note FrameGetterSystem is singleton.
+ * This will be used when system capture the screenshot.
+ *
+ * Currently, following capture supports system capture:
+ *      MacOS: monitor capture
+ *             bound capture
+ *      Windows: window capture
+ *
+ * This will be internally filling up the _fb(CircleWRBuf).
+ *
  */
-class FrameProcessorWrap {
+class FrameGetterSystem : public FrameGetterControl {
   public:
-    static FrameProcessorWrap * instance() ;
-    void init();
-    void setCFB(CircWRBuf<FrameBuffer> * fb) ;
-    void pause();
-    void resume();
-    void stop();
-    bool isPause() const { return _isPause; }
-    void setMinFrameDuration(const std::chrono::microseconds & duration);
-    void convert();
-    void setMV(CapMonitor * mon, unsigned int frequency);
-    void setBD(CapImageRect * bd);
+    FrameGetterSystem(CircleWRBuf<FrameBuffer> * fb,
+                      std::chrono::milliseconds sp) :
+                      _fb(fb), _duration(sp), _fpi(nullptr),
+                      _monitor(nullptr), _bounds(nullptr), _win(nullptr),
+                      _isReInited(false), _type(SPType::SP_NULL),
+                      _imgType(SP_IMAGE_RGBA) { }
+
+    FrameGetterSystem(CircleWRBuf<FrameBuffer> * fb,
+                      CapMonitor * mon,
+                      unsigned int frequency) :
+        FrameGetterSystem(fb, std::chrono::milliseconds(MICROSECONDS_PER_SECOND/frequency)) {
+        _type = SP_MONITOR;
+        _monitor = mon;
+        init();
+    }
+
+    FrameGetterSystem(CircleWRBuf<FrameBuffer> * fb,
+                      CapImageRect * bd,
+                      unsigned int frequency) :
+        FrameGetterSystem(fb, std::chrono::milliseconds(MICROSECONDS_PER_SECOND/frequency)) {
+        _type = SP_PARTIAL;
+        _bounds = bd;
+        init();
+
+    }
+
+    FrameGetterSystem(CircleWRBuf<FrameBuffer> * fb,
+                      CapWindow * win,
+                      unsigned int frequency) :
+        FrameGetterSystem(fb, std::chrono::milliseconds(MICROSECONDS_PER_SECOND/frequency)) {
+        _type = SP_WINDOW;
+        _win = win;
+        init();
+    }
+
     CapMonitor * getMonitor ();
     bool isPartial();
     void writeBuf(CapMonitor * mon, unsigned char * buf, int bpr, size_t bufSize=0) ; /* write buffer */
     void writeBuf(CapImageRect * bd, unsigned char * buf, int bpr, size_t bufSize=0);
-    bool isReady() const { return _isReady; }
-    bool isReInitiated() const { return _isReInited; }
     void setReInitiated() { _isReInited = true; }
     CapImageRect * getBounds() { return _bounds; }
 
     void debug(char * array []);
-    void setImageTypeToYUV();
     void setImageTypeToRGB();
-    bool isYUVType();
-    SPImageType getImageType() const { return _imgType; }
+    [[nodiscard]] SPImageType getImageType() const { return _imgType; }
 
-  private:
-    FrameProcessorWrap();
-    static FrameProcessorWrap * _instance;
-    CircWRBuf<FrameBuffer>    * _fb;
+    void pause()  override;
+    void resume() override;
+    void stop()   override;
+
+private:
+    void init();
+
+    CircleWRBuf<FrameBuffer>    * _fb;
+    std::chrono::microseconds   _duration;
     FrameProcessorImpl        * _fpi;
+
     CapMonitor                * _monitor;
     CapImageRect              * _bounds;
-    std::chrono::microseconds   _duration;
-    bool                        _isPause;
-    bool                        _isReady;
+    CapWindow                 * _win;
     bool                        _isReInited;  // used by export all monitors
-    std::mutex                  _mtx;
     SPType                      _type;
     SPImageType                 _imgType;
  };
 
 /*
- * CircleWriteThread to write to the circle buffer
- * Will have a new thread to capture screenshot
+ * @class FrameGetterThread
+ *
+ * @note FrameGetterThread is a thread to capture screenshot and fill up _fb(CircleWRBuf).
+ *
+ * Currently, following capture supports thread capture:
+ *      MacOS: window capture
+ *      Linux: monitor capture
+ *             window capture
+ *             bound capture
+ *      Windows: monitor capture
+ *               bound capture
+ *
  */
-class CircleWriteThread : public Thread {
+class FrameGetterThread : public Thread, public FrameGetterControl {
   public:
     /* this is final constructor */
-    CircleWriteThread(CircWRBuf<FrameBuffer> * fb,
+    FrameGetterThread(CircleWRBuf<FrameBuffer> * fb,
                       std::chrono::milliseconds sp) : _fb(fb),
-                      _status(NONE), _duration(sp), Thread(false),
-                      _isReady(false), _isPause(true) { }
+                      _duration(sp), _type(SPType::SP_NULL), _win(nullptr),
+                      _mon(nullptr), _bounds(nullptr),
+                      _mtx(), Thread(false), FrameGetterControl() { }
 
-    CircleWriteThread(CircWRBuf<FrameBuffer> *fb, unsigned int frequency) :
-        CircleWriteThread(fb, std::chrono::milliseconds(MICROSECONDS_PER_SECOND/frequency)) { }
-    CircleWriteThread() : CircleWriteThread(nullptr,
+    FrameGetterThread(CircleWRBuf<FrameBuffer> *fb, unsigned int frequency) :
+        FrameGetterThread(fb, std::chrono::milliseconds(MICROSECONDS_PER_SECOND/frequency)) { }
+    FrameGetterThread() : FrameGetterThread(nullptr,
                       std::chrono::milliseconds(MICROSECONDS_PER_SECOND)) { }
 
-    ~CircleWriteThread () {  }
+    ~FrameGetterThread () = default;
 
     /* monitor capture thread */
-    CircleWriteThread(CircWRBuf<FrameBuffer> * fb,
+    FrameGetterThread(CircleWRBuf<FrameBuffer> * fb,
                       CapMonitor & mon,
-                      unsigned int frequency) : CircleWriteThread(fb, frequency)
+                      unsigned int frequency) : FrameGetterThread(fb, frequency)
     {
         _mon = &mon;
         _type = SP_MONITOR;
@@ -114,18 +177,18 @@ class CircleWriteThread : public Thread {
     }
 
     /* partial capture thread */
-    CircleWriteThread(CircWRBuf<FrameBuffer> * fb,
+    [[maybe_unused]] FrameGetterThread(CircleWRBuf<FrameBuffer> * fb,
                       CapImageRect & rect,
-                      unsigned int frequency) : CircleWriteThread(fb, frequency)
+                      unsigned int frequency) : FrameGetterThread(fb, frequency)
     {
         _type = SP_PARTIAL;
         init() ;
     }
 
-    CircleWriteThread(CircWRBuf<FrameBuffer> * fb,
+    FrameGetterThread(CircleWRBuf<FrameBuffer> * fb,
                       CapImageRect & rect,
                       CapMonitor & mon,
-                      unsigned int frequency) : CircleWriteThread(fb, frequency)
+                      unsigned int frequency) : FrameGetterThread(fb, frequency)
     {
         _type = SP_PARTIAL;
         _bounds = &rect;
@@ -134,86 +197,80 @@ class CircleWriteThread : public Thread {
     }
 
     /* window capture thread */
-    CircleWriteThread(CircWRBuf<FrameBuffer> * fb,
-                      CapWindow & win,
-                      unsigned int frequency) : CircleWriteThread(fb, frequency)
+    FrameGetterThread(CircleWRBuf<FrameBuffer> * fb,
+                      CapWindow * win,
+                      unsigned int frequency) : FrameGetterThread(fb, frequency)
     {
         _type = SP_WINDOW;
-        _win  = &win;
+        _win  = win;
         init() ;
     }
 
-    void init() ;
+    void start() override { go(); FrameGetterControl::start(); }
 
-    void mainImp();
-    void startFPW() ; /* start frame processor */
+private:
+    void init();
+    void mainImp() override;
 
-    bool isReady() ;
-
-    void pause();
-    bool isPause();
-    void resume();
-
-  private:
-    THREAD_STATUS           _status;
-    CircWRBuf<FrameBuffer> * _fb;
+    CircleWRBuf<FrameBuffer> * _fb;
     std::chrono::milliseconds _duration;
     SPType                _type;
     CapWindow           * _win;
     CapMonitor          * _mon;
     CapImageRect        * _bounds;
-    bool                  _isPause;
-    bool                  _isReady;
     std::mutex            _mtx;
 };
 
-/* Provider monitor samples screen */
 class SamplesProvider  {
   public:
-    SamplesProvider(int size, CapMonitor & mon, unsigned int frequency) :
-        _buffer(size), _cwt(&_buffer, mon, frequency) {
-        if(PLATFORM == SHAREDT_IOS)
-            FrameProcessorWrap::instance()->setMV(&mon, frequency);
-        else {
-        }
+    SamplesProvider(unsigned int frequency) : _buffer(5),
+                        _start(std::chrono::system_clock::now()),
+                        _duration(std::chrono::milliseconds(MICROSECONDS_PER_SECOND/frequency)) { }
+
+    SamplesProvider(CapMonitor & mon, unsigned int frequency) : SamplesProvider(frequency)
+    {
+#ifdef __SHAREDT_IOS__
+        _fgc = std::make_unique<FrameGetterSystem>(&_buffer, &mon, frequency);
+#else
+        _fgc = std::make_unique<FrameGetterThread>(&_buffer, mon, frequency);
+#endif
+
     }
 
-    SamplesProvider(int size, CapWindow & win, unsigned int frequency) : _buffer(size), _cwt(&_buffer, win, frequency) {
+    SamplesProvider(CapWindow  & win, unsigned int frequency) : SamplesProvider(frequency)
+     {
+         _fgc = std::make_unique<FrameGetterThread>(&_buffer, &win, frequency);
+     }
+
+    SamplesProvider(CapImageRect & bd, CapMonitor & mon, unsigned int frequency) : SamplesProvider(frequency)
+    {
+#ifdef __SHAREDT_IOS__
+        _fgc = std::make_unique<FrameGetterSystem>(&_buffer, &bd, frequency);
+#else
+        _fgc = std::make_unique<FrameGetterThread>(&_buffer, bd, mon, frequency);
+#endif
+
     }
-
-    SamplesProvider(int size, CapImageRect & rect, CapMonitor & mon, unsigned int frequency) :
-        _buffer(size), _cwt(&_buffer, rect, mon, frequency) {
-        if(PLATFORM == SHAREDT_IOS) {
-            FrameProcessorWrap::instance()->setMV(&mon, frequency);
-            FrameProcessorWrap::instance()->setBD(&rect);
-        } else {
-
-        }
-    }
-
-    /* default 5, should be configured */
-    SamplesProvider(CapMonitor & mon, unsigned int frequency) : SamplesProvider(5, mon, frequency) { }
-    SamplesProvider(CapWindow  & win, unsigned int frequency) : SamplesProvider(5, win, frequency) { }
-    SamplesProvider(CapImageRect & bd, CapMonitor & mon, unsigned int frequency) : SamplesProvider(5, bd, mon, frequency) { }
 
     ~SamplesProvider () {
         _buffer.clear();
     }
 
-    void startCWT() { _cwt.go(); }
-    CircleWriteThread & getCWT() { return _cwt; }
-
+    /* read frame buffer */
     FrameBuffer * getFrameBuffer();
 
-    bool isReady() ;
-
-    void pause()   { _cwt.pause(); }
-    bool isPause() { return _cwt.isPause(); }
-    void resume()  { _cwt.resume(); }
+    /* capture control */
+    void start()    { _fgc->start(); }
+    void pause()    { _fgc->pause(); }
+    void resume()   { _fgc->resume(); }
+    bool isPause()  { return _fgc->isPause(); }
+    bool isReady()  { return _fgc->isReady(); }
 
   private:
-    CircWRBuf<FrameBuffer> _buffer;
-    CircleWriteThread     _cwt;
+    CircleWRBuf<FrameBuffer> _buffer;
+    std::unique_ptr<FrameGetterControl> _fgc;
+    std::chrono::time_point<std::chrono::system_clock> _start;
+    std::chrono::microseconds   _duration;
 };
 
 #endif //_SAMPLESPROVIDER_H_

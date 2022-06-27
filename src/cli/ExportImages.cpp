@@ -100,7 +100,7 @@ int ExportImages::parseExportImagesOptions(int argc, char ** argv)
                 return RETURN_CODE_INVALID_ARG;
             _total = std::stoi(val.c_str());
         } else if ( cur == "--mp4" ) {
-            FrameProcessorWrap::instance()->setImageTypeToRGB();
+//            FrameGetterSystem::instance()->setImageTypeToRGB();
             _action = EXPORT_MP4;
         }
     }
@@ -153,7 +153,7 @@ int ExportImages::startExportAll()
 {
     LOGGER.info() << "Starting to export images for all windows and monitoes";
 
-    CircWRBuf<FrameBuffer>  cwb(2);
+    CircleWRBuf<FrameBuffer>  cwb(2);
     MonitorVectorProvider mvp;
     CapPoint cp(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
 

@@ -10,7 +10,7 @@
 #define MAX_RAND_LENGTH 10
 
 ScreenProvider::ScreenProvider(SPType type) 
-    : _bytespixel(4), _type(type) {
+    : _bytespixel(4), _type(type), _samp(nullptr) {
 }
 
 /* Start SampleProvider */
@@ -18,7 +18,7 @@ bool ScreenProvider::startSample() {
     if(!_samp) return false;
     else
     {
-        _samp->startCWT();
+        _samp->start();
         return true;
     }
 }
@@ -41,10 +41,6 @@ void ScreenProvider::samplePause()    { return _samp->pause(); }
 void ScreenProvider::sampleResume()   { return _samp->resume(); }
 bool ScreenProvider::isSamplePaused() { return _samp->isPause(); }
 
-/* append the random number */
-void ScreenProvider::setWIDAppdx()
-{
-}
 
 /* ScreenProviderPartial */
 ScreenProviderPartial:: ScreenProviderPartial(CapImageRect bounds, unsigned int frequency)

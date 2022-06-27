@@ -1,9 +1,10 @@
 # CMakeLists.txt for building the whole project
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.16)
 project(shareDT VERSION 0.0.1 LANGUAGES C CXX)
 
 # C++17
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # target executable
 set(START_SERVER ShareDTServer)

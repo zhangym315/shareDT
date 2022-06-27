@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <mutex>
+#include <thread>
 
 enum SPImageType { SP_IMAGE_BGRA, SP_IMAGE_RGBA, SP_IMAGE_RGB, SP_IMAGE_YUV420};  // default RGBA
 
@@ -85,45 +87,55 @@ class FrameBuffer {
  *  differentiate the start and end pointer.
  */
 template<typename T>
-class CircWRBuf {
+class CircleWRBuf {
   public:
-    CircWRBuf(int);
-    ~CircWRBuf();
-    CircWRBuf() : CircWRBuf (4) { }
+    explicit CircleWRBuf(int);
+    ~CircleWRBuf();
+    CircleWRBuf() : CircleWRBuf (4) { }
 
-    bool empty() const { return read == write; }
-    bool full () const { return read == ((write+1) % size); }
-    void setEmpty() { read = write; }
+    [[nodiscard]] bool empty() const {
+        std::scoped_lock<std::mutex> guard_w(_mtx);
+        return read == write;
+    }
+    [[nodiscard]] bool full () const {
+        std::scoped_lock<std::mutex> guard_w(_mtx);
+        return size == 0 || read == ((write+1) % size);
+    }
+    void setEmpty() {
+        std::scoped_lock<std::mutex> guard_w(_mtx);
+        read = write;
+    }
 
     T * getToWrite();
     T * getToRead () ;
-    const int getSize () const { return size; }
+    [[nodiscard]] int getSize () const { return size; }
 
     void clear();
 
   private:
-    const int size;
+    int size;
     T *data;
+
+    mutable std::mutex _mtx;
     int write;
     int read ;
 };
 
-template<typename T> CircWRBuf<T>::CircWRBuf(int sz): size(sz) {
+template<typename T> CircleWRBuf<T>::CircleWRBuf(int sz) : size(sz), write(0), read(0) {
     if (sz==0) throw std::invalid_argument("size cannot be zero");
     data = new T[sz];
-    write = 0;
-    read = 0;
 }
 
-template<typename T> CircWRBuf<T>::~CircWRBuf() {
+template<typename T> CircleWRBuf<T>::~CircleWRBuf() {
     delete[] data;
 }
 
 /* returns true if write was successful, false if the buffer is already full */
-template<typename T> T * CircWRBuf<T>::getToWrite() {
+template<typename T> T * CircleWRBuf<T>::getToWrite() {
     if ( full() ) {
         return nullptr;
     } else {
+        std::scoped_lock<std::mutex> guard_w(_mtx);
         T * ret = &data[write];
         write = (write + 1) % size;
         return ret;
@@ -131,18 +143,23 @@ template<typename T> T * CircWRBuf<T>::getToWrite() {
 }
 
 /* returns true if there is something to remove, false otherwise */
-template<typename T> T * CircWRBuf<T>::getToRead() {
+template<typename T> T * CircleWRBuf<T>::getToRead() {
     if ( empty() ) {
         return nullptr;
     } else {
         int ret = read;
-        read = (read + 1) % size;
+        {
+            std::scoped_lock<std::mutex> guard_w(_mtx);
+            read = (read + 1) % size;
+        }
         return &data[ret];
     }
 }
 
-template<typename T> void CircWRBuf<T>::clear() {
+template<typename T> void CircleWRBuf<T>::clear() {
     delete[] data;
+    std::scoped_lock<std::mutex> guard_w(_mtx);
+    size = read = write = 0;
 }
 
 #endif //_BUFFER_H_

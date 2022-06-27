@@ -7,10 +7,10 @@ set(SHAREDT_SERVER_SRC_COMMON
         ${CMAKE_SOURCE_DIR}/src/capture/SamplesProvider.cpp
         ${CMAKE_SOURCE_DIR}/src/capture/ExportAll.cpp
         ${CMAKE_SOURCE_DIR}/src/capture/CaptureInfo.cpp
+        ${CMAKE_SOURCE_DIR}/src/capture/ScreenProvider.cpp
 )
 
 set(SHAREDT_SERVER_SRC_COMMON
-        ${SHAREDT_SRC}/ScreenProvider.cpp
         ${SHAREDT_SRC}/MainService.cpp
         ${SHAREDT_SRC}/WindowsProvider.cpp
         ${SHAREDT_SRC}/MainManagementProcess.cpp

@@ -2,18 +2,28 @@
 #define __SCREENPROVIDER_H__
 
 #include <algorithm>
-#include <TypeDef.h>
-#include <WindowsProvider.h>
+
+#include "TypeDef.h"
 #include "ImageRect.h"
-#include "WindowProcessor.h"
 #include "Buffer.h"
+#include "WindowsProvider.h"
+#include "WindowProcessor.h"
+#include "SamplesProvider.h"
 
-class SamplesProvider;
 using namespace std;
-//using namespace Screen_Capture;
 
-typedef std::vector<CapWindow> Windows;
+typedef vector<CapWindow> Windows;
 
+/*
+ * @note
+ * ScreenProvider is to class to provide captured frame, it will call specific capture type(monitor, window or boundary).
+ *
+ * Following is call stack for different type of capture:
+ *                                          /==> FrameGetterSystem -> store frame to SamplesProvider::_buffer
+ * ScreenProvider ==> SamplesProvider  ==> |
+ *                                          \==> FrameGetterThread -> store frame to SamplesProvider::_buffer
+ *
+ */
 class ScreenProvider {
   public:
 
@@ -21,14 +31,14 @@ class ScreenProvider {
     ScreenProvider() : ScreenProvider(SP_ALLMONITOR) {}  /* default is all monitor */
 
     /* for both SP_ALLMONITOR type and all other types */
-    ScreenProvider(SPType type);
+    explicit ScreenProvider(SPType type);
 
     /* For partial type */
-    ScreenProvider(CapImageRect bounds) : ScreenProvider(SP_PARTIAL) {
+    explicit ScreenProvider(const CapImageRect& bounds) : ScreenProvider(SP_PARTIAL) {
         _bounds = bounds;
     }
 
-    ~ScreenProvider() {  }
+    ~ScreenProvider() { delete _samp; }
 
     const CapImageRect & getBounds() { return _bounds; }
     virtual void init() { }
@@ -39,18 +49,12 @@ class ScreenProvider {
     virtual bool isSampleReady();
     FrameBuffer * getFrameBuffer ();
     void setBounds(int l, int r, int t, int b);
-    int getWidth()  const { return _bounds.getWidth(); }
-    int getHeight() const { return _bounds.getHeight(); }
-    int getOffsetX() const { return _bounds.getTLX(); }
-    int getOffsetY() const { return _bounds.getTLY(); }
+    [[nodiscard]] int getWidth()  const { return _bounds.getWidth(); }
+    [[nodiscard]] int getHeight() const { return _bounds.getHeight(); }
 
     void samplePause()    ;
     void sampleResume()   ;
     bool isSamplePaused() ;
-
-    void setWIDPrefix() ;
-    void setWIDAppdx() ;
-    const String & getWID();
 
   protected:
     unsigned int       _bytespixel;
@@ -85,12 +89,12 @@ class ScreenProviderWindow final : public ScreenProvider {
 
 class ScreenProviderMonitor final : public ScreenProvider {
   public:
-    ScreenProviderMonitor(unsigned int frequency);
+    explicit ScreenProviderMonitor(unsigned int frequency);
     ScreenProviderMonitor(int id, unsigned int frequency) ;
     void init(unsigned int frequency);
 
     bool isValid() override { return _monitor.isValid(); }
-    const CapMonitor & get() const { return _monitor; }
+    [[nodiscard]] const CapMonitor & get() const { return _monitor; }
 
   private:
     int           _id;      /* monitor id */

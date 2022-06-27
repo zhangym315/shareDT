@@ -6,14 +6,15 @@
 #include "ThreadPool.h"
 #include "MainManagementProcess.h"
 
-#include <string.h>
+#include <cstring>
 #include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <type_traits>
 
 #ifdef __SHAREDT_LINUX__
 #include <sys/wait.h>
