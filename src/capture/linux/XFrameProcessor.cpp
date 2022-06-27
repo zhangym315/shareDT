@@ -76,7 +76,7 @@ bool X11FrameProcessor::init()
     return ret;
 }
 
-bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
+bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb, SPImageType imgtype)
 {
 
     if(_type == SP_MONITOR) {
@@ -88,8 +88,7 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
             return false;
         }
         fb->setDataPerRow((unsigned char*)XImage_->data, _mon->getWidth(),
-                          _mon->getHeight(), XImage_->bytes_per_line,
-                          FrameGetterSystem::instance()->getImageType());
+                          _mon->getHeight(), XImage_->bytes_per_line, imgtype);
     } else if(_type == SP_PARTIAL) {
         if(!XShmGetImage(SelectedDisplay,
                        RootWindow(SelectedDisplay, _mon->getId ()),
@@ -100,8 +99,7 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
             return false;
         }
         fb->setDataPerRow((unsigned char*)XImage_->data,_bounds->getWidth(),
-                          _bounds->getHeight(), XImage_->bytes_per_line,
-                          FrameGetterSystem::instance()->getImageType());
+                          _bounds->getHeight(), XImage_->bytes_per_line, imgtype);
     } else if ( _type == SP_WINDOW ) {
         XWindowAttributes wndattr;
 
@@ -123,8 +121,7 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb)
         }
         fb->setDataPerRow((unsigned char*)XImage_->data,
                           _win->getWidth(), _win->getHeight(),
-                          XImage_->bytes_per_line,
-                          FrameGetterSystem::instance()->getImageType());
+                          XImage_->bytes_per_line, imgtype);
     }
 
     return true;
@@ -140,10 +137,10 @@ void FrameGetterThread::init() {
     }
 }
 
-bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler) {
+bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler, SPImageType imgtype) {
     (void) type; (void) handler;
     if(x11FP)
-        return x11FP->ProcessFrame(fb);
+        return x11FP->ProcessFrame(fb, imgtype);
     else {
         std::cerr << "FrameGetter::windowsFrame x11FB is NULL" << std::endl;
         return false;
@@ -178,5 +175,5 @@ bool FrameGetter::exportAllFrameGetter(FrameBuffer * fb, SPType type, size_t han
         return false;
     }
 
-    return fp->ProcessFrame(fb);
+    return fp->ProcessFrame(fb, SPImageType::SP_IMAGE_RGBA);
 }

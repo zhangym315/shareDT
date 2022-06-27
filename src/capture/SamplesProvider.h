@@ -232,7 +232,7 @@ class SamplesProvider  {
 #ifdef __SHAREDT_IOS__
         _fgc = std::make_unique<FrameGetterSystem>(&_buffer, &mon, frequency);
 #else
-        _fgc = std::make_unique<FrameGetterThread>(&_buffer, &mon, frequency);
+        _fgc = std::make_unique<FrameGetterThread>(&_buffer, mon, frequency);
 #endif
 
     }

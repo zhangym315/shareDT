@@ -33,7 +33,7 @@ class X11FrameProcessor {
     ~X11FrameProcessor() { }
 
     bool init();
-    bool ProcessFrame(FrameBuffer * fb);
+    bool ProcessFrame(FrameBuffer * fb, SPImageType imgtype);
 
   private:
     Display* SelectedDisplay=nullptr;
