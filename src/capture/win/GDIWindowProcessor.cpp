@@ -140,8 +140,8 @@ void FrameGetterThread::init() {
     }
 }
 
-bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler) {
-    (void) type; (void) handler;
+bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler, SPImageType imgtype) {
+    (void) type; (void) handler; (void) imgtype;
     if(gdiFP)
         return gdiFP->ProcessFrame(fb);
     else {
