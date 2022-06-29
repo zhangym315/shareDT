@@ -47,20 +47,27 @@ void FetchingDataThread::run()
 {
     auto sp = _capture.getScreenProvide();
     FrameBuffer * fb;
+    std::chrono::microseconds duration(MICROSECONDS_PER_SECOND/_capture.getFrenquency());
 
     sp->sampleResume();
+    auto start = std::chrono::system_clock::now();
     while (!_stopped) {
-        this_thread::sleep_for(60ms);  // TODO: can be set through menu edit
+        std::chrono::duration<double> diff = std::chrono::system_clock::now() - start;
+        if(duration > diff) {
+            std::cout << " FetchingDataThread::run sleeped " << duration.count() << std::endl;
+            std::this_thread::sleep_for(duration - diff);
+        }
 
         /* get frame and emit to display */
         fb = sp->getFrameBuffer();
         if(!fb) {
             std::cout << "sleep for reading" << std::endl;
-            std::this_thread::sleep_for(60ms);
+            std::this_thread::sleep_for(duration);
             continue;
         }
 
         emit sendRect(fb);
+        start = std::chrono::system_clock::now();
     }
 
     _shutdown = true;

@@ -69,6 +69,7 @@ class Capture {
 
     [[nodiscard]] bool isDaemon() const { return _daemon; }
     [[nodiscard]] int  getPort()  const { return _vncPort; }
+    [[nodiscard]] unsigned int  getFrenquency()  const { return _frequency; }
 
     ScreenProvider * getScreenProvide() { return _sp; }
     void Usage();
