@@ -61,6 +61,7 @@ class FrameBuffer {
 
     bool set(unsigned char * data, uint64_t size);
     void setUsed() { _isUsed = true; }
+    void setUnused() { _isUsed = false; }
 
     void setInvalid() {_isValid = false;}
 
@@ -99,8 +100,9 @@ class CircleWRBuf {
     }
     [[nodiscard]] bool full () const {
         std::scoped_lock<std::mutex> guard_w(_mtx);
-        return size == 0 || read == ((write+1) % size);
+        return size == 0 || (read == ((write+1) % size) && !data[read].isUsed());
     }
+
     void setEmpty() {
         std::scoped_lock<std::mutex> guard_w(_mtx);
         read = write;
@@ -132,9 +134,10 @@ template<typename T> CircleWRBuf<T>::~CircleWRBuf() {
 
 /* returns true if write was successful, false if the buffer is already full */
 template<typename T> T * CircleWRBuf<T>::getToWrite() {
-    if ( full() ) {
+    if ( full()) {
         return nullptr;
     } else {
+std::cout << "getToWrite=" << write << std::endl;
         std::scoped_lock<std::mutex> guard_w(_mtx);
         T * ret = &data[write];
         write = (write + 1) % size;
@@ -147,12 +150,11 @@ template<typename T> T * CircleWRBuf<T>::getToRead() {
     if ( empty() ) {
         return nullptr;
     } else {
+std::cout << "getToRead=" << read << std::endl;
+        std::scoped_lock<std::mutex> guard_w(_mtx);
         int ret = read;
-        {
-            std::scoped_lock<std::mutex> guard_w(_mtx);
-            read = (read + 1) % size;
-        }
-        return &data[ret];
+        read = (read + 1) % size;
+       return &data[ret];
     }
 }
 

@@ -50,11 +50,13 @@ void FetchingDataThread::run()
 
     sp->sampleResume();
     while (!_stopped) {
-        this_thread::sleep_for(20ms);  // TODO: can be set through menu edit
+        this_thread::sleep_for(60ms);  // TODO: can be set through menu edit
 
         /* get frame and emit to display */
         fb = sp->getFrameBuffer();
         if(!fb) {
+            std::cout << "sleep for reading" << std::endl;
+            std::this_thread::sleep_for(60ms);
             continue;
         }
 

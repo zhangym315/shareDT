@@ -265,6 +265,7 @@ class SamplesProvider  {
     void resume()   { _fgc->resume(); }
     bool isPause()  { return _fgc->isPause(); }
     bool isReady()  { return _fgc->isReady(); }
+    std::chrono::microseconds getDuration() { return _duration; }
 
   private:
     CircleWRBuf<FrameBuffer> _buffer;

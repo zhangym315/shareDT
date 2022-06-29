@@ -127,6 +127,8 @@ bool GDIFrameProcessor::ProcessFrame(FrameBuffer * fb) {
             SelectObject(CaptureDC.DC, originalBmp);
         }
     }
+
+    fb->setUnused();
     return true;
 }
 
