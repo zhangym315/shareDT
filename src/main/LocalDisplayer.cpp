@@ -50,24 +50,17 @@ void FetchingDataThread::run()
     std::chrono::microseconds duration(MICROSECONDS_PER_SECOND/_capture.getFrenquency());
 
     sp->sampleResume();
-    auto start = std::chrono::system_clock::now();
-    while (!_stopped) {
-        std::chrono::duration<double> diff = std::chrono::system_clock::now() - start;
-        if(duration > diff) {
-            std::cout << " FetchingDataThread::run sleeped " << duration.count() << std::endl;
-            std::this_thread::sleep_for(duration - diff);
-        }
 
+    while (!_stopped) {
+        std::this_thread::sleep_for(duration);
         /* get frame and emit to display */
         fb = sp->getFrameBuffer();
         if(!fb) {
-            std::cout << "sleep for reading" << std::endl;
             std::this_thread::sleep_for(duration);
             continue;
         }
 
         emit sendRect(fb);
-        start = std::chrono::system_clock::now();
     }
 
     _shutdown = true;

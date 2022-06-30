@@ -43,12 +43,12 @@ void FrameBuffer::setData(unsigned char * data, size_t w, size_t h, SPImageType 
 
     }
 
-    _isValid = true;
+    _isUsed.store(false, std::memory_order_relaxed);
 }
 
 void FrameBuffer::setDataPerRow(unsigned char * data, int w, int h, int bytesrow, SPImageType type)
 {
-    size_t total, perRow, dstPerRow;
+    size_t total, perRow;
 
     setWidthHeight(w, h);
 
@@ -84,7 +84,7 @@ void FrameBuffer::setDataPerRow(unsigned char * data, int w, int h, int bytesrow
         break;
     }
 
-    _isValid = true;
+    _isUsed.store(false, std::memory_order_relaxed);
 }
 
 bool FrameBuffer::reSet(const size_t size)
@@ -179,7 +179,6 @@ void FrameBuffer::ConvertBGRA2YCrCb420(unsigned char * dst, size_t size)
 
     for (int i=0; i<size/4 && Cb<half && Cr<end ; i++)
     {
-//printf("data[%d]: %.2X %.2X %.2X ", i, data[i].R, data[i].G, data[i].B);
         *Y = CRGB2Y(data[i].R, data[i].G, data[i].B); Y++;
         if ((i & 1) == 0) {
             *Cb = CRGB2Cb(data[i].R, data[i].G, data[i].B); Cb++;
@@ -197,7 +196,7 @@ bool FrameBuffer::set (unsigned char *data, uint64_t size)
 
     memcpy(_data, data, size);
     _size = size;
-    _isUsed = true;
+    _isUsed.store(false, std::memory_order_relaxed);
     return true;
 }
 
