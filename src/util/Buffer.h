@@ -63,6 +63,7 @@ class FrameBuffer {
     bool set(unsigned char * data, uint64_t size);
     // comsumer needs to set frame as unsed.
     void setUsed() { _isUsed.store(true, std::memory_order_relaxed); }
+    void setUnused() { _isUsed.store(false, std::memory_order_relaxed); }
 
     void setInvalid() {_isValid = false;}
 
