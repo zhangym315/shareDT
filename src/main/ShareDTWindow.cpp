@@ -163,24 +163,23 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
             cp.setX((int) fb->getWidth());
             cp.setY((int) fb->getHeight());
         }
+        fb->setUsed();
     }
 
     WindowVectorProvider wvp(-1);
     for (const auto & w : wvp.get()) {
-std::cout << get_current_time_string() << " Get new win handler=" << w.getName() << std::endl;
 
         if (ExportAll::filterExportWinName(w.getName())) continue;
 
         ExportAll ea(SP_WINDOW, w.getHandler());
         ItemInfo info;
 
-        if ((fb=ea.getFrameBuffer(cwb)) == nullptr) continue;
-
         // filter out the unnecessary window
         if ((fb=ea.getFrameBuffer(cwb)) == nullptr ||
             fb->getWidth() < cp.getX()/8 ||
-            fb->getHeight() < cp.getY()/8)
+            fb->getHeight() < cp.getY()/8) {
             continue;
+        }
 
         info.name = w.getName();
         info.argument << "-c" <<  "win" <<  "-h" << std::to_string(w.getHandler()).c_str();
@@ -188,6 +187,7 @@ std::cout << get_current_time_string() << " Get new win handler=" << w.getName()
                                                      fb->getHeight(),
                                                      fb->getData(),
                                                      info));
+        fb->setUsed();
     }
 }
 

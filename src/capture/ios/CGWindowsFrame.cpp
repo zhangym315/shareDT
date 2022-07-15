@@ -31,7 +31,6 @@ bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler, SP
     auto buf = CFDataGetBytePtr(rawdatas);
 
     fb->setDataPerRow((unsigned char *)buf, width, height, bytesperrow, imgtype);
-
     CFRelease(rawdatas);
     CGImageRelease(imageRef);
     return true;

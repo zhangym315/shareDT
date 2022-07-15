@@ -47,14 +47,16 @@ void FetchingDataThread::run()
 {
     auto sp = _capture.getScreenProvide();
     FrameBuffer * fb;
+    std::chrono::microseconds duration(MICROSECONDS_PER_SECOND/_capture.getFrenquency());
 
     sp->sampleResume();
-    while (!_stopped) {
-        this_thread::sleep_for(20ms);  // TODO: can be set through menu edit
 
+    while (!_stopped) {
+        std::this_thread::sleep_for(duration);
         /* get frame and emit to display */
         fb = sp->getFrameBuffer();
         if(!fb) {
+            std::this_thread::sleep_for(duration);
             continue;
         }
 

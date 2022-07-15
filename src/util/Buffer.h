@@ -7,6 +7,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <atomic>
 
 enum SPImageType { SP_IMAGE_BGRA, SP_IMAGE_RGBA, SP_IMAGE_RGB, SP_IMAGE_YUV420};  // default RGBA
 
@@ -18,9 +19,9 @@ struct ImageBGRA {
 class FrameBuffer {
   public:
     FrameBuffer(size_t size) : _size(size), _capacity(size),
-                            _subCapacity(0), _subData(nullptr),
-                            _isUsed(true)
+                            _subCapacity(0), _subData(nullptr)
     {
+        _isUsed.store(true, std::memory_order_relaxed);
         if(size == 0)
             _data = nullptr;
         else
@@ -57,10 +58,12 @@ class FrameBuffer {
     void resetSubData() { resetSubData(0); }
     unsigned char * getSubData() { return _subData; }
     [[nodiscard]] size_t getSubCap() const { return _subCapacity; }
-    [[nodiscard]] bool isUsed() const { return _isUsed ;}
+    [[nodiscard]] bool isUsed() const { return _isUsed.load(std::memory_order_relaxed) ;}
 
     bool set(unsigned char * data, uint64_t size);
-    void setUsed() { _isUsed = true; }
+    // comsumer needs to set frame as unsed.
+    void setUsed() { _isUsed.store(true, std::memory_order_relaxed); }
+    void setUnused() { _isUsed.store(false, std::memory_order_relaxed); }
 
     void setInvalid() {_isValid = false;}
 
@@ -76,7 +79,7 @@ class FrameBuffer {
     unsigned char * _data;
     unsigned char * _subData;
     bool     _isValid;
-    bool     _isUsed;
+    std::atomic<bool>     _isUsed;
     size_t   _width;
     size_t   _height;
 };
@@ -94,16 +97,17 @@ class CircleWRBuf {
     CircleWRBuf() : CircleWRBuf (4) { }
 
     [[nodiscard]] bool empty() const {
-        std::scoped_lock<std::mutex> guard_w(_mtx);
-        return read == write;
+        return read == write || data[read % size].isUsed();
     }
+
     [[nodiscard]] bool full () const {
-        std::scoped_lock<std::mutex> guard_w(_mtx);
-        return size == 0 || read == ((write+1) % size);
+        return size == 0 || !data[write % size].isUsed() || (read == ((write+1) % size));
     }
+
     void setEmpty() {
         std::scoped_lock<std::mutex> guard_w(_mtx);
         read = write;
+        for (int i=0; i<size; i++) data[i].setUsed();
     }
 
     T * getToWrite();
@@ -132,28 +136,22 @@ template<typename T> CircleWRBuf<T>::~CircleWRBuf() {
 
 /* returns true if write was successful, false if the buffer is already full */
 template<typename T> T * CircleWRBuf<T>::getToWrite() {
-    if ( full() ) {
-        return nullptr;
-    } else {
-        std::scoped_lock<std::mutex> guard_w(_mtx);
-        T * ret = &data[write];
-        write = (write + 1) % size;
-        return ret;
-    }
+    std::scoped_lock<std::mutex> guard_w(_mtx);
+    if (full()) return nullptr;
+
+    T * ret = &data[write];
+    write = (write + 1) % size;
+    return ret;
 }
 
 /* returns true if there is something to remove, false otherwise */
 template<typename T> T * CircleWRBuf<T>::getToRead() {
-    if ( empty() ) {
-        return nullptr;
-    } else {
-        int ret = read;
-        {
-            std::scoped_lock<std::mutex> guard_w(_mtx);
-            read = (read + 1) % size;
-        }
-        return &data[ret];
-    }
+    std::scoped_lock<std::mutex> guard_w(_mtx);
+    if (empty()) return nullptr;
+
+    int ret = read;
+    read = (read + 1) % size;
+    return &data[ret];
 }
 
 template<typename T> void CircleWRBuf<T>::clear() {

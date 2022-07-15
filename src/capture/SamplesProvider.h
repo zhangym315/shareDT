@@ -24,7 +24,7 @@ const static PLATFORM_STATUS PLATFORM = SHAREDT_LINUX;
 const static PLATFORM_STATUS PLATFORM = SHAREDT_UNKNOWN;
 #endif
 
-#define DEFAULT_SAMPLE_PROVIDER 60
+#define DEFAULT_SAMPLE_PROVIDER 50
 #define MICROSECONDS_PER_SECOND 1000
 
 class FrameProcessorImpl;
@@ -265,6 +265,7 @@ class SamplesProvider  {
     void resume()   { _fgc->resume(); }
     bool isPause()  { return _fgc->isPause(); }
     bool isReady()  { return _fgc->isReady(); }
+    std::chrono::microseconds getDuration() { return _duration; }
 
   private:
     CircleWRBuf<FrameBuffer> _buffer;
