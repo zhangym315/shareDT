@@ -102,7 +102,7 @@ elseif(APPLE)
             ${CMAKE_SOURCE_DIR}/src/capture/ios/CGWindowsFrame.cpp
             ${CMAKE_SOURCE_DIR}/src/input/ios/KeyboardEvents.mm
             ${CMAKE_SOURCE_DIR}/src/input/ios/MouseEvents.mm
-            ${CMAKE_SOURCE_DIR}/src/MainNixService.cpp
+            ${CMAKE_SOURCE_DIR}/src/main/MainNixService.cpp
             )
 
     set(${PROJECT_NAME}_PLATFORM_LIBS
@@ -133,7 +133,7 @@ elseif(UNIX)
             ${CMAKE_SOURCE_DIR}/src/capture/linux/XFrameProcessor.cpp
             ${CMAKE_SOURCE_DIR}/src/input/linux/MouseEvents.cpp
             ${CMAKE_SOURCE_DIR}/src/input/linux/KeyboardEvents.cpp
-            ${CMAKE_SOURCE_DIR}/src/MainNixService.cpp
+            ${CMAKE_SOURCE_DIR}/src/main/MainNixService.cpp
             )
 
     set(${PROJECT_NAME}_PLATFORM_LIBS
