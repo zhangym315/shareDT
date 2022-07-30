@@ -12,7 +12,7 @@
 
 #ifdef __SHAREDT_WIN__
 #include "WindowsProcess.h"
-#include <windows.h>
+#include <Windows.h>
 #include <process.h>
 #else
 #include <sys/stat.h>

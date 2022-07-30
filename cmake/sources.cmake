@@ -11,9 +11,9 @@ set(SHAREDT_SERVER_SRC_COMMON
 )
 
 set(SHAREDT_SERVER_SRC_COMMON
-        ${SHAREDT_SRC}/MainService.cpp
-        ${SHAREDT_SRC}/WindowsProvider.cpp
-        ${SHAREDT_SRC}/MainManagementProcess.cpp
+        ${SHAREDT_SRC}/main/MainService.cpp
+        ${SHAREDT_SRC}/main/MainManagementProcess.cpp
+        ${SHAREDT_SRC}/capture/WindowsProvider.cpp
         ${SHAREDT_SRC}/util/StringTools.cpp
         ${SHAREDT_SRC}/util/Buffer.cpp
         ${SHAREDT_SRC}/util/Thread.cpp
@@ -29,12 +29,12 @@ set(SHAREDT_SERVER_SRC_COMMON
 )
 
 set(SHAREDT_SERVER_SRC
+        ${SHAREDT_SRC}/capture/CaptureServer.cpp
         ${SHAREDT_SERVER_SRC_COMMON}
-        ${SHAREDT_SRC}/CaptureServer.cpp
         ${SHAREDT_SRC}/ffmpeg/ReadWriteVideo.c
         ${SHAREDT_SRC}/ffmpeg/ReadWriteImages.c
         ${SHAREDT_SRC}/cli/ExportImages.cpp
-        ${SHAREDT_SRC}/MainConsole.cpp
+        ${SHAREDT_SRC}/main/MainConsole.cpp
         ${SHAREDT_SRC}/input/InputInterface.cpp
 )
 

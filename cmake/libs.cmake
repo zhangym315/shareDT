@@ -60,7 +60,7 @@ if(WIN32)
             ${CMAKE_SOURCE_DIR}/src/capture/win/GDIWindowProcessor.cpp
             ${CMAKE_SOURCE_DIR}/src/input/win/MouseEvents.cpp
             ${CMAKE_SOURCE_DIR}/src/input/win/KeyboardEvents.cpp
-            ${CMAKE_SOURCE_DIR}/src/MainWindowsService.cpp
+            ${CMAKE_SOURCE_DIR}/src/main/MainWindowsService.cpp
             ${CMAKE_SOURCE_DIR}/src/util/WindowsProcess.cpp
             )
 
