@@ -18,10 +18,10 @@
 
 #include <fcntl.h>
 #ifdef __SHAREDT_WIN__
-#include <windows.h>
+#include <Windows.h>
 #include <tchar.h>
 #include <strsafe.h>
-#include <Lmcons.h>
+#include <lmcons.h>
 #else
 #include "Daemon.h"
 #endif

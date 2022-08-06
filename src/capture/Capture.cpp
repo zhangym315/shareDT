@@ -13,7 +13,7 @@
 #include "Daemon.h"
 #include "Logger.h"
 #include "Enum.h"
-#include "MainConsole.h"
+#include "main/MainConsole.h"
 #include "InputInterface.h"
 #include "CaptureInfo.h"
 
