@@ -23,9 +23,7 @@ CapMonitor * FrameGetterSystem::getMonitor()
 
 void FrameGetterSystem::debug(char * array [])
 {
-    std::cout << "Hello from FrameGetterSystem::debug" << std::endl;
     while( (*array) != nullptr) {
-            std::cout << "Hello from FrameGetterSystem::debug available: " << *array << std::endl;
     }
 }
 
@@ -84,7 +82,7 @@ void FrameGetterThread::mainImp()
         }
         std::chrono::duration<double> diff = std::chrono::system_clock::now() - start;
         if(_duration > diff) {
-            std::cout << get_current_time_string() << " FrameGetterThread sleeped " << _duration.count() << std::endl;
+//            std::cout << get_current_time_string() << " FrameGetterThread sleeped " << _duration.count() << std::endl;
             std::this_thread::sleep_for(_duration - diff);
         }
     }

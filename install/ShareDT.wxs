@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+  <Product Name='ShareDT' Id='*' Language='1033'
+    Version='0.1' Manufacturer='Share Desktop.'
+    UpgradeCode="ba176334-e13a-4b85-a037-f950bc6152ce">
+
+    <Package Id='*' Keywords='Installer' Description="Share Desktop Installer"
+      Manufacturer='Share Desktop.'
+      InstallerVersion='100' Languages='1033' Compressed='yes' />
+    <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' />
+
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id='ProgramFilesFolder' Name='ShareDT'>
+        <Directory Id='SHAREDTMAIN' Name='ShareDT'>
+          <Directory Id='INSTALLBIN' Name='bin'>
+
+            <Component Id='Mainexe' Guid='97e06667-63c2-48b6-8983-c3931bf124f1'>
+              <File Id='ShareDTexe' Name='ShareDT.exe' Source='ShareDT.exe' KeyPath='yes'>
+                <Shortcut Id="ShareDT" Directory="ProgramMenuDir" Name="ShareDT"
+                        WorkingDirectory='ShareDT'
+                        Icon="ShareDT.exe" IconIndex="0" Advertise="yes" />
+              </File>
+            </Component>
+
+            <Component Id='IconPng' Guid='b7b9b14b-0688-4cbe-8d33-2be74d5cde84'>
+              <File Id='IconPng' Name='ShareDT.png' DiskId='1' Source='ShareDT.png' KeyPath='yes' />
+            </Component>
+          </Directory>
+
+        </Directory>
+      </Directory>
+
+      <Directory Id="ProgramMenuFolder" Name="Programs">
+        <Directory Id="ProgramMenuDir" Name="ShareDT">
+          <Component Id="ProgramMenuDir" Guid="12345678-7E98-44CE-B049-C477CC0A2B00">
+            <RemoveFolder Id='ProgramMenuDir' On='uninstall' />
+            <RegistryValue Root='HKCU' Key='Software\ShareDT\ShareDT' Type='string' Value='' KeyPath='yes' />
+          </Component>
+        </Directory>
+      </Directory>
+      <Directory Id="DesktopFolder" Name="Desktop" />
+    </Directory>
+
+    <Feature Id='Complete' Level='1'>
+      <ComponentRef Id='Mainexe' />
+      <ComponentRef Id='ProgramMenuDir' />
+      <ComponentRef Id='IconPng' />
+    </Feature>
+
+    <Icon Id="ShareDT.exe" SourceFile="ShareDT.png" />
+    <Property Id="WIXUI_INSTALLDIR" Value="SHAREDTMAIN" />
+    <UIRef Id="WixUI_InstallDir" />
+    <WixVariable Id="WixUIDialogBmp" Value="ShareDTDiaglogInstall.png" />
+    <WixVariable Id="WixUIBannerBmp" Value="ShareDTDiagBannerInstall.png" />
+
+    <UI>
+      <UIRef Id="WixUI_InstallDir" />
+      <Publish Dialog="WelcomeDlg"
+            Control="Next"
+            Event="NewDialog"
+            Value="InstallDirDlg"
+            Order="2">1</Publish>
+      <Publish Dialog="InstallDirDlg"
+            Control="Back"
+            Event="NewDialog"
+            Value="WelcomeDlg"
+            Order="2">1</Publish>
+    </UI>
+
+  </Product>
+</Wix>

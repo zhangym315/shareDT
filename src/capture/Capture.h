@@ -70,8 +70,10 @@ class Capture {
     [[nodiscard]] bool isDaemon() const { return _daemon; }
     [[nodiscard]] int  getPort()  const { return _vncPort; }
     [[nodiscard]] unsigned int  getFrenquency()  const { return _frequency; }
+    [[nodiscard]] SPType  getType()  const { return _type; }
 
     ScreenProvider * getScreenProvide() { return _sp; }
+    const String & getName() const { return _name; }
     void Usage();
     virtual void rfbUsagePrint() { }
 

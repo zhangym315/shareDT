@@ -1,14 +1,23 @@
+/*
+ * ShareDT
+ * Show all of the windows/monitors that can be shared
+ */
 #include <QApplication>
 #include <QImage>
 #include <QAction>
 #include <QDesktopWidget>
 
-#include "MainWindow.h"
+#include "ShareDT.h"
 #include "LocalDisplayer.h"
 
 ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
         _ui(new Ui::ShareDTWindow)
 {
+#ifndef __SHAREDT_IOS__
+    // set program icon, ShareDT.png should be the same directory
+    this->setWindowIcon(QIcon(QPixmap("ShareDT.png")));
+#endif
+
     setMenu();
     setCentralWidget(parent);
     resize(QDesktopWidget().availableGeometry(this).size() * 0.5);
@@ -63,6 +72,7 @@ void ShareDTWindow::setMenu()
 ShareDTWindow::~ShareDTWindow()
 {
     delete _ui;
+    LOGGER.info() << "Stopped...";
 }
 
 void ShareDTWindow::actionFreshItems()
@@ -70,13 +80,25 @@ void ShareDTWindow::actionFreshItems()
     _ui->refreshLocalBoxGroup(this);
 }
 
+static void initShareDT(const char * argv0)
+{
+    ShareDTHome::instance()->set(argv0);
+    String varrun = ShareDTHome::instance()->getHome() + String(VAR_RUN);
+    if (!fs::exists(varrun)) fs::create_directories(varrun);
+}
+
 int
 main(int argc, char **argv)
 {
-    ShareDTHome::instance()->set(argv[0]);
+    initShareDT(argv[0]);
     QApplication app(argc, argv);
 
     if (argc == 1) {
+        //set log file to var/run/ShareDT.log
+        Logger::instance().setLogFile((ShareDTHome::instance()->getHome() +
+                                        String(VAR_RUN)+String(CAPTURE_LOG)).c_str());
+        LOGGER.info() << "Starting " << argv[0] << " ...";
+
         ShareDTWindow gui(argc, argv);
         gui.show();
         return QApplication::exec();

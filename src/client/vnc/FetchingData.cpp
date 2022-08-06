@@ -1,4 +1,6 @@
 #include "FetchingData.h"
+#include "Logger.h"
+
 #include <png.h>
 #include <iostream>
 #include <chrono>
@@ -78,7 +80,7 @@ using namespace std::chrono_literals;
 void FetchingDataFromServer::run ()
 {
     if (!isInited()) {
-        std::cout << "Failed to initialise vnc client" << std::endl;
+        LOGGER.error() << "Failed to initialise vnc client";
         return;
     }
 
@@ -90,11 +92,11 @@ void FetchingDataFromServer::run ()
     }
 
     if (_client->_serverClosed) {
-        std::cout << "server connection closed, start to emit message" << std::endl;
+        LOGGER.info()  << "server connection closed, start to emit message";
         emit serverConnectionClosedSend(); 
     }
 
-    std::cout << "Shutdown FetchingDataFromServer" << std::endl;
+    LOGGER.error()  << "Shutdown FetchingDataFromServer";
     _shutdown = true;
 }
 
@@ -110,7 +112,7 @@ void FetchingDataFromServer::HandleRectFromServer(rfbClient* client, int x, int 
     if (fetcher->getFrame().frame.isUsed())
         fetcher->HandleRect(client);
     else {
-        std::cout << "Waiting for fetcher's HandleRect " << std::endl;
+        LOGGER.info()  << "Waiting for fetcher's HandleRect ";
     }
 }
 
