@@ -73,7 +73,9 @@ LocalDisplayer::LocalDisplayer (int argc, char ** argv) :
 
 #ifndef __SHAREDT_IOS__
     // set program icon, ShareDT.png should be the same directory
-    this->setWindowIcon(QIcon(QPixmap("ShareDT.png")));
+    String png = ShareDTHome::instance()->getHome() + String(PATH_SEP_STR) +
+                 String("bin") + String(PATH_SEP_STR) + String("ShareDT.png");
+    setWindowIcon(QIcon(QPixmap(png.c_str())));
 #endif
 
     setupMenu();

@@ -10,12 +10,19 @@
 #include "ShareDT.h"
 #include "LocalDisplayer.h"
 
+#ifdef __SHAREDT_WIN__
+#include <Shlobj.h>
+#include <windows.h>
+#endif
+
 ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
         _ui(new Ui::ShareDTWindow)
 {
 #ifndef __SHAREDT_IOS__
     // set program icon, ShareDT.png should be the same directory
-    this->setWindowIcon(QIcon(QPixmap("ShareDT.png")));
+    String png = ShareDTHome::instance()->getHome() + String(PATH_SEP_STR) +
+                String("bin") + String(PATH_SEP_STR) + String("ShareDT.png");
+    setWindowIcon(QIcon(QPixmap(png.c_str())));
 #endif
 
     setMenu();
@@ -83,8 +90,23 @@ void ShareDTWindow::actionFreshItems()
 static void initShareDT(const char * argv0)
 {
     ShareDTHome::instance()->set(argv0);
+#ifdef __SHAREDT_WIN__
+    WCHAR * filepath;
+    if (!SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &filepath))) {
+    }
+    std::wstring ws(filepath);
+    String varRun = String(ws.begin(), ws.end()) + String(PATH_SEP_STR) +
+                    String(SHAREDT_KEYWORD) + String(PATH_SEP_STR) +  String(VAR_RUN);
+    if (!fs::exists(varRun)) fs::create_directories(varRun);
+    //set log file to var/run/ShareDT.log
+    Logger::instance().setLogFile((varRun+String(CAPTURE_LOG)).c_str());
+#else
     String varrun = ShareDTHome::instance()->getHome() + String(VAR_RUN);
     if (!fs::exists(varrun)) fs::create_directories(varrun);
+    //set log file to var/run/ShareDT.log
+    Logger::instance().setLogFile((ShareDTHome::instance()->getHome() +
+                                   String(VAR_RUN)+String(CAPTURE_LOG)).c_str());
+#endif
 }
 
 int
@@ -94,9 +116,6 @@ main(int argc, char **argv)
     QApplication app(argc, argv);
 
     if (argc == 1) {
-        //set log file to var/run/ShareDT.log
-        Logger::instance().setLogFile((ShareDTHome::instance()->getHome() +
-                                        String(VAR_RUN)+String(CAPTURE_LOG)).c_str());
         LOGGER.info() << "Starting " << argv[0] << " ...";
 
         ShareDTWindow gui(argc, argv);
