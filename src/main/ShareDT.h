@@ -1,5 +1,5 @@
-#ifndef SHAREDT_MAINWINDOW_H
-#define SHAREDT_MAINWINDOW_H
+#ifndef SHAREDT_SHAREDT_H
+#define SHAREDT_SHAREDT_H
 #include "ShareDTWindow.h"
 #include <QWidget>
 #include <QMainWindow>
@@ -21,4 +21,4 @@ public slots:
 //    void putImage(FrameBuffer * data);
 };
 
-#endif //SHAREDT_MAINWINDOW_H
+#endif //SHAREDT_SHAREDT_H

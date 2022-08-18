@@ -1,0 +1,7 @@
+<svg version="1.1" width="493 " height="58" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="400" cy="29" r="8" stroke="darkgoldenrod" stroke-width="1" fill="lightgreen" />
+    <circle cx="445" cy="44" r="8" stroke="dimgrey" stroke-width="1" fill="cornsilk" />
+    <circle cx="445" cy="15" r="8" stroke="dimgrey" stroke-width="1" fill="cornsilk" />
+    <line x1="408" y1="29" x2="437" y2="15" style="stroke:rgb(110,128,91);stroke-width:1" />
+    <line x1="408" y1="29" x2="437" y2="44" style="stroke:rgb(110,128,91);stroke-width:1" />
+</svg>

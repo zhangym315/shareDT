@@ -71,8 +71,15 @@ LocalDisplayer::LocalDisplayer (int argc, char ** argv) :
 {
     if (!_fetcher->isInited()) return;
 
+#ifndef __SHAREDT_IOS__
+    // set program icon, ShareDT.png should be the same directory
+    this->setWindowIcon(QIcon(QPixmap("ShareDT.png")));
+#endif
+
     setupMenu();
     setupMain();
+
+    setWindowTitle((String("ShareDT - ") + _fetcher->getName()).c_str());
 
     QObject::connect (_fetcher, SIGNAL(sendRect(FrameBuffer*)),
                       this, SLOT(putImage(FrameBuffer*)));
@@ -215,7 +222,12 @@ void LocalDisplayer::startFetcher()
 {
     MonitorVectorProvider mvp;
 
-    int scale = static_cast<int>(mvp.get().begin()->getScale() * RATIO_PRECISION);
+    int scale =
+#ifdef __SHAREDT_IOS__
+    (_fetcher->getType() != SP_WINDOW) ? RATIO_PRECISION : static_cast<int>(mvp.get().begin()->getScale() * RATIO_PRECISION);
+#else
+    RATIO_PRECISION;
+#endif
     _winSize.oriSize.setWidth(_fetcher->getScreenProvide()->getWidth()*RATIO_PRECISION / scale);
     _winSize.oriSize.setHeight(_fetcher->getScreenProvide()->getHeight()*RATIO_PRECISION / scale);
 

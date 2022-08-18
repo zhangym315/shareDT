@@ -151,7 +151,7 @@ int ExportImages::startExportImages()
 
 int ExportImages::startExportAll()
 {
-    LOGGER.info() << "Starting to export images for all windows and monitoes";
+    LOGGER.info() << "Starting to export images for all windows and monitors";
 
     CircleWRBuf<FrameBuffer>  cwb(2);
     MonitorVectorProvider mvp;

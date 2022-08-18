@@ -16,7 +16,7 @@ typedef vector<CapWindow> Windows;
 
 /*
  * @note
- * ScreenProvider is to class to provide captured frame, it will call specific capture type(monitor, window or boundary).
+ * ScreenProvider is a class to provide captured frame, it will call specific capture type(monitor, window or boundary).
  *
  * Following is call stack for different type of capture:
  *                                          /==> FrameGetterSystem -> store frame to SamplesProvider::_buffer
@@ -80,6 +80,7 @@ class ScreenProviderWindow final : public ScreenProvider {
     ScreenProviderWindow(Pid pid, unsigned int frequency);
     void init() override;
     bool isValid() override { return _win.isValid(); }
+    const CapWindow & get() const { return _win; }
 
   private:
     Pid                  _pid;

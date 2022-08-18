@@ -386,9 +386,6 @@ int Capture::initParsing(int argc, char * argv[])
     /* Argument parsing is done here */
     if((ret=parseType()) != RETURN_CODE_SUCCESS) return ret;
 
-    /* no need to setup HomePath for localDisplayer */
-    if (_ctype == C_LOCALDISPLAYER) return RETURN_CODE_SUCCESS;
-
     /* set home path */
     ShareDTHome::instance()->reSet(argv[0]);
     if(!ShareDTHome::instance()->isValid()) {
@@ -440,13 +437,16 @@ int Capture::initSrceenProvider()
             _sp = new ScreenProviderWindow(_hdler, _frequency);
         else
             _sp = new ScreenProviderWindow(_pid, _frequency);
+        _name = ((ScreenProviderWindow * )_sp)->get().getName();
     }
     else if (_type == SP_MONITOR) {
         _sp = new ScreenProviderMonitor(_monID, _frequency);
+        _name = ((ScreenProviderMonitor * )_sp)->get().getName();
     }
     else if (_ctype == C_LOCALDISPLAYER && _type == SP_NULL) {
         _type = SP_MONITOR;
         _sp = new ScreenProviderMonitor(_frequency);
+        _name = ((ScreenProviderMonitor * )_sp)->get().getName();
     }
     else if (_type == SP_NULL) {
         Usage();

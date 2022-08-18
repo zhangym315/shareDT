@@ -36,6 +36,8 @@ public:
 
     FrameBuffer *  getFrame() { return _frame; }
     ScreenProvider * getScreenProvide() { return _capture.getScreenProvide();}
+    SPType getType() const {return _capture.getType(); }
+    const String & getName() const {return _capture.getName(); }
 
 signals:
     void sendRect(FrameBuffer* client);

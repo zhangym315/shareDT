@@ -96,3 +96,9 @@ cmake --build . --config Release --parallel
 ```
 cmake --install . --prefix install
 ```
+
+### Windows MSI generation
+```
+candle .\ShareDT.wxs
+light -ext WixUIExtension -cultures:en-us .\ShareDT.wixobj -out ShareDT.msi
+```

@@ -58,7 +58,7 @@ set(SERVERGUI_ICONS
     ${SHAREDT_SRC}/sgui/icons/expand.png
 )
 
-#### ShareDTClient
+#### ShareDTClient  removed client due to ShareDT will repace it
 add_executable(${START_CLIENT}
     ${SHAREDT_CLIENT_SRC_FILES}
     ${SHAREDT_CLIENT_GUI_SRC_FILES}
@@ -90,8 +90,8 @@ install(TARGETS ${START_CLIENT} DESTINATION client/bin)
 set(SHAREDT_MAIN_WINDOW ShareDT)
 add_executable(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_SRC}/util/TimeUtil.c
-        ${SHAREDT_SRC}/main/MainWindow.cpp
         ${SHAREDT_SRC}/main/Layout.cpp
+        ${SHAREDT_SRC}/main/ShareDT.cpp
         ${SHAREDT_SRC}/main/ShareDTWindow.cpp
         ${SHAREDT_SRC}/main/LocalDisplayer.cpp
         ${SHAREDT_SRC_CLIENT}/qt/SDThread.cpp
@@ -104,6 +104,20 @@ target_link_libraries(${SHAREDT_MAIN_WINDOW}
         )
 if(APPLE)
         install(TARGETS ${SHAREDT_MAIN_WINDOW} DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents/MacOS)
+        install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDT.icns DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents/Resources)
+        install(FILES ${CMAKE_SOURCE_DIR}/install/Info.plist DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents)
+else()
+        install(TARGETS ${SHAREDT_MAIN_WINDOW} DESTINATION ShareDT/bin)
+        install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDT.png DESTINATION ShareDT/bin)
+        install(DIRECTORY DESTINATION ShareDT/var/run/)
+endif()
+
+if(WIN32)
+        install(TARGETS ${SHAREDT_MAIN_WINDOW} DESTINATION MSI/)
+        install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDT.png DESTINATION MSI/)
+        install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDTDiaglogInstall.png DESTINATION MSI/)
+        install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDTDiagBannerInstall.png DESTINATION MSI/)
+        install(FILES ${CMAKE_SOURCE_DIR}/install/ShareDT.wxs DESTINATION MSI/)
 endif()
 
 #### Testing #### Can't link gtest on Win32, skip win testing

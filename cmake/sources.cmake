@@ -83,6 +83,7 @@ set(SHAREDT_CLIENT_SRC_FILES
         ${SHAREDT_SRC_CLIENT}/vnc/FetchingData.cpp
         ${SHAREDT_SRC_CLIENT}/qt/SDThread.cpp
         ${SHAREDT_SRC_CLIENT}/Main.cpp
+        ${SHAREDT_SRC}/util/Logger.cpp
 )
 
 set(SHAREDT_CLIENT_INCLUDE

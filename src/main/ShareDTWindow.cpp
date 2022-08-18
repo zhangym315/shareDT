@@ -3,6 +3,7 @@
 #include "WindowProcessor.h"
 #include "Path.h"
 #include "ExportAll.h"
+#include "Logger.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,6 +20,7 @@ extern "C" {
 #include <QProcess>
 #include <QChar>
 
+// not in use yet ^ ^
 void UI_ShareDTWindow::newRemoteGroupBox()
 {
     auto * gb = new QGroupBox("192.168.56.113");
@@ -48,10 +50,9 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
     } else {
         QString program = ShareDTHome::instance()->getArgv0().c_str();
 
-        std::cout << "Starting display for name=\"" << _info.name << "\" command=\""
+        LOGGER.info() << "Starting display for name=\"" << _info.name << "\" command=\""
             << qPrintable(program) << " "
-            << qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)) << "\""
-            << std::endl;
+            << qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)) << "\"";
 
         auto * newProcess = new QProcess();
         newProcess->start(program, _info.argument);
@@ -82,7 +83,7 @@ QWidget * UI_ShareDTWindow::newImageBox(int width, int height, unsigned char * d
     image->setFrameShadow(QFrame::Plain);
     image->setLineWidth(0);
 
-    String n = info.name.size() < 30 ? info.name : info.name.substr(0, 25) + String(" ...");
+    String n = info.name.size() < 20 ? info.name : info.name.substr(0, 15) + String(" ...");
     text->setText(QString::fromUtf8(n.c_str()));
     text->setFont(QFont({"Arial", 10}));
 
@@ -98,7 +99,7 @@ void UI_ShareDTWindow::setLocalWindows(QWidget *w)
 {
     _localGroupBox.layout = new FlowLayout();
     _localGroupBox.item = new QGroupBox(QString("Localhost Group Box"));
-    _localGroupBox.item->setFont(QFont({"Arial", 22}));
+    _localGroupBox.item->setFont(QFont({"Arial", 18}));
     _localGroupBox.item->setLayout(_localGroupBox.layout);
 
     auto * scrollArea = new QScrollArea();
@@ -129,6 +130,7 @@ void UI_ShareDTWindow::refreshLocalBoxGroup(QWidget * w)
     while ((child = _localGroupBox.layout->itemAt(0)) != nullptr) {
         _localGroupBox.layout->removeItem(child);
         removeImageBox(child->widget());  // remove single image box(image widget and label)
+        delete child->widget();
         delete child;
         _localGroupBox.layout->activate();
     }
@@ -140,7 +142,10 @@ void UI_ShareDTWindow::refreshLocalBoxGroup(QWidget * w)
 
 void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
 {
-    if (_localGroupBox.layout == nullptr) return;
+    if (_localGroupBox.layout == nullptr) {
+        LOGGER.error() << "Failed to refresh local box group because layout=null";
+        return;
+    }
 
     CircleWRBuf<FrameBuffer>  cwb(2);
     MonitorVectorProvider mvp;
@@ -164,12 +169,17 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
             cp.setY((int) fb->getHeight());
         }
         fb->setUsed();
+        LOGGER.info() << "Refreshed monitor_id=" << m.getId() << " name=\"" << info.name
+                        << "\" argument=\"" << info.argument.join(" ").toStdString() << "\"";
     }
 
     WindowVectorProvider wvp(-1);
     for (const auto & w : wvp.get()) {
 
-        if (ExportAll::filterExportWinName(w.getName())) continue;
+        if (ExportAll::filterExportWinName(w.getName())) {
+            LOGGER.info() << "Skipped fresh window_id=" << w.getHandler() << " name=\"" << w.getName();
+            continue;
+        }
 
         ExportAll ea(SP_WINDOW, w.getHandler());
         ItemInfo info;
@@ -188,6 +198,8 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
                                                      fb->getData(),
                                                      info));
         fb->setUsed();
+        LOGGER.info() << "Refreshed window_id=" << w.getHandler() << " name=\"" << info.name
+                      << "\" argument=\"" << info.argument.join(" ").toStdString() << "\"";
     }
 }
 
