@@ -47,7 +47,7 @@
       <ComponentRef Id='IconPng' />
     </Feature>
 
-    <Icon Id="ShareDT.exe" SourceFile="ShareDT.png" />
+    <Icon Id="ShareDT.exe" SourceFile="ShareDT.ico" />
     <Property Id="WIXUI_INSTALLDIR" Value="SHAREDTMAIN" />
     <UIRef Id="WixUI_InstallDir" />
     <WixVariable Id="WixUIDialogBmp" Value="ShareDTDiaglogInstall.png" />
