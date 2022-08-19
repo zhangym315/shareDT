@@ -13,6 +13,10 @@
 #ifdef __SHAREDT_WIN__
 #include <Shlobj.h>
 #include <windows.h>
+
+// Hide console for windows
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+
 #endif
 
 ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
@@ -122,9 +126,6 @@ main(int argc, char **argv)
         gui.show();
         return QApplication::exec();
     } else {
-#ifdef __SHAREDT_WIN__
-//    ::ShowWindow(::GetConsoleWindow(), SW_HIDE ); //hide console window
-#endif
         LocalDisplayer gui(argc, argv);
 
         if (!gui.isInited()) {
