@@ -1,5 +1,6 @@
 #include "GDIWindowProcessor.h"
 #include "GDIHelper.h"
+#include "StringTools.h"
 
 #include <dwmapi.h>
 #include <array>
@@ -104,7 +105,7 @@ static BOOL CALLBACK EnumWindowsProc(_In_ HWND hwnd, _In_ LPARAM lParam)
 {
     srch *s = (srch *)lParam;
     DWORD pid;
-    char Name[1024] = { '\0' };
+    wchar_t Name[1024] = { '\0' };
 
     auto class_name = GetClassName(hwnd);
     auto title = GetWindowText(hwnd);
@@ -123,11 +124,11 @@ static BOOL CALLBACK EnumWindowsProc(_In_ HWND hwnd, _In_ LPARAM lParam)
     if(s->pid != -1 && s->pid != pid) return true;
 
     if (pid != GetCurrentProcessId()) {
-        auto textlen = GetWindowTextA(hwnd, Name, sizeof(Name));
+        auto textlen = GetWindowTextW(hwnd, Name, sizeof(Name));
     }
 
     /* window name only return the windows with name */
-    if(!s->all && strlen(Name)==0) return true;
+    if(!s->all && wcslen (Name)==0) return true;
 
     auto windowrect = GetWindowRect(hwnd);
 
@@ -137,7 +138,7 @@ static BOOL CALLBACK EnumWindowsProc(_In_ HWND hwnd, _In_ LPARAM lParam)
     CapPoint size (windowrect.ClientRect.right - windowrect.ClientRect.left,
                     windowrect.ClientRect.bottom - windowrect.ClientRect.top);
 
-    CapWindow w(reinterpret_cast<size_t>(hwnd), offset, size, std::string(Name), pid);
+    CapWindow w(reinterpret_cast<size_t>(hwnd), offset, size, utf16_to_utf8(Name), pid);
 
     s->win->push_back(w);
     return TRUE;
