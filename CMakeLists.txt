@@ -114,6 +114,7 @@ endif()
 
 if(WIN32)
         install(TARGETS ${SHAREDT_MAIN_WINDOW} DESTINATION MSI/)
+        install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDT.ico DESTINATION MSI/)
         install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDT.png DESTINATION MSI/)
         install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDTDiaglogInstall.png DESTINATION MSI/)
         install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDTDiagBannerInstall.png DESTINATION MSI/)
