@@ -26,6 +26,7 @@ namespace fs = std::filesystem;
 #  define PATH_SEP_STR		PATH_SEP_STR_UNIX
 #endif
 
+#define SHAREDT_KEYWORD        "ShareDT"
 #define CAPTURE_LOG        "ShareDT.log"
 #define VNCSERV_LOG        "vncserv.log"
 #define MAINSER_LOG        "shareDT.log"

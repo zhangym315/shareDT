@@ -32,7 +32,7 @@
 
       <Directory Id="ProgramMenuFolder" Name="Programs">
         <Directory Id="ProgramMenuDir" Name="ShareDT">
-          <Component Id="ProgramMenuDir" Guid="12345678-7E98-44CE-B049-C477CC0A2B00">
+          <Component Id="ProgramMenuDir" Guid="30d7bd73-3f40-4cc1-ade9-acbcbda8881e">
             <RemoveFolder Id='ProgramMenuDir' On='uninstall' />
             <RegistryValue Root='HKCU' Key='Software\ShareDT\ShareDT' Type='string' Value='' KeyPath='yes' />
           </Component>
@@ -47,7 +47,7 @@
       <ComponentRef Id='IconPng' />
     </Feature>
 
-    <Icon Id="ShareDT.exe" SourceFile="ShareDT.png" />
+    <Icon Id="ShareDT.exe" SourceFile="ShareDT.ico" />
     <Property Id="WIXUI_INSTALLDIR" Value="SHAREDTMAIN" />
     <UIRef Id="WixUI_InstallDir" />
     <WixVariable Id="WixUIDialogBmp" Value="ShareDTDiaglogInstall.png" />

@@ -1,5 +1,6 @@
 #include "GDIWindowProcessor.h"
 #include <DXGI.h>
+#include "StringTools.h"
 
 static float scaleFromDpi(int xdpi)
 {
@@ -36,7 +37,6 @@ void MonitorVectorProvider::CapGetMonitors ()
                 pOutput->GetDesc(&desc);
                 pOutput->Release();
                 std::wstring wname = desc.DeviceName;
-                std::string name(wname.begin(), wname.end());
                 DEVMODEW devMode;
                 EnumDisplaySettingsW(desc.DeviceName, ENUM_CURRENT_SETTINGS, &devMode);
 
@@ -46,7 +46,7 @@ void MonitorVectorProvider::CapGetMonitors ()
                 auto scale = scaleFromDpi(xdpi);
 
                 bool flipSides = desc.Rotation == DXGI_MODE_ROTATION_ROTATE90 || desc.Rotation == DXGI_MODE_ROTATION_ROTATE270;
-                CapMonitor m(name, _mons.size(), j,
+                CapMonitor m(utf16_to_utf8(wname), _mons.size(), j,
                             flipSides ? devMode.dmPelsHeight : devMode.dmPelsWidth,
                             flipSides ? devMode.dmPelsWidth : devMode.dmPelsHeight,
                             devMode.dmPosition.x, devMode.dmPosition.y, scale, i);

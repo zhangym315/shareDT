@@ -386,6 +386,9 @@ int Capture::initParsing(int argc, char * argv[])
     /* Argument parsing is done here */
     if((ret=parseType()) != RETURN_CODE_SUCCESS) return ret;
 
+    /* no need to setup HomePath for localDisplayer */
+    if (_ctype == C_LOCALDISPLAYER) return RETURN_CODE_SUCCESS;
+
     /* set home path */
     ShareDTHome::instance()->reSet(argv[0]);
     if(!ShareDTHome::instance()->isValid()) {

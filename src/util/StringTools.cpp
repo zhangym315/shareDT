@@ -36,3 +36,13 @@ bool toInt(const String &input, int &out)
 
     return true;
 }
+
+std::wstring utf8_to_utf16(std::string utf8_string)
+{
+    return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.from_bytes(utf8_string);
+}
+
+std::string utf16_to_utf8(std::wstring utf16_string)
+{
+    return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.to_bytes(utf16_string);
+}

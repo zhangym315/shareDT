@@ -98,7 +98,12 @@ cmake --install . --prefix install
 ```
 
 ### Windows MSI generation
+* 0. Install rcedit from https://github.com/electron/rcedit
+* 1. Install wix and add executables to path
+* 2. After build, install it to a path
+* 3. cd to the install path/MSI, run following two command. `ShareDT.msi` will be generated
 ```
+rcedit.exe .\ShareDT.exe --set-icon .\ShareDT.ico
 candle .\ShareDT.wxs
 light -ext WixUIExtension -cultures:en-us .\ShareDT.wixobj -out ShareDT.msi
 ```

@@ -86,7 +86,7 @@ install(DIRECTORY DESTINATION server/var/run/)
 install(TARGETS ${START_CLIENT} DESTINATION client/bin)
 
 
-##### ShareDTWindow for client
+##### ShareDT
 set(SHAREDT_MAIN_WINDOW ShareDT)
 add_executable(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_SRC}/util/TimeUtil.c
