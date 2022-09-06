@@ -103,7 +103,9 @@ bool GDIFrameProcessor::ProcessFrame(FrameBuffer * fb) {
         auto top = -windowrect.ClientBorder.top;
         fb->setWidthHeight(width, height);
 
-        if (BitBlt(CaptureDC.DC, left, top, r, b, MonitorDC.DC, 0, 0, SRCCOPY) == FALSE) {
+        BOOL result = PrintWindow((HWND)_win->getHandler(), CaptureDC.DC, PW_RENDERFULLCONTENT );
+
+        if (!result && BitBlt(CaptureDC.DC, left, top, r, b, MonitorDC.DC, 0, 0, SRCCOPY | CAPTUREBLT) == FALSE) {
             LOGGER.error() << "Failed on BitBlt: " << l << "  " << t << " " << r << " " << b << " " ;
             SelectObject(CaptureDC.DC, originalBmp);
             return false;

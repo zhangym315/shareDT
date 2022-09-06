@@ -83,7 +83,11 @@ QWidget * UI_ShareDTWindow::newImageBox(int width, int height, unsigned char * d
     image->setFrameShadow(QFrame::Plain);
     image->setLineWidth(0);
 
+#ifdef __SHAREDT_WIN__
+    String n = info.name.size() < 20 ? info.name : info.name.substr(0, 10) + String(" ...");
+#else
     String n = info.name.size() < 20 ? info.name : info.name.substr(0, 15) + String(" ...");
+#endif
     text->setText(QString::fromUtf8(n.c_str()));
     text->setFont(QFont({"Arial", 10}));
 
