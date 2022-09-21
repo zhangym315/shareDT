@@ -106,9 +106,14 @@ void AddWindow(Display* display, XID& window, WindowVector & wnd, bool all)
     wnd.push_back(w);
 }
 
+static Display * display = nullptr;
+
 void WindowVectorProvider::CapGetWindows()
 {
-    auto* display = XOpenDisplay(NULL);
+    if (display == nullptr)
+        display = XOpenDisplay(NULL);
+    if (display == NULL) return;
+
     Atom a = XInternAtom(display, "_NET_CLIENT_LIST", true);
     Atom actualType;
     int format;
@@ -135,6 +140,6 @@ void WindowVectorProvider::CapGetWindows()
         }
         XFree(data);
     }
-    XCloseDisplay(display);
+    //XCloseDisplay(display);
     return ;
 }

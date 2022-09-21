@@ -88,7 +88,7 @@ ShareDTWindow::~ShareDTWindow()
 
 void ShareDTWindow::actionFreshItems()
 {
-    _ui->refreshLocalBoxGroup(this);
+    _ui->refreshLocalBoxGroup();
 }
 
 static void initShareDT(const char * argv0)

@@ -3,8 +3,11 @@
 
 #include "StringTools.h"
 #include "Layout.h"
+#include "SDThread.h"
+
 #include <utility>
 #include <vector>
+#include <chrono>
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QAction>
@@ -62,17 +65,35 @@ private:
     ItemInfo _info;
 };
 
-class UI_ShareDTWindow
+class FreshMainWindow;
+
+class UI_ShareDTWindow : public QObject
 {
+    Q_OBJECT
+
+    class FreshMainWindow : public SDThread {
+    public:
+        explicit FreshMainWindow(UI_ShareDTWindow * ui) : _ui(ui) { }
+        ~FreshMainWindow() override { _ui = nullptr; }
+        void run() override;
+
+    private:
+        UI_ShareDTWindow * _ui;
+    };
+
 public:
-    UI_ShareDTWindow() : _w_unit(140), _h_unit(110) { }
+    UI_ShareDTWindow() : _w_unit(140), _h_unit(110), _freshMainWin(this) {
+        QObject::connect (this, SIGNAL(refreshSignal()),
+                          this, SLOT(refreshSlot()));
+    }
+    ~UI_ShareDTWindow();
     void newRemoteGroupBox();
     QWidget * newImageBox(int w, int h, unsigned char * data, const ItemInfo & info) const;
     void setupMainWindow(QWidget * w);
     void setupUi(QWidget * w);
     void setLocalWindows(QWidget * w);
 
-    void refreshLocalBoxGroup(QWidget * w);
+    void refreshLocalBoxGroup();
 
 private:
     void refreshLocalBoxGroupInternal() const;
@@ -80,6 +101,8 @@ private:
 
     int _w_unit;
     int _h_unit;
+
+    FreshMainWindow _freshMainWin;
 
     QAction * _freshWin;  /* Window -> Fresh Items */
 
@@ -93,6 +116,11 @@ private:
     QGROUP_BOX    _localGroupBox;
     std::vector<QGroupBox *> _remoteGroupBoxes;
 
+signals:
+    void refreshSignal();
+
+public slots:
+    void refreshSlot() { refreshLocalBoxGroup(); }
 };
 
 namespace Ui {

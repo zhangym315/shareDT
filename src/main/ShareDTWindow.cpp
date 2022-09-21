@@ -112,7 +112,8 @@ void UI_ShareDTWindow::setLocalWindows(QWidget *w)
     scrollArea->setGeometry(QRect(600, 1000, 1000, 900));
 
     _mainLayout->addWidget(scrollArea);
-    
+    _freshMainWin.start();
+
     refreshLocalBoxGroupInternal();
 }
 
@@ -128,7 +129,7 @@ void UI_ShareDTWindow::setupUi(QWidget *w)
     setLocalWindows(w);
 }
 
-void UI_ShareDTWindow::refreshLocalBoxGroup(QWidget * w)
+void UI_ShareDTWindow::refreshLocalBoxGroup()
 {
     QLayoutItem * child;
     while ((child = _localGroupBox.layout->itemAt(0)) != nullptr) {
@@ -219,3 +220,22 @@ void UI_ShareDTWindow::removeImageBox(QWidget *w) {
         l1->activate();
     }
 }
+
+UI_ShareDTWindow::~UI_ShareDTWindow() {
+    // make sure fetcher thread is shutdown
+    while(!_freshMainWin.isShutDown()) {
+        _freshMainWin.stop();
+    }
+}
+
+void UI_ShareDTWindow::FreshMainWindow::run() {
+    while(!_stopped) {
+        LOGGER.info() << "Refreshing window";
+        emit _ui->refreshSignal();
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+    }
+
+    _shutdown = true;
+}
+
+
