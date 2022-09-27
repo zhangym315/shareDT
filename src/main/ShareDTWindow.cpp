@@ -23,7 +23,7 @@ extern "C" {
 // not in use yet ^ ^
 void UI_ShareDTWindow::newRemoteGroupBox()
 {
-    auto * gb = new QGroupBox("192.168.56.113");
+    auto * gb = new GroupBox("192.168.56.113", this);
     auto * gbFL = new FlowLayout();
     gb->setLayout(gbFL);
 
@@ -102,7 +102,7 @@ QWidget * UI_ShareDTWindow::newImageBox(int width, int height, unsigned char * d
 void UI_ShareDTWindow::setLocalWindows(QWidget *w)
 {
     _localGroupBox.layout = new FlowLayout();
-    _localGroupBox.item = new QGroupBox(QString("Localhost Group Box"));
+    _localGroupBox.item = new GroupBox(QString("Localhost Group Box"), this);
     _localGroupBox.item->setFont(QFont({"Arial", 18}));
     _localGroupBox.item->setLayout(_localGroupBox.layout);
 
@@ -131,6 +131,7 @@ void UI_ShareDTWindow::setupUi(QWidget *w)
 
 void UI_ShareDTWindow::refreshLocalBoxGroup()
 {
+    LOGGER.info() << "Fresh slot triggered";
     QLayoutItem * child;
     while ((child = _localGroupBox.layout->itemAt(0)) != nullptr) {
         _localGroupBox.layout->removeItem(child);
@@ -174,8 +175,8 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
             cp.setY((int) fb->getHeight());
         }
         fb->setUsed();
-        LOGGER.info() << "Refreshed monitor_id=" << m.getId() << " name=\"" << info.name
-                        << "\" argument=\"" << info.argument.join(" ").toStdString() << "\"";
+//        LOGGER.info() << "Refreshed monitor_id=" << m.getId() << " name=\"" << info.name
+//                        << "\" argument=\"" << info.argument.join(" ").toStdString() << "\"";
     }
 
     WindowVectorProvider wvp(-1);
@@ -203,8 +204,8 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
                                                      fb->getData(),
                                                      info));
         fb->setUsed();
-        LOGGER.info() << "Refreshed window_id=" << w.getHandler() << " name=\"" << info.name
-                      << "\" argument=\"" << info.argument.join(" ").toStdString() << "\"";
+//        LOGGER.info() << "Refreshed window_id=" << w.getHandler() << " name=\"" << info.name
+//                      << "\" argument=\"" << info.argument.join(" ").toStdString() << "\"";
     }
 }
 
@@ -230,12 +231,28 @@ UI_ShareDTWindow::~UI_ShareDTWindow() {
 
 void UI_ShareDTWindow::FreshMainWindow::run() {
     while(!_stopped) {
-        LOGGER.info() << "Refreshing window";
-        emit _ui->refreshSignal();
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        if (_autoFresh.load())
+            emit _ui->refreshSignal();
+        std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 
     _shutdown = true;
 }
 
 
+void GroupBox::mousePressEvent(QMouseEvent *event) {
+    if (event->button() == Qt::MouseButton::RightButton) {
+        QMenu contextMenu(tr("Context menu"), this);
+
+        QAction actionRefresh("Refresh Window", this);
+        connect(&actionRefresh, SIGNAL(triggered()), _ui, SLOT(refreshSlot()));
+        contextMenu.addAction(&actionRefresh);
+        contextMenu.exec(event->globalPos());
+    }
+
+    QGroupBox::mousePressEvent(event);
+}
+
+void GroupBox::mouseReleaseEvent(QMouseEvent *event) {
+    QGroupBox::mouseReleaseEvent(event);
+}

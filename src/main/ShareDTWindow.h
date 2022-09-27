@@ -40,9 +40,19 @@ QT_BEGIN_NAMESPACE
  *  |                                     |
  *  =======================================
  */
+class UI_ShareDTWindow;
+class GroupBox : public QGroupBox {
+public:
+    explicit GroupBox(const QString & s, UI_ShareDTWindow * ui) : QGroupBox(s), _ui(ui) { }
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+
+private:
+    UI_ShareDTWindow * _ui;
+};
 
 typedef struct qgroup_item {
-    QGroupBox *  item;
+    GroupBox   *  item;
     FlowLayout * layout;
     String name;
 } QGROUP_BOX;
@@ -65,19 +75,18 @@ private:
     ItemInfo _info;
 };
 
-class FreshMainWindow;
-
 class UI_ShareDTWindow : public QObject
 {
     Q_OBJECT
 
     class FreshMainWindow : public SDThread {
     public:
-        explicit FreshMainWindow(UI_ShareDTWindow * ui) : _ui(ui) { }
+        explicit FreshMainWindow(UI_ShareDTWindow * ui) : _ui(ui) , _autoFresh(false) { }
         ~FreshMainWindow() override { _ui = nullptr; }
         void run() override;
 
     private:
+        std::atomic<bool> _autoFresh;
         UI_ShareDTWindow * _ui;
     };
 
@@ -87,7 +96,7 @@ public:
                           this, SLOT(refreshSlot()));
     }
     ~UI_ShareDTWindow();
-    void newRemoteGroupBox();
+    void newRemoteGroupBox(); // TODO for remote groupbox
     QWidget * newImageBox(int w, int h, unsigned char * data, const ItemInfo & info) const;
     void setupMainWindow(QWidget * w);
     void setupUi(QWidget * w);
@@ -103,14 +112,6 @@ private:
     int _h_unit;
 
     FreshMainWindow _freshMainWin;
-
-    QAction * _freshWin;  /* Window -> Fresh Items */
-
-    std::vector<QLabel *> images;
-    QMenuBar * _menubar;
-    QMenu * _menuEdit;
-    QMenu * _menuWindow;
-    QMenu * _menuHelp;
 
     QVBoxLayout * _mainLayout;
     QGROUP_BOX    _localGroupBox;
