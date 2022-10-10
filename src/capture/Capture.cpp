@@ -1,9 +1,3 @@
-/*********************************************************
- * StartServer.cpp                                       *
- *                                                       *
- * main function to start a server                       *
- *                                                       *
- *********************************************************/
 #include "StringTools.h"
 #include "TypeDef.h"
 #include "WindowProcessor.h"
