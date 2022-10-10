@@ -268,7 +268,7 @@ void GroupBox::mousePressEvent(QMouseEvent *event) {
         connect(&actionConnection, SIGNAL(triggered()), _ui, SLOT(newGroupConnection()));
         contextMenu.addAction(&actionConnection);
 
-        contextMenu.addSection(QString("Stripe"));
+        contextMenu.addSection(QString(""));
 
         QAction actionRefresh("Refresh Window", this);
         connect(&actionRefresh, SIGNAL(triggered()), _ui, SLOT(refreshSlot()));
