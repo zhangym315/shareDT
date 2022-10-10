@@ -19,21 +19,31 @@ extern "C" {
 #include <QMouseEvent>
 #include <QProcess>
 #include <QChar>
+#include <QInputDialog>
 
-// not in use yet ^ ^
-void UI_ShareDTWindow::newRemoteGroupBox()
+const static int gpBoxFontSize = 15;
+
+void UI_ShareDTWindow::newRemoteGroupBox(const String & host)
 {
-    auto * gb = new GroupBox("192.168.56.113", this);
-    auto * gbFL = new FlowLayout();
-    gb->setLayout(gbFL);
+    if (_remoteGroupBoxes.find(host) != _remoteGroupBoxes.end()) {
+        QMessageBox msgBox;
+        QString message("Host already connected: ");
+        message.append(host.c_str());
+        msgBox.setText(message); msgBox.exec();
+        return;
+    }
+
+    auto * gb= new GroupBox(host.c_str(), this);
+    FlowLayout gbFL;
+    gb->setLayout(&gbFL);
 
     auto* scrollArea = new QScrollArea();
     scrollArea->setWidget(gb);
     scrollArea->setWidgetResizable( true );
 
     _mainLayout->addWidget(scrollArea);
-    gb->setFont(QFont({"Arial", 10}));
-    _remoteGroupBoxes.emplace_back(gb);
+    gb->setFont(QFont(QString("Arial"), gpBoxFontSize));
+    _remoteGroupBoxes[host] = gb;
 }
 
 void ImageItem::mousePressEvent(QMouseEvent *event)
@@ -102,8 +112,8 @@ QWidget * UI_ShareDTWindow::newImageBox(int width, int height, unsigned char * d
 void UI_ShareDTWindow::setLocalWindows(QWidget *w)
 {
     _localGroupBox.layout = new FlowLayout();
-    _localGroupBox.item = new GroupBox(QString("Localhost Group Box"), this);
-    _localGroupBox.item->setFont(QFont({"Arial", 18}));
+    _localGroupBox.item = new GroupBox(QString("Localhost"), this);
+    _localGroupBox.item->setFont(QFont(QString("Arial"), gpBoxFontSize));
     _localGroupBox.item->setLayout(_localGroupBox.layout);
 
     auto * scrollArea = new QScrollArea();
@@ -229,6 +239,16 @@ UI_ShareDTWindow::~UI_ShareDTWindow() {
     }
 }
 
+void UI_ShareDTWindow::newGroupConnection() {
+    bool ok;
+    QString text = QInputDialog::getText(nullptr, tr("New Connections"),
+                                         tr("Host Address:"), QLineEdit::Normal,
+                                         "", &ok);
+
+    newRemoteGroupBox(text.toStdString());
+    LOGGER.info() << "Trying to connect to address=" << text.toStdString();
+}
+
 void UI_ShareDTWindow::FreshMainWindow::run() {
     while(!_stopped) {
         if (_autoFresh.load())
@@ -243,6 +263,12 @@ void UI_ShareDTWindow::FreshMainWindow::run() {
 void GroupBox::mousePressEvent(QMouseEvent *event) {
     if (event->button() == Qt::MouseButton::RightButton) {
         QMenu contextMenu(tr("Context menu"), this);
+
+        QAction actionConnection("New Connection", this);
+        connect(&actionConnection, SIGNAL(triggered()), _ui, SLOT(newGroupConnection()));
+        contextMenu.addAction(&actionConnection);
+
+        contextMenu.addSection(QString("Stripe"));
 
         QAction actionRefresh("Refresh Window", this);
         connect(&actionRefresh, SIGNAL(triggered()), _ui, SLOT(refreshSlot()));
