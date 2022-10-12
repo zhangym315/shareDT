@@ -60,6 +60,7 @@ class ShareDTHome {
     void   set(const char *argv);
     String & getHome();
     const String & getArgv0() const;
+    const String & getArgv0Dir() const;
     bool isValid() const;
 
   private:
@@ -67,6 +68,7 @@ class ShareDTHome {
     static ShareDTHome * _instance;
     String _home;
     String _execPath; /* argv[0] full path */
+    String _execDir; /* argv[0] directory */
     bool   _valid;
 };
 

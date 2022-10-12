@@ -124,6 +124,7 @@ signals:
 public slots:
     void refreshSlot() { refreshLocalBoxGroup(); }
     void newGroupConnection();
+    void startLocalCaptureServer();
 };
 
 namespace Ui {

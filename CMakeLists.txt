@@ -102,10 +102,14 @@ target_link_libraries(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_CLIENT_QT_LIBS}
         ${${PROJECT_NAME}_PLATFORM_LIBS}
         )
+
 if(APPLE)
         install(TARGETS ${SHAREDT_MAIN_WINDOW} DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents/MacOS)
         install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDT.icns DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents/Resources)
         install(FILES ${CMAKE_SOURCE_DIR}/install/Info.plist DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents)
+
+        install(TARGETS ${START_SERVER} DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents/MacOS)
+        install(FILES ${KeyCode} DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents/MacOS )
 else()
         install(TARGETS ${SHAREDT_MAIN_WINDOW} DESTINATION ShareDT/bin)
         install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDT.png DESTINATION ShareDT/bin)

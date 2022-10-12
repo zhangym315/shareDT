@@ -249,6 +249,17 @@ void UI_ShareDTWindow::newGroupConnection() {
     LOGGER.info() << "Trying to connect to address=" << text.toStdString();
 }
 
+void UI_ShareDTWindow::startLocalCaptureServer() {
+    String startServer = ShareDTHome::instance()->getArgv0Dir() + String(PATH_SEP_STR) + String("ShareDTServer");
+    QString startServerProgram = startServer.c_str();
+    QStringList args("start");
+
+    LOGGER.info() << "Starting ShareDTServer path=" << qPrintable(startServerProgram);
+
+    auto * newProcess = new QProcess();
+    newProcess->start(startServerProgram, args);
+}
+
 void UI_ShareDTWindow::FreshMainWindow::run() {
     while(!_stopped) {
         if (_autoFresh.load())
