@@ -29,7 +29,7 @@ namespace fs = std::filesystem;
 #define SHAREDT_KEYWORD        "ShareDT"
 #define CAPTURE_LOG        "ShareDT.log"
 #define VNCSERV_LOG        "vncserv.log"
-#define MAINSER_LOG        "shareDT.log"
+#define MAINSER_LOG        "ShareDTServer.log"
 #define FILEPID            "file.pid"
 #define SOCKET_FILE        "server.sf"
 #define ALIVE_FILE         "alive.mng"

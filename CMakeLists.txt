@@ -114,6 +114,9 @@ else()
         install(TARGETS ${SHAREDT_MAIN_WINDOW} DESTINATION ShareDT/bin)
         install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDT.png DESTINATION ShareDT/bin)
         install(DIRECTORY DESTINATION ShareDT/var/run/)
+
+        install(TARGETS ${START_SERVER} DESTINATION ShareDT/bin)
+        install(FILES ${KeyCode} DESTINATION ShareDT/bin )
 endif()
 
 if(WIN32)
