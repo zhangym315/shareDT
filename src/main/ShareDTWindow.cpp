@@ -251,6 +251,9 @@ void UI_ShareDTWindow::newGroupConnection() {
 
 void UI_ShareDTWindow::startLocalCaptureServer() {
     String startServer = ShareDTHome::instance()->getArgv0Dir() + String(PATH_SEP_STR) + String("ShareDTServer");
+#ifdef __SHAREDT_WIN__
+    startServer.append(".exe");
+#endif
     QString startServerProgram = startServer.c_str();
     QStringList args("start");
 

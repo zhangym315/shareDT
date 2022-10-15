@@ -126,8 +126,8 @@ void ShareDTHome::reSet(const char *argv)
     GetModuleFileName(NULL, path, MAX_PATH);
 
     _execPath = path;
-    _execDir = path;
     _home = getParentDir(path, 2);
+    _execDir = getParentDir(path, 1);
     _valid = true;
 #else
     String path(argv);

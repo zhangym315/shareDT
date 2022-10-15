@@ -7,10 +7,8 @@
 
 #include <fcntl.h>
 #ifdef __SHAREDT_WIN__
-#include <Windows.h>
 #include <tchar.h>
 #include <strsafe.h>
-#include <lmcons.h>
 #else
 #include "Daemon.h"
 #endif
