@@ -29,7 +29,7 @@ namespace fs = std::filesystem;
 #define SHAREDT_KEYWORD        "ShareDT"
 #define CAPTURE_LOG        "ShareDT.log"
 #define VNCSERV_LOG        "vncserv.log"
-#define MAINSER_LOG        "shareDT.log"
+#define MAINSER_LOG        "ShareDTServer.log"
 #define FILEPID            "file.pid"
 #define SOCKET_FILE        "server.sf"
 #define ALIVE_FILE         "alive.mng"
@@ -60,6 +60,7 @@ class ShareDTHome {
     void   set(const char *argv);
     String & getHome();
     const String & getArgv0() const;
+    const String & getArgv0Dir() const;
     bool isValid() const;
 
   private:
@@ -67,6 +68,7 @@ class ShareDTHome {
     static ShareDTHome * _instance;
     String _home;
     String _execPath; /* argv[0] full path */
+    String _execDir; /* argv[0] directory */
     bool   _valid;
 };
 

@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 #include <chrono>
+#include <unordered_map>
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QAction>
@@ -96,7 +97,7 @@ public:
                           this, SLOT(refreshSlot()));
     }
     ~UI_ShareDTWindow();
-    void newRemoteGroupBox(); // TODO for remote groupbox
+    void newRemoteGroupBox(const String & host); // TODO for remote groupbox
     QWidget * newImageBox(int w, int h, unsigned char * data, const ItemInfo & info) const;
     void setupMainWindow(QWidget * w);
     void setupUi(QWidget * w);
@@ -115,13 +116,15 @@ private:
 
     QVBoxLayout * _mainLayout;
     QGROUP_BOX    _localGroupBox;
-    std::vector<QGroupBox *> _remoteGroupBoxes;
+    std::unordered_map<String, QGroupBox *> _remoteGroupBoxes;  // <connectionHost, GroupBox*>
 
 signals:
     void refreshSignal();
 
 public slots:
     void refreshSlot() { refreshLocalBoxGroup(); }
+    void newGroupConnection();
+    void startLocalCaptureServer();
 };
 
 namespace Ui {

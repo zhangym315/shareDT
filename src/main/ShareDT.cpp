@@ -46,10 +46,18 @@ void ShareDTWindow::setMenu()
     auto * menuEdit = new QMenu(menubar);
     menuEdit->setObjectName(QString::fromUtf8("menuEdit"));
     menuEdit->setTitle(QCoreApplication::translate("ShareDTClientWin", "Edit", nullptr));
+
+    auto * localCapture = new QAction();
+    localCapture->setObjectName(QString::fromUtf8("startCapture"));
+    localCapture->setText(QCoreApplication::translate("ShareDTWindow", "Start Local Capture Server", nullptr));
+    menuEdit->addAction(localCapture);
+    QObject::connect (localCapture, SIGNAL(triggered()), _ui, SLOT(startLocalCaptureServer()));
+
     auto * newConnect = new QAction();
     newConnect->setObjectName(QString::fromUtf8("new_connection"));
     newConnect->setText(QCoreApplication::translate("ShareDTWindow", "New Connection", nullptr));
     menuEdit->addAction(newConnect);
+    QObject::connect (newConnect, SIGNAL(triggered()), _ui, SLOT(newGroupConnection()));
     /* Edit end*/
 
     /* Window */
@@ -58,7 +66,7 @@ void ShareDTWindow::setMenu()
     menuWindow->setTitle(QCoreApplication::translate("ShareDTWindow", "Window", nullptr));
 
     auto * freshWin = new QAction();
-    freshWin->setObjectName(QString::fromUtf8("fresh_itmes"));
+    freshWin->setObjectName(QString::fromUtf8("fresh_items"));
     freshWin->setText(QCoreApplication::translate("ShareDTWindow", "Refresh Items", nullptr));
     menuWindow->addAction(freshWin);
     QObject::connect (freshWin, SIGNAL(triggered()), this, SLOT(actionFreshItems()));
