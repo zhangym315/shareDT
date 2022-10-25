@@ -115,7 +115,7 @@ int MainServiceServer::listening()
 /*********************************/
 int MainServiceServer::getNewConnection()
 {
-    int client_sock = ::accept(_serverSock, NULL, NULL);
+    int client_sock = ::accept(_serverSock, nullptr, nullptr);
     if (client_sock == -1){
         LOGGER.error("ACCEPT ERROR");
         close(client_sock);
@@ -129,7 +129,7 @@ int MainServiceServer::getNewConnection()
 }
 
 int MainWindowsServices() {
-    const String pipeFile = CapServerHome::instance()->getHome() + PATH_SEP_STR + SOCKET_FILE;
+    const std::string pipeFile = CapServerHome::instance()->getHome() + PATH_SEP_STR + SOCKET_FILE;
     char buf[BUFSIZE];
     int clientSocket;
     ThreadPool tp(2);
@@ -139,7 +139,7 @@ int MainWindowsServices() {
     /* Main service port */
     SocketServer ss(SHAREDT_INTERNAL_PORT_START, 10);
     LOGGER.info() << "MainService started on port=" << ss.getPort() ;
-    String alive = ShareDTHome::instance()->getHome() + String(MAIN_SERVER_PATH) + String(PATH_ALIVE_FILE);
+    std::string alive = ShareDTHome::instance()->getHome() + std::string(MAIN_SERVER_PATH) + std::string(PATH_ALIVE_FILE);
     {
         if(fs::exists(alive) && !fs::remove(alive)){
             LOGGER.error() << "Failed to remove the file: " << alive;
@@ -151,7 +151,7 @@ int MainWindowsServices() {
 
     while(true) {
         Socket* s=ss.Accept();
-        String received = s->ReceiveBytes();
+        std::string received = s->receiveStrings();
         LOGGER.info("ShareDTServer service DATA RECEIVED CMD=\"%s\", "
                         " clientSocket=%d", received.c_str(), s->getSocket());
 
@@ -162,7 +162,7 @@ int MainWindowsServices() {
         /* first check if stop command */
         if(!memcmp(buf, MAIN_SERVICE_STOPPING, sizeof(MAIN_SERVICE_STOPPING))){
             stopAllSC();
-            s->send("ShareDTServer Stopped");
+            s->send("ShareDT Server Stopped");
             break;
         }
 
@@ -172,7 +172,7 @@ int MainWindowsServices() {
         tp.enqueue(HandleCommandSocket, s, buf);
     }
 
-    LOGGER.info("ShareDTServer Service stopped");
+    LOGGER.info("ShareDT Server Service stopped");
 
     return 0;
 }
@@ -180,8 +180,8 @@ int MainWindowsServices() {
 
 MainServiceClient::MainServiceClient() : _valid(false)
 {
-    std::srand ((unsigned int) std::time (NULL));
-    const String serverSockFile = CapServerHome::instance()->getHome() +
+    std::srand ((unsigned int) std::time (nullptr));
+    const std::string serverSockFile = CapServerHome::instance()->getHome() +
                             PATH_SEP_STR + SOCKET_FILE;
     int rc;
     struct sockaddr_un server_sockaddr;

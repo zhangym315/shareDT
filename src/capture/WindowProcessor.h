@@ -23,9 +23,9 @@ class WindowVectorProvider : public Thread {
     /*
      * _pid : -1, show all
      */
-    WindowVectorProvider(Pid pid, bool callOnce, bool getAll) : Thread(false),
+    WindowVectorProvider(pid_t pid, bool callOnce, bool getAll) : Thread(false),
             _pid(pid), _callOnce(callOnce), _getAll(getAll) { init(); }
-    WindowVectorProvider(Pid pid) : WindowVectorProvider(pid, true, false) { }
+    WindowVectorProvider(pid_t pid) : WindowVectorProvider(pid, true, false) { }
     /* default constructor show all */
     WindowVectorProvider() : WindowVectorProvider(0, true, false) { }
     ~WindowVectorProvider () { _wins.clear(); }
@@ -35,7 +35,7 @@ class WindowVectorProvider : public Thread {
 
     const WindowVector & get() { return _wins; }
     void emplace(const CapWindow & win) { _wins.emplace_back(win); }
-    void getWinByPid(Pid pid, CapWindow & win) ;
+    void getWinByPid(pid_t pid, CapWindow & win) ;
     void getWinByHandler(size_t hd, CapWindow & win);
 
     WindowVectorProvider & operator=(WindowVectorProvider & other) {
@@ -54,7 +54,7 @@ class WindowVectorProvider : public Thread {
 
     bool         _getAll;   /* Get all windows without name */
     bool         _callOnce;
-    Pid          _pid;
+    pid_t        _pid;
     WindowVector _wins;
     std::mutex   _winMtx;
 };

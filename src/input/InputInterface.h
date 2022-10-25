@@ -61,18 +61,18 @@ typedef struct Cordinate {
 extern void ptrServerMouseEvent(int buttonMask, int x, int y, rfbClientPtr cl);
 extern void kbdServerKeyEvent(rfbBool down, rfbKeySym keySym, struct _rfbClientRec* cl);
 
-typedef std::map<uint32_t, String> KeycodeString;
+typedef std::map<uint32_t, std::string> KeycodeString;
 
 class KeyCodeSingleton {
 public:
     static KeyCodeSingleton * instance() ;
     ~KeyCodeSingleton();
-    const String & getKeyString(uint32_t key);
+    const std::string & getKeyString(uint32_t key);
 
 private:
     KeyCodeSingleton();
     void init();
-    void parseLine(const String & line, KeycodeString & c);
+    void parseLine(const std::string & line, KeycodeString & c);
 
     static KeyCodeSingleton * _instance;
     KeycodeString _codeMap;
@@ -81,7 +81,7 @@ private:
 class InputMousePlatform {
 public:
     static void mouseClickAtCordinate(Cordinate c, MouseButton b, int clickCount);
-    static void keyboardClick(int isDown, const String  & key);
+    static void keyboardClick(int isDown, const std::string  & key);
 };
 
 #endif //SHAREDT_INPUTINTERFACE_H

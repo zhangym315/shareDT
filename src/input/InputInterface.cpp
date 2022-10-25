@@ -4,8 +4,8 @@
 #include "Logger.h"
 #include "Path.h"
 
-const static String CODEKEY_PATH = "/bin/KeyCode.txt";
-const static String CODEKEY_EMPTY = "";
+const static std::string CODEKEY_PATH = "/bin/KeyCode.txt";
+const static std::string CODEKEY_EMPTY = "";
 
 void ptrServerMouseEvent(int buttonMask, int x, int y, rfbClientPtr cl)
 {
@@ -62,19 +62,19 @@ KeyCodeSingleton::~KeyCodeSingleton()
 
 void KeyCodeSingleton::init()
 {
-    const String pathCodeKey = ShareDTHome::instance()->getHome() + CODEKEY_PATH;
+    const std::string pathCodeKey = ShareDTHome::instance()->getHome() + CODEKEY_PATH;
     std::ifstream infile(pathCodeKey);
 
     LOGGER.info() << "Loading keyboard code file=" << pathCodeKey;
 
-    String line;
+    std::string line;
     while (std::getline(infile, line))
     {
         parseLine(line, _codeMap);
     }
 }
 
-const String & KeyCodeSingleton::getKeyString(uint32_t key)
+const std::string & KeyCodeSingleton::getKeyString(uint32_t key)
 {
     if(_codeMap.find(key) == _codeMap.end()) {
         LOGGER.warn() << "Can't find input key_value=" << key << ". Ignored.";
@@ -95,7 +95,7 @@ const String & KeyCodeSingleton::getKeyString(uint32_t key)
  * ....
  *
  */
-void KeyCodeSingleton::parseLine(const String & line, KeycodeString & c)
+void KeyCodeSingleton::parseLine(const std::string & line, KeycodeString & c)
 {
     const char * p = line.c_str();
     while(*p == ' ' || *p == '\t') p++;
@@ -107,7 +107,7 @@ void KeyCodeSingleton::parseLine(const String & line, KeycodeString & c)
           *q!='=' && *q!='\0' && *q!='\n') q++;
 
     if (p == q) return;
-    String key(p, q-p);
+    std::string key(p, q-p);
 
     while(*q == ' ' || *q == '\t') q++;
 
@@ -127,7 +127,7 @@ void KeyCodeSingleton::parseLine(const String & line, KeycodeString & c)
         return;
     }
 
-    String value(p, q-p);
+    std::string value(p, q-p);
 
     uint32_t v = std::stoi(value);
 

@@ -86,10 +86,10 @@ class CapImageRect {
     void setInvalid() { _isValid = false; }
     [[nodiscard]] bool isValid() { return _isValid; }
 
-    String toString(char * delimiter) {
-        return std::to_string(_lt.getX()) + String(delimiter) +
-                std::to_string(_lt.getY()) + String(delimiter) +
-                std::to_string(_rb.getX()) + String(delimiter) +
+    std::string toString(char * delimiter) {
+        return std::to_string(_lt.getX()) + std::string(delimiter) +
+                std::to_string(_lt.getY()) + std::string(delimiter) +
+                std::to_string(_rb.getX()) + std::string(delimiter) +
                 std::to_string(_rb.getY());
     }
 
@@ -115,8 +115,8 @@ class CapWindow {
     CapWindow(size_t h,
               CapPoint & o,
               CapPoint &s,
-              String & n,
-              Pid p) :
+              std::string && n,
+              pid_t p) :
           _handler(h), _offset(o),  _size(s),
           _name(n), _pid(p), _isValid (true)  {  }
 
@@ -127,11 +127,11 @@ class CapWindow {
     ~CapWindow () = default;
 
     [[nodiscard]] size_t getHandler() const { return _handler; }
-    [[nodiscard]] Pid    getPid    () const { return _pid; }
+    [[nodiscard]] pid_t    getPid    () const { return _pid; }
     [[nodiscard]] bool   isValid   () const { return _isValid; }
     [[nodiscard]] const CapPoint & getOffset() const { return _offset; }
     [[nodiscard]] const CapPoint & getSize () const { return _size; }
-    [[nodiscard]] const String   & getName () const { return _name; }
+    [[nodiscard]] const std::string   & getName () const { return _name; }
     [[nodiscard]] int   getWidth()  const { return _size.getX (); }
     [[nodiscard]] int   getHeight() const { return _size.getY (); }
     [[nodiscard]] std::vector<size_t> getAll() const { return _all; }
@@ -164,8 +164,8 @@ class CapWindow {
     SPWinType _winType;
     CapPoint  _offset;
     CapPoint  _size;
-    String    _name;
-    Pid       _pid{};
+    std::string    _name;
+    pid_t       _pid{};
     bool      _isValid;
     std::vector<size_t>  _all;   /* all handler with the same process id */
 };
@@ -178,7 +178,7 @@ class CapMonitor {
                float sc) :
         _index(idx), _id(id), _adapter(-1),
         _offset(of), _size(sz), _orgOffset(of), _orgSize(sz),
-        _name(String("Display-") + std::to_string(idx)),
+        _name(std::string("Display-") + std::to_string(idx)),
         _scale(sc), _isValid(true) { }
 
     CapMonitor(int idx, int id,
@@ -188,7 +188,7 @@ class CapMonitor {
                float sc) :
         _index(idx), _id(id), _adapter(-1),
         _offset(of), _size(sz), _orgOffset(of), _orgSize(os),
-        _name(String("Display-") + std::to_string(idx)),
+        _name(std::string("Display-") + std::to_string(idx)),
         _scale(sc), _isValid(true) { }
 
     CapMonitor(int idx, int id, int w, int h, int ox, int oy, float sc) :
@@ -204,7 +204,7 @@ class CapMonitor {
         _isValid = true;
     }
 
-    CapMonitor(String & name, int idx, int id, int w, int h, int ox, int oy, float sc, int adapter) :
+    CapMonitor(std::string && name, int idx, int id, int w, int h, int ox, int oy, float sc, int adapter) :
             CapMonitor (idx, id, CapPoint(w, h), CapPoint(ox, oy), sc)  {
         _adapter = adapter;
         _isValid = true;
@@ -218,7 +218,7 @@ class CapMonitor {
     [[nodiscard]] int   getIndex() const { return _index; }
     [[nodiscard]] float  getScale() const { return _scale; }
     [[nodiscard]] int   getAdapter() const { return _adapter; }
-    [[nodiscard]] const String  & getName()  const { return _name ; }
+    [[nodiscard]] const std::string  & getName()  const { return _name ; }
     [[nodiscard]] const CapPoint& getOffset() const { return _offset; }
     [[nodiscard]] const CapPoint& getSize () const  { return _size ; }
     [[nodiscard]] const CapPoint& getOrgOffset() const { return _orgOffset; }
@@ -259,7 +259,7 @@ class CapMonitor {
     CapPoint _orgOffset;
     CapPoint _orgSize;  /* Width and height */
 
-    String  _name;
+    std::string  _name;
     float _scale = 1.000f;
 
     bool _isValid;

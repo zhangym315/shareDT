@@ -35,8 +35,8 @@ static const char *SPTypePrefix[] =
 
 void CommandChecker::mainImp()
 {
-    String stop    = _path + PATH_SEP_STR + CAPTURE_SERVER_STOP;
-    String stopped = _path + PATH_SEP_STR + CAPTURE_SERVER_STOPPED;
+    std::string stop    = _path + PATH_SEP_STR + CAPTURE_SERVER_STOP;
+    std::string stopped = _path + PATH_SEP_STR + CAPTURE_SERVER_STOPPED;
 
     while(!fs::exists(stop))
     {
@@ -54,7 +54,7 @@ void CommandChecker::mainImp()
 
 void Capture::Usage ()
 {
-    String instanceName = _ctype == C_LOCALDISPLAYER ? "LocalDisplayer" : "ShareDTServer";
+    std::string instanceName = _ctype == C_LOCALDISPLAYER ? "LocalDisplayer" : "ShareDTServer";
     std::cerr << "--help                       Help message"  << std::endl;
     std::cerr << "\n";
     std::cerr << "The following options related with "<< instanceName << " option"  << std::endl;
@@ -93,11 +93,11 @@ void Capture::removeAlivePath() const
  * Strip quote, retrieve values and set to "value"
  * Count of paremeters that going forward is returned
  */
-static int getValueWithQuote(vector<String>::const_iterator start,
-                              vector<String>::const_iterator end,
-                              String & value)
+static int getValueWithQuote(vector<std::string>::const_iterator start,
+                              vector<std::string>::const_iterator end,
+                              std::string & value)
 {
-    const String & tmp = *(++start);
+    const std::string & tmp = *(++start);
     int i = 1;
 
     if(tmp.front() == '"')
@@ -112,7 +112,7 @@ static int getValueWithQuote(vector<String>::const_iterator start,
             while ((start + 1) != end)
             {
                 i++;
-                const String & tmp1 = *(++start);
+                const std::string & tmp1 = *(++start);
                 value.append(" ");
                 if(tmp1.back() == '"')
                 {
@@ -137,10 +137,11 @@ static int getValueWithQuote(vector<String>::const_iterator start,
  * Return 0 for success
  * Others for failure
  */
-int Capture::parseArgs(const vector<String> & args)
+int Capture::parseArgs(const vector<std::string> & args)
 {
     /* parse argument that belongs to StartServer */
     for (auto i = args.begin(); i != args.end(); ++i) {
+
         if (_ctype == C_NONE) {
             if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
                 _ctype = C_NEWCAPTURE;
@@ -159,6 +160,8 @@ int Capture::parseArgs(const vector<String> & args)
                 _ctype = C_STATUS;
             } else if (*i == SHAREDT_SERVER_COMMAND_EXPORT) {
                 _ctype = C_EXPORT;
+            } else if (*i == SHAREDT_SERVER_COMMAND_REMOTGET) {
+                _ctype = C_REMOTEGET;
             }
         }
 
@@ -173,7 +176,7 @@ int Capture::parseArgs(const vector<String> & args)
             }
 
             /* get the capture type */
-            const String & cap = ((i+1) != args.end()) ?  *(++i) : "NULL";
+            const std::string & cap = ((i+1) != args.end()) ?  *(++i) : "NULL";
             if(cap == "win" || cap == "window" )
                 _type = SP_WINDOW;
             else if (cap == "mon" || cap == "monitor")
@@ -265,7 +268,7 @@ int Capture::parseArgs(const vector<String> & args)
 
 bool Capture::setWorkingDirectory()
 {
-    String wPath; // working path
+    std::string wPath; // working path
     wPath.append(ShareDTHome::instance()->getHome());
 #ifdef __SHAREDT_WIN__
     wPath.append("\\var\\run\\");
@@ -274,7 +277,7 @@ bool Capture::setWorkingDirectory()
 #endif
 
     // _wID passed as an argument
-    String & cid = (_wID.length() > 0) ? _wID : setAndGetWID();
+    std::string & cid = (_wID.length() > 0) ? _wID : setAndGetWID();
     wPath.append(cid);
     _capturePath = wPath;
     CapServerHome::instance()->setHome(wPath, cid);
@@ -286,7 +289,7 @@ bool Capture::setWorkingDirectory()
     return true;
 }
 
-String & Capture::setAndGetWID()
+std::string & Capture::setAndGetWID()
 {
     _wID.clear ();
 
@@ -318,7 +321,7 @@ String & Capture::setAndGetWID()
 
     /* append */
     std::srand ((unsigned int) std::time (NULL));
-    String rnd = std::to_string (std::rand ());
+    std::string rnd = std::to_string (std::rand ());
     _wID.append ("_RND");
     if (MAX_RAND_LENGTH > rnd.length ())
         _wID.append (std::string (MAX_RAND_LENGTH - rnd.length (), '0') + rnd);
@@ -333,7 +336,7 @@ String & Capture::setAndGetWID()
  */
 void Capture::initDaemon()
 {
-    String captureLog = CapServerHome::instance()->getHome() + PATH_CAPTURE_LOG;
+    std::string captureLog = CapServerHome::instance()->getHome() + PATH_CAPTURE_LOG;
     LOGGER.setLogFile(captureLog.c_str());
 
     LOGGER.info() << "Set CaptureServer log to file=" << captureLog;
@@ -363,8 +366,8 @@ int Capture::initParsing(int argc, char * argv[])
         return RETURN_CODE_INVALID_ARG;
 
     /* Argument setting start here */
-    vector<String> args(argv + 1, argv + argc);
-    String infname, outfname;
+    vector<std::string> args(argv + 1, argv + argc);
+    std::string infname, outfname;
     int ret;
 
     _type = SP_NULL;
@@ -381,7 +384,9 @@ int Capture::initParsing(int argc, char * argv[])
     if((ret=parseType()) != RETURN_CODE_SUCCESS) return ret;
 
     /* no need to setup HomePath for localDisplayer */
-    if (_ctype == C_LOCALDISPLAYER) return RETURN_CODE_SUCCESS;
+    if (_ctype == C_LOCALDISPLAYER || _ctype == C_REMOTEGET) return RETURN_CODE_SUCCESS;
+
+    if (_ctype == C_NONE) return RETURN_CODE_INVALID_ARG;
 
     /* set home path */
     ShareDTHome::instance()->reSet(argv[0]);
@@ -479,8 +484,8 @@ bool Capture::parseBounds()
 {
     std::istringstream iss( _name );
 
-    String result;
-    String token;
+    std::string result;
+    std::string token;
     int b[4] = {DEFAULT_BOUNDS_LEFT, DEFAULT_BOUNDS_TOP,
                     DEFAULT_BOUNDS_RIGHT, DEFAULT_BOUNDS_BOTTOM};
     int i = 0;

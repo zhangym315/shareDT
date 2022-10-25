@@ -3,7 +3,7 @@
 #include "ExportAll.h"
 #include "x265.h"
 
-const static String ALL_EXPORT_NAME="EXPORT_ALL";
+const static std::string ALL_EXPORT_NAME="EXPORT_ALL";
 
 extern "C" {
 #include "ReadWriteVideo.h"
@@ -78,13 +78,13 @@ void ExportImages::exportUsage()
 int ExportImages::parseExportImagesOptions(int argc, char ** argv)
 {
     for (int i=0; i< argc; i++) {
-        String cur = argv[i];
+        std::string cur = argv[i];
         if ( cur == "--all") {
             _action = EXPORT_ALL;
         } else if ( cur == "--format" ) {
             if (i >= argc) return RETURN_CODE_INVALID_ARG;
 
-            String val = argv[++i];
+            std::string val = argv[++i];
             if( val == "RGB" || val == "rgb" )
                 _format = ExportImages::EXPORT_RGB;
             else if ( val == "YUV" || val == "yuv" )
@@ -95,7 +95,7 @@ int ExportImages::parseExportImagesOptions(int argc, char ** argv)
         } else if ( cur == "--total" ) {
             if (i >= argc) return RETURN_CODE_INVALID_ARG;
 
-            String val = argv[++i];
+            std::string val = argv[++i];
             if (val.find_first_not_of("0123456789") == string::npos)
                 return RETURN_CODE_INVALID_ARG;
             _total = std::stoi(val.c_str());
@@ -209,7 +209,7 @@ int ExportImages::startExportH265Video()
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
-    String outfile = getCapServerPath() + PATH_SEP_STR + "EXPORTED_OUTFILE.mp4";
+    std::string outfile = getCapServerPath() + PATH_SEP_STR + "EXPORTED_OUTFILE.mp4";
 
     while ( !_sp->isSampleReady() ) {
         std::this_thread::sleep_for(50ms);
@@ -259,11 +259,11 @@ int ExportImages::startExportH265Video()
     return RETURN_CODE_SUCCESS;
 }
 
-int ExportImages::_startExportH265Video(const String & infile,
+int ExportImages::_startExportH265Video(const std::string & infile,
                                         int width,
                                         int height,
                                         int type,
-                                        const String & outfile)
+                                        const std::string & outfile)
 {
     FILE *fp_src = nullptr;
     FILE *fp_dst = nullptr;

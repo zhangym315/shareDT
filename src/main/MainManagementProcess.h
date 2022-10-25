@@ -8,14 +8,14 @@
 
 #define VNCSERVER_PORT_START 5900
 class MainManagementProcess;
-typedef std::map<String, MainManagementProcess> WIDMAP;
+typedef std::map<std::string, MainManagementProcess> WIDMAP;
 
 class MainManagementProcess
 {
   public:
     enum STATUS {STARTED, STOPPED, PENDING, UNKNOWN};
-    MainManagementProcess(const String & alive, const String & home, int port, STATUS status);
-    MainManagementProcess(const String & alive, const String & home, int port ) :
+    MainManagementProcess(const std::string & alive, const std::string & home, int port, STATUS status);
+    MainManagementProcess(const std::string & alive, const std::string & home, int port ) :
                             MainManagementProcess(alive, home, port, UNKNOWN) { }
 
     void send(const char * buf);
@@ -27,8 +27,8 @@ class MainManagementProcess
     int getPort() const { return _vncport; }
   private:
     STATUS _status;
-    String _alivePath;
-    String _home;
+    std::string _alivePath;
+    std::string _home;
     ReadWriteFD _rw;
     int    _vncport;
 };

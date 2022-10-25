@@ -18,11 +18,11 @@ void ControlHandler(DWORD request);
 int MainWindowsServices()
 {
     SERVICE_TABLE_ENTRY ServiceTable[2];
-    ServiceTable[0].lpServiceName = SHAREDT_SERVER_SVCNAME;
+    ServiceTable[0].lpServiceName = (LPSTR)SHAREDT_SERVER_SVCNAME;
     ServiceTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
 
-    ServiceTable[1].lpServiceName = NULL;
-    ServiceTable[1].lpServiceProc = NULL;
+    ServiceTable[1].lpServiceName = nullptr;
+    ServiceTable[1].lpServiceProc = nullptr;
 
     StartServiceCtrlDispatcher(ServiceTable);
     return 0;
@@ -39,16 +39,16 @@ struct FdBuffer {
  */
 DWORD WINAPI InstanceThread(LPVOID lpvParam)
 {
-    if (lpvParam == NULL )
+    if (lpvParam == nullptr )
     {
-        LOGGER.error() << "InstanceThread got an unexpected NULL" <<
+        LOGGER.error() << "InstanceThread got an unexpected nullptr" <<
                        " value in lpvParam. InstanceThread exitting.";
         return (DWORD)-1;
     }
 
     FdBuffer * p = (FdBuffer * ) lpvParam;
     Socket   * s = (Socket  *) (p->fd);
-    String command(p->buf);
+    std::string command(p->buf);
 
     LOGGER.info() <<"Started new thread for processing CMD=\"" << command << "\"";
     HandleCommandSocket(s, p->buf);
@@ -61,7 +61,7 @@ DWORD WINAPI InstanceThread(LPVOID lpvParam)
 
 void ServiceMain(int argc, char** argv)
 {
-    LOGGER.info() << "ShareDTServer service is starting" ;
+    LOGGER.info() << "ShareDT Server service is starting" ;
 
     ServiceStatus.dwServiceType = SERVICE_WIN32;
     ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
@@ -82,12 +82,12 @@ void ServiceMain(int argc, char** argv)
     SetServiceStatus (hStatus, &ServiceStatus);
 
     /* ok, started the windows service */
-    LOGGER.info() << "ShareDTServer service Started";
+    LOGGER.info() << "ShareDT Server service Started";
 
     /*
      * do the main service work
      */
-    String  lpszPipename = SERVICE_PIPE_SERVER;
+    std::string  lpszPipename = SERVICE_PIPE_SERVER;
     HANDLE  hThread;
     DWORD   dwThreadId = 0;
     char    buf[BUFSIZE];
@@ -95,7 +95,7 @@ void ServiceMain(int argc, char** argv)
     /* Main service port */
     SocketServer ss(SHAREDT_INTERNAL_PORT_START, 10);
     LOGGER.info() << "MainService started on port=" << ss.getPort() ;
-    String alive = ShareDTHome::instance()->getHome() + String(MAIN_SERVER_PATH) + String(PATH_ALIVE_FILE);
+    std::string alive = ShareDTHome::instance()->getHome() + std::string(MAIN_SERVER_PATH) + std::string(PATH_ALIVE_FILE);
     {
         if(fs::exists(alive) && !fs::remove(alive)){
             LOGGER.error() << "Failed to remove the file: " << alive;
@@ -108,14 +108,14 @@ void ServiceMain(int argc, char** argv)
     while (ServiceStatus.dwCurrentState == SERVICE_RUNNING)
     {
         Socket* s=ss.Accept();
-        String received = s->ReceiveBytes();
-        LOGGER.info("ShareDTServer service DATA RECEIVED CMD=\"%s\", clientSocket=%d", received.c_str(), ss.getSocket());
+        std::string received = s->receiveStrings();
+        LOGGER.info("ShareDT Server service DATA RECEIVED CMD=\"%s\", clientSocket=%d", received.c_str(), ss.getSocket());
 
         strcpy_s(buf, received.c_str());
         FdBuffer fb(s, buf);
         LOGGER.info() << "Client connected, creating a processing thread.";
-        hThread = CreateThread(NULL, 0, InstanceThread, (LPVOID) &fb, 0, &dwThreadId);
-        if (hThread == NULL)
+        hThread = CreateThread(nullptr, 0, InstanceThread, (LPVOID) &fb, 0, &dwThreadId);
+        if (hThread == nullptr)
         {
             LOGGER.error () << "CreateThread failed to run, GLE=" <<  GetLastError() << " clientSocket=" << ss.getSocket();
             delete s;
@@ -136,7 +136,7 @@ void ControlHandler(DWORD request)
     switch(request)
     {
         case SERVICE_CONTROL_STOP:
-            LOGGER.info() << "ShareDTServer service stopped";
+            LOGGER.info() << "ShareDT Server service stopped";
             ServiceStatus.dwWin32ExitCode = 0;
             ServiceStatus.dwCurrentState = SERVICE_STOPPED;
             SetServiceStatus (hStatus, &ServiceStatus);

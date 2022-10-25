@@ -59,7 +59,7 @@ void ScreenProviderPartial::init() {
 }
 
 /* ScreenProviderWindow for pid */
-ScreenProviderWindow::ScreenProviderWindow(Pid pid, unsigned int frequency)
+ScreenProviderWindow::ScreenProviderWindow(pid_t pid, unsigned int frequency)
     : ScreenProvider(SP_WINDOW), _pid(pid)
 {
     WindowVectorProvider wvp(pid);

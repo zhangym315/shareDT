@@ -10,33 +10,56 @@
 #include "ShareDTWindow.h"
 
 #ifdef __SHAREDT_WIN__
+#include <tchar.h>
+#include <strsafe.h>
+#else
+#include "Daemon.h"
+#endif
+
+#include "MainConsoleSubFunction.h"
+#include "ExportImages.h"
+
+#ifdef __SHAREDT_WIN__
 #include <Shlobj.h>
 #include <windows.h>
 
 // Hide console for windows
-#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
-
+//#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #endif
+
+const char * SHAREDT_SERVER_SVCNAME            = "shareDTServer";
+const char * SHAREDT_SERVER_COMMAND_START      = "start";
+const char * SHAREDT_SERVER_COMMAND_STOP       = "stop";
+const char * SHAREDT_SERVER_COMMAND_RESTART    = "restart";
+const char * SHAREDT_SERVER_COMMAND_CAPTURE    = "capture";
+const char * SHAREDT_SERVER_COMMAND_NEWCAPTURE = "newCapture";
+const char * SHAREDT_SERVER_COMMAND_SHOW       = "show";
+const char * SHAREDT_SERVER_COMMAND_STATUS     = "status";
+const char * SHAREDT_SERVER_COMMAND_EXPORT     = "export";
+const char * SHAREDT_SERVER_COMMAND_NODAEMON   = "nodaemon";
+const char * SHAREDT_SERVER_COMMAND_DISPLAY    = "display";
+const char * SHAREDT_SERVER_COMMAND_GET        = "get";
+const char * SHAREDT_SERVER_COMMAND_REMOTGET   = "remoteGet";
 
 static void initShareDT(const char * argv0)
 {
     ShareDTHome::instance()->set(argv0);
 #ifdef __SHAREDT_WIN__
     WCHAR * filepath;
-    if (!SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &filepath))) {
+    if (!SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &filepath))) {
     }
     std::wstring ws(filepath);
-    String varRun = String(ws.begin(), ws.end()) + String(PATH_SEP_STR) +
-                    String(SHAREDT_KEYWORD) + String(PATH_SEP_STR) +  String(VAR_RUN);
+    std::string varRun = std::string(ws.begin(), ws.end()) + std::string(PATH_SEP_STR) +
+                    std::string(SHAREDT_KEYWORD) + std::string(PATH_SEP_STR) +  std::string(VAR_RUN);
     if (!fs::exists(varRun)) fs::create_directories(varRun);
     //set log file to var/run/ShareDT.log
-    Logger::instance().setLogFile((varRun+String(CAPTURE_LOG)).c_str());
+    Logger::instance().setLogFile((varRun+std::string(CAPTURE_LOG)).c_str());
 #else
-    String varrun = ShareDTHome::instance()->getHome() + String(VAR_RUN);
+    std::string varrun = ShareDTHome::instance()->getHome() + std::string(VAR_RUN);
     if (!fs::exists(varrun)) fs::create_directories(varrun);
     //set log file to var/run/ShareDT.log
     Logger::instance().setLogFile((ShareDTHome::instance()->getHome() +
-                                   String(VAR_RUN)+String(CAPTURE_LOG)).c_str());
+                                   std::string(VAR_RUN)+std::string(CAPTURE_LOG)).c_str());
 #endif
 }
 
@@ -53,33 +76,42 @@ static int localDisplayer(const char ** a, const struct cmdConf * conf)
     gui.startFetcher();
     return QApplication::exec();
 }
-#include <fcntl.h>
-#ifdef __SHAREDT_WIN__
-#include <tchar.h>
-#include <strsafe.h>
-#else
-#include "Daemon.h"
-#endif
 
-#include "MainConsoleSubFunction.h"
-#include "ExportImages.h"
+static const struct {
+    const char *name;
+    int (*func)(const char **extra, const struct cmdConf *cconf);
+} cmdHandlers[] = {
+        { SHAREDT_SERVER_COMMAND_START ,     &mainStart   },     /* start service         */
+        { SHAREDT_SERVER_COMMAND_STOP  ,     &mainStop    },     /* stop  service         */
+        { SHAREDT_SERVER_COMMAND_RESTART,    &mainRestart },     /* restart service       */
+        { SHAREDT_SERVER_COMMAND_CAPTURE,    &mainCapture },     /* capture command       */
+        { SHAREDT_SERVER_COMMAND_NEWCAPTURE, &mainNewCapture },  /* new capture process   */
+        { SHAREDT_SERVER_COMMAND_SHOW,       &mainShow    },     /* command show win      */
+        { SHAREDT_SERVER_COMMAND_NODAEMON,   &noDaemon    },     /* run in no daemon mode */
+        { SHAREDT_SERVER_COMMAND_STATUS,     &status      },     /* status of current pro */
+        { SHAREDT_SERVER_COMMAND_EXPORT,     &mainExport  },     /* export images         */
+        { SHAREDT_SERVER_COMMAND_DISPLAY,    &localDisplayer},   /* local display         */
+        { SHAREDT_SERVER_COMMAND_GET,  &getSc }            /* Get screen            */
+#ifdef  __SHAREDT_WIN__
+        ,{ "install",    &installService },  /* install service       */
+            { "service",    &startService },    /* from scm service      */
+            { "uninstall",  &uninstallService } /* uninstall service     */
+#endif
+};
 
 static void Usage()
 {
     fprintf(stdout, "%s\n",
-            "Usage: ShareDTServer start\n"
-            "                     stop\n"
-            "                     restart\n"
-            "                     capture\n"
-            "                     show\n"
-            "                     nodaemon\n"
-            "                     status\n"
-            "                     export\n"
-    );
+            "Usage: ShareDT <subcommand> ");
+
+    for (const auto & e : cmdHandlers) {
+        fprintf(stdout, "               %s\n", e.name);
+    }
 }
 
 int main(int argc, char** argv)
 {
+    // no parameter, start GUI
     if (argc == 1) {
         initShareDT(argv[0]);
         QApplication app(argc, argv);
@@ -90,40 +122,20 @@ int main(int argc, char** argv)
         return QApplication::exec();
     }
 
-    static const struct {
-        const char *name;
-        int (*func)(const char **extra, const struct cmdConf *cconf);
-    } cmdHandlers[] = {
-            { "start" ,     &mainStart   },     /* start service         */
-            { "stop"  ,     &mainStop    },     /* stop  service         */
-            { "restart",    &mainRestart },     /* restart service       */
-            { "capture",    &mainCapture },     /* capture command       */
-            { "newCapture", &mainNewCapture },  /* new capture process   */
-            { "show",       &mainShow    },     /* command show win      */
-            { "nodaemon",   &noDaemon    },     /* run in no daemon mode */
-            { "status",     &status      },     /* status of current pro */
-            { "export",     &mainExport  },     /* cli to export images  */
-            { "display",    &localDisplayer}      /* cli to export images  */
-#ifdef  __SHAREDT_WIN__
-            ,{ "install",    &installService },  /* install service       */
-            { "service",    &startService },    /* from scm service      */
-            { "uninstall",  &uninstallService } /* uninstall service     */
-#endif
-    };
 
     unsigned cmd_count = 0;
-    struct cmdConf cconf;
+    struct cmdConf cconf{};
     OS_ALLOCATE(const char *, cmd, argc + 1);
     for (int x = 0; x < argc; x++) {
         cmd[cmd_count++] = argv[x];
     }
-    cmd[cmd_count] = NULL;
-    cconf.argc = cmd_count;
+    cmd[cmd_count] = nullptr;
+    cconf.argc = (int) cmd_count;
     cconf.argv = cmd;
 
-    for (int i = 0; i < ARRAY_SIZE(cmdHandlers); i++) {
-        if (chars_equal(cmdHandlers[i].name, cmd[1])) {
-            int ret = cmdHandlers[i].func(cmd + 1, &cconf);
+    for (const auto & cmdHandler : cmdHandlers) {
+        if (chars_equal(cmdHandler.name, cmd[1])) {
+            int ret = cmdHandler.func(cmd + 1, &cconf);
             fflush(stdout);
             return ret;
         }

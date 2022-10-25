@@ -76,7 +76,7 @@ class MainServiceServer
     int _backlog;
     std::vector<int> _clientsSock;
     bool _valid;
-    String _socketFile;
+    std::string _socketFile;
 };
 
 class MainServiceClient
@@ -103,8 +103,8 @@ public:
     HandleCommandLine(char * buf);
     ~HandleCommandLine();
 
-    String toString(int offset);
-    String toString() { return toString(0); }
+    std::string toString(int offset);
+    std::string toString() { return toString(0); }
     int initParsing() { return _sc.initParsing(_argc, _argv); }
 
     void setWID();

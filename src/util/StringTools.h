@@ -1,7 +1,7 @@
 /*********************************************************
  * StringTools.h                                         *
  *                                                       *
- * String related function                               *
+ * std::string related function                               *
  *                                                       *
  *********************************************************/
 
@@ -14,9 +14,9 @@
 #include <algorithm>
 #include "TypeDef.h"
 
-bool   isNumber(const String & s);
-String getString(char * x);
-bool   toInt(const String & in, int &out);
+bool   isNumber(const std::string & s);
+std::string getString(char * x);
+bool   toInt(const std::string & in, int &out);
 #ifdef __SHAREDT_WIN__
 #include <locale>
 #include <codecvt>

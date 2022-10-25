@@ -12,8 +12,8 @@
 #define ARRAY_ELEMENTS(arr)	(sizeof(arr) / sizeof(0[arr]))
 
 
-extern const String INVALID_ENUM;
-extern String enumToStr( int enumval, const char *const*array, size_t arrsz );
+extern const std::string INVALID_ENUM;
+extern std::string enumToStr( int enumval, const char *const*array, size_t arrsz );
 
 #define ENUM_TO_STR(val,ar) enumToStr((int)val, ar, ARRAY_ELEMENTS(ar))
 

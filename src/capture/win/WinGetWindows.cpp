@@ -11,7 +11,7 @@
 
 struct srch {
     WindowVector * win;
-    Pid pid;
+    pid_t pid;
     bool all;
 };
 

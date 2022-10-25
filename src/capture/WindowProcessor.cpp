@@ -34,7 +34,7 @@ void WindowVectorProvider::mainImp()
     }
 }
 
-void WindowVectorProvider::getWinByPid(Pid pid, CapWindow & win)
+void WindowVectorProvider::getWinByPid(pid_t pid, CapWindow & win)
 {
     win.clear();
     int offsetX = INT32_MAX;

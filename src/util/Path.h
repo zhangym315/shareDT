@@ -58,17 +58,17 @@ class ShareDTHome {
 
     void   reSet(const char *argv);
     void   set(const char *argv);
-    String & getHome();
-    const String & getArgv0() const;
-    const String & getArgv0Dir() const;
+    std::string & getHome();
+    const std::string & getArgv0() const;
+    const std::string & getArgv0Dir() const;
     bool isValid() const;
 
   private:
     ShareDTHome();
     static ShareDTHome * _instance;
-    String _home;
-    String _execPath; /* argv[0] full path */
-    String _execDir; /* argv[0] directory */
+    std::string _home;
+    std::string _execPath; /* argv[0] full path */
+    std::string _execDir; /* argv[0] directory */
     bool   _valid;
 };
 
@@ -80,35 +80,35 @@ class CapServerHome {
   public:
     static CapServerHome * instance() ;
     void init();
-    void setHome(const String & path,const String & cid);
-    const String & getHome();
-    const String & getCid();
+    void setHome(const std::string & path,const std::string & cid);
+    const std::string & getHome();
+    const std::string & getCid();
     [[nodiscard]] bool  isValid() const { return _valid; }
 
   private:
     CapServerHome();
     static CapServerHome * _instance;
-    String _home;
-    String _cid;
+    std::string _home;
+    std::string _cid;
     bool   _valid;
 };
 
-static const String EMPTY_STRING = "EMPTY_STRING";
+static const std::string EMPTY_STRING = "EMPTY_STRING";
 
 class Path
 {
   public:
-    explicit Path(const String& path) : _ffs(path, std::fstream::in | std::fstream::out | std::fstream::app) { }
-    Path(const String& path, std::ios_base::openmode mode) : _ffs(path, mode) { }
+    explicit Path(const std::string& path) : _ffs(path, std::fstream::in | std::fstream::out | std::fstream::app) { }
+    Path(const std::string& path, std::ios_base::openmode mode) : _ffs(path, mode) { }
     ~Path() { _ffs.close(); }
-    void write(const String & data);
+    void write(const std::string & data);
     void write(int data);
     void write(char * data);
     int  readLineAsInt();
-    String readAll();
-    static bool checkAndWait(String & path, int seconds);
+    std::string readAll();
+    static bool checkAndWait(std::string & path, int seconds);
 
-    static void removeContent(const String & path);
+    static void removeContent(const std::string & path);
 
   private:
     std::fstream _ffs;

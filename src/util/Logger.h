@@ -41,7 +41,7 @@ class Timestamp
         return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - _beginTimePoint).count();
     }
 
-    static String localtime();
+    static std::string localtime();
 
   private:
     std::chrono::time_point<std::chrono::high_resolution_clock> _beginTimePoint;
@@ -86,7 +86,7 @@ class Logger
     std::thread _thread;
     std::mutex _mutex;
     std::condition_variable _cond;
-    std::queue<String> _queue;
+    std::queue<std::string> _queue;
     std::ofstream _ofs;
 };
 
@@ -94,7 +94,7 @@ class LoggerStream {
   public:
     ~LoggerStream ();
 
-    LoggerStream& operator << (const String & val)
+    LoggerStream& operator << (const std::string & val)
     {
         _logp.append(val);
         return *this;
@@ -131,7 +131,7 @@ class LoggerStream {
     LoggerStream (Priority p) : _p(p) { }
     void _finish();
 
-    String _logp;
+    std::string _logp;
     Priority _p;
 
     friend Logger;

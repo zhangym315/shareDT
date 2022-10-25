@@ -1,9 +1,9 @@
 #include "Enum.h"
 #include <string>
 
-const String INVALID_ENUM = "INVALID_TYPE=";
+const std::string INVALID_ENUM = "INVALID_TYPE=";
 
-String enumToStr( int enumval, const char *const * array, size_t arrsz )
+std::string enumToStr( int enumval, const char *const * array, size_t arrsz )
 {
     if ( enumval >= 0 && enumval < (int)arrsz ) {
         return array[ enumval ];

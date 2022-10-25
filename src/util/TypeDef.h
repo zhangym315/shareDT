@@ -26,11 +26,6 @@ typedef int pid_t;
 #define DELC_EXPORT
 #endif
 
-typedef unsigned char   uchar;
-typedef std::string     String;
-typedef pid_t           Pid;
-typedef std::vector<String> StringVec;
-
 #define ARRAY_SIZE(arr)	(sizeof(arr) / sizeof(0[arr]))
 
 #ifndef OS_ALLOCATE

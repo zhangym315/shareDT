@@ -7,7 +7,6 @@
 #include "Path.h"
 #include "ReadWriteFD.h"
 #include "Sock.h"
-#include "ShareDT.h"
 
 #ifdef __SHAREDT_WIN__
 #include <Windows.h>
@@ -29,7 +28,7 @@ int mainInform(const char * command, const struct cmdConf * conf)
        !checkMainServiceStarted() )
         return RETURN_CODE_INTERNAL_ERROR;
 
-    String commandPath;
+    std::string commandPath;
     commandPath.append(ShareDTHome::instance()->getHome());
     commandPath.append(MAIN_SERVER_EXEC);
     commandPath.append(command);
@@ -47,7 +46,7 @@ int mainStart (const char ** cmdArg, const struct cmdConf * conf)
     (void) cmdArg;
     if(conf->argc == 2)
     {
-        fprintf(stdout, "Starting shareDTServer\n");
+        fprintf(stdout, "Starting ShareDT Server\n");
 #ifdef __SHAREDT_WIN__
         /*
          * 1. set home directory
@@ -77,10 +76,10 @@ int mainStart (const char ** cmdArg, const struct cmdConf * conf)
         }
 
         if (hSc != nullptr) CloseServiceHandle (hSc);
-        fprintf(stdout, "ShareDTServer Started\n");
+        fprintf(stdout, "ShareDT Server Started\n");
         return RETURN_CODE_SUCCESS;
 #else
-        fprintf(stdout, "ShareDTServer Started\n");
+        fprintf(stdout, "ShareDT Server Started\n");
 
         DaemonizeProcess::instance()->daemonize();
         /*
@@ -119,7 +118,7 @@ int mainStop (const char ** cmdArg, const struct cmdConf * conf)
     }
 
 #ifdef __SHAREDT_WIN__
-    fprintf(stdout, "Stopping ShareDTServer\n");
+    fprintf(stdout, "Stopping ShareDT Server\n");
 
     SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
     SC_HANDLE hSc;
@@ -138,10 +137,10 @@ int mainStop (const char ** cmdArg, const struct cmdConf * conf)
         }
     }
     if (hSc != nullptr) CloseServiceHandle (hSc);
-    fprintf(stdout, "ShareDTServer stopped.\n");
+    fprintf(stdout, "ShareDT Server stopped.\n");
     return RETURN_CODE_SUCCESS;
 #else
-    fprintf(stdout, "Stopping ShareDTServer\n");
+    fprintf(stdout, "Stopping ShareDT Server\n");
     return infoServiceToAction (MAIN_SERVICE_STOPPING);
 #endif
 }
@@ -164,9 +163,9 @@ int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
         return RETURN_CODE_INVALID_ARG;
 
 #ifdef __SHAREDT_WIN__
-    String commandPath;
+    std::string commandPath;
     TCHAR szPath[MAX_PATH];
-    if( !GetModuleFileNameA( NULL, szPath, MAX_PATH ) )
+    if( !GetModuleFileNameA( nullptr, szPath, MAX_PATH ) )
     {
         fprintf(stderr, "Failed to get path of current running command\n");
         return RETURN_CODE_INTERNAL_ERROR;
@@ -224,13 +223,13 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
         return RETURN_CODE_SUCCESS;
     } else if (ret != RETURN_CODE_SUCCESS)
     {
-        String failed = "Failed to start Capture Server.";
+        std::string failed = "Failed to start Capture Server.";
         alivePath.write(failed);
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
     LOGGER.info() << "Write to MainManagementProcess: successfully created capture Server";
-    String result("Successfully created Capture Server on port: ");
+    std::string result("Successfully created Capture Server on port: ");
     result.append(std::to_string(cap.getPort()));
 
     alivePath.write(result);
@@ -284,10 +283,10 @@ int status (const char ** cmdArg, const struct cmdConf * conf)
 {
     (void) cmdArg;
 #ifdef __SHAREDT_WIN__
-    String commandPath;
+    std::string commandPath;
     TCHAR szPath[MAX_PATH];
 
-    if( !GetModuleFileNameA( NULL, szPath, MAX_PATH ) )
+    if( !GetModuleFileNameA( nullptr, szPath, MAX_PATH ) )
     {
         fprintf(stderr, "Failed to get path of current running command\n");
         return RETURN_CODE_INTERNAL_ERROR;
@@ -312,6 +311,21 @@ int status (const char ** cmdArg, const struct cmdConf * conf)
 #endif
 }
 
+int getSc (const char ** cmdArg, const struct cmdConf * conf)
+{
+    SocketClient sc(conf->argv[2], 31400);
+    std::string cmd = conf->argv[0];
+
+    cmd.append(" ");
+    cmd.append(SHAREDT_SERVER_COMMAND_REMOTGET);
+    sc.sendString(cmd);
+
+    unsigned char buf[31400];
+    size_t rec = sc.receiveBytes(buf, 31400);
+    fprintf(stdout, ("received, %zu\n"), rec);
+    return 0;
+}
+
 #ifdef __SHAREDT_WIN__
 int installService (const char ** cmdArg, const struct cmdConf * conf)
 {
@@ -319,7 +333,7 @@ int installService (const char ** cmdArg, const struct cmdConf * conf)
     SC_HANDLE schService;
     TCHAR szPath[MAX_PATH];
 
-    if( !GetModuleFileNameA( NULL, szPath, MAX_PATH ) )
+    if( !GetModuleFileNameA( nullptr, szPath, MAX_PATH ) )
     {
         fprintf(stderr, "Cannot install service (%d)\n", GetLastError());
         return RETURN_CODE_SERVICE_ERROR;
@@ -327,16 +341,16 @@ int installService (const char ** cmdArg, const struct cmdConf * conf)
 
     // Get a handle to the SCM database.
     schSCManager = OpenSCManager(
-            NULL,                    // local computer
-            NULL,                    // ServicesActive database
+            nullptr,                    // local computer
+            nullptr,                    // ServicesActive database
             SC_MANAGER_ALL_ACCESS);  // full access rights
-    if (NULL == schSCManager)
+    if (nullptr == schSCManager)
     {
         fprintf(stderr, "OpenSCManager failed (%d)\n", GetLastError());
         return RETURN_CODE_SERVICE_ERROR;
     }
 
-    String runningServicePath(szPath);
+    std::string runningServicePath(szPath);
     runningServicePath.insert(0, "\"");
     runningServicePath.insert(runningServicePath.length(), "\"");
     runningServicePath.append(" service");
@@ -344,8 +358,8 @@ int installService (const char ** cmdArg, const struct cmdConf * conf)
     schService = CreateService(schSCManager, SHAREDT_SERVER_SVCNAME,
                 SHAREDT_SERVER_SVCNAME, SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
                 SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, runningServicePath.c_str(),
-                NULL, NULL, NULL, NULL, NULL);
-    if (schService == NULL)
+                nullptr, nullptr, nullptr, nullptr, nullptr);
+    if (schService == nullptr)
     {
         fprintf(stderr, "CreateService failed (%d)\n", GetLastError());
         CloseServiceHandle(schSCManager);
@@ -367,17 +381,17 @@ int uninstallService (const char ** cmdArg, const struct cmdConf * conf)
 
     // Get a handle to the SCM database.
     schSCManager = OpenSCManager(
-            NULL,                    // local computer
-            NULL,                    // ServicesActive database
+            nullptr,                    // local computer
+            nullptr,                    // ServicesActive database
             SC_MANAGER_ALL_ACCESS);  // full access rights
-    if (NULL == schSCManager)
+    if (nullptr == schSCManager)
     {
         fprintf(stderr, "OpenSCManager failed (%d)\n", GetLastError());
         return RETURN_CODE_SERVICE_ERROR;
     }
 
     schService = OpenServiceA( schSCManager, SHAREDT_SERVER_SVCNAME, DELETE);
-    if (schService == NULL)
+    if (schService == nullptr)
     {
         fprintf(stderr, "OpenService failed (%d)\n", GetLastError());
         CloseServiceHandle(schSCManager);

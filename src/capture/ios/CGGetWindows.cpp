@@ -65,7 +65,7 @@ void WindowVectorProvider::CapGetWindows()
 
         // window name is NULL, no need to add to list
         if(cfwindowname == NULL) continue;
-        String name(CapCFStringCopyUTF8String(cfwindowname));
+        std::string name(CapCFStringCopyUTF8String(cfwindowname));
 
         if(!_getAll && name.length() == 0) continue;
 

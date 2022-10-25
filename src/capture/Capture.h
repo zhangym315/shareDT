@@ -28,13 +28,13 @@
 class CommandChecker : public Thread
 {
   public:
-    CommandChecker(String path) : Thread(false), _path(path) { }
+    CommandChecker(std::string path) : Thread(false), _path(path) { }
 
     void mainImp();
 
   private:
     CommandChecker();
-    String  _path;
+    std::string  _path;
 
 };
 
@@ -49,23 +49,23 @@ class Capture {
     int initParsing(int argc, char * argv[]);
 
     enum SType { S_NONE, S_WIN_ALL, S_WIN_NAME, S_MONITOR , S_ALL};
-    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_STOP_ALL_SC, C_RESTART, C_SHOW, C_STATUS, C_EXPORT, C_LOCALDISPLAYER, C_NONE };
+    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_STOP_ALL_SC, C_RESTART, C_SHOW, C_STATUS, C_EXPORT, C_REMOTEGET, C_LOCALDISPLAYER, C_NONE };
 
     bool setWorkingDirectory();
     void initDaemon();
     void show();             /* show handler for all of windows */
 
-    String & setAndGetWID();
-    const String & getWID() { return _wID; }
-    void setWID(const String & wid) { _wID = wid ; }
+    std::string & setAndGetWID();
+    const std::string & getWID() { return _wID; }
+    void setWID(const std::string & wid) { _wID = wid ; }
 
-    const String & getAlivePath() { return _alivePath; }
+    const std::string & getAlivePath() { return _alivePath; }
     Capture::CType getCType();
     void setCType(CType c) { _ctype = c; }
     void  removeAlivePath() const;
 
-    [[nodiscard]] const String & getUserName() const { return _user; }
-    [[nodiscard]] const String & getCapServerPath() const { return _capturePath; }
+    [[nodiscard]] const std::string & getUserName() const { return _user; }
+    [[nodiscard]] const std::string & getCapServerPath() const { return _capturePath; }
 
     [[nodiscard]] bool isDaemon() const { return _daemon; }
     [[nodiscard]] int  getPort()  const { return _vncPort; }
@@ -73,7 +73,7 @@ class Capture {
     [[nodiscard]] SPType  getType()  const { return _type; }
 
     ScreenProvider * getScreenProvide() { return _sp; }
-    const String & getName() const { return _name; }
+    const std::string & getName() const { return _name; }
     void Usage();
     virtual void rfbUsagePrint() { }
 
@@ -82,7 +82,7 @@ class Capture {
     unsigned int     _frequency;
 
   private:
-    int parseArgs(const vector<String> & args);
+    int parseArgs(const vector<std::string> & args);
     bool parseBounds();
     bool parseWindows();
     int  parseType();
@@ -101,20 +101,20 @@ class Capture {
     } _cap;
 
     SPType           _type;
-    String           _name;   /* captured named  */
-    Pid              _pid;    /* for window capture, the process id we want to capture */
+    std::string           _name;   /* captured named  */
+    pid_t            _pid;    /* for window capture, the process id we want to capture */
     size_t           _hdler;  /* for window capture, the handler id we want to capture */
     SType            _show;
     int              _monID;  /* for monitor capture, the id of monitor */
     bool             _daemon;
-    String           _wID;    /* unique id */
-    String           _user;
-    String           _capturePath;
-    String           _alivePath;
+    std::string           _wID;    /* unique id */
+    std::string           _user;
+    std::string           _capturePath;
+    std::string           _alivePath;
     CType            _ctype;  /* command type, newcaptre, start, stop ... */
     int              _vncPort{};
 
-    StringVec        _unrecognizedOptions;
+    std::vector<std::string>  _unrecognizedOptions;
 };
 
 #endif

@@ -13,7 +13,7 @@
 #include <unistd.h>
 #endif
 
-static String getExecuteFromPath(const char * arg)
+static std::string getExecuteFromPath(const char * arg)
 {
     char* pPath;
 
@@ -24,12 +24,12 @@ static String getExecuteFromPath(const char * arg)
     pPath = getenv ("PATH");
 #endif
 
-    String s(pPath);
-    String delimiter = ":";  /* PATH delimiter */
+    std::string s(pPath);
+    std::string delimiter = ":";  /* PATH delimiter */
     size_t pos;
-    String token;
+    std::string token;
 
-    while ((pos = s.find(delimiter)) != String::npos) {
+    while ((pos = s.find(delimiter)) != std::string::npos) {
         token = s.substr(0, pos);
         if(token.back() != '/')
             token.append("/");
@@ -54,14 +54,14 @@ static String getExecuteFromPath(const char * arg)
     return token;
 }
 
-static String getCWD()
+static std::string getCWD()
 {
     char temp[MAX_PATH];
 #ifdef __SHAREDT_WIN__
     char* buffer;
     if ( (buffer = _getcwd( NULL, 0 )) == NULL ) {
         perror( "_getcwd error" );
-        return String("");
+        return std::string("");
     } else {
         if(strlen(buffer) > MAX_PATH)
             perror( "current direcroty error: path length more than 256");
@@ -69,13 +69,13 @@ static String getCWD()
             strcpy_s(temp, buffer);
         free(buffer);
     }
-    return String (temp);
+    return std::string (temp);
 #else
-    return (getcwd(temp, sizeof(temp)) ? String( temp ) : String("") );
+    return (getcwd(temp, sizeof(temp)) ? std::string( temp ) : std::string("") );
 #endif
 }
 
-static bool hasEnding (String const &fullString, String const &ending) {
+static bool hasEnding (std::string const &fullString, std::string const &ending) {
     if (fullString.length() >= ending.length()) {
         return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
     } else {
@@ -83,7 +83,7 @@ static bool hasEnding (String const &fullString, String const &ending) {
     }
 }
 
-static size_t stringReverserFind(const String & s, char c) {
+static size_t stringReverserFind(const std::string & s, char c) {
     size_t i = s.length()-1;
 
     for (; i>0; i--) {
@@ -93,8 +93,8 @@ static size_t stringReverserFind(const String & s, char c) {
     return i;
 }
 
-static String getParentDir(const String & path, int recur=1) {
-    String ret;
+static std::string getParentDir(const std::string & path, int recur=1) {
+    std::string ret;
     ret = path;
     do {
         ret = ret.back () == PATH_SEP_CHAR ?
@@ -130,11 +130,11 @@ void ShareDTHome::reSet(const char *argv)
     _execDir = getParentDir(path, 1);
     _valid = true;
 #else
-    String path(argv);
-    String appended, execName;
+    std::string path(argv);
+    std::string appended, execName;
 
     std::size_t pos;
-    execName = String::npos != (pos = path.rfind ('/')) ? path.substr (pos + 1) : path;
+    execName = std::string::npos != (pos = path.rfind ('/')) ? path.substr (pos + 1) : path;
     /* relative path */
     if(argv[0] == '.' && argv[1] == '/') {
         path = getCWD();
@@ -142,20 +142,20 @@ void ShareDTHome::reSet(const char *argv)
     } else if (!strchr(argv, '/')) {
         path = getExecuteFromPath(argv);
         if(path.length() == 0) {
-            LOGGER.error() << "Can't determine home path for: " << String(argv);
+            LOGGER.error() << "Can't determine home path for: " << std::string(argv);
             return;
         }
     }
 
     /* replace /./ to / in the path */
-    if((pos = path.find("/./")) != String::npos)
+    if((pos = path.find("/./")) != std::string::npos)
         path.replace(pos, pos+3, "/");
 
-    appended = String(execName);
+    appended = std::string(execName);
     /* be sure it's ending with bin/ShareDTServer */
     if(!hasEnding(path, appended))
     {
-        LOGGER.error() << "Can't determine home path for: " << String(argv);
+        LOGGER.error() << "Can't determine home path for: " << std::string(argv);
         return;
     }
 
@@ -167,8 +167,8 @@ void ShareDTHome::reSet(const char *argv)
 #endif
 }
 
-String & ShareDTHome::getHome()  { return _home; }
-const String & ShareDTHome::getArgv0() const { return _execPath; }
+std::string & ShareDTHome::getHome()  { return _home; }
+const std::string & ShareDTHome::getArgv0() const { return _execPath; }
 ShareDTHome * ShareDTHome::instance()
 {
     if (_instance == nullptr)
@@ -180,7 +180,7 @@ ShareDTHome * ShareDTHome::instance()
 
 bool ShareDTHome::isValid() const  { return _valid; }
 
-const String &ShareDTHome::getArgv0Dir() const {
+const std::string &ShareDTHome::getArgv0Dir() const {
     return _execDir;
 }
 
@@ -198,17 +198,17 @@ CapServerHome * CapServerHome::instance ()
     return _instance;
 }
 
-void CapServerHome::setHome(const String &path, const String & cid)
+void CapServerHome::setHome(const std::string &path, const std::string & cid)
 {
     _home = path;
     _cid  = cid;
     _valid = true;
 }
 
-const String & CapServerHome::getHome() {
+const std::string & CapServerHome::getHome() {
     return _home;
 }
-const String & CapServerHome::getCid() {
+const std::string & CapServerHome::getCid() {
     return _cid;
 }
 
@@ -217,7 +217,7 @@ void CapServerHome::init ()
 
 }
 
-void Path::write(const String &data)
+void Path::write(const std::string &data)
 {
     _ffs << data;
     _ffs.flush();
@@ -242,14 +242,14 @@ int Path::readLineAsInt()
     return std::stoi(buffer);
 }
 
-String Path::readAll ()
+std::string Path::readAll ()
 {
     std::stringstream ret;
     ret << _ffs.rdbuf();
     return ret.str();
 }
 
-bool Path::checkAndWait(String & path, int waitSeconds)
+bool Path::checkAndWait(std::string & path, int waitSeconds)
 {
     using namespace std;
     int count = waitSeconds * 2;
@@ -262,7 +262,7 @@ bool Path::checkAndWait(String & path, int waitSeconds)
     return (waitSeconds == count);
 }
 
-void Path::removeContent(const String & path)
+void Path::removeContent(const std::string & path)
 {
     for (const auto& entry : std::filesystem::directory_iterator(path)) 
         std::filesystem::remove_all(entry.path());

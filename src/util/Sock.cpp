@@ -138,7 +138,7 @@ void Socket::Close() const
 #endif
 }
 
-String Socket::ReceiveBytes() const
+std::string Socket::receiveStrings() const
 {
     char ret[BUFSIZE];
     int  reclen;
@@ -150,9 +150,9 @@ String Socket::ReceiveBytes() const
     return ret;
 }
 
-String Socket::ReceiveLine() const
+std::string Socket::ReceiveLine() const
 {
-    String ret;
+    std::string ret;
     while (1) {
         char r;
 
@@ -170,15 +170,29 @@ String Socket::ReceiveLine() const
     }
 }
 
-void Socket::SendLine(String s) const
+size_t Socket::receiveBytes(unsigned char *b, size_t s) {
+    size_t rec;
+    if((rec=::recv(_s, (char *)b, s, 0)) == -1)
+    {
+        return 0;
+    }
+
+    return rec;
+}
+
+void Socket::sendStringLine(std::string s) const
 {
     s += '\n';
     ::send(_s,s.c_str(),s.length(),0);
 }
 
-void Socket::SendBytes(const String& s) const
+void Socket::sendString(const std::string& s) const
 {
-    ::send(_s,s.c_str(),s.length(),0);
+    ::send(_s,s.c_str(),s.length()+1,0);
+}
+
+void Socket::sendBytes(const unsigned char *p, size_t size) {
+    ::send(_s, (const char *)p, size,0);
 }
 
 SocketServer::SocketServer(int port, int connections, TypeSocket type)
@@ -256,9 +270,9 @@ Socket* SocketServer::Accept()
     return r;
 }
 
-SocketClient::SocketClient(const String& host, int port) : Socket()
+SocketClient::SocketClient(const std::string& host, int port) : Socket()
 {
-    String error;
+    std::string error;
 
     hostent *he;
     if ((he = gethostbyname(host.c_str())) == 0) {

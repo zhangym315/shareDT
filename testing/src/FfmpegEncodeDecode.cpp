@@ -26,7 +26,7 @@ TEST(ffmpeg_encode_decode, ffmpeg_decode) {
 }
 
 FfmpegEncodeDecodeFrameTesting::FfmpegEncodeDecodeFrameTesting(int w, int h, int totalFrames,
-                                                   AVPixelFormat pixFormat, const String & codecName ) :
+                                                   AVPixelFormat pixFormat, const std::string & codecName ) :
                                                     _width(w),
                                                     _height(h),
                                                     _totalFrames(totalFrames),
@@ -279,7 +279,7 @@ bool FfmpegEncodeDecodeFrameTesting::decodeToFrame()
     return true;
 }
 
-void FfmpegEncodeDecodeFrameTesting::toRGBandExportToFiles(const std::vector<AVFrame *> & frameVector, const String & prefix)
+void FfmpegEncodeDecodeFrameTesting::toRGBandExportToFiles(const std::vector<AVFrame *> & frameVector, const std::string & prefix)
 {
     int i = 0;
     unsigned char * buffer = (unsigned char* ) malloc(_width * _height * 4);
@@ -293,7 +293,7 @@ void FfmpegEncodeDecodeFrameTesting::toRGBandExportToFiles(const std::vector<AVF
     }
 }
 
-void FfmpegEncodeDecodeFrameTesting::exportRGBX32ToFiles(const String &path, unsigned char *buffer,
+void FfmpegEncodeDecodeFrameTesting::exportRGBX32ToFiles(const std::string &path, unsigned char *buffer,
                                                          size_t w, size_t h)
 {
     write_RGB32_image(path.c_str(), buffer, w, h);

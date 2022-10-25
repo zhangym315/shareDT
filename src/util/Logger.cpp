@@ -72,7 +72,7 @@ void Logger::log(Priority priority, const char* __file, const char* __func, int 
     vsprintf(buf + strlen(buf), fmt, args);
     va_end(args);
 
-    String entry(buf);
+    std::string entry(buf);
     std::unique_lock<std::mutex> lock(_mutex);
     _queue.push(std::move(entry));
     lock.unlock();
@@ -93,7 +93,7 @@ void Logger::log2(Priority priority, const char *fmt, ...)
     vsprintf(buf + strlen(buf), fmt, args);
     va_end(args);
 
-    String entry(buf);
+    std::string entry(buf);
     std::unique_lock<std::mutex> lock(_mutex);
     _queue.push(std::move(entry));
     lock.unlock();
@@ -110,7 +110,7 @@ void Logger::vaPrint(Priority priority, const char * fmt, va_list args) {
     }
 
     vsprintf(buf + strlen(buf), fmt, args);
-    String entry(buf);
+    std::string entry(buf);
     std::unique_lock<std::mutex> lock(_mutex);
     _queue.push(std::move(entry));
     lock.unlock();
@@ -191,7 +191,7 @@ void Logger::noPre(const char *fmt, ...) {
     va_end(args);
 }
 
-String Timestamp::localtime()
+std::string Timestamp::localtime()
 {
     std::ostringstream stream;
     auto now = std::chrono::system_clock::now();
@@ -206,7 +206,7 @@ String Timestamp::localtime()
     stream << std::put_time(&tm, "%F %T.");
 #else
     char buffer[200] = {0};
-    String timeString;
+    std::string timeString;
     std::strftime(buffer, 200, "%F %T.", std::localtime(&tt));
     stream << buffer;
 #endif

@@ -14,7 +14,7 @@
 
 @end
 
-typedef std::map<String, CGKeyCode> KeyCode;
+typedef std::map<std::string, CGKeyCode> KeyCode;
 
 #define KVK_ANSI(x) {#x, kVK_ANSI_##x },
 #define KVK(x)      {#x, kVK_##x },
@@ -165,7 +165,7 @@ static KeyCode IOSKEYCODE = {
         {"Mute"          , kVK_Mute           }
 };
 
-void InputMousePlatform::keyboardClick(int isDown, const String & k)
+void InputMousePlatform::keyboardClick(int isDown, const std::string & k)
 {
     if (k.empty() || (IOSKEYCODE.find(k)==IOSKEYCODE.end())) {
         LOGGER.info() << "Can't get code for key=" << k ;

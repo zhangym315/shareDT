@@ -8,7 +8,7 @@
 
 static Display * display = nullptr;
 
-typedef std::map<String, KeySym> KeyCodeLinux;
+typedef std::map<std::string, KeySym> KeyCodeLinux;
 
 #define XK(x) {#x, XK_##x },
 
@@ -168,7 +168,7 @@ static KeyCodeLinux LINUXKEYCODE = {
         {"Begin",        XK_Begin       }   // Todo no implement end
 };
 
-void InputMousePlatform::keyboardClick(int isDown, const String  & key)
+void InputMousePlatform::keyboardClick(int isDown, const std::string  & key)
 {
     if (key.empty() || LINUXKEYCODE.find(key)==LINUXKEYCODE.end()){
         LOGGER.error() << "Can't get code for key=" << key ;
