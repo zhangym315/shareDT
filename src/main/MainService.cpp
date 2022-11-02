@@ -1,7 +1,7 @@
 #include "MainService.h"
 #include "Path.h"
 #include "Logger.h"
-#include "MainConsole.h"
+#include "ShareDT.h"
 #include "CrossPlatform.h"
 #include "MainManagementProcess.h"
 #include "Foreach.h"

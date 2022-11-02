@@ -7,7 +7,7 @@
 #include "Daemon.h"
 #include "Logger.h"
 #include "Enum.h"
-#include "main/MainConsole.h"
+#include "main/ShareDT.h"
 #include "InputInterface.h"
 #include "CaptureInfo.h"
 

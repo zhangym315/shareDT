@@ -175,7 +175,7 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
         if ((fb=ea.getFrameBuffer(cwb)) == nullptr) continue;
 
         info.name = m.getName();
-        info.argument << "-c" << "mon" <<  "-i" << std::to_string(m.getId()).c_str();
+        info.argument << " display " << "-c" << "mon" <<  "-i" << std::to_string(m.getId()).c_str();
         _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(),
                                                      fb->getHeight(),
                                                      fb->getData(),
@@ -209,7 +209,7 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
         }
 
         info.name = w.getName();
-        info.argument << "-c" <<  "win" <<  "-h" << std::to_string(w.getHandler()).c_str();
+        info.argument << " display " << "-c" <<  "win" <<  "-h" << std::to_string(w.getHandler()).c_str();
         _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(),
                                                      fb->getHeight(),
                                                      fb->getData(),

@@ -1,5 +1,5 @@
 #include "MainService.h"
-#include "MainConsole.h"
+#include "ShareDT.h"
 #include "TypeDef.h"
 #include "Logger.h"
 #include "Sock.h"
