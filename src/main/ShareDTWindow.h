@@ -4,6 +4,7 @@
 #include "StringTools.h"
 #include "Layout.h"
 #include "SDThread.h"
+#include "LocalDisplayer.h"
 
 #include <utility>
 #include <vector>
@@ -21,6 +22,8 @@
 #include <QtWidgets/QWidget>
 #include <QScrollArea>
 #include <QGroupBox>
+#include <QWidget>
+#include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
 
@@ -130,6 +133,24 @@ public slots:
 namespace Ui {
     class ShareDTWindow: public UI_ShareDTWindow {};
 } // namespace Ui
+
+class ShareDTWindow : public QMainWindow{
+Q_OBJECT
+
+public:
+    explicit ShareDTWindow (int argc, char ** argv,
+                            QWidget *parent = new QWidget());
+    ~ShareDTWindow () override;
+
+    void setMenu();
+private:
+    Ui::ShareDTWindow   * _ui;
+
+public slots:
+    void actionFreshItems();
+//    void putImage(FrameBuffer * data);
+};
+
 
 QT_END_NAMESPACE
 
