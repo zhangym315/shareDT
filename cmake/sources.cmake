@@ -35,7 +35,6 @@ set(SHAREDT_SERVER_SRC
         ${SHAREDT_SRC}/ffmpeg/ReadWriteImages.c
         ${SHAREDT_SRC}/cli/ExportImages.cpp
         ${SHAREDT_SRC}/main/MainConsoleSubFunction.cpp
-        ${SHAREDT_SRC}/main/MainConsole.cpp
         ${SHAREDT_SRC}/input/InputInterface.cpp
 )
 

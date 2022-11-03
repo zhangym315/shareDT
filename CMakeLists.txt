@@ -32,17 +32,17 @@ include_directories (
 )
 
 ### ShareDTServer
-add_executable(${START_SERVER} ${SHAREDT_SERVER_SRC})
-
-target_link_libraries(${START_SERVER}
-    ${BZIP2_LIBRARIES}
-    ${FFMPEG_REQUIRED_LIBS}
-    vncserver
-    ${${PROJECT_NAME}_PLATFORM_LIBS}
-    ${X265_LIBRARIES}
-    ${X264_LIBRARY}
-    ${LZMA_LIBRARIES}
-)
+#add_executable(${START_SERVER} ${SHAREDT_SERVER_SRC})
+#
+#target_link_libraries(${START_SERVER}
+#    ${BZIP2_LIBRARIES}
+#    ${FFMPEG_REQUIRED_LIBS}
+#    vncserver
+#    ${${PROJECT_NAME}_PLATFORM_LIBS}
+#    ${X265_LIBRARIES}
+#    ${X264_LIBRARY}
+#    ${LZMA_LIBRARIES}
+#)
 
 ### ShareDTServer gui
 add_executable(${SERVERGUI_TARGET}
@@ -77,7 +77,7 @@ target_link_libraries(${START_CLIENT}
 
 ### Installing
 # ShareDTServer
-install(TARGETS ${START_SERVER} DESTINATION server/bin)
+#install(TARGETS ${START_SERVER} DESTINATION server/bin)
 install(FILES ${KeyCode} DESTINATION server/bin )
 install(FILES ${SERVERGUI_ICONS} DESTINATION server/images)
 install(DIRECTORY DESTINATION server/var/run/)
@@ -89,6 +89,7 @@ install(TARGETS ${START_CLIENT} DESTINATION client/bin)
 ##### ShareDT
 set(SHAREDT_MAIN_WINDOW ShareDT)
 add_executable(${SHAREDT_MAIN_WINDOW}
+        ${SHAREDT_SERVER_SRC}
         ${SHAREDT_SRC}/util/TimeUtil.c
         ${SHAREDT_SRC}/main/Layout.cpp
         ${SHAREDT_SRC}/main/ShareDT.cpp
@@ -101,6 +102,13 @@ add_executable(${SHAREDT_MAIN_WINDOW}
 target_link_libraries(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_CLIENT_QT_LIBS}
         ${${PROJECT_NAME}_PLATFORM_LIBS}
+
+        ${BZIP2_LIBRARIES}
+        ${FFMPEG_REQUIRED_LIBS}
+        vncserver
+        ${X265_LIBRARIES}
+        ${X264_LIBRARY}
+        ${LZMA_LIBRARIES}
         )
 
 if(APPLE)
@@ -108,14 +116,14 @@ if(APPLE)
         install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDT.icns DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents/Resources)
         install(FILES ${CMAKE_SOURCE_DIR}/install/Info.plist DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents)
 
-        install(TARGETS ${START_SERVER} DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents/MacOS)
+#        install(TARGETS ${START_SERVER} DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents/MacOS)
         install(FILES ${KeyCode} DESTINATION ${SHAREDT_MAIN_WINDOW}.app/Contents/MacOS )
 else()
         install(TARGETS ${SHAREDT_MAIN_WINDOW} DESTINATION ShareDT/bin)
         install(FILES ${CMAKE_SOURCE_DIR}/image/ShareDT.png DESTINATION ShareDT/bin)
         install(DIRECTORY DESTINATION ShareDT/var/run/)
 
-        install(TARGETS ${START_SERVER} DESTINATION ShareDT/bin)
+#        install(TARGETS ${START_SERVER} DESTINATION ShareDT/bin)
         install(FILES ${KeyCode} DESTINATION ShareDT/bin )
 endif()
 
