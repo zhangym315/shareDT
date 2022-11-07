@@ -15,7 +15,8 @@ void RemoteGetter::send()
 
         if ((fb = ea.getFrameBuffer(cwb)) == nullptr) continue;
 
-        QImage im(fb->getData(), fb->getWidth(), fb->getHeight(), QImage::Format::Format_RGBX8888);
+        QImage im(fb->getData(), fb->getWidth(), fb->getHeight(),
+                  QImage::Format::Format_RGBX8888);
         im = im.scaled(140, 110);
 
         std::string head;

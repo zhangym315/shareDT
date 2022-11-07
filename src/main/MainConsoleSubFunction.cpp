@@ -322,7 +322,7 @@ int getSc (const char ** cmdArg, const struct cmdConf * conf)
 
     unsigned char buf[31400];
     size_t rec = sc.receiveBytes(buf, 31400);
-    fprintf(stdout, ("received, %zu\n"), rec);
+    fprintf(stdout, ("received, %i\n"), rec);
     return 0;
 }
 
