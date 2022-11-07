@@ -6,6 +6,7 @@
 #include "MainManagementProcess.h"
 #include "Foreach.h"
 #include "Sock.h"
+#include "RemoteGetter.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -54,7 +55,7 @@ static void stopSpecificCaptureServer(
         Socket * sk,
         HandleCommandLine & hcl )
 {
-    String wid;
+    std::string wid;
 
     /* parsing input argument */
     hcl.initParsing();
@@ -67,7 +68,7 @@ static void stopSpecificCaptureServer(
     }
 
     if(it == _WIDManager.end()) {
-        String msg("Can't find status for: ");
+        std::string msg("Can't find status for: ");
         msg.append(wid);
         sk->send(msg.c_str());
         return;
@@ -75,9 +76,9 @@ static void stopSpecificCaptureServer(
 
     LOGGER.info() << "Sending stopping to WID: " << wid;
 
-    const String & capServerHome = hcl.getSC().getCapServerPath();
-    String stop    = capServerHome + PATH_SEP_STR + CAPTURE_SERVER_STOP;
-    String stopped = capServerHome + PATH_SEP_STR + CAPTURE_SERVER_STOPPED;
+    const std::string & capServerHome = hcl.getSC().getCapServerPath();
+    std::string stop    = capServerHome + PATH_SEP_STR + CAPTURE_SERVER_STOP;
+    std::string stopped = capServerHome + PATH_SEP_STR + CAPTURE_SERVER_STOPPED;
 
     if(fs::exists(stop) && !fs::remove(stop)){
         LOGGER.error() << "Failed to remove the stop file: " << stop;
@@ -107,14 +108,14 @@ static void stopSpecificCaptureServer(
     if(i == 20)
     {
         LOGGER.error() << "Waited 20s for CaptureServer to stop, but no responds for wid=" << wid;
-        String msg("Capture Server Unknown Status: ");
+        std::string msg("Capture Server Unknown Status: ");
         msg.append(wid);
         sk->send(msg.c_str());
         return;
     }
 
     /* send msg back to command line */
-    String msg("Capture Server Stopped: ");
+    std::string msg("Capture Server Stopped: ");
     msg.append(wid);
 
     sk->send(msg.c_str());
@@ -124,7 +125,7 @@ static void statusAllSC (
         Socket * sk,
         HandleCommandLine & hcl )
 {
-    String ret;
+    std::string ret;
     if(_WIDManager.empty()) {
         sk->send("No Capture Server found.\n");
         return;
@@ -147,15 +148,24 @@ static void statusAllSC (
     sk->send(ret.c_str());
 }
 
+static void getRemoteScreen(Socket * sk)
+{
+//    sk->send("Received remote get screen request!\n");
+    LOGGER.info() << "Received getRmoeteScreen request";
+
+    RemoteGetter rg(sk);
+    rg.send();
+}
+
 /*
  * This is center of msg handling, it receives message from CLI command, and do the
  * corresponding action, then send back status back to CLI command.
  *
  * New request from MainServiceServer, usually it's
  * command request. Like:
- * ShareDTServer start
- * ShareDTServer capture -c win -h 1234 --daemon --wid WINDOW_1597564504_HID269_RND0278580287
- * ShareDTserver stop --wid WINDOW_1597564504_HID269_RND0278580287
+ * ShareDT start
+ * ShareDT capture -c win -h 1234 --daemon --wid WINDOW_1597564504_HID269_RND0278580287
+ * ShareDT stop --wid WINDOW_1597564504_HID269_RND0278580287
  *
  * 1. New capture, construct the capture id(cid)
  *    a). Generate cid and fork a new process.
@@ -177,7 +187,7 @@ static void statusAllSC (
  */
 void HandleCommandSocket(Socket * sk, char * buf)
 {
-    String wid;
+    std::string wid;
     Capture::CType commandType;
     /* start handle particular --wid specified or start new capture server */
     HandleCommandLine hcl(buf);
@@ -187,8 +197,8 @@ void HandleCommandSocket(Socket * sk, char * buf)
     wid = hcl.getSC().getWID();
     WIDMAP::iterator it = _WIDManager.find(wid);
     commandType = hcl.getSC().getCType();
-    String user = hcl.getSC().getUserName();
-    const String & capServerHome = hcl.getSC().getCapServerPath();
+    std::string user = hcl.getSC().getUserName();
+    const std::string & capServerHome = hcl.getSC().getCapServerPath();
 
     /* 0. check if status command */
     if( commandType == Capture::C_STATUS )
@@ -201,6 +211,7 @@ void HandleCommandSocket(Socket * sk, char * buf)
     {
         return stopSpecificCaptureServer(sk, hcl);
     }
+
     if( commandType == Capture::C_STOP_ALL_SC)
     {
         stopAllSC();
@@ -208,10 +219,16 @@ void HandleCommandSocket(Socket * sk, char * buf)
         return;
     }
 
+    /* remoteget, return avaible screen */
+    if (commandType == Capture::C_REMOTEGET)
+    {
+        return getRemoteScreen(sk);
+    }
+
     if(!hcl.hasWid())   hcl.setWID();
     if(!hcl.isDaemon()) hcl.setDaemon();
 
-    String ret("Starting Capture ID(CID) = ");
+    std::string ret("Starting Capture ID(CID) = ");
     ret.append(wid);
     ret.append("\nStatus: ");
 
@@ -221,9 +238,9 @@ void HandleCommandSocket(Socket * sk, char * buf)
      */
     if( (commandType == Capture::C_START || commandType == Capture::C_NEWCAPTURE) &&
         (it == _WIDManager.end() || it->second.status() != MainManagementProcess::STATUS::STARTED) ) {
-        String start = capServerHome + String(CAPTURE_SERVER_START);
-        String started = capServerHome + String(CAPTURE_SERVER_STARTED);
-        String alive = capServerHome + PATH_ALIVE_FILE;
+        std::string start = capServerHome + std::string(CAPTURE_SERVER_START);
+        std::string started = capServerHome + std::string(CAPTURE_SERVER_STARTED);
+        std::string alive = capServerHome + PATH_ALIVE_FILE;
         int    capServerPort = VNCSERVER_PORT_START + _incrse;
 
         if(fs::exists(start) && !fs::remove(start)){
@@ -239,7 +256,7 @@ void HandleCommandSocket(Socket * sk, char * buf)
         int childPid;
 
         if(fs::exists(alive) && !fs::remove(alive)){
-            String error = "Failed to remove the file: " + alive;
+            std::string error = "Failed to remove the file: " + alive;
             LOGGER.error() << error;
             ret.append(error);
             sk->send(ret.c_str());
@@ -269,14 +286,14 @@ void HandleCommandSocket(Socket * sk, char * buf)
         si.cb = sizeof(si);
         ZeroMemory( &pi, sizeof(pi) );
         if(!CreateProcessAsUserA ( usrSession.getToken(),
-                                NULL,    // module name (use command line)
+                                nullptr,    // module name (use command line)
                                (LPTSTR)hcl.toString().c_str(),     // Command line
-                                NULL,    // Process handle not inheritable
-                                NULL,    // Thread handle not inheritable
+                                nullptr,    // Process handle not inheritable
+                                nullptr,    // Thread handle not inheritable
                                 true,    // Set handle inheritance to FALSE
                                 CREATE_NO_WINDOW, // no console window
-                                NULL,    // Use parent's environment block
-                                NULL,    // Use parent's starting directory
+                                nullptr,    // Use parent's environment block
+                                nullptr,    // Use parent's starting directory
                                 &si,     // Pointer to STARTUPINFO structure
                                 &pi )    // Pointer to PROCESS_INFORMATION structure
                             )
@@ -292,7 +309,7 @@ void HandleCommandSocket(Socket * sk, char * buf)
         LOGGER.info() << "Successuflly create child process for WID=" << wid <<
                       " started, PID=" << childPid << " CMD=" << hcl.toString();
 
-        String answer;
+        std::string answer;
 
         if(Path::checkAndWait(alive, 10)) {
             sk->send("Have waited for 10 seconds, but no responds from CaptureServer process.");
@@ -313,7 +330,7 @@ void HandleCommandSocket(Socket * sk, char * buf)
 
         int success = false;
         /* increase the dest port if successfully create Capture Server */
-        if(answer.find("Successfully created") != String::npos)
+        if(answer.find("Successfully created") != std::string::npos)
         {
             success = true;
         }
@@ -321,7 +338,7 @@ void HandleCommandSocket(Socket * sk, char * buf)
         /* add it to global _WIDManager, skip the failed one */
         if(it == _WIDManager.end() && success) {
             std::scoped_lock<std::mutex> guard(_WIDManagerMutex);
-            _WIDManager.insert(std::pair<String, MainManagementProcess>
+            _WIDManager.insert(std::pair<std::string, MainManagementProcess>
                        (wid, MainManagementProcess(alive, capServerHome, capServerPort,
                                                    MainManagementProcess::STATUS::STARTED)));
         } else if (success) {
@@ -342,14 +359,14 @@ HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)
     int i = 0;
 
     // loop through the string to extract all other tokens
-    while( token != NULL ) {
+    while( token != nullptr ) {
         argv[i++] = strdup(token);
         if(!strcmp(argv[i-1], "--wid"))
             _hasWid = true;
-        token = strtok(NULL, " ");
+        token = strtok(nullptr, " ");
     }
 
-    argv[i] = NULL;
+    argv[i] = nullptr;
     _argv = argv;
     _argc = i;
 }
@@ -359,19 +376,19 @@ HandleCommandLine::~HandleCommandLine()
     for(int i=0; i<_argc; i++) {
         if(_argv[i]) {
             free(_argv[i]);
-            _argv[i] = NULL;
+            _argv[i] = nullptr;
         }
     }
 
     if(_argv) free(_argv);
 }
 
-String HandleCommandLine::toString(int offset)
+std::string HandleCommandLine::toString(int offset)
 {
     if(offset < 0 || offset > _argc)
-        return (String&) "";
+        return (std::string&) "";
 
-    String ret;
+    std::string ret;
     for(int i=offset; i<_argc; i++)
     {
         if(_argv[i])
@@ -418,7 +435,7 @@ bool setMainProcessServiceHome(const struct cmdConf * conf)
     /* get the main service running */
 #ifdef __SHAREDT_WIN__
     TCHAR szPath[MAX_PATH];
-    if( !GetModuleFileNameA( NULL, szPath, MAX_PATH ) )
+    if( !GetModuleFileNameA( nullptr, szPath, MAX_PATH ) )
     {
         fprintf(stderr, "Cannot get module file name\n");
         return false;
@@ -428,9 +445,9 @@ bool setMainProcessServiceHome(const struct cmdConf * conf)
     ShareDTHome::instance()->set(conf->argv[0]);
 #endif
 
-    CapServerHome::instance()->setHome(ShareDTHome::instance()->getHome()+String(MAIN_SERVER_PATH), MAINSERVER);
+    CapServerHome::instance()->setHome(ShareDTHome::instance()->getHome()+std::string(MAIN_SERVER_PATH), MAINSERVER);
 
-    const String & path = CapServerHome::instance()->getHome();
+    const std::string & path = CapServerHome::instance()->getHome();
     if(!fs::exists(path) && !fs::create_directory(path)) {
         std::cerr << "Failed to create working directory: " << path << std::endl;
         return false;
@@ -446,12 +463,12 @@ bool checkMainServiceStarted()
 
 bool setMainServiceFile()
 {
-    String pathLog = CapServerHome::instance()->getHome() + PATH_SEP_STR + String(MAINSER_LOG);
+    std::string pathLog = CapServerHome::instance()->getHome() + PATH_SEP_STR + std::string(MAINSER_LOG);
     LOGGER.setLogFile(pathLog.c_str());
     LOGGER.info() << "Main service log set to: " << pathLog ;
 
 #ifdef __SHAREDT_WIN__
-    String pathPid = CapServerHome::instance()->getHome() + PATH_SEP_STR + String(PATH_PID_FILE);
+    std::string pathPid = CapServerHome::instance()->getHome() + PATH_SEP_STR + std::string(PATH_PID_FILE);
     int curPid = _getpid();
     std::ofstream fs(pathPid.c_str());
     if(!fs)
@@ -475,15 +492,15 @@ bool setMainServiceFile()
  */
 int infoServiceToAction(const char * execCmd)
 {
-    String alive = ShareDTHome::instance()->getHome() + String(MAIN_SERVER_PATH) + String(PATH_ALIVE_FILE);
+    std::string alive = ShareDTHome::instance()->getHome() + std::string(MAIN_SERVER_PATH) + std::string(PATH_ALIVE_FILE);
     Path aliveReader(alive, std::fstream::in);
     int port;
     try {
         port = aliveReader.readLineAsInt();
         SocketClient sc(LOCALHOST, port);
-        sc.SendBytes(execCmd);
+        sc.sendString(execCmd);
 
-        String receive = sc.ReceiveBytes();
+        std::string receive = sc.receiveStrings();
         fprintf(stdout, ("%s\n"), receive.c_str() );
     } catch (...) {
         fprintf(stderr, "Failed to connect server process.");

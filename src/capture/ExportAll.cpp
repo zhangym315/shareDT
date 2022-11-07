@@ -43,28 +43,28 @@ FrameBuffer * ExportAll::getFrameBuffer(CircleWRBuf<FrameBuffer> & cwf)
 
 
 #ifdef __SHAREDT_IOS__
-const static std::unordered_set<String> PROCESS_FILTER{"Menubar", "Fullscreen Backdrop", "Desktop", "Dock"};
-const static std::unordered_set<String> PROCESS_FILTER_CONTAINS {"Desktop Picture"};
+const static std::unordered_set<std::string> PROCESS_FILTER{"Menubar", "Fullscreen Backdrop", "Desktop", "Dock"};
+const static std::unordered_set<std::string> PROCESS_FILTER_CONTAINS {"Desktop Picture"};
 #elif __SHAREDT_WIN__
-const static std::unordered_set<String> PROCESS_FILTER {"default ime", "msctfime ui", "radeonsettings"};
-const static std::unordered_set<String> PROCESS_FILTER_CONTAINS {};
+const static std::unordered_set<std::string> PROCESS_FILTER {"default ime", "msctfime ui", "radeonsettings"};
+const static std::unordered_set<std::string> PROCESS_FILTER_CONTAINS {};
 #else
-const static std::unordered_set<String> PROCESS_FILTER {};
-const static std::unordered_set<String> PROCESS_FILTER_CONTAINS {};
+const static std::unordered_set<std::string> PROCESS_FILTER {};
+const static std::unordered_set<std::string> PROCESS_FILTER_CONTAINS {};
 #endif
 
-bool ExportAll::filterExportWinName(const String & w)
+bool ExportAll::filterExportWinName(const std::string & w)
 {
     if (PROCESS_FILTER.find(w) != PROCESS_FILTER.end()) return true;
     auto it = find_if(PROCESS_FILTER_CONTAINS.begin(), PROCESS_FILTER_CONTAINS.end(),
-                      [&](const String & name) -> bool {
+                      [&](const std::string & name) -> bool {
                           return w.find(name) != std::string::npos;
                       });
 
     return it != PROCESS_FILTER_CONTAINS.end();
 }
 
-void ExportAll::writeToFile(const String &p, const FrameBuffer *f)
+void ExportAll::writeToFile(const std::string &p, const FrameBuffer *f)
 {
     unsigned int width = f->getWidth();
     unsigned int height = f->getHeight();

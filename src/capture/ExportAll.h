@@ -10,8 +10,8 @@ public:
 
     FrameBuffer * getFrameBuffer(CircleWRBuf<FrameBuffer> & cwf);
 
-    static void writeToFile(const String & p, const FrameBuffer * f);
-    static bool filterExportWinName(const String & w);
+    static void writeToFile(const std::string & p, const FrameBuffer * f);
+    static bool filterExportWinName(const std::string & w);
 private:
     SPType _type;
     int    _captureId;

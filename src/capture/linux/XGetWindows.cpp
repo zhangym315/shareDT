@@ -102,7 +102,7 @@ void AddWindow(Display* display, XID& window, WindowVector & wnd, bool all)
     if(!all && name.length()==0 ) return;
 
     /* for linux, there is not support to fetch pid from window handler */
-    CapWindow w(static_cast<size_t>(window), offset, size, name, 0);
+    CapWindow w(static_cast<size_t>(window), offset, size, std::move(name), 0);
     wnd.push_back(w);
 }
 

@@ -20,7 +20,7 @@ bool UserSession::FindAndSetSessionIds()
         return false;
     }
 
-    String usrSession;
+    std::string usrSession;
     for (unsigned int i = 0; i < dwSICount; ++i)
     {
         if(GetSessionUserName(pSI[i].SessionId, usrSession) &&
@@ -35,7 +35,7 @@ bool UserSession::FindAndSetSessionIds()
     return true;
 }
 
-bool UserSession::GetSessionUserName(DWORD sid, String & username)
+bool UserSession::GetSessionUserName(DWORD sid, std::string & username)
 {
     LPTSTR	pBuffer = NULL;
     DWORD	dwBufferLen;
@@ -53,7 +53,7 @@ bool UserSession::GetSessionUserName(DWORD sid, String & username)
     return true;
 }
 
-bool UserSession::GetSessionDomain(String & domain)
+bool UserSession::GetSessionDomain(std::string & domain)
 {
     LPTSTR	pBuffer = NULL;
     DWORD	dwBufferLen;
@@ -72,7 +72,7 @@ bool UserSession::GetSessionDomain(String & domain)
     return true;
 }
 
-UserSession::UserSession(const String & user) : _user(user) , _sessionId(0)
+UserSession::UserSession(const std::string & user) : _user(user) , _sessionId(0)
 {
     if(FindAndSetSessionIds())
         FindAndSetTokens();

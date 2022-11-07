@@ -14,7 +14,7 @@ typedef std::vector<CapMonitor> Monitors;
 class WindowsProviderChecker : public Thread
 {
   public:
-    WindowsProviderChecker(Pid pid, shared_ptr<Windows> win) :
+    WindowsProviderChecker(pid_t pid, shared_ptr<Windows> win) :
             Thread(false), _running(false), _monPid(pid), _monWin(win) {
     }
     WindowsProviderChecker() :
@@ -36,7 +36,7 @@ class WindowsProviderChecker : public Thread
 
   private:
     bool _running;
-    Pid  _monPid;
+    pid_t  _monPid;
     shared_ptr<Windows> _monWin;
     size_t  _winCount;        /* current window number monitored */
 
@@ -58,12 +58,12 @@ class WindowsProcessProvider : public WindowsProvider
 {
   public:
     WindowsProcessProvider() : WindowsProcessProvider(-1) { }
-    WindowsProcessProvider(Pid pid) : _pid(pid), _wpm(NULL) { }
-    int set(Pid pid);
+    WindowsProcessProvider(pid_t pid) : _pid(pid), _wpm(NULL) { }
+    int set(pid_t pid);
     void    createMonitorThread();
 
   private:
-    Pid                      _pid;
+    pid_t                    _pid;
     WindowsProviderChecker * _wpm;
 };
 

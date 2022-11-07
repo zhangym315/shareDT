@@ -19,7 +19,7 @@ bool sendKey(WORD code, bool isDown)
     return true;
 }
 
-typedef std::map<String, WORD> KeyCode;
+typedef std::map<std::string, WORD> KeyCode;
 
 /*
  * Windows key code
@@ -183,7 +183,7 @@ static KeyCode WINKEYCODE = {
         {"Mute"          , VK_VOLUME_MUTE }
 };
 
-void InputMousePlatform::keyboardClick(int isDown, const String  & key)
+void InputMousePlatform::keyboardClick(int isDown, const std::string  & key)
 {
     if (key.empty() || WINKEYCODE.find(key)==WINKEYCODE.end()) {
         LOGGER.info() << "Can't get code for key=" << key ;

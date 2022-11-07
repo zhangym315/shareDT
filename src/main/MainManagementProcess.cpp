@@ -3,7 +3,7 @@
 
 #include <fcntl.h>
 
-MainManagementProcess::MainManagementProcess(const String & alive, const String & home,
+MainManagementProcess::MainManagementProcess(const std::string & alive, const std::string & home,
                                              int port, STATUS status) :
                 _alivePath(alive),  _status(status), _vncport(port),
                 _rw(alive.c_str(), O_WRONLY), _home(home)
@@ -22,8 +22,8 @@ void MainManagementProcess::updateStatus(STATUS status)
 
 void MainManagementProcess::stop()
 {
-    String stop    = _home + PATH_SEP_STR + CAPTURE_SERVER_STOP;
-    String stopped = _home + PATH_SEP_STR + CAPTURE_SERVER_STOPPED;
+    std::string stop    = _home + PATH_SEP_STR + CAPTURE_SERVER_STOP;
+    std::string stopped = _home + PATH_SEP_STR + CAPTURE_SERVER_STOPPED;
 
     if(fs::exists(stop) && !fs::remove(stop)){
         LOGGER.error() << "Failed to remove the stop file: " << stop;

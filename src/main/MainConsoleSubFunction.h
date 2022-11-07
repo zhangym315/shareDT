@@ -10,6 +10,7 @@ extern int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf);
 extern int mainShow (const char ** cmdArg, const struct cmdConf * conf);
 extern int noDaemon (const char ** cmdArg, const struct cmdConf * conf);
 extern int status (const char ** cmdArg, const struct cmdConf * conf);
+extern int getSc (const char ** cmdArg, const struct cmdConf * conf);
 
 
 #ifdef __SHAREDT_WIN__

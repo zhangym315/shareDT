@@ -28,7 +28,7 @@ class ExportImages final : public Capture {
 
   private:
     int parseExportImagesOptions(int argc, char ** argv);
-    int _startExportH265Video(const String & infile, int width, int height, int type, const String & outfile);
+    int _startExportH265Video(const std::string & infile, int width, int height, int type, const std::string & outfile);
 
     Format       _format;
     unsigned int _total;

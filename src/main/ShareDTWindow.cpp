@@ -4,6 +4,7 @@
 #include "Path.h"
 #include "ExportAll.h"
 #include "Logger.h"
+#include "ShareDT.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,7 +25,7 @@ extern "C" {
 
 const static int gpBoxFontSize = 15;
 
-void UI_ShareDTWindow::newRemoteGroupBox(const String & host)
+void UI_ShareDTWindow::newRemoteGroupBox(const std::string & host)
 {
     if (_remoteGroupBoxes.find(host) != _remoteGroupBoxes.end()) {
         QMessageBox msgBox;
@@ -95,9 +96,9 @@ QWidget * UI_ShareDTWindow::newImageBox(int width, int height, unsigned char * d
     image->setLineWidth(0);
 
 #ifdef __SHAREDT_WIN__
-    String n = info.name.size() < 20 ? info.name : info.name.substr(0, 10) + String(" ...");
+    std::string n = info.name.size() < 20 ? info.name : info.name.substr(0, 10) + std::string(" ...");
 #else
-    String n = info.name.size() < 20 ? info.name : info.name.substr(0, 15) + String(" ...");
+    std::string n = info.name.size() < 20 ? info.name : info.name.substr(0, 15) + std::string(" ...");
 #endif
     text->setText(QString::fromUtf8(n.c_str()));
     text->setFont(QFont({"Arial", 10}));
@@ -175,7 +176,7 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
         if ((fb=ea.getFrameBuffer(cwb)) == nullptr) continue;
 
         info.name = m.getName();
-        info.argument << "display" << "-c" << "mon" <<  "-i" << std::to_string(m.getId()).c_str();
+        info.argument << SHAREDT_SERVER_COMMAND_DISPLAY << "-c" << "mon" <<  "-i" << std::to_string(m.getId()).c_str();
         _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(),
                                                      fb->getHeight(),
                                                      fb->getData(),
@@ -209,7 +210,7 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
         }
 
         info.name = w.getName();
-        info.argument << "display" << "-c" <<  "win" <<  "-h" << std::to_string(w.getHandler()).c_str();
+        info.argument << SHAREDT_SERVER_COMMAND_DISPLAY << "-c" <<  "win" <<  "-h" << std::to_string(w.getHandler()).c_str();
         _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(),
                                                      fb->getHeight(),
                                                      fb->getData(),
@@ -251,14 +252,14 @@ void UI_ShareDTWindow::newGroupConnection() {
 }
 
 void UI_ShareDTWindow::startLocalCaptureServer() {
-    String startServer = ShareDTHome::instance()->getArgv0Dir() + String(PATH_SEP_STR) + String("ShareDTServer");
+    std::string startServer = ShareDTHome::instance()->getArgv0Dir() + std::string(PATH_SEP_STR) + std::string("ShareDT");
 #ifdef __SHAREDT_WIN__
     startServer.append(".exe");
 #endif
     QString startServerProgram = startServer.c_str();
     QStringList args("start");
 
-    LOGGER.info() << "Starting ShareDTServer path=" << qPrintable(startServerProgram);
+    LOGGER.info() << "Starting ShareDT Server path=" << qPrintable(startServerProgram);
 
     auto * newProcess = new QProcess();
     newProcess->start(startServerProgram, args);

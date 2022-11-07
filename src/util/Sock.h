@@ -45,14 +45,17 @@ class Socket {
     Socket(const Socket&);
     Socket& operator=(Socket&);
 
-    String ReceiveLine() const;
-    String ReceiveBytes() const;
+    std::string ReceiveLine() const;
+    std::string receiveStrings() const;
+
+    size_t receiveBytes(unsigned char * b, size_t s);
 
     void   Close() const;
 
-    void   SendLine (String) const;
-    void   SendBytes(const String&) const;
-    void   send(const char * buf) { SendBytes(String(buf)); }
+    void   sendBytes(const unsigned char * p, size_t size);
+    void   sendStringLine (std::string) const;
+    void   sendString(const std::string&) const;
+    void   send(const char * buf) { sendString(std::string(buf)); }
     SOCKET getSocket() { return _s; }
 
   protected:
@@ -73,15 +76,15 @@ class Socket {
 
 class SocketClient : public Socket {
   public:
-    SocketClient(const String& host, int port);
-    void write(const char * bytes) { SendBytes(bytes); }
+    SocketClient(const std::string& host, int port);
+    void write(const char * bytes) { sendString(bytes); }
 };
 
 class SocketServer : public Socket {
   public:
     SocketServer(int port, int connections, TypeSocket type=BlockingSocket);
     Socket* Accept();
-    int  getPort() { return _port; }
+    int  getPort() const { return _port; }
 
   private:
     int _port;
@@ -89,8 +92,8 @@ class SocketServer : public Socket {
 
 class SocketSelect {
   public:
-    SocketSelect(Socket const * const s1, Socket const * const s2=NULL, TypeSocket type=BlockingSocket);
-    bool Readable(Socket const * const s);
+    explicit SocketSelect(Socket const * s1, Socket const * const s2=NULL, TypeSocket type=BlockingSocket);
+    bool Readable(Socket const * s);
 
   private:
     fd_set fds_{};

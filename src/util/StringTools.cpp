@@ -1,19 +1,19 @@
 #include "StringTools.h"
 
-bool isNumber(const String & s)
+bool isNumber(const std::string & s)
 {
     return !s.empty() && std::find_if(s.begin(),
         s.end(), [](unsigned char c) { return !::isdigit(c); }) == s.end();
 }
 
-String getString(char * x)
+std::string getString(char * x)
 {
-    String s(x);
+    std::string s(x);
     return s;
 }
 
 /* Return false if failed */
-bool toInt(const String &input, int &out)
+bool toInt(const std::string &input, int &out)
 {
     /* convert to int */
     try

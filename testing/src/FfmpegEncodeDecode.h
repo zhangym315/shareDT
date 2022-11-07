@@ -30,7 +30,7 @@ public:
         _encodeBuffer.clear();
     }
     FfmpegEncodeDecodeFrameTesting(int w, int h, int totalFrames = 1, AVPixelFormat pixFormat = AV_PIX_FMT_YUV420P,
-                                     const String & codecName = "libx265");
+                                     const std::string & codecName = "libx265");
     ~FfmpegEncodeDecodeFrameTesting();
 
     bool getSampleFrame(int framesCnt=0);
@@ -38,8 +38,8 @@ public:
     bool encodeToBuffer();
     bool decodeToFrame();
     AVFrame * allocateFrame();
-    void toRGBandExportToFiles(const std::vector<AVFrame *> & frameVector, const String & prefix);
-    void exportRGBX32ToFiles(const String & path, unsigned char * buffer, size_t w, size_t h);
+    void toRGBandExportToFiles(const std::vector<AVFrame *> & frameVector, const std::string & prefix);
+    void exportRGBX32ToFiles(const std::string & path, unsigned char * buffer, size_t w, size_t h);
 
     [[nodiscard]] const std::vector<AVFrame *> & getDstFrames() const { return _dstFrames; }
     [[nodiscard]] const std::vector<AVFrame *> & getSrcFrames() const { return _originalFrames; }

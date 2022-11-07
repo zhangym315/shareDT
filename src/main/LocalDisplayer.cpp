@@ -73,15 +73,15 @@ LocalDisplayer::LocalDisplayer (int argc, char ** argv) :
 
 #ifndef __SHAREDT_IOS__
     // set program icon, ShareDT.png should be the same directory
-    String png = ShareDTHome::instance()->getHome() + String(PATH_SEP_STR) +
-                 String("bin") + String(PATH_SEP_STR) + String("ShareDT.png");
+    std::string png = ShareDTHome::instance()->getHome() + std::string(PATH_SEP_STR) +
+                 std::string("bin") + std::string(PATH_SEP_STR) + std::string("ShareDT.png");
     setWindowIcon(QIcon(QPixmap(png.c_str())));
 #endif
 
     setupMenu();
     setupMain();
 
-    setWindowTitle((String("ShareDT - ") + _fetcher->getName()).c_str());
+    setWindowTitle((std::string("ShareDT - ") + _fetcher->getName()).c_str());
 
     QObject::connect (_fetcher, SIGNAL(sendRect(FrameBuffer*)),
                       this, SLOT(putImage(FrameBuffer*)));

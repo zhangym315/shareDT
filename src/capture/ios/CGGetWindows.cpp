@@ -65,7 +65,7 @@ void WindowVectorProvider::CapGetWindows()
 
         // window name is NULL, no need to add to list
         if(cfwindowname == NULL) continue;
-        String name(CapCFStringCopyUTF8String(cfwindowname));
+        std::string name(CapCFStringCopyUTF8String(cfwindowname));
 
         if(!_getAll && name.length() == 0) continue;
 
@@ -83,7 +83,7 @@ void WindowVectorProvider::CapGetWindows()
 
         CapPoint offset(rect.origin.x, rect.origin.y);
         CapPoint size (rect.size.width * xscale, rect.size.height* yscale);
-        CapWindow w(static_cast<size_t>(windowid), offset, size, name, curPid);
+        CapWindow w(static_cast<size_t>(windowid), offset, size, std::move(name), curPid);
         ret.push_back(w);
     }
     CFRelease(windowList);

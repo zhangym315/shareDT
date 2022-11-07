@@ -1,7 +1,7 @@
 #include "WindowsProvider.h"
 #include <chrono>
 
-int WindowsProcessProvider::set(Pid pid)
+int WindowsProcessProvider::set(pid_t pid)
 {
 #if 0
     /* only get the window with a name */

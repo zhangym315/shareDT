@@ -77,13 +77,13 @@ class ScreenProviderPartial final : public ScreenProvider {
 class ScreenProviderWindow final : public ScreenProvider {
   public:
     ScreenProviderWindow(size_t hd, unsigned int frequency);
-    ScreenProviderWindow(Pid pid, unsigned int frequency);
+    ScreenProviderWindow(pid_t pid, unsigned int frequency);
     void init() override;
     bool isValid() override { return _win.isValid(); }
     const CapWindow & get() const { return _win; }
 
   private:
-    Pid                  _pid;
+    pid_t                _pid;
     size_t               _hd;
     CapWindow            _win;
 };

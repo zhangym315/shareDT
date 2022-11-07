@@ -7,22 +7,22 @@
 class UserSession
 {
   public:
-    UserSession(const String & user);
-    bool GetSessionDomain(String & domain);
-    bool GetSessionUserName(DWORD sid, String & username);
+    UserSession(const std::string & user);
+    bool GetSessionDomain(std::string & domain);
+    bool GetSessionUserName(DWORD sid, std::string & username);
     DWORD getSid()      { return _sessionId; }
     HANDLE getToken()   { return _hToken; }
     bool  isValid()     { return _sessionId != 0; }
-    const String & getReason() const { return _reason; }
+    const std::string & getReason() const { return _reason; }
 
   private:
     bool FindAndSetSessionIds();
     void FindAndSetTokens();
 
-    String  _user;
+    std::string  _user;
     DWORD   _sessionId;
     HANDLE  _hToken;
-    String  _reason;
+    std::string  _reason;
 };
 
 #endif //SHAREDT_WINDOWSPROCESS_H

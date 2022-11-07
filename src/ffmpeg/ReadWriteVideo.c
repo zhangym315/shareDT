@@ -93,11 +93,11 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
 static void add_stream(ffmpeg_audio_video_input *input,
                        OutputStream *ost,
                        AVFormatContext *oc,
-                       AVCodec **codec,
+                       const AVCodec **codec,
                        enum AVCodecID codec_id)
 {
-    AVCodecContext *c;
     int i;
+    AVCodecContext *c;
 
     /* find the encoder */
     *codec = avcodec_find_encoder(codec_id);
@@ -377,7 +377,7 @@ static AVFrame *alloc_picture(enum AVPixelFormat pix_fmt, int width, int height)
     return picture;
 }
 
-static void open_video(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, AVDictionary *opt_arg)
+static void open_video(AVFormatContext *oc, const AVCodec *codec, OutputStream *ost, AVDictionary *opt_arg)
 {
     int ret;
     AVCodecContext *c = ost->enc;
@@ -493,9 +493,10 @@ static void close_stream(AVFormatContext *oc, OutputStream *ost)
 /**************************************************************/
 /* media file output */
 static OutputStream video_st = {0}, audio_st = {0};
-static AVOutputFormat *fmt;
+static const AVOutputFormat *fmt;
 static AVFormatContext *oc;
-static AVCodec *audio_codec, *video_codec;
+static AVCodec *audio_codec;
+static const AVCodec *video_codec;
 static int ret;
 static int have_video = 0, have_audio = 0;
 static int encode_video = 0, encode_audio = 0;

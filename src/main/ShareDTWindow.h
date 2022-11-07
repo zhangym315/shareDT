@@ -58,11 +58,11 @@ private:
 typedef struct qgroup_item {
     GroupBox   *  item;
     FlowLayout * layout;
-    String name;
+    std::string name;
 } QGROUP_BOX;
 
 typedef struct {
-    String name;
+    std::string name;
     QStringList argument;
 } ItemInfo;
 
@@ -100,7 +100,7 @@ public:
                           this, SLOT(refreshSlot()));
     }
     ~UI_ShareDTWindow();
-    void newRemoteGroupBox(const String & host); // TODO for remote groupbox
+    void newRemoteGroupBox(const std::string & host); // TODO for remote groupbox
     QWidget * newImageBox(int w, int h, unsigned char * data, const ItemInfo & info) const;
     void setupMainWindow(QWidget * w);
     void setupUi(QWidget * w);
@@ -119,7 +119,7 @@ private:
 
     QVBoxLayout * _mainLayout;
     QGROUP_BOX    _localGroupBox;
-    std::unordered_map<String, QGroupBox *> _remoteGroupBoxes;  // <connectionHost, GroupBox*>
+    std::unordered_map<std::string, QGroupBox *> _remoteGroupBoxes;  // <connectionHost, GroupBox*>
 
 signals:
     void refreshSignal();
