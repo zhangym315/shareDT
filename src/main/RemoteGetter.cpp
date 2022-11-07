@@ -22,7 +22,5 @@ void RemoteGetter::send()
 
         _sk->sendBytes(im.bits(), im.sizeInBytes());
         LOGGER.info() << "Sent number of bytes=" << im.sizeInBytes();
-//        head << "width=" << fb->getWidth() << ",height=" << fb->getHeight() << ",format=" << QImage::Format::Format_RGBX8888;
-//        im.bits();
     }
 }
