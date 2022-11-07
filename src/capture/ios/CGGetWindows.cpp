@@ -83,7 +83,7 @@ void WindowVectorProvider::CapGetWindows()
 
         CapPoint offset(rect.origin.x, rect.origin.y);
         CapPoint size (rect.size.width * xscale, rect.size.height* yscale);
-        CapWindow w(static_cast<size_t>(windowid), offset, size, name, curPid);
+        CapWindow w(static_cast<size_t>(windowid), offset, size, std::move(name), curPid);
         ret.push_back(w);
     }
     CFRelease(windowList);
