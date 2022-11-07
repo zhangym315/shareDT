@@ -27,4 +27,29 @@ std::string utf16_to_utf8(std::wstring utf16_string);
 
 #endif
 
+class String {
+public:
+    String(const char* data);
+    String(size_t init_size = 20);
+    String(const String &string);
+
+    ~String();
+
+    char* getText();
+    void setText(const char* text);
+    size_t getLength() const;
+    void setLength(size_t size);
+    void add(const String &text);
+
+    template<typename T>
+    static String toString(const T & s);
+private:
+    char*  _buf;
+    size_t _size;
+
+    template<typename T>
+    friend String &operator<<(String &iostream, const T &string);
+};
+
+
 #endif //_STRINGTOOLS_H_

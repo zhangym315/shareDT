@@ -52,10 +52,10 @@ class Socket {
 
     void   Close() const;
 
-    void   sendBytes(const unsigned char * p, size_t size);
-    void   sendStringLine (std::string) const;
-    void   sendString(const std::string&) const;
-    void   send(const char * buf) { sendString(std::string(buf)); }
+    size_t   sendBytes(const unsigned char * p, size_t size) const;
+    size_t   sendStringLine (std::string) const;
+    size_t   sendString(const std::string&) const;
+    size_t   send(const char * buf) { return sendString(std::string(buf)); }
     SOCKET getSocket() { return _s; }
 
   protected:

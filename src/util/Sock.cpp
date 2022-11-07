@@ -180,19 +180,19 @@ size_t Socket::receiveBytes(unsigned char *b, size_t s) {
     return rec;
 }
 
-void Socket::sendStringLine(std::string s) const
+size_t Socket::sendStringLine(std::string s) const
 {
     s += '\n';
-    ::send(_s,s.c_str(),s.length(),0);
+    return ::send(_s,s.c_str(),s.length(),0);
 }
 
-void Socket::sendString(const std::string& s) const
+size_t Socket::sendString(const std::string& s) const
 {
-    ::send(_s,s.c_str(),s.length()+1,0);
+    return ::send(_s,s.c_str(),s.length()+1,0);
 }
 
-void Socket::sendBytes(const unsigned char *p, size_t size) {
-    ::send(_s, (const char *)p, size,0);
+size_t Socket::sendBytes(const unsigned char *p, size_t size) const {
+    return ::send(_s, (const char *)p, size,0);
 }
 
 SocketServer::SocketServer(int port, int connections, TypeSocket type)
