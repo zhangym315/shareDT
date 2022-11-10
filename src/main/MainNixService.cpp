@@ -151,6 +151,7 @@ int MainWindowsServices() {
 
     while(true) {
         Socket* s=ss.Accept();
+        if (s == nullptr) continue;
         std::string received = s->receiveStrings();
         LOGGER.info("ShareDTServer service DATA RECEIVED CMD=\"%s\", "
                         " clientSocket=%d", received.c_str(), s->getSocket());

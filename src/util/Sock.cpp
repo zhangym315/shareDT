@@ -262,7 +262,8 @@ Socket* SocketServer::Accept()
         else
 #endif
         {
-            throw "Invalid Socket";
+            LOGGER.error() << "Invalid Socket";
+            return nullptr;
         }
     }
 

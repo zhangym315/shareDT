@@ -29,9 +29,10 @@ std::string utf16_to_utf8(std::wstring utf16_string);
 
 class String {
 public:
-    String(const char* data);
-    String(size_t init_size = 20);
-    String(const String &string);
+    explicit String(const char* data);
+    explicit String(const std::string & data);
+    explicit String(size_t init_size = 20);
+    explicit String(const String &string);
 
     ~String();
 
@@ -42,13 +43,26 @@ public:
     void add(const String &text);
 
     template<typename T>
-    static String toString(const T & s);
+    String &operator<<(const T & s) {
+        add(toString(s));
+        return *this;
+    }
+
+    static String toString(int v) {
+        return String(std::to_string(v));
+    }
+
+    static String toString(size_t v) {
+        return String(std::to_string(v));
+    }
+
+    static String toString(const char * v) {
+        return String(*v);
+    }
+
 private:
     char*  _buf;
     size_t _size;
-
-    template<typename T>
-    friend String &operator<<(String &iostream, const T &string);
 };
 
 

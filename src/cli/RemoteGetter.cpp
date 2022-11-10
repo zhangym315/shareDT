@@ -10,6 +10,7 @@ void RemoteGetter::send()
     CircleWRBuf<FrameBuffer>  cwb(2);
     MonitorVectorProvider mvp;
     FrameBuffer * fb;
+    LOGGER.info() << "RemoteGetter::send";
     for (auto & m : mvp.get()) {
         ExportAll ea(SP_MONITOR, m.getId());
 
@@ -25,4 +26,5 @@ void RemoteGetter::send()
         _sk->sendBytes(im.bits(), im.sizeInBytes());
         LOGGER.info() << "Sent number of bytes=" << im.sizeInBytes();
     }
+    LOGGER.info() << "RemoteGetter::send finished";
 }

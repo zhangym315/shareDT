@@ -62,6 +62,17 @@ String::String(size_t init_size) {
     }
 }
 
+String::String(const std::string & data) {
+    size_t size = data.size();
+
+    _buf = new char[size];
+    _size = size;
+
+    if (_buf != nullptr) {
+        strncpy(_buf, data.c_str(), size);
+    }
+}
+
 String::String(const char* buf) {
     size_t size = strlen(buf);
 
@@ -69,7 +80,7 @@ String::String(const char* buf) {
     _size = size;
 
     if (_buf != nullptr) {
-        strncpy(_buf, _buf, size);
+        strncpy(_buf, buf, size);
     }
 }
 
@@ -132,15 +143,4 @@ void String::add(const String &text) {
     for (size_t i = length; i < new_size; i++) {
         _buf[i] = text._buf[i - length];
     }
-}
-
-template<typename T>
-String & operator<<(String &s, const T &d) {
-    s.add(String::toString(d));
-    return s;
-}
-
-template<typename T>
-String String::toString(const T &s) {
-    return String(std::to_string(s));
 }
