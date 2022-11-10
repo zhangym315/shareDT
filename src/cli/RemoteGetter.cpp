@@ -23,8 +23,8 @@ void RemoteGetter::send()
         String head;
 
         head << "w=" << fb->getWidth() << ",h=" << fb->getHeight();
-        _sk->sendBytes(im.bits(), im.sizeInBytes());
-        LOGGER.info() << "Sent number of bytes=" << im.sizeInBytes();
+        LOGGER.info() << "Sent number of bytes=" << im.sizeInBytes() <<
+                    " sent=" << _sk->sendBytes(im.bits(), im.sizeInBytes());
     }
     LOGGER.info() << "RemoteGetter::send finished";
 }
