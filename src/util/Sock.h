@@ -48,7 +48,7 @@ class Socket {
     std::string ReceiveLine() const;
     std::string receiveStrings() const;
 
-    size_t receiveBytes(unsigned char * b, size_t s);
+    size_t receiveBytes(unsigned char * b, size_t s) const;
 
     void   Close() const;
 

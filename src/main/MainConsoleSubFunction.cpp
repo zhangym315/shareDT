@@ -320,9 +320,9 @@ int getSc (const char ** cmdArg, const struct cmdConf * conf)
     cmd.append(SHAREDT_SERVER_COMMAND_REMOTGET);
     sc.sendString(cmd);
 
-    unsigned char buf[31400]; size_t rec;
-    while ((rec = sc.receiveBytes(buf, 31400) != 0)) {
-        fprintf(stdout, ("received, %i\n"), rec);
+    unsigned char buf[1400]; size_t rec;
+    while ((rec = sc.receiveBytes(buf, 1400) != 0)) {
+        fprintf(stdout, ("received, %ul\n"), rec);
     }
     return 0;
 }

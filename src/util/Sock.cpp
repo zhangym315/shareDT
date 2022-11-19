@@ -170,14 +170,8 @@ std::string Socket::ReceiveLine() const
     }
 }
 
-size_t Socket::receiveBytes(unsigned char *b, size_t s) {
-    size_t rec;
-    if((rec=::recv(_s, (char *)b, s, 0)) == -1)
-    {
-        return 0;
-    }
-
-    return rec;
+size_t Socket::receiveBytes(unsigned char *b, size_t s) const {
+    return  ::recv(_s, (char *)b, s, 0);
 }
 
 size_t Socket::sendStringLine(std::string s) const
