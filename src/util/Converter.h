@@ -1,8 +1,6 @@
 #ifndef SHAREDT_CONVERTER_H
 #define SHAREDT_CONVERTER_H
 
-template<typename T>
-extern T toLittleEndian(T x) ;
 const extern bool isLittleEndian;
 
 class Converter {
