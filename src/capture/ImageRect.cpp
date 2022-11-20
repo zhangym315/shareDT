@@ -66,8 +66,9 @@ CapMonitor CapMonitor::getById(int id)
 CapWindow CapWindow::getWinById(size_t h)
 {
     WindowVectorProvider wvp(-1);
-    auto result = std::find_if(wvp.get().begin(), wvp.get().end(), [=](const CapWindow & win) -> bool {
-        return win.getHandler() == h;
+    auto result = std::find_if(wvp.get().begin(), wvp.get().end(),
+                               [=](const CapWindow & win) -> bool {
+                    return win.getHandler() == h;
     });
 
     return (result == wvp.get().end()) ? CapWindow() : *result;

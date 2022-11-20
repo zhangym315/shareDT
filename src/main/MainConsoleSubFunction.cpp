@@ -7,6 +7,7 @@
 #include "Path.h"
 #include "ReadWriteFD.h"
 #include "Sock.h"
+#include "RemoteGetter.h"
 
 #ifdef __SHAREDT_WIN__
 #include <Windows.h>
@@ -320,10 +321,23 @@ int getSc (const char ** cmdArg, const struct cmdConf * conf)
     cmd.append(SHAREDT_SERVER_COMMAND_REMOTGET);
     sc.sendString(cmd);
 
-    unsigned char buf[1400]; size_t rec;
-    while ((rec = sc.receiveBytes(buf, 1400) != 0)) {
-        fprintf(stdout, ("received, %ul\n"), rec);
+    FrameBuffer fb;
+    while (true) {
+        RemoteGetterMsg msg{};
+        if (sc.receiveBytes((unsigned char *) &msg, sizeof(msg)) <= 0) break;
+
+        msg.convert();
+
+        fb.reSet(msg.dataLen);
+        if (sc.receiveBytes(fb.getDataToWrite(), msg.dataLen) < 0 ) break;
+
+        std::cout << "Received frame buffer size=" << msg.dataLen
+                  << " name=" << msg.name
+                  << " cmdArgs=" << msg.cmdArgs << std::endl;
     }
+
+    std::cout << "Read finished" << std::endl;
+
     return 0;
 }
 
@@ -420,3 +434,4 @@ int startService (const char ** cmdArg, const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 }
 #endif
+

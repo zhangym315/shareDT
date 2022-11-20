@@ -32,9 +32,10 @@ class FrameBuffer {
     FrameBuffer() : FrameBuffer(0) { }
     ~FrameBuffer() { reSet(0); resetSubData(0); }
 
-    [[nodiscard]] size_t getSize() const   { return _size ; }
-    [[nodiscard]] size_t getCapacity() const { return _capacity; }
-    [[nodiscard]] unsigned char * getData() const { return _data; }
+    size_t getSize() const   { return _size ; }
+    size_t getCapacity() const { return _capacity; }
+    unsigned char * getData() const { return _data; }
+    unsigned char * getDataToWrite() { return _data; }
 
     void setData(unsigned char * data, size_t w, size_t h, SPImageType type=SPImageType::SP_IMAGE_RGBA);
     void setDataPerRow(unsigned char * data, int w, int h,
