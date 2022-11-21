@@ -3,10 +3,9 @@
 #include "ExportAll.h"
 #include "Logger.h"
 #include "Converter.h"
+#include "main/ShareDT.h"
 
 #include <QImage>
-#include <arpa/inet.h>
-#include <main/ShareDT.h>
 
 void RemoteGetter::send()
 {
