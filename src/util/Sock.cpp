@@ -291,7 +291,12 @@ SocketClient::SocketClient(const std::string& host, int port) : Socket(),
         throw error;
     }
 
-    if (::setsockopt (_s, SOL_SOCKET, SO_RCVTIMEO, &_tv, sizeof(_tv)) < 0)
+    if (::setsockopt (_s, SOL_SOCKET, SO_RCVTIMEO,
+#ifdef __SHAREDT_WIN__
+                      (char *)
+#endif
+                      &_tv,
+                      sizeof(_tv)) < 0)
         LOGGER.warn() << "Failed to set timeout to seconds=" << _tv.tv_sec;
 }
 

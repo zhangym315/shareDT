@@ -14,9 +14,9 @@ extern int getSc  (const struct cmdConf * conf);
 
 
 #ifdef __SHAREDT_WIN__
-extern int installService (const char ** cmdArg, const struct cmdConf * conf);
-extern int uninstallService (const char ** cmdArg, const struct cmdConf * conf);
-extern int startService (const char ** cmdArg, const struct cmdConf * conf);
+extern int installService (const struct cmdConf * conf);
+extern int uninstallService (const struct cmdConf * conf);
+extern int startService (const struct cmdConf * conf);
 #endif
 
 #endif //SHAREDT_MAINCONSOLESUBFUNCTION_H

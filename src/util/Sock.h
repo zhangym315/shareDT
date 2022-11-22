@@ -4,6 +4,7 @@
 #ifdef __SHAREDT_WIN__
 #include <WinSock2.h>
 #include <Windows.h>
+typedef size_t ssize_t;
 #else
 #define SOCKET int
 #define INVALID_SOCKET -1

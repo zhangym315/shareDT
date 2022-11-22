@@ -9,12 +9,12 @@
 #ifndef _STRINGTOOLS_H_
 #define _STRINGTOOLS_H_
 
+#include "TypeDef.h"
 #include <iostream>
 #include <string>
 #include <algorithm>
-#include "TypeDef.h"
 
-bool   isNumber(const std::string & s);
+bool isNumber(const std::string & s);
 std::string getString(char * x);
 bool   toInt(const std::string & in, int &out);
 #ifdef __SHAREDT_WIN__
