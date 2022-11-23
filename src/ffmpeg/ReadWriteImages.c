@@ -99,7 +99,7 @@ static int output_video_frame(AVFrame *frame)
     video_frame_count++;
 
     char filename[100];
-    sprintf(filename, "%s%07d.jpg", output_prefix, video_frame_count);
+    snprintf(filename, 100, "%s%07d.jpg", output_prefix, video_frame_count);
 
     int ret = ffmpeg_save_frame_as_jpeg(frame, filename);
     if(ret < 0) {

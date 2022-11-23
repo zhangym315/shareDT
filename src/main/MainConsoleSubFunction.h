@@ -1,16 +1,16 @@
 #ifndef SHAREDT_MAINCONSOLESUBFUNCTION_H
 #define SHAREDT_MAINCONSOLESUBFUNCTION_H
 
-extern int mainInform(const char * command, const struct cmdConf * conf);
-extern int mainStart (const char ** cmdArg, const struct cmdConf * conf);
-extern int mainStop (const char ** cmdArg, const struct cmdConf * conf);
-extern int mainRestart (const char ** cmdArg, const struct cmdConf * conf);
-extern int mainCapture (const char ** cmdArg, const struct cmdConf * conf);
-extern int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf);
-extern int mainShow (const char ** cmdArg, const struct cmdConf * conf);
-extern int noDaemon (const char ** cmdArg, const struct cmdConf * conf);
-extern int status (const char ** cmdArg, const struct cmdConf * conf);
-extern int getSc (const char ** cmdArg, const struct cmdConf * conf);
+extern int mainInform(const struct cmdConf * conf);
+extern int mainStart (const struct cmdConf * conf);
+extern int mainStop  (const struct cmdConf * conf);
+extern int mainRestart (const struct cmdConf * conf);
+extern int mainCapture (const struct cmdConf * conf);
+extern int mainNewCapture (const struct cmdConf * conf);
+extern int mainShow (const struct cmdConf * conf);
+extern int noDaemon (const struct cmdConf * conf);
+extern int status (const struct cmdConf * conf);
+extern int getSc  (const struct cmdConf * conf);
 
 
 #ifdef __SHAREDT_WIN__
