@@ -4,13 +4,13 @@
 
 struct RemoteGetterMsg {
     RemoteGetterMsg()  = default;
-    RemoteGetterMsg(size_t width, size_t height) : w(width), h(height), dataLen(0), name{0}, cmdArgs{0} { }
+    RemoteGetterMsg(uint32_t width, uint32_t height) : w(width), h(height), dataLen(0), name{0}, cmdArgs{0} { }
 
     void convert();
 
-    size_t w;
-    size_t h;
-    size_t dataLen;
+    uint32_t w;
+    uint32_t h;
+    uint32_t dataLen;
 
     char name[64];
     char cmdArgs[128];
@@ -24,8 +24,8 @@ public:
 
 private:
     Socket * _sk;
-    size_t _replyW;
-    size_t _replyH;
+    uint32_t _replyW;
+    uint32_t _replyH;
 };
 
 #endif //SHAREDT_REMOTEGETTER_H

@@ -79,6 +79,7 @@ private:
     ItemInfo _info;
 };
 
+typedef std::unordered_map<std::string, std::unique_ptr<QGroupBox>> RemoteToGroupBox;
 class UI_ShareDTWindow : public QObject
 {
     Q_OBJECT
@@ -119,7 +120,7 @@ private:
 
     QVBoxLayout * _mainLayout;
     QGROUP_BOX    _localGroupBox;
-    std::unordered_map<std::string, QGroupBox *> _remoteGroupBoxes;  // <connectionHost, GroupBox*>
+    RemoteToGroupBox _remoteGroupBoxes;  // <connectionHost, GroupBox*>
 
 signals:
     void refreshSignal();

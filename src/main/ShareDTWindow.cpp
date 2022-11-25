@@ -5,6 +5,8 @@
 #include "ExportAll.h"
 #include "Logger.h"
 #include "ShareDT.h"
+#include "Sock.h"
+#include "RemoteGetter.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,6 +24,7 @@ extern "C" {
 #include <QChar>
 #include <QInputDialog>
 #include <QDesktopWidget>
+#include <memory>
 
 const static int gpBoxFontSize = 15;
 
@@ -36,16 +39,63 @@ void UI_ShareDTWindow::newRemoteGroupBox(const std::string & host)
     }
 
     auto * gb= new GroupBox(host.c_str(), this);
-    FlowLayout gbFL;
-    gb->setLayout(&gbFL);
+    auto * gbFL = new FlowLayout();
+    gb->setLayout(gbFL);
 
     auto* scrollArea = new QScrollArea();
     scrollArea->setWidget(gb);
     scrollArea->setWidgetResizable( true );
+    scrollArea->setGeometry(QRect(600, 1000, 1000, 900));
 
     _mainLayout->addWidget(scrollArea);
     gb->setFont(QFont(QString("Arial"), gpBoxFontSize));
-    _remoteGroupBoxes[host] = gb;
+    _remoteGroupBoxes[host].reset(gb);
+
+    try {
+        SocketClient sc(host, 31400);
+        std::string cmd = "ShareDT";
+        cmd.append(" ");
+        cmd.append(SHAREDT_SERVER_COMMAND_REMOTGET);
+        sc.sendString(cmd);
+
+        FrameBuffer fb;
+        while (true) {
+            RemoteGetterMsg msg{};
+            if (sc.receiveBytes((unsigned char *) &msg, sizeof(msg)) <= 0) break;
+
+            msg.convert();
+
+            fb.reSet(msg.dataLen);
+            fb.setWidthHeight(msg.w, msg.h);
+            if (sc.receiveBytes(fb.getDataToWrite(), msg.dataLen) < 0 ) break;
+
+            LOGGER.info() << "Received frame buffer size=" << msg.dataLen
+                          << " name=" << msg.name
+                          << " cmdArgs=" << msg.cmdArgs;
+
+            ItemInfo info;
+            info.name = msg.name;
+            info.argument << msg.cmdArgs;
+            gbFL->addWidget(newImageBox(fb.getWidth(),
+                                         fb.getHeight(),
+                                         fb.getData(),
+                                         info));
+        }
+    } catch (std::string & e) {
+        QMessageBox msgBox;
+        QString message = QString("Cannot connect to host: ") + QString::fromStdString(host) +
+                            QString(" error=") + QString::fromStdString(e);
+        msgBox.setText(message); msgBox.exec();
+        _mainLayout->removeWidget(gb);
+        _remoteGroupBoxes.erase(host);
+    } catch (...) {
+        QMessageBox msgBox;
+        QString message = QString("Cannot connect to host: ") + QString::fromStdString(host) +
+                          QString(" unknown error.");
+        msgBox.setText(message); msgBox.exec();
+        _mainLayout->removeWidget(gb);
+        _remoteGroupBoxes.erase(host);
+    }
 }
 
 void ImageItem::mousePressEvent(QMouseEvent *event)
