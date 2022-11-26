@@ -1,4 +1,6 @@
 #include "StringTools.h"
+#include <type_traits>
+#include <cstring>
 
 bool isNumber(const std::string & s)
 {
@@ -45,3 +47,100 @@ std::string utf16_to_utf8(std::wstring utf16_string)
     return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.to_bytes(utf16_string);
 }
 #endif
+
+
+/*
+ * String Class
+ */
+String::String(size_t init_size) {
+    _buf = new char[init_size];
+    _size = init_size;
+    if (_buf != nullptr) {
+        for (size_t i = 0; i < init_size; i++) {
+            _buf[i] = '\0';
+        }
+    }
+}
+
+String::String(const std::string & data) {
+    size_t size = data.size();
+
+    _buf = new char[size];
+    _size = size;
+
+    if (_buf != nullptr) {
+        strncpy(_buf, data.c_str(), size);
+    }
+}
+
+String::String(const char* buf) {
+    size_t size = strlen(buf);
+
+    _buf = new char[size];
+    _size = size;
+
+    if (_buf != nullptr) {
+        strncpy(_buf, buf, size);
+    }
+}
+
+String::String(const String &string) {
+    _size = string.getLength();
+    _buf = new char[_size];
+
+    if (_buf != nullptr) {
+        strncpy(_buf, string._buf, _size);
+    }
+}
+
+String::~String() {
+    if (_buf != nullptr)
+        delete[] _buf;
+}
+
+char* String::getText() {
+    return _buf;
+}
+
+void String::setText(const char* text) {
+    delete[] _buf;
+
+    _size = strlen(text);
+    _buf = new char[_size];
+
+    strncpy(_buf, text, _size);
+}
+
+size_t String::getLength() const {
+    return strlen(_buf);
+}
+
+void String::setLength(size_t size) {
+    size_t old_length = getLength();
+    char* old_data = _buf;
+
+    _size = size;
+    _buf = new char[size];
+
+    for (size_t i = 0; i < size; i++) {
+        if (i < old_length) {
+            _buf[i] = old_data[i];
+        } else {
+            _buf[i] = '\0';
+        }
+    }
+
+    delete[] old_data;
+
+    _buf[size] = '\0';
+}
+
+void String::add(const String &text) {
+    size_t new_size = _size + text._size;
+    setLength(new_size);
+
+    size_t length = getLength();
+    for (size_t i = length; i < new_size; i++) {
+        _buf[i] = text._buf[i - length];
+    }
+}

@@ -4,12 +4,11 @@
 #include "ShareDT.h"
 #include "CrossPlatform.h"
 #include "MainManagementProcess.h"
-#include "Foreach.h"
 #include "Sock.h"
 #include "RemoteGetter.h"
 
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 
 #ifdef __SHAREDT_WIN__
 #include "WindowsProcess.h"
@@ -34,21 +33,20 @@ static unsigned int _incrse   = 0;   // vnc server start port
 void stopAllSC()
 {
     LOGGER.info() << "Stoping all Capture Server";
-    FOREACH(WIDMAP, it, _WIDManager)
+    for (auto & wid : _WIDManager)
     {
-        MainManagementProcess::STATUS statusType = it->second.status();
+        MainManagementProcess::STATUS statusType = wid.second.status();
 
         if(statusType == MainManagementProcess::STATUS::STARTED)
         {
-            LOGGER.info() << "Sending stopping to WID: " << it->first;
-            it->second.stop();
+            LOGGER.info() << "Sending stopping to WID: " << wid.first;
+            wid.second.stop();
 
             std::scoped_lock<std::mutex> guard(_WIDManagerMutex);
-            it->second.updateStatus(MainManagementProcess::STATUS::STOPPED);
-            LOGGER.info() << "Stopped Capture Server WID: " << it->first;
+            wid.second.updateStatus(MainManagementProcess::STATUS::STOPPED);
+            LOGGER.info() << "Stopped Capture Server WID: " << wid.first;
         }
     }
-    return;
 }
 
 static void stopSpecificCaptureServer(
@@ -60,7 +58,7 @@ static void stopSpecificCaptureServer(
     /* parsing input argument */
     hcl.initParsing();
     wid = hcl.getSC().getWID();
-    WIDMAP::iterator it = _WIDManager.find(wid);
+    auto it = _WIDManager.find(wid);
 
     if(!hcl.hasWid()) {
         sk->send("Command must has a valid \"--wid\" setting");
@@ -131,18 +129,18 @@ static void statusAllSC (
         return;
     }
 
-    FOREACH_CONST( WIDMAP, it, _WIDManager)
+    for (auto & wid : _WIDManager)
     {
         ret.append("Capture Server on port: ");
-        ret.append(std::to_string(it->second.getPort()));
+        ret.append(std::to_string(wid.second.getPort()));
         ret.append("\t Status: ");
-        if(it->second.status() == MainManagementProcess::STATUS::STOPPED)
+        if(wid.second.status() == MainManagementProcess::STATUS::STOPPED)
             ret.append("Stopped");
-        else if(it->second.status() == MainManagementProcess::STATUS::PENDING)
+        else if(wid.second.status() == MainManagementProcess::STATUS::PENDING)
             ret.append("Pending");
         else
             ret.append("Started");
-        ret.append("\t WID: " + it->first + "\n");
+        ret.append("\t WID: " + wid.first + "\n");
     }
 
     sk->send(ret.c_str());
@@ -185,8 +183,9 @@ static void getRemoteScreen(Socket * sk)
  * If new capture server reqeust is received
  *
  */
-void HandleCommandSocket(Socket * sk, char * buf)
+void HandleCommandSocket(Socket * s, char * buf)
 {
+    std::unique_ptr<Socket> sk(s);  /* take ownership of s */
     std::string wid;
     Capture::CType commandType;
     /* start handle particular --wid specified or start new capture server */
@@ -195,7 +194,7 @@ void HandleCommandSocket(Socket * sk, char * buf)
     /* parsing input argument */
     hcl.initParsing();
     wid = hcl.getSC().getWID();
-    WIDMAP::iterator it = _WIDManager.find(wid);
+    auto it = _WIDManager.find(wid);
     commandType = hcl.getSC().getCType();
     std::string user = hcl.getSC().getUserName();
     const std::string & capServerHome = hcl.getSC().getCapServerPath();
@@ -203,13 +202,13 @@ void HandleCommandSocket(Socket * sk, char * buf)
     /* 0. check if status command */
     if( commandType == Capture::C_STATUS )
     {
-        return statusAllSC(sk, hcl);
+        return statusAllSC(sk.get(), hcl);
     }
 
     /* 1. first check stop specific wid */
     if( commandType == Capture::C_STOP )
     {
-        return stopSpecificCaptureServer(sk, hcl);
+        return stopSpecificCaptureServer(sk.get(), hcl);
     }
 
     if( commandType == Capture::C_STOP_ALL_SC)
@@ -221,9 +220,7 @@ void HandleCommandSocket(Socket * sk, char * buf)
 
     /* remoteget, return avaible screen */
     if (commandType == Capture::C_REMOTEGET)
-    {
-        return getRemoteScreen(sk);
-    }
+        return getRemoteScreen(sk.get());
 
     if(!hcl.hasWid())   hcl.setWID();
     if(!hcl.isDaemon()) hcl.setDaemon();

@@ -142,7 +142,7 @@ std::string Socket::receiveStrings() const
 {
     char ret[BUFSIZE];
     int  reclen;
-    if((reclen=::recv(_s, ret, BUFSIZE, 0)) == -1)
+    if((reclen=::recv(_s, ret, BUFSIZE, MSG_PEEK)) == -1)
     {
             return "";
     }
@@ -156,7 +156,7 @@ std::string Socket::ReceiveLine() const
     while (1) {
         char r;
 
-        switch(recv(_s, &r, 1, 0))
+        switch(recv(_s, &r, 1, MSG_PEEK))
         {
             case 0:
                 return ret;
@@ -170,29 +170,23 @@ std::string Socket::ReceiveLine() const
     }
 }
 
-size_t Socket::receiveBytes(unsigned char *b, size_t s) {
-    size_t rec;
-    if((rec=::recv(_s, (char *)b, s, 0)) == -1)
-    {
-        return 0;
-    }
-
-    return rec;
+ssize_t Socket::receiveBytes(unsigned char *b, size_t s) const {
+    return  ::recv(_s, (char *)b, s, MSG_WAITALL);
 }
 
-void Socket::sendStringLine(std::string s) const
+size_t Socket::sendStringLine(std::string s) const
 {
     s += '\n';
-    ::send(_s,s.c_str(),s.length(),0);
+    return ::send(_s,s.c_str(),s.length(),0);
 }
 
-void Socket::sendString(const std::string& s) const
+size_t Socket::sendString(const std::string& s) const
 {
-    ::send(_s,s.c_str(),s.length()+1,0);
+    return ::send(_s,s.c_str(),s.length()+1,0);
 }
 
-void Socket::sendBytes(const unsigned char *p, size_t size) {
-    ::send(_s, (const char *)p, size,0);
+size_t Socket::sendBytes(const unsigned char *p, size_t size) const {
+    return ::send(_s, (const char *)p, size,0);
 }
 
 SocketServer::SocketServer(int port, int connections, TypeSocket type)
@@ -262,7 +256,8 @@ Socket* SocketServer::Accept()
         else
 #endif
         {
-            throw "Invalid Socket";
+            LOGGER.error() << "Invalid Socket";
+            return nullptr;
         }
     }
 
@@ -270,7 +265,8 @@ Socket* SocketServer::Accept()
     return r;
 }
 
-SocketClient::SocketClient(const std::string& host, int port) : Socket()
+SocketClient::SocketClient(const std::string& host, int port) : Socket(),
+                    _tv{ _tv.tv_sec = 60, _tv.tv_usec = 0}
 {
     std::string error;
 
@@ -294,6 +290,14 @@ SocketClient::SocketClient(const std::string& host, int port) : Socket()
 #endif
         throw error;
     }
+
+    if (::setsockopt (_s, SOL_SOCKET, SO_RCVTIMEO,
+#ifdef __SHAREDT_WIN__
+                      (char *)
+#endif
+                      &_tv,
+                      sizeof(_tv)) < 0)
+        LOGGER.warn() << "Failed to set timeout to seconds=" << _tv.tv_sec;
 }
 
 SocketSelect::SocketSelect(Socket const * const s1, Socket const * const s2, TypeSocket type)

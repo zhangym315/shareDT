@@ -4,6 +4,7 @@
 #ifdef __SHAREDT_WIN__
 #include <WinSock2.h>
 #include <Windows.h>
+typedef size_t ssize_t;
 #else
 #define SOCKET int
 #define INVALID_SOCKET -1
@@ -18,7 +19,7 @@ enum TypeSocket {BlockingSocket, NonBlockingSocket};
 
 class SocketFD
 {
-  public:
+public:
 #ifdef __SHAREDT_WIN__
     SocketFD(HANDLE fd) : _fd(fd) { }
 #else
@@ -29,7 +30,7 @@ class SocketFD
     int send(const char * buf) const;
     int recv(char * buf, size_t size) const;
 
-  private:
+private:
     SocketFD() { }
 #ifdef __SHAREDT_WIN__
     HANDLE _fd;
@@ -40,7 +41,7 @@ class SocketFD
 };
 
 class Socket {
-  public:
+public:
     virtual ~Socket();
     Socket(const Socket&);
     Socket& operator=(Socket&);
@@ -48,17 +49,17 @@ class Socket {
     std::string ReceiveLine() const;
     std::string receiveStrings() const;
 
-    size_t receiveBytes(unsigned char * b, size_t s);
+    ssize_t receiveBytes(unsigned char * b, size_t s) const;
 
     void   Close() const;
 
-    void   sendBytes(const unsigned char * p, size_t size);
-    void   sendStringLine (std::string) const;
-    void   sendString(const std::string&) const;
-    void   send(const char * buf) { sendString(std::string(buf)); }
+    size_t   sendBytes(const unsigned char * p, size_t size) const;
+    size_t   sendStringLine (std::string) const;
+    size_t   sendString(const std::string&) const;
+    size_t   send(const char * buf) { return sendString(std::string(buf)); }
     SOCKET getSocket() { return _s; }
 
-  protected:
+protected:
     friend class SocketServer;
     friend class SocketSelect;
 
@@ -68,16 +69,19 @@ class Socket {
     SOCKET _s;
     int* _refCounter;
 
-  private:
+private:
     static void Start();
     static void End();
     static int  _nofSockets;
 };
 
 class SocketClient : public Socket {
-  public:
+public:
     SocketClient(const std::string& host, int port);
     void write(const char * bytes) { sendString(bytes); }
+
+private:
+    struct timeval _tv;
 };
 
 class SocketServer : public Socket {
@@ -91,11 +95,11 @@ class SocketServer : public Socket {
 };
 
 class SocketSelect {
-  public:
+public:
     explicit SocketSelect(Socket const * s1, Socket const * const s2=NULL, TypeSocket type=BlockingSocket);
     bool Readable(Socket const * s);
 
-  private:
+private:
     fd_set fds_{};
 };
 

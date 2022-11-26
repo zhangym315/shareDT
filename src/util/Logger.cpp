@@ -66,10 +66,10 @@ void Logger::log(Priority priority, const char* __file, const char* __func, int 
 {
     char buf[2048] = {0};
 
-    sprintf(buf, "[%s][%s:%s:%d] ", Priority_To_String[priority],  __file, __func, __line);
+    snprintf(buf, 2048, "[%s][%s:%s:%d] ", Priority_To_String[priority],  __file, __func, __line);
     va_list args;
     va_start(args, fmt);
-    vsprintf(buf + strlen(buf), fmt, args);
+    vsnprintf(buf + strlen(buf), 2048-strlen(buf), fmt, args);
     va_end(args);
 
     std::string entry(buf);
@@ -86,11 +86,11 @@ void Logger::log2(Priority priority, const char *fmt, ...)
 
     if(priority != LOG_NOPREFIX)
     {
-        sprintf(buf, "[%s] [%s] ", Timestamp::localtime().c_str(), Priority_To_String[priority]);
+        snprintf(buf, 4096, "[%s] [%s] ", Timestamp::localtime().c_str(), Priority_To_String[priority]);
     }
     va_list args;
     va_start(args, fmt);
-    vsprintf(buf + strlen(buf), fmt, args);
+    vsnprintf(buf + strlen(buf), 4096-strlen(buf), fmt, args);
     va_end(args);
 
     std::string entry(buf);
@@ -106,10 +106,10 @@ void Logger::vaPrint(Priority priority, const char * fmt, va_list args) {
 
     if(priority != LOG_NOPREFIX)
     {
-        sprintf(buf, "[%s] [%s] ", Timestamp::localtime().c_str(), Priority_To_String[priority]);
+        snprintf(buf, 40960, "[%s] [%s] ", Timestamp::localtime().c_str(), Priority_To_String[priority]);
     }
 
-    vsprintf(buf + strlen(buf), fmt, args);
+    vsnprintf(buf + strlen(buf), 40960-strlen(buf), fmt, args);
     std::string entry(buf);
     std::unique_lock<std::mutex> lock(_mutex);
     _queue.push(std::move(entry));

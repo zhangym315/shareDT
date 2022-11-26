@@ -97,7 +97,7 @@ add_executable(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_SRC}/main/LocalDisplayer.cpp
         ${SHAREDT_SRC_CLIENT}/qt/SDThread.cpp
         ${SHAREDT_SERVER_SRC_COMMON}
-        src/main/RemoteGetter.h src/main/RemoteGetter.cpp)
+        src/cli/RemoteGetter.h src/cli/RemoteGetter.cpp)
 
 target_link_libraries(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_CLIENT_QT_LIBS}

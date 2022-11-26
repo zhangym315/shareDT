@@ -7,6 +7,7 @@
 #include "Path.h"
 #include "ReadWriteFD.h"
 #include "Sock.h"
+#include "RemoteGetter.h"
 
 #ifdef __SHAREDT_WIN__
 #include <Windows.h>
@@ -41,9 +42,8 @@ int mainInform(const char * command, const struct cmdConf * conf)
     return infoServiceToAction(commandPath.c_str());
 }
 
-int mainStart (const char ** cmdArg, const struct cmdConf * conf)
+int mainStart (const struct cmdConf * conf)
 {
-    (void) cmdArg;
     if(conf->argc == 2)
     {
         fprintf(stdout, "Starting ShareDT Server\n");
@@ -104,9 +104,8 @@ int mainStart (const char ** cmdArg, const struct cmdConf * conf)
 
 }
 
-int mainStop (const char ** cmdArg, const struct cmdConf * conf)
+int mainStop (const struct cmdConf * conf)
 {
-    (void) cmdArg;
     if(!setMainProcessServiceHome(conf) ||
        !checkMainServiceStarted())
         return RETURN_CODE_INTERNAL_ERROR;
@@ -145,7 +144,7 @@ int mainStop (const char ** cmdArg, const struct cmdConf * conf)
 #endif
 }
 
-int mainRestart (const char ** cmdArg, const struct cmdConf * conf)
+int mainRestart (const struct cmdConf * conf)
 {
     return RETURN_CODE_SUCCESS;
 }
@@ -155,7 +154,7 @@ int mainRestart (const char ** cmdArg, const struct cmdConf * conf)
  * This function doesn't start capture server straightforwardly
  * Instead, if notify MainService to start new process as Capture Server
  */
-int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
+int mainCapture (const struct cmdConf * conf)
 {
     CaptureServer cap;
     char ** argv = const_cast<char **>(conf->argv);
@@ -202,9 +201,8 @@ int mainCapture (const char ** cmdArg, const struct cmdConf * conf)
 }
 
 /* main service fork/create new process as the capture server */
-int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
+int mainNewCapture (const struct cmdConf * conf)
 {
-    (void) cmdArg;
     CaptureServer cap;
     char ** argv = const_cast<char **>(conf->argv);
     int ret = cap.initParsing(conf->argc, argv) ||
@@ -240,9 +238,8 @@ int mainNewCapture (const char ** cmdArg, const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 }
 
-int mainShow (const char ** cmdArg, const struct cmdConf * conf)
+int mainShow (const struct cmdConf * conf)
 {
-    (void) cmdArg;
     Capture cap;
     int ret;
 
@@ -254,9 +251,8 @@ int mainShow (const char ** cmdArg, const struct cmdConf * conf)
     }
 }
 
-int noDaemon (const char ** cmdArg, const struct cmdConf * conf)
+int noDaemon (const struct cmdConf * conf)
 {
-    (void) cmdArg;
     int ret;
     CaptureServer cap;
     char ** argv = const_cast<char **>(conf->argv);
@@ -279,9 +275,8 @@ int noDaemon (const char ** cmdArg, const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 }
 
-int status (const char ** cmdArg, const struct cmdConf * conf)
+int status (const struct cmdConf * conf)
 {
-    (void) cmdArg;
 #ifdef __SHAREDT_WIN__
     std::string commandPath;
     TCHAR szPath[MAX_PATH];
@@ -311,7 +306,7 @@ int status (const char ** cmdArg, const struct cmdConf * conf)
 #endif
 }
 
-int getSc (const char ** cmdArg, const struct cmdConf * conf)
+int getSc (const struct cmdConf * conf)
 {
     SocketClient sc(conf->argv[2], 31400);
     std::string cmd = conf->argv[0];
@@ -320,14 +315,28 @@ int getSc (const char ** cmdArg, const struct cmdConf * conf)
     cmd.append(SHAREDT_SERVER_COMMAND_REMOTGET);
     sc.sendString(cmd);
 
-    unsigned char buf[31400];
-    size_t rec = sc.receiveBytes(buf, 31400);
-    fprintf(stdout, ("received, %i\n"), rec);
+    FrameBuffer fb;
+    while (true) {
+        RemoteGetterMsg msg{};
+        if (sc.receiveBytes((unsigned char *) &msg, sizeof(msg)) <= 0) break;
+
+        msg.convert();
+
+        fb.reSet(msg.dataLen);
+        if (sc.receiveBytes(fb.getDataToWrite(), msg.dataLen) < 0 ) break;
+
+        std::cout << "Received frame buffer size=" << msg.dataLen
+                  << " name=" << msg.name
+                  << " cmdArgs=" << msg.cmdArgs << std::endl;
+    }
+
+    std::cout << "Read finished" << std::endl;
+
     return 0;
 }
 
 #ifdef __SHAREDT_WIN__
-int installService (const char ** cmdArg, const struct cmdConf * conf)
+int installService (const struct cmdConf * conf)
 {
     SC_HANDLE schSCManager;
     SC_HANDLE schService;
@@ -373,7 +382,7 @@ int installService (const char ** cmdArg, const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 }
 
-int uninstallService (const char ** cmdArg, const struct cmdConf * conf)
+int uninstallService (const struct cmdConf * conf)
 {
     SC_HANDLE schSCManager;
     SC_HANDLE schService;
@@ -410,7 +419,7 @@ int uninstallService (const char ** cmdArg, const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 }
 
-int startService (const char ** cmdArg, const struct cmdConf * conf)
+int startService (const struct cmdConf * conf)
 {
     setMainProcessServiceHome(conf);
     setMainServiceFile() ;
@@ -419,3 +428,4 @@ int startService (const char ** cmdArg, const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 }
 #endif
+

@@ -43,7 +43,7 @@ char * get_current_time_string()
     timeptr = localtime (&time);
 
 
-    sprintf(result, "%.2d-%.2d-%d %.2d:%.2d:%.2d.%.3d",
+    snprintf(result, 32, "%.2d-%.2d-%d %.2d:%.2d:%.2d.%.3d",
             timeptr->tm_mon+1,
             timeptr->tm_mday,
             1900 + timeptr->tm_year,

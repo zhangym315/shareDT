@@ -113,7 +113,7 @@ void DaemonizeProcess::daemonizeInit()
     }
 
     /* Get current PID */
-    sprintf(str, "%d\n", getpid());
+    snprintf(str, 256, "%d\n", getpid());
 
     /* Write PID to lockfile */
     write(pid_fd, str, strlen(str));

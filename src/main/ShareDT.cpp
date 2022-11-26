@@ -63,7 +63,7 @@ static void initShareDT(const char * argv0)
 #endif
 }
 
-static int localDisplayer(const char ** a, const struct cmdConf * conf)
+static int localDisplayer(const struct cmdConf * conf)
 {
     QApplication app(const_cast<int&> (conf->argc), const_cast<char **>(conf->argv));
     LocalDisplayer gui(const_cast<int&> (conf->argc), const_cast<char **> (conf->argv));
@@ -79,7 +79,7 @@ static int localDisplayer(const char ** a, const struct cmdConf * conf)
 
 static const struct {
     const char *name;
-    int (*func)(const char **extra, const struct cmdConf *cconf);
+    int (*func)(const struct cmdConf *cconf);
 } cmdHandlers[] = {
         { SHAREDT_SERVER_COMMAND_START ,     &mainStart   },     /* start service         */
         { SHAREDT_SERVER_COMMAND_STOP  ,     &mainStop    },     /* stop  service         */
@@ -91,11 +91,11 @@ static const struct {
         { SHAREDT_SERVER_COMMAND_STATUS,     &status      },     /* status of current pro */
         { SHAREDT_SERVER_COMMAND_EXPORT,     &mainExport  },     /* export images         */
         { SHAREDT_SERVER_COMMAND_DISPLAY,    &localDisplayer},   /* local display         */
-        { SHAREDT_SERVER_COMMAND_GET,  &getSc }            /* Get screen            */
+        { SHAREDT_SERVER_COMMAND_GET,        &getSc }            /* Get screen            */
 #ifdef  __SHAREDT_WIN__
         ,{ "install",    &installService },  /* install service       */
-            { "service",    &startService },    /* from scm service      */
-            { "uninstall",  &uninstallService } /* uninstall service     */
+        { "service",    &startService },    /* from scm service      */
+        { "uninstall",  &uninstallService } /* uninstall service     */
 #endif
 };
 
@@ -135,7 +135,7 @@ int main(int argc, char** argv)
 
     for (const auto & cmdHandler : cmdHandlers) {
         if (chars_equal(cmdHandler.name, cmd[1])) {
-            int ret = cmdHandler.func(cmd + 1, &cconf);
+            int ret = cmdHandler.func(&cconf);
             fflush(stdout);
             return ret;
         }

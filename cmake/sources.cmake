@@ -25,6 +25,7 @@ set(SHAREDT_SERVER_SRC_COMMON
         ${SHAREDT_SRC}/util/Sock.cpp
         ${SHAREDT_SRC}/util/Pid.c
         ${SHAREDT_SRC}/util/TimeUtil.c
+        ${SHAREDT_SRC}/util/Converter.cpp
         ${SHAREDT_SERVER_SRC_COMMON}
 )
 

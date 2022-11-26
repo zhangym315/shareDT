@@ -69,7 +69,7 @@
 static char *vnc_connection_addr_to_string(char *host, int port)
 {
     char * buf = (char *)malloc(strlen(host) + 7);
-    sprintf(buf, "%s;%hu", host, port);
+    snprintf(buf, strlen(host) + 7, "%s;%hu", host, port);
     return buf;
 }
 
