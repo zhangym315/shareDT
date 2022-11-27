@@ -76,7 +76,9 @@ class SocketClient : public Socket {
 public:
     SocketClient(const std::string& host, int port);
     void write(const char * bytes) { sendString(bytes); }
+#ifndef __SHAREDT_WIN__
     int connectWait (int sockno, struct sockaddr * addr, size_t addrlen, struct timeval * timeout);
+#endif
 
 private:
     struct timeval _tv;

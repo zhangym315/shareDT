@@ -96,7 +96,7 @@ void ServiceMain(int argc, char** argv)
     SocketServer ss(SHAREDT_INTERNAL_PORT_START, 10);
     if (!ss.isInit()) {
         LOGGER.error() << "Failed to start MainService";
-        return 1;
+        return;
     }
 
     LOGGER.info() << "MainService started on port=" << ss.getPort() ;

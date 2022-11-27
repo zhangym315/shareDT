@@ -283,6 +283,7 @@ SocketClient::SocketClient(const std::string& host, int port) : Socket(),
     _isConnected = true;
 }
 
+#ifndef __SHAREDT_WIN__
 int SocketClient::connectWait(int sockno, struct sockaddr *addr, size_t addrlen, struct timeval *timeout)     {
     int res, opt;
 
@@ -333,3 +334,4 @@ int SocketClient::connectWait(int sockno, struct sockaddr *addr, size_t addrlen,
 
     return 0;
 }
+#endif
