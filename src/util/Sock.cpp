@@ -11,6 +11,8 @@
 #include <cerrno>
 #include <netdb.h>
 #include <sys/select.h>
+
+#include <errno.h>
 #endif
 
 using namespace std;
@@ -52,7 +54,9 @@ int SocketFD::recv(char * buf, size_t size) const
     return rc;
 }
 
+#ifdef __SHAREDT_WIN__
 int Socket::_nofSockets= 0;
+#endif
 
 void Socket::Start()
 {
@@ -62,7 +66,8 @@ void Socket::Start()
         WSADATA info;
         if (WSAStartup(MAKEWORD(2,0), &info))
         {
-            throw "Could not start WSA";
+            LOGGER.warn() << "Could not start WSA";
+            return;
         }
     }
     ++_nofSockets;
@@ -76,57 +81,32 @@ void Socket::End()
 #endif
 }
 
-Socket::Socket() : _s(0)
+Socket::Socket() : _s(INVALID_SOCKET)
 {
     Start();
     // UDP: use SOCK_DGRAM instead of SOCK_STREAM
     _s = socket(AF_INET, SOCK_STREAM, 0);
-
-    if (_s == INVALID_SOCKET)
-    {
-        throw "INVALID_SOCKET";
-    }
-
-    _refCounter = new int(1);
 }
 
 Socket::Socket(SOCKET s) : _s(s)
 {
     Start();
-    _refCounter = new int(1);
 };
 
 Socket::~Socket()
 {
-    if (! --(*_refCounter))
-    {
-        Close();
-        delete _refCounter;
-    }
-
-    --_nofSockets;
+    Close();
+#ifdef __SHAREDT_WIN__
     if (!_nofSockets) End();
+#endif
 }
 
 Socket::Socket(const Socket& o)
 {
-    _refCounter=o._refCounter;
-    (*_refCounter)++;
     _s         =o._s;
-
+#ifdef __SHAREDT_WIN__
     _nofSockets++;
-}
-
-Socket& Socket::operator=(Socket& o)
-{
-    (*o._refCounter)++;
-
-    _refCounter=o._refCounter;
-    _s         =o._s;
-
-    _nofSockets++;
-
-    return *this;
+#endif
 }
 
 void Socket::Close() const
@@ -153,7 +133,7 @@ std::string Socket::receiveStrings() const
 std::string Socket::ReceiveLine() const
 {
     std::string ret;
-    while (1) {
+    while (true) {
         char r;
 
         switch(recv(_s, &r, 1, MSG_PEEK))
@@ -162,7 +142,6 @@ std::string Socket::ReceiveLine() const
                 return ret;
             case -1:
                 return "";
-
         }
 
         ret += r;
@@ -189,13 +168,13 @@ size_t Socket::sendBytes(const unsigned char *p, size_t size) const {
     return ::send(_s, (const char *)p, size,0);
 }
 
-SocketServer::SocketServer(int port, int connections, TypeSocket type)
+SocketServer::SocketServer(int port, int connections, TypeSocket type) : _isInit(false)
 {
     sockaddr_in sa{};
 
     _s = socket(AF_INET, SOCK_STREAM, 0);
     if (_s == INVALID_SOCKET) {
-        throw "INVALID_SOCKET";
+        return;
     }
 
     if(type==NonBlockingSocket) {
@@ -217,7 +196,7 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type)
 #ifdef __SHAREDT_WIN__
     WSAGetLastError() == WSAEADDRINUSE &&
 #endif
-            (retry++) < 200)
+            (retry++) < 20)
     {
         LOGGER.warn() << "Port("<< port << ") has been used, retry another one for internal communication: " << port+1;
 
@@ -237,14 +216,15 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type)
 #else
         close(_s);
 #endif
-        throw("INVALID_SOCKET");
+        LOGGER.error() << "INVALID_SOCKET";
     }
 
     _port = port;
     listen(_s, connections);
+    _isInit = true;
 }
 
-Socket* SocketServer::Accept()
+Socket* SocketServer::accept()
 {
     SOCKET new_sock = ::accept(_s, nullptr, nullptr);
     if (new_sock == INVALID_SOCKET) {
@@ -261,19 +241,20 @@ Socket* SocketServer::Accept()
         }
     }
 
-    Socket* r = new Socket(new_sock);
+    Socket * r = new Socket(new_sock);
     return r;
 }
 
 SocketClient::SocketClient(const std::string& host, int port) : Socket(),
-                    _tv{ _tv.tv_sec = 60, _tv.tv_usec = 0}
+                    _tv{ _tv.tv_sec = 10, _tv.tv_usec = 0},
+                    _isConnected(false)
 {
     std::string error;
 
     hostent *he;
-    if ((he = gethostbyname(host.c_str())) == 0) {
-        error = strerror(errno);
-        throw error;
+    if ((he = gethostbyname(host.c_str())) == nullptr) {
+        LOGGER.error() << "Failed to get host by name for" << host << " errorno=" << error;
+        return;
     }
 
     sockaddr_in addr{};
@@ -282,60 +263,73 @@ SocketClient::SocketClient(const std::string& host, int port) : Socket(),
     addr.sin_addr = *((in_addr *)he->h_addr);
     memset(&(addr.sin_zero), 0, 8);
 
+    if (::setsockopt (_s, SOL_SOCKET, SO_RCVTIMEO,
+#ifdef __SHAREDT_WIN__
+            (char *)
+#endif
+                      &_tv,
+                      sizeof(_tv)) < 0)
+        LOGGER.warn() << "Failed to set timeout to seconds=" << _tv.tv_sec;
+
     if (::connect(_s, (sockaddr *) &addr, sizeof(sockaddr))) {
 #ifdef __SHAREDT_WIN__
         error = strerror(WSAGetLastError());
 #else
         error = "connect error";
 #endif
-        throw error;
+        return;
     }
 
-    if (::setsockopt (_s, SOL_SOCKET, SO_RCVTIMEO,
-#ifdef __SHAREDT_WIN__
-                      (char *)
-#endif
-                      &_tv,
-                      sizeof(_tv)) < 0)
-        LOGGER.warn() << "Failed to set timeout to seconds=" << _tv.tv_sec;
+    _isConnected = true;
 }
 
-SocketSelect::SocketSelect(Socket const * const s1, Socket const * const s2, TypeSocket type)
-{
-    FD_ZERO(&fds_);
-    FD_SET(const_cast<Socket*>(s1)->_s,&fds_);
-    if(s2) {
-        FD_SET(const_cast<Socket*>(s2)->_s,&fds_);
+int SocketClient::connectWait(int sockno, struct sockaddr *addr, size_t addrlen, struct timeval *timeout)     {
+    int res, opt;
+
+    if ((opt = fcntl (sockno, F_GETFL, NULL)) < 0) {
+        return -1;
     }
 
-#ifdef __SHAREDT_WIN__
-    TIMEVAL tval;
-    TIMEVAL *ptval;
-#else
-    timeval tval;
-    timeval *ptval;
-#endif
-    tval.tv_sec  = 0;
-    tval.tv_usec = 1;
-
-    if(type==NonBlockingSocket) {
-        ptval = &tval;
-    }
-    else {
-        ptval = 0;
+    if (fcntl (sockno, F_SETFL, opt | O_NONBLOCK) < 0) {
+        return -1;
     }
 
-    if (select (0, &fds_, (fd_set*) 0, (fd_set*) 0, ptval)
-#ifdef __SHAREDT_WIN__
-        == SOCKET_ERROR)
-#else
-        == -1)
-#endif
-        throw "Error in select";
-}
+    /* connecting */
+    if ((res = connect (sockno, addr, addrlen)) < 0) {
+        if (errno == EINPROGRESS) {
+            fd_set wait_set;
 
-bool SocketSelect::Readable(Socket const* const s)
-{
-    if (FD_ISSET(s->_s,&fds_)) return true;
-    return false;
+            FD_ZERO (&wait_set);
+            FD_SET (sockno, &wait_set);
+
+            res = select (sockno + 1, NULL, &wait_set, NULL, timeout);
+        }
+    } else {
+        res = 1;
+    }
+
+    if (fcntl (sockno, F_SETFL, opt) < 0) {
+        return -1;
+    }
+
+    if (res < 0) {
+        return -1;
+    } else if (res == 0) {
+        errno = ETIMEDOUT;
+        return 1;
+    } else {
+        socklen_t len = sizeof (opt);
+
+        /* check for errors */
+        if (getsockopt (sockno, SOL_SOCKET, SO_ERROR, &opt, &len) < 0) {
+            return -1;
+        }
+
+        if (opt) {
+            errno = opt;
+            return -1;
+        }
+    }
+
+    return 0;
 }
