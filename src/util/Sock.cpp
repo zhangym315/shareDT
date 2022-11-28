@@ -6,13 +6,10 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
-#include <netinet/in.h>
 #include <fcntl.h>
 #include <cerrno>
 #include <netdb.h>
 #include <sys/select.h>
-
-#include <errno.h>
 #endif
 
 using namespace std;
@@ -241,97 +238,94 @@ Socket* SocketServer::accept()
         }
     }
 
-    Socket * r = new Socket(new_sock);
-    return r;
+    return new Socket(new_sock);
 }
 
 SocketClient::SocketClient(const std::string& host, int port) : Socket(),
-                    _tv{ _tv.tv_sec = 10, _tv.tv_usec = 0},
-                    _isConnected(false)
+                            _tv{ _tv.tv_sec = 10, _tv.tv_usec = 0},
+                            _skAddr{},
+                            _isInited(false)
 {
-    std::string error;
-
     hostent *he;
     if ((he = gethostbyname(host.c_str())) == nullptr) {
-        LOGGER.error() << "Failed to get host by name for" << host << " errorno=" << error;
+        LOGGER.error() << "Failed to get host by name for" << host;
         return;
     }
 
-    sockaddr_in addr{};
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    addr.sin_addr = *((in_addr *)he->h_addr);
-    memset(&(addr.sin_zero), 0, 8);
+    _skAddr.sin_family = AF_INET;
+    _skAddr.sin_port = htons(port);
+    _skAddr.sin_addr = *((in_addr *)he->h_addr);
+    memset(&(_skAddr.sin_zero), 0, 8);
 
-    if (::setsockopt (_s, SOL_SOCKET, SO_RCVTIMEO,
-#ifdef __SHAREDT_WIN__
-            (char *)
-#endif
-                      &_tv,
-                      sizeof(_tv)) < 0)
-        LOGGER.warn() << "Failed to set timeout to seconds=" << _tv.tv_sec;
+    _isInited = true;
+}
 
-    if (::connect(_s, (sockaddr *) &addr, sizeof(sockaddr))) {
+bool SocketClient::connect() {
+    if (!_isInited) return false;
+
+    if (::connect(_s, (sockaddr *) &_skAddr, sizeof(sockaddr))) {
+        std::string error;
 #ifdef __SHAREDT_WIN__
         error = strerror(WSAGetLastError());
 #else
         error = "connect error";
 #endif
-        return;
+        LOGGER.error() << "Failed to connect, error=\"" << error << "\"";
+        return false;
     }
 
-    _isConnected = true;
+    return true;
 }
 
 #ifndef __SHAREDT_WIN__
-int SocketClient::connectWait(int sockno, struct sockaddr *addr, size_t addrlen, struct timeval *timeout)     {
+bool SocketClient::connectWait()     {
     int res, opt;
 
-    if ((opt = fcntl (sockno, F_GETFL, NULL)) < 0) {
-        return -1;
+    if ((opt = fcntl (_s, F_GETFL, NULL)) < 0) {
+        return false;
     }
 
-    if (fcntl (sockno, F_SETFL, opt | O_NONBLOCK) < 0) {
-        return -1;
+    if (fcntl (_s, F_SETFL, opt | O_NONBLOCK) < 0) {
+        return false;
     }
 
     /* connecting */
-    if ((res = connect (sockno, addr, addrlen)) < 0) {
+    if ((res = ::connect (_s, (sockaddr *) &_skAddr, sizeof(_skAddr))) < 0) {
         if (errno == EINPROGRESS) {
             fd_set wait_set;
 
             FD_ZERO (&wait_set);
-            FD_SET (sockno, &wait_set);
+            FD_SET (_s, &wait_set);
 
-            res = select (sockno + 1, NULL, &wait_set, NULL, timeout);
+            res = select (_s + 1, nullptr, &wait_set, nullptr, &_tv);
         }
     } else {
         res = 1;
     }
 
-    if (fcntl (sockno, F_SETFL, opt) < 0) {
-        return -1;
+    if (fcntl (_s, F_SETFL, opt) < 0) {
+        return false;
     }
 
     if (res < 0) {
-        return -1;
+        return false;
     } else if (res == 0) {
         errno = ETIMEDOUT;
-        return 1;
+        return true;
     } else {
         socklen_t len = sizeof (opt);
 
         /* check for errors */
-        if (getsockopt (sockno, SOL_SOCKET, SO_ERROR, &opt, &len) < 0) {
-            return -1;
+        if (getsockopt (_s, SOL_SOCKET, SO_ERROR, &opt, &len) < 0) {
+            return false;
         }
 
         if (opt) {
             errno = opt;
-            return -1;
+            return false;
         }
     }
 
-    return 0;
+    return true;
 }
 #endif

@@ -6,6 +6,7 @@
 #include <Windows.h>
 typedef size_t ssize_t;
 #else
+#include <netinet/in.h>
 #define SOCKET int
 #define INVALID_SOCKET -1
 #endif
@@ -76,13 +77,16 @@ class SocketClient : public Socket {
 public:
     SocketClient(const std::string& host, int port);
     void write(const char * bytes) { sendString(bytes); }
+    bool connect();
+
 #ifndef __SHAREDT_WIN__
-    int connectWait (int sockno, struct sockaddr * addr, size_t addrlen, struct timeval * timeout);
+    bool connectWait ();
 #endif
 
 private:
-    struct timeval _tv;
-    bool   _isConnected;
+    struct timeval  _tv;
+    sockaddr_in     _skAddr;
+    bool            _isInited;
 };
 
 class SocketServer : public Socket {

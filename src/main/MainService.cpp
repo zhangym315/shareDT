@@ -492,17 +492,17 @@ int infoServiceToAction(const char * execCmd)
     std::string alive = ShareDTHome::instance()->getHome() + std::string(MAIN_SERVER_PATH) + std::string(PATH_ALIVE_FILE);
     Path aliveReader(alive, std::fstream::in);
     int port;
-    try {
-        port = aliveReader.readLineAsInt();
-        SocketClient sc(LOCALHOST, port);
-        sc.sendString(execCmd);
-
-        std::string receive = sc.receiveStrings();
-        fprintf(stdout, ("%s\n"), receive.c_str() );
-    } catch (...) {
+    port = aliveReader.readLineAsInt();
+    SocketClient sc(LOCALHOST, port);
+    if (!sc.connect()) {
         fprintf(stderr, "Failed to connect server process.");
         return RETURN_CODE_INTERNAL_ERROR;
     }
+
+    sc.sendString(execCmd);
+
+    std::string receive = sc.receiveStrings();
+    fprintf(stdout, ("%s\n"), receive.c_str() );
 
     return RETURN_CODE_SUCCESS;
 }

@@ -309,6 +309,11 @@ int status (const struct cmdConf * conf)
 int getSc (const struct cmdConf * conf)
 {
     SocketClient sc(conf->argv[2], 31400);
+
+    if (!sc.connect()) {
+        return -1;
+    }
+
     std::string cmd = conf->argv[0];
 
     cmd.append(" ");
