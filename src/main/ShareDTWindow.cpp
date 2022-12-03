@@ -30,6 +30,16 @@ const static int gpBoxFontSize = 15;
 
 void UI_ShareDTWindow::newRemoteGroupBox(const std::string & host)
 {
+    /* check if already connected */
+    if (_remoteGroupBoxes.find(host) != _remoteGroupBoxes.end()) {
+        QMessageBox msgBox;
+        QString message("Host already connected: ");
+        message.append(host.c_str());
+        msgBox.setText(message); msgBox.exec();
+        return;
+    }
+
+    /* connection */
     SocketClient sc(host, 31400);
     if (!sc.connectWait()) {
         QMessageBox msgBox;
@@ -37,14 +47,6 @@ void UI_ShareDTWindow::newRemoteGroupBox(const std::string & host)
                         QString::fromStdString(host));
         msgBox.exec();
         return ;
-    }
-
-    if (_remoteGroupBoxes.find(host) != _remoteGroupBoxes.end()) {
-        QMessageBox msgBox;
-        QString message("Host already connected: ");
-        message.append(host.c_str());
-        msgBox.setText(message); msgBox.exec();
-        return;
     }
 
     auto * gb= new GroupBox(host.c_str(), this);

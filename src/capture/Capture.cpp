@@ -143,7 +143,9 @@ int Capture::parseArgs(const vector<std::string> & args)
     for (auto i = args.begin(); i != args.end(); ++i) {
 
         if (_ctype == C_NONE) {
-            if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
+            if (*i == SHAREDT_SERVER_COMMAND_CAPTURE) {
+                _ctype = C_CAPTURE;
+            } else if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
                 _ctype = C_NEWCAPTURE;
             } else if (*i == SHAREDT_SERVER_COMMAND_STOP) {
                 if((i+1) != args.end() && *(i+1) == "all")

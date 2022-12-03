@@ -473,7 +473,7 @@ bool setMainServiceFile()
         LOGGER.error() << "Cannot open pid file: " << pathPid;
         return false;
     }
-    fs<< curPid;
+    fs << curPid;
     fs.close();
 
     LOGGER.info() << "Starting server service process: " << curPid;

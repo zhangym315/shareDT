@@ -100,7 +100,7 @@ void DaemonizeProcess::daemonizeInit()
     strcat(pid_file_name, PATH_PID_FILE);
 
     char str[256];
-    int pid_fd = open(pid_file_name, O_RDWR|O_CREAT|O_APPEND, 0640);
+    int pid_fd = open(pid_file_name, O_RDWR|O_CREAT|O_TRUNC, 0640);
 
     if (pid_fd < 0) {
         /* Can't open lockfile */
