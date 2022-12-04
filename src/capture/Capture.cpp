@@ -165,6 +165,8 @@ int Capture::parseArgs(const vector<std::string> & args)
             } else if (*i == SHAREDT_SERVER_COMMAND_REMOTGET) {
                 _ctype = C_REMOTEGET;
             }
+
+            if (_ctype != C_NONE) continue;
         }
 
         if (*i == "--help") {
@@ -261,6 +263,16 @@ int Capture::parseArgs(const vector<std::string> & args)
             }
         }
         else {
+            /* parameter without options should be host(:port) */
+            std::string s = *i;
+            auto pos = s.find(':');
+            if (pos != std::string::npos ) {
+                _host = s.substr(0, pos);
+                toInt(s.substr(pos + 1, s.length()), _vncPort);
+            } else {
+                _host = s;
+            }
+
             _unrecognizedOptions.emplace_back(*i);
         }
     }

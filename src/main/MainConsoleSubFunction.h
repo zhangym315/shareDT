@@ -1,7 +1,6 @@
 #ifndef SHAREDT_MAINCONSOLESUBFUNCTION_H
 #define SHAREDT_MAINCONSOLESUBFUNCTION_H
 
-extern int mainInform(const struct cmdConf * conf);
 extern int mainStart (const struct cmdConf * conf);
 extern int mainStop  (const struct cmdConf * conf);
 extern int mainRestart (const struct cmdConf * conf);

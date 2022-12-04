@@ -40,7 +40,7 @@ void UI_ShareDTWindow::newRemoteGroupBox(const std::string & host)
     }
 
     /* connection */
-    SocketClient sc(host, 31400);
+    SocketClient sc(host, SHAREDT_INTERNAL_PORT_START);
     if (!sc.connectWait()) {
         QMessageBox msgBox;
         msgBox.setText(QString("Cannot connect to host: ") +

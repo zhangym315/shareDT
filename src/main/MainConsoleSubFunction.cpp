@@ -18,7 +18,39 @@
 #include "Daemon.h"
 #endif
 
-int mainInform(const char * command, const struct cmdConf * conf)
+/*
+ * Command line to inform service to create child
+ * process to run the server procedure
+ */
+int connectServiceToAction(const char * execCmd, const CaptureServer & cap)
+{
+    std::string alive = ShareDTHome::instance()->getHome() + std::string(MAIN_SERVER_PATH) + std::string(PATH_ALIVE_FILE);
+
+    int port; std::string host;
+    if (cap.getHost().empty()) {
+        Path aliveReader(alive, std::fstream::in);
+        port = aliveReader.readLineAsInt();
+        host = LOCALHOST;
+    } else {
+        port = SHAREDT_INTERNAL_PORT_START;
+        host = cap.getHost();
+    }
+
+    SocketClient sc(host, port);
+    if (!sc.connect()) {
+        fprintf(stderr, "Failed to connect server process.");
+        return RETURN_CODE_INTERNAL_ERROR;
+    }
+
+    sc.sendString(execCmd);
+
+    std::string receive = sc.receiveStrings();
+    fprintf(stdout, ("%s\n"), receive.c_str());
+
+    return RETURN_CODE_SUCCESS;
+}
+
+int mainInform(const char * command, const struct cmdConf * conf, const CaptureServer & cap)
 {
     /*
      * 1. set home directory
@@ -39,7 +71,7 @@ int mainInform(const char * command, const struct cmdConf * conf)
         commandPath.append(conf->argv[i]);
     }
 
-    return infoServiceToAction(commandPath.c_str());
+    return connectServiceToAction(commandPath.c_str(), cap);
 }
 
 int mainStart (const struct cmdConf * conf)
@@ -99,7 +131,7 @@ int mainStart (const struct cmdConf * conf)
 #endif
     } else {
         fprintf(stdout, "Starting Capture Server\n");
-        return mainInform(" start", conf);
+        return mainInform(" start", conf, CaptureServer());
     }
 
 }
@@ -113,7 +145,7 @@ int mainStop (const struct cmdConf * conf)
     if(conf->argc > 2)
     {
         fprintf(stdout, "Stopping Capture Server\n");
-        return mainInform(" stop", conf);
+        return mainInform(" stop", conf, CaptureServer());
     }
 
 #ifdef __SHAREDT_WIN__
@@ -140,7 +172,7 @@ int mainStop (const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 #else
     fprintf(stdout, "Stopping ShareDT Server\n");
-    return infoServiceToAction (MAIN_SERVICE_STOPPING);
+    return connectServiceToAction (MAIN_SERVICE_STOPPING, CaptureServer());
 #endif
 }
 
@@ -194,9 +226,9 @@ int mainCapture (const struct cmdConf * conf)
     commandPath.append("\"");
 
     fprintf(stdout, "Starting Capture Server\n");
-    infoServiceToAction(commandPath.c_str());
+    connectServiceToAction(commandPath.c_str(), CaptureServer());
 #else
-    return mainInform(" newCapture", conf);
+    return mainInform(" newCapture", conf, cap);
 #endif
 }
 
@@ -298,17 +330,17 @@ int status (const struct cmdConf * conf)
 
     fprintf(stdout, "Capture Server status:\n");
 
-    infoServiceToAction(commandPath.c_str());
+    connectServiceToAction(commandPath.c_str(), CaptureServer());
 
 #else
     fprintf(stdout, "Capture Server status:\n");
-    return mainInform(" status", conf);
+    return mainInform(" status", conf, CaptureServer());
 #endif
 }
 
 int getSc (const struct cmdConf * conf)
 {
-    SocketClient sc(conf->argv[2], 31400);
+    SocketClient sc(conf->argv[2], SHAREDT_INTERNAL_PORT_START);
 
     if (!sc.connect()) {
         return -1;

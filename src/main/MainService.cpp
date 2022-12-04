@@ -482,27 +482,3 @@ bool setMainServiceFile()
 #endif
     return true;
 }
-
-/*
- * Command line to inform service to create child
- * process to run the server procedure
- */
-int infoServiceToAction(const char * execCmd)
-{
-    std::string alive = ShareDTHome::instance()->getHome() + std::string(MAIN_SERVER_PATH) + std::string(PATH_ALIVE_FILE);
-    Path aliveReader(alive, std::fstream::in);
-    int port;
-    port = aliveReader.readLineAsInt();
-    SocketClient sc(LOCALHOST, port);
-    if (!sc.connect()) {
-        fprintf(stderr, "Failed to connect server process.");
-        return RETURN_CODE_INTERNAL_ERROR;
-    }
-
-    sc.sendString(execCmd);
-
-    std::string receive = sc.receiveStrings();
-    fprintf(stdout, ("%s\n"), receive.c_str() );
-
-    return RETURN_CODE_SUCCESS;
-}
