@@ -4,7 +4,7 @@
 #include "Path.h"
 #include "Logger.h"
 #include "ThreadPool.h"
-#include "MainManagementProcess.h"
+#include "main/MainManagementProcess.h"
 
 #include <cstring>
 #include <unistd.h>

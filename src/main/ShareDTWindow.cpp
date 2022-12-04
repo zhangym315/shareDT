@@ -6,7 +6,7 @@
 #include "Logger.h"
 #include "ShareDT.h"
 #include "Sock.h"
-#include "RemoteGetter.h"
+#include "service/RemoteGetter.h"
 
 #ifdef __cplusplus
 extern "C" {

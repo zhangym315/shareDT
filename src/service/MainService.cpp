@@ -1,11 +1,11 @@
 #include "MainService.h"
 #include "Path.h"
 #include "Logger.h"
-#include "ShareDT.h"
+#include "main/ShareDT.h"
 #include "CrossPlatform.h"
-#include "MainManagementProcess.h"
+#include "main/MainManagementProcess.h"
 #include "Sock.h"
-#include "RemoteGetter.h"
+#include "service/RemoteGetter.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -148,9 +148,7 @@ static void statusAllSC (
 
 static void getRemoteScreen(Socket * sk)
 {
-//    sk->send("Received remote get screen request!\n");
     LOGGER.info() << "Received getRmoeteScreen request";
-
     RemoteGetter rg(sk);
     rg.send();
 }
@@ -199,28 +197,21 @@ void HandleCommandSocket(Socket * s, char * buf)
     std::string user = hcl.getSC().getUserName();
     const std::string & capServerHome = hcl.getSC().getCapServerPath();
 
-    /* 0. check if status command */
-    if( commandType == Capture::C_STATUS )
-    {
-        return statusAllSC(sk.get(), hcl);
+    /*
+     * Handle simple command
+     */
+    switch (commandType) {
+        case Capture::C_STATUS:
+            return statusAllSC(sk.get(), hcl);
+        case Capture::C_STOP:
+            return stopSpecificCaptureServer(sk.get(), hcl);
+        case Capture::C_STOP_ALL_SC:
+            stopAllSC();
+            sk->send("All Capture Server are stopped.");
+            return;
+        case Capture::C_REMOTEGET:
+            return getRemoteScreen(sk.get());
     }
-
-    /* 1. first check stop specific wid */
-    if( commandType == Capture::C_STOP )
-    {
-        return stopSpecificCaptureServer(sk.get(), hcl);
-    }
-
-    if( commandType == Capture::C_STOP_ALL_SC)
-    {
-        stopAllSC();
-        sk->send("All Capture Server are stopped.");
-        return;
-    }
-
-    /* remoteget, return avaible screen */
-    if (commandType == Capture::C_REMOTEGET)
-        return getRemoteScreen(sk.get());
 
     if(!hcl.hasWid())   hcl.setWID();
     if(!hcl.isDaemon()) hcl.setDaemon();
@@ -259,12 +250,12 @@ void HandleCommandSocket(Socket * s, char * buf)
             sk->send(ret.c_str());
             return;
         }
+
 #ifndef __SHAREDT_WIN__
         char ** argv = hcl.getArgv();
         if((childPid=fork()) == 0) {
             execv(argv[0], argv);
         }
-
 #else
         /* create process as the user requested */
         LOGGER.info() << "Retrieving user session token for user=" << user;

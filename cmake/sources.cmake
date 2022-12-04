@@ -11,7 +11,7 @@ set(SHAREDT_SERVER_SRC_COMMON
 )
 
 set(SHAREDT_SERVER_SRC_COMMON
-        ${SHAREDT_SRC}/main/MainService.cpp
+        ${SHAREDT_SRC}/service/MainService.cpp
         ${SHAREDT_SRC}/main/MainManagementProcess.cpp
         ${SHAREDT_SRC}/capture/WindowsProvider.cpp
         ${SHAREDT_SRC}/util/StringTools.cpp
@@ -45,6 +45,7 @@ set(SHAREDT_SERVER_INCLUDE
         ${CMAKE_SOURCE_DIR}/src/capture/
         ${CMAKE_SOURCE_DIR}/src/util/
         ${CMAKE_SOURCE_DIR}/src/cli/
+        ${CMAKE_SOURCE_DIR}/src/service/
         ${CMAKE_SOURCE_DIR}/contrib/libwxWidgets/include/
         ${CMAKE_BINARY_DIR}/lib/
         ${SHAREDT_SRC}/ffmpeg/
