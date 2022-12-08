@@ -1,5 +1,5 @@
-#ifndef SHAREDT_MAINCONSOLESUBFUNCTION_H
-#define SHAREDT_MAINCONSOLESUBFUNCTION_H
+#ifndef SHAREDT_SUBFUNCTION_H
+#define SHAREDT_SUBFUNCTION_H
 
 extern int mainStart (struct cmdConf * conf);
 extern int mainStop  (struct cmdConf * conf);
@@ -19,4 +19,4 @@ extern int uninstallService (struct cmdConf * conf);
 extern int startService (struct cmdConf * conf);
 #endif
 
-#endif //SHAREDT_MAINCONSOLESUBFUNCTION_H
+#endif //SHAREDT_SUBFUNCTION_H

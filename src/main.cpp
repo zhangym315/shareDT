@@ -16,7 +16,7 @@
 #include "Daemon.h"
 #endif
 
-#include "main/MainConsoleSubFunction.h"
+#include "main/SubFunction.h"
 #include "ExportImages.h"
 
 #ifdef __SHAREDT_WIN__
