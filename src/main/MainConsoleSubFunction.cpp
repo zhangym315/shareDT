@@ -8,7 +8,9 @@
 #include "ReadWriteFD.h"
 #include "Sock.h"
 #include "service/RemoteGetter.h"
+#include "main/client/ShareDTClientWin.h"
 
+#include <QApplication>
 #ifdef __SHAREDT_WIN__
 #include <Windows.h>
 #include <tchar.h>
@@ -74,7 +76,7 @@ int mainInform(const char * command, const struct cmdConf * conf, const CaptureS
     return connectServiceToAction(commandPath.c_str(), cap);
 }
 
-int mainStart (const struct cmdConf * conf)
+int mainStart (struct cmdConf * conf)
 {
     if(conf->argc == 2)
     {
@@ -136,7 +138,7 @@ int mainStart (const struct cmdConf * conf)
 
 }
 
-int mainStop (const struct cmdConf * conf)
+int mainStop (struct cmdConf * conf)
 {
     if(!setMainProcessServiceHome(conf) ||
        !checkMainServiceStarted())
@@ -176,7 +178,7 @@ int mainStop (const struct cmdConf * conf)
 #endif
 }
 
-int mainRestart (const struct cmdConf * conf)
+int mainRestart (struct cmdConf * conf)
 {
     return RETURN_CODE_SUCCESS;
 }
@@ -186,7 +188,7 @@ int mainRestart (const struct cmdConf * conf)
  * This function doesn't start capture server straightforwardly
  * Instead, if notify MainService to start new process as Capture Server
  */
-int mainCapture (const struct cmdConf * conf)
+int mainCapture (struct cmdConf * conf)
 {
     CaptureServer cap;
     char ** argv = const_cast<char **>(conf->argv);
@@ -233,7 +235,7 @@ int mainCapture (const struct cmdConf * conf)
 }
 
 /* main service fork/create new process as the capture server */
-int mainNewCapture (const struct cmdConf * conf)
+int mainNewCapture (struct cmdConf * conf)
 {
     CaptureServer cap;
     char ** argv = const_cast<char **>(conf->argv);
@@ -270,7 +272,7 @@ int mainNewCapture (const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 }
 
-int mainShow (const struct cmdConf * conf)
+int mainShow (struct cmdConf * conf)
 {
     Capture cap;
     int ret;
@@ -283,7 +285,7 @@ int mainShow (const struct cmdConf * conf)
     }
 }
 
-int noDaemon (const struct cmdConf * conf)
+int noDaemon (struct cmdConf * conf)
 {
     int ret;
     CaptureServer cap;
@@ -307,7 +309,7 @@ int noDaemon (const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 }
 
-int status (const struct cmdConf * conf)
+int status (struct cmdConf * conf)
 {
 #ifdef __SHAREDT_WIN__
     std::string commandPath;
@@ -338,7 +340,7 @@ int status (const struct cmdConf * conf)
 #endif
 }
 
-int getSc (const struct cmdConf * conf)
+int getSc (struct cmdConf * conf)
 {
     SocketClient sc(conf->argv[2], SHAREDT_INTERNAL_PORT_START);
 
@@ -372,8 +374,25 @@ int getSc (const struct cmdConf * conf)
     return 0;
 }
 
+int connectRemote (struct cmdConf * conf) {
+    QApplication app(conf->argc, conf->argv);
+    ShareDTClientWin gui(conf->argc, conf->argv);
+
+    if (!gui.isInited()) {
+        std::cerr << "Failed to connect to server" << std::endl;
+        std::cerr << std::endl;
+//        showUages(conf->argv);
+        return -1;
+    }
+
+    gui.show();
+    gui.startVNC();
+
+    return QApplication::exec();
+}
+
 #ifdef __SHAREDT_WIN__
-int installService (const struct cmdConf * conf)
+int installService (struct cmdConf * conf)
 {
     SC_HANDLE schSCManager;
     SC_HANDLE schService;
@@ -419,7 +438,7 @@ int installService (const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 }
 
-int uninstallService (const struct cmdConf * conf)
+int uninstallService (struct cmdConf * conf)
 {
     SC_HANDLE schSCManager;
     SC_HANDLE schService;
@@ -456,7 +475,7 @@ int uninstallService (const struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 }
 
-int startService (const struct cmdConf * conf)
+int startService (struct cmdConf * conf)
 {
     setMainProcessServiceHome(conf);
     setMainServiceFile() ;

@@ -11,18 +11,10 @@
 #include "Capture.h"
 #include "SDThread.h"
 #include "Buffer.h"
+#include "ShareDTClientWin.h"
 
 #define RATIO_PRECISION 1000
 
-struct MainWindowResized {
-    bool isResized = false;
-    QSize curSize;    /* current window size */
-    QSize oriSize;    /* original window size */
-
-    int ratioX = RATIO_PRECISION;     /* Ratio of original to X */
-    int ratioY = RATIO_PRECISION;     /* Ratio of original to Y */
-    int ratioX_Y;
-};
 
 class FetchingDataThread : public SDThread {
     Q_OBJECT

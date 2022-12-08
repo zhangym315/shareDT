@@ -70,8 +70,8 @@ set(SERVERGUI_SOURCES
 )
 
 set(SHAREDT_CLIENT_GUI_SRC_FILES
-        ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.cpp
-        ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.ui
+        ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.cpp
+        ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.ui
 )
 
 ##### ShareDTClient
@@ -79,19 +79,16 @@ set(SHAREDT_CLIENT_SRC_FILES
         ${SHAREDT_SRC}/util/Pid.c
         ${SHAREDT_SRC}/util/Buffer.cpp
         ${SHAREDT_SRC}/util/TimeUtil.c
-        ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.cpp
-        ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.h
-        ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.ui
-        ${SHAREDT_SRC_CLIENT}/vnc/FetchingData.cpp
-        ${SHAREDT_SRC_CLIENT}/qt/SDThread.cpp
-        ${SHAREDT_SRC_CLIENT}/Main.cpp
+        ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.cpp
+        ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.h
+        ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.ui
+        ${SHAREDT_SRC_CLIENT}/FetchingData.cpp
+        ${SHAREDT_SRC_CLIENT}/SDThread.cpp
         ${SHAREDT_SRC}/util/Logger.cpp
 )
 
 set(SHAREDT_CLIENT_INCLUDE
-        ${SHAREDT_SRC_CLIENT}/gui/
-        ${SHAREDT_SRC_CLIENT}/vnc/
-        ${SHAREDT_SRC_CLIENT}/qt/
+        ${SHAREDT_SRC_CLIENT}/
 )
 
 set(KeyCode ${CMAKE_SOURCE_DIR}/src/input/KeyCode.txt)

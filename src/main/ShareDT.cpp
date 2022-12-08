@@ -38,6 +38,7 @@ const char * SHAREDT_SERVER_COMMAND_STATUS     = "status";
 const char * SHAREDT_SERVER_COMMAND_EXPORT     = "export";
 const char * SHAREDT_SERVER_COMMAND_NODAEMON   = "nodaemon";
 const char * SHAREDT_SERVER_COMMAND_DISPLAY    = "display";
+const char * SHAREDT_SERVER_COMMAND_CONNECTR   = "connect";
 const char * SHAREDT_SERVER_COMMAND_GET        = "get";
 const char * SHAREDT_SERVER_COMMAND_REMOTGET   = "remoteGet";
 
@@ -63,7 +64,7 @@ static void initShareDT(const char * argv0)
 #endif
 }
 
-static int localDisplayer(const struct cmdConf * conf)
+static int localDisplayer(struct cmdConf * conf)
 {
     QApplication app(const_cast<int&> (conf->argc), const_cast<char **>(conf->argv));
     LocalDisplayer gui(const_cast<int&> (conf->argc), const_cast<char **> (conf->argv));
@@ -79,19 +80,20 @@ static int localDisplayer(const struct cmdConf * conf)
 
 static const struct {
     const char *name;
-    int (*func)(const struct cmdConf *cconf);
+    int (*func)(struct cmdConf *cconf);
 } cmdHandlers[] = {
-        { SHAREDT_SERVER_COMMAND_START ,     &mainStart   },     /* start service         */
-        { SHAREDT_SERVER_COMMAND_STOP  ,     &mainStop    },     /* stop  service         */
-        { SHAREDT_SERVER_COMMAND_RESTART,    &mainRestart },     /* restart service       */
-        { SHAREDT_SERVER_COMMAND_CAPTURE,    &mainCapture },     /* capture command       */
-        { SHAREDT_SERVER_COMMAND_NEWCAPTURE, &mainNewCapture },  /* new capture process   */
-        { SHAREDT_SERVER_COMMAND_SHOW,       &mainShow    },     /* command show win      */
-        { SHAREDT_SERVER_COMMAND_NODAEMON,   &noDaemon    },     /* run in no daemon mode */
-        { SHAREDT_SERVER_COMMAND_STATUS,     &status      },     /* status of current pro */
-        { SHAREDT_SERVER_COMMAND_EXPORT,     &mainExport  },     /* export images         */
-        { SHAREDT_SERVER_COMMAND_DISPLAY,    &localDisplayer},   /* local display         */
-        { SHAREDT_SERVER_COMMAND_GET,        &getSc }            /* Get screen            */
+        { SHAREDT_SERVER_COMMAND_START ,     &mainStart   },     /* start service          */
+        { SHAREDT_SERVER_COMMAND_STOP  ,     &mainStop    },     /* stop  service          */
+        { SHAREDT_SERVER_COMMAND_RESTART,    &mainRestart },     /* restart service        */
+        { SHAREDT_SERVER_COMMAND_CAPTURE,    &mainCapture },     /* capture command        */
+        { SHAREDT_SERVER_COMMAND_NEWCAPTURE, &mainNewCapture },  /* new capture process    */
+        { SHAREDT_SERVER_COMMAND_SHOW,       &mainShow    },     /* command show win       */
+        { SHAREDT_SERVER_COMMAND_NODAEMON,   &noDaemon    },     /* run in no daemon mode  */
+        { SHAREDT_SERVER_COMMAND_STATUS,     &status      },     /* status of current pro  */
+        { SHAREDT_SERVER_COMMAND_EXPORT,     &mainExport  },     /* export images          */
+        { SHAREDT_SERVER_COMMAND_DISPLAY,    &localDisplayer},   /* local display          */
+        { SHAREDT_SERVER_COMMAND_CONNECTR,   &connectRemote},    /* connect remote display */
+        { SHAREDT_SERVER_COMMAND_GET,        &getSc }            /* Get screen             */
 #ifdef  __SHAREDT_WIN__
         ,{ "install",    &installService },  /* install service       */
         { "service",    &startService },    /* from scm service      */
@@ -125,7 +127,7 @@ int main(int argc, char** argv)
 
     unsigned cmd_count = 0;
     struct cmdConf cconf{};
-    OS_ALLOCATE(const char *, cmd, argc + 1);
+    OS_ALLOCATE(char *, cmd, argc + 1);
     for (int x = 0; x < argc; x++) {
         cmd[cmd_count++] = argv[x];
     }

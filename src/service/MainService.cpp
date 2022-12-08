@@ -211,6 +211,8 @@ void HandleCommandSocket(Socket * s, char * buf)
             return;
         case Capture::C_REMOTEGET:
             return getRemoteScreen(sk.get());
+        default:
+            break;
     }
 
     if(!hcl.hasWid())   hcl.setWID();

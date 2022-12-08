@@ -16,7 +16,7 @@ set(CMAKE_SOURCE_CONTRIB ${CMAKE_SOURCE_DIR}/contrib)
 set(CMAKE_SOURCE_CMAKE ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_SOURCE_CMAKE_CONTRIB ${CMAKE_SOURCE_DIR}/cmake/contrib)
 set(SHAREDT_SRC ${CMAKE_SOURCE_DIR}/src)
-set(SHAREDT_SRC_CLIENT ${SHAREDT_SRC}/client)
+set(SHAREDT_SRC_CLIENT ${SHAREDT_SRC}/main/client)
 set(CMAKE_SOURCE_LIBVNC ${CMAKE_SOURCE_DIR}/libvnc)
 
 include(${CMAKE_SOURCE_CMAKE}/functions.cmake)
@@ -32,35 +32,35 @@ include_directories (
 )
 
 ### ShareDTServer gui
-add_executable(${SERVERGUI_TARGET}
-    ${SERVERGUI_SOURCES}
-)
-
-target_link_libraries(${SERVERGUI_TARGET} ${SHAREDT_SERVER_QT_LIBS})
-
-set(SERVERGUI_ICONS
-    ${SHAREDT_SRC}/sgui/icons/monitor.png
-    ${SHAREDT_SRC}/sgui/icons/window.png
-    ${SHAREDT_SRC}/sgui/icons/callapse.png
-    ${SHAREDT_SRC}/sgui/icons/expand.png
-)
+#add_executable(${SERVERGUI_TARGET}
+#    ${SERVERGUI_SOURCES}
+#)
+#
+#target_link_libraries(${SERVERGUI_TARGET} ${SHAREDT_SERVER_QT_LIBS})
+#
+#set(SERVERGUI_ICONS
+#    ${SHAREDT_SRC}/sgui/icons/monitor.png
+#    ${SHAREDT_SRC}/sgui/icons/window.png
+#    ${SHAREDT_SRC}/sgui/icons/callapse.png
+#    ${SHAREDT_SRC}/sgui/icons/expand.png
+#)
 
 #### ShareDTClient  removed client due to ShareDT will repace it
-add_executable(${START_CLIENT}
-    ${SHAREDT_CLIENT_SRC_FILES}
-    ${SHAREDT_CLIENT_GUI_SRC_FILES}
-)
-
-target_link_libraries(${START_CLIENT}
-    vncclient
-    ${PNG_LIBRARIES}
-    ${${PROJECT_NAME}_PLATFORM_LIBS}
-    ${SHAREDT_CLIENT_QT_LIBS}
-    ${FFMPEG_REQUIRED_LIBS}
-    ${LZMA_LIBRARIES}
-    ${X265_LIBRARIES}
-    ${X264_LIBRARY}
-)
+#add_executable(${START_CLIENT}
+#    ${SHAREDT_CLIENT_SRC_FILES}
+#    ${SHAREDT_CLIENT_GUI_SRC_FILES}
+#)
+#
+#target_link_libraries(${START_CLIENT}
+#    vncclient
+#    ${PNG_LIBRARIES}
+#    ${${PROJECT_NAME}_PLATFORM_LIBS}
+#    ${SHAREDT_CLIENT_QT_LIBS}
+#    ${FFMPEG_REQUIRED_LIBS}
+#    ${LZMA_LIBRARIES}
+#    ${X265_LIBRARIES}
+#    ${X264_LIBRARY}
+#)
 
 ### Installing
 ##### ShareDT
@@ -73,17 +73,19 @@ add_executable(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_SRC}/main/ShareDTWindow.cpp
         ${SHAREDT_SRC}/main/LocalDisplayer.cpp
         ${SHAREDT_SRC}/service/RemoteGetter.cpp
-        ${SHAREDT_SRC_CLIENT}/qt/SDThread.cpp
+#        ${SHAREDT_SRC_CLIENT}/SDThread.cpp
         ${SHAREDT_SERVER_SRC_COMMON}
+        ${SHAREDT_CLIENT_SRC_FILES}
+        ${SHAREDT_CLIENT_GUI_SRC_FILES}
         )
 
 target_link_libraries(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_CLIENT_QT_LIBS}
         ${${PROJECT_NAME}_PLATFORM_LIBS}
-
         ${BZIP2_LIBRARIES}
         ${FFMPEG_REQUIRED_LIBS}
         vncserver
+        vncclient
         ${X265_LIBRARIES}
         ${X264_LIBRARY}
         ${LZMA_LIBRARIES}

@@ -1,7 +1,3 @@
-//
-// Created by Yiming Zhang on 4/6/21.
-//
-
 #ifndef _SHAREDTCLIENTWIN_H_
 #define _SHAREDTCLIENTWIN_H_
 
@@ -29,12 +25,14 @@ QT_END_NAMESPACE
 
 struct MainWindowResized {
     bool isResized = false;
-    QSize curSize;    /* current shareDTClient window size */
+    QSize curSize;    /* current window size */
+    QSize oriSize;    /* original window size */
     QSize oldSize;    /* last shareDTClient window size    */
     QSize vncSize;    /* original window size on shareDTServer */
 
     int ratioX = RATIO_PRECISION;     /* Ratio of original to X */
     int ratioY = RATIO_PRECISION;     /* Ratio of original to Y */
+    int ratioX_Y;
 };
 
 class ShareDTClientWin : public QWidget{

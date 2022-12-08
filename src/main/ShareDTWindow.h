@@ -3,7 +3,7 @@
 
 #include "StringTools.h"
 #include "Layout.h"
-#include "SDThread.h"
+#include "main/client/SDThread.h"
 #include "LocalDisplayer.h"
 
 #include <utility>

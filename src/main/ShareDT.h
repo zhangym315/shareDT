@@ -12,11 +12,12 @@ extern const char * SHAREDT_SERVER_COMMAND_STATUS;
 extern const char * SHAREDT_SERVER_COMMAND_EXPORT;
 extern const char * SHAREDT_SERVER_COMMAND_NODAEMON;
 extern const char * SHAREDT_SERVER_COMMAND_DISPLAY;
+extern const char * SHAREDT_SERVER_COMMAND_CONNECTR;
 extern const char * SHAREDT_SERVER_COMMAND_GET;
 extern const char * SHAREDT_SERVER_COMMAND_REMOTGET;
 
 struct cmdConf {
     int argc;
-    const char ** argv;
+    char ** argv;
 };
 #endif //SHAREDT_SHAREDT_H
