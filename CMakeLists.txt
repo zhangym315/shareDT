@@ -2,6 +2,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(shareDT VERSION 0.0.1 LANGUAGES C CXX)
 
+cmake_policy(SET CMP0115 OLD)
+
 # C++20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -69,11 +71,10 @@ add_executable(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_SERVER_SRC}
         ${SHAREDT_SRC}/util/TimeUtil.c
         ${SHAREDT_SRC}/main/Layout.cpp
-        ${SHAREDT_SRC}/main/ShareDT.cpp
-        ${SHAREDT_SRC}/main/ShareDTWindow.cpp
+        ${SHAREDT_SRC}/main.cpp
+        ${SHAREDT_SRC}/main/MainGUI.cpp
         ${SHAREDT_SRC}/main/LocalDisplayer.cpp
         ${SHAREDT_SRC}/service/RemoteGetter.cpp
-#        ${SHAREDT_SRC_CLIENT}/SDThread.cpp
         ${SHAREDT_SERVER_SRC_COMMON}
         ${SHAREDT_CLIENT_SRC_FILES}
         ${SHAREDT_CLIENT_GUI_SRC_FILES}

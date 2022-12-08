@@ -15,6 +15,7 @@
 
 #define RATIO_PRECISION 1000
 
+extern int localDisplayer(struct cmdConf * conf);
 
 class FetchingDataThread : public SDThread {
     Q_OBJECT

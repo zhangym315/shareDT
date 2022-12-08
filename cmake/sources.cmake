@@ -41,15 +41,16 @@ set(SHAREDT_SERVER_SRC
 
 set(SHAREDT_SERVER_INCLUDE
         ${CMAKE_BINARY_DIR}/libvnc/
-        ${CMAKE_SOURCE_DIR}/src/
-        ${CMAKE_SOURCE_DIR}/src/capture/
-        ${CMAKE_SOURCE_DIR}/src/util/
-        ${CMAKE_SOURCE_DIR}/src/cli/
-        ${CMAKE_SOURCE_DIR}/src/service/
         ${CMAKE_SOURCE_DIR}/contrib/libwxWidgets/include/
         ${CMAKE_BINARY_DIR}/lib/
+        ${SHAREDT_SRC}/
+        ${SHAREDT_SRC}/capture/
+        ${SHAREDT_SRC}/util/
+        ${SHAREDT_SRC}/cli/
+        ${SHAREDT_SRC}/service/
         ${SHAREDT_SRC}/ffmpeg/
         ${SHAREDT_SRC}/input/
+        ${SHAREDT_SRC}/main/
         ${CMAKE_BINARY_DIR}/lib/wx/include/osx_cocoa-unicode-static-3.1/
 )
 

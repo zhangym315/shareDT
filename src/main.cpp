@@ -1,13 +1,13 @@
 /*
- * ShareDT
- * Show all of the windows/monitors that can be shared
+ * ShareDT main program
  */
 #include <QApplication>
 #include <QImage>
 #include <QDesktopWidget>
 
-#include "ShareDT.h"
-#include "ShareDTWindow.h"
+#include "main.h"
+#include "MainGUI.h"
+#include "LocalDisplayer.h"
 
 #ifdef __SHAREDT_WIN__
 #include <tchar.h>
@@ -16,7 +16,7 @@
 #include "Daemon.h"
 #endif
 
-#include "MainConsoleSubFunction.h"
+#include "main/MainConsoleSubFunction.h"
 #include "ExportImages.h"
 
 #ifdef __SHAREDT_WIN__
@@ -27,6 +27,9 @@
 //#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #endif
 
+/*
+ * All sub command, without sub command(argc==1), it will start the main GUI.
+ */
 const char * SHAREDT_SERVER_SVCNAME            = "shareDTServer";
 const char * SHAREDT_SERVER_COMMAND_START      = "start";
 const char * SHAREDT_SERVER_COMMAND_STOP       = "stop";
@@ -42,6 +45,9 @@ const char * SHAREDT_SERVER_COMMAND_CONNECTR   = "connect";
 const char * SHAREDT_SERVER_COMMAND_GET        = "get";
 const char * SHAREDT_SERVER_COMMAND_REMOTGET   = "remoteGet";
 
+/*
+ * Init main GUI
+ */
 static void initShareDT(const char * argv0)
 {
     ShareDTHome::instance()->set(argv0);
@@ -64,19 +70,6 @@ static void initShareDT(const char * argv0)
 #endif
 }
 
-static int localDisplayer(struct cmdConf * conf)
-{
-    QApplication app(const_cast<int&> (conf->argc), const_cast<char **>(conf->argv));
-    LocalDisplayer gui(const_cast<int&> (conf->argc), const_cast<char **> (conf->argv));
-
-    if (!gui.isInited()) {
-        return -1;
-    }
-
-    gui.show();
-    gui.startFetcher();
-    return QApplication::exec();
-}
 
 static const struct {
     const char *name;
@@ -124,19 +117,12 @@ int main(int argc, char** argv)
         return QApplication::exec();
     }
 
-
-    unsigned cmd_count = 0;
     struct cmdConf cconf{};
-    OS_ALLOCATE(char *, cmd, argc + 1);
-    for (int x = 0; x < argc; x++) {
-        cmd[cmd_count++] = argv[x];
-    }
-    cmd[cmd_count] = nullptr;
-    cconf.argc = (int) cmd_count;
-    cconf.argv = cmd;
+    cconf.argc = argc;
+    cconf.argv = argv;
 
     for (const auto & cmdHandler : cmdHandlers) {
-        if (chars_equal(cmdHandler.name, cmd[1])) {
+        if (chars_equal(cmdHandler.name, argv[1])) {
             int ret = cmdHandler.func(&cconf);
             fflush(stdout);
             return ret;

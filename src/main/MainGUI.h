@@ -132,7 +132,7 @@ public slots:
 };
 
 namespace Ui {
-    class ShareDTWindow: public UI_ShareDTWindow {};
+    class MainGUI: public UI_ShareDTWindow {};
 } // namespace Ui
 
 class ShareDTWindow : public QMainWindow{
@@ -145,7 +145,7 @@ public:
 
     void setMenu();
 private:
-    Ui::ShareDTWindow   * _ui;
+    Ui::MainGUI   * _ui;
 
 public slots:
     void actionFreshItems();

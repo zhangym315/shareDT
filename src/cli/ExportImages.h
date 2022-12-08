@@ -2,7 +2,7 @@
 #define _EXPORTIMAGES_H_
 
 #include <png.h>
-#include "main/ShareDT.h"
+#include "main/main.h"
 #include "Capture.h"
 
 extern int mainExport(struct cmdConf * conf);

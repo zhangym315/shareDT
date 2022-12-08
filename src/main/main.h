@@ -1,5 +1,5 @@
-#ifndef SHAREDT_SHAREDT_H
-#define SHAREDT_SHAREDT_H
+#ifndef SHAREDT_MAIN_H
+#define SHAREDT_MAIN_H
 
 extern const char * SHAREDT_SERVER_SVCNAME;
 extern const char * SHAREDT_SERVER_COMMAND_START;
@@ -20,4 +20,4 @@ struct cmdConf {
     int argc;
     char ** argv;
 };
-#endif //SHAREDT_SHAREDT_H
+#endif //SHAREDT_MAIN_H

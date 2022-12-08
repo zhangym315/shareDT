@@ -1,4 +1,3 @@
-
 #include <QApplication>
 #include <QObject>
 #include <chrono>
@@ -10,6 +9,7 @@
 #include <QDesktopWidget>
 
 #include "LocalDisplayer.h"
+#include "main.h"
 
 #ifdef __SHAREDT_WIN__
 #include <windows.h>
@@ -250,3 +250,16 @@ void LocalDisplayer::closeEvent (QCloseEvent *event)
     event->accept();
 }
 
+int localDisplayer(struct cmdConf * conf)
+{
+    QApplication app(const_cast<int&> (conf->argc), const_cast<char **>(conf->argv));
+    LocalDisplayer gui(const_cast<int&> (conf->argc), const_cast<char **> (conf->argv));
+
+    if (!gui.isInited()) {
+        return -1;
+    }
+
+    gui.show();
+    gui.startFetcher();
+    return QApplication::exec();
+}

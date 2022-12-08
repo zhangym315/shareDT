@@ -1,7 +1,7 @@
 #include "MainService.h"
 #include "Path.h"
 #include "Logger.h"
-#include "main/ShareDT.h"
+#include "main/main.h"
 #include "CrossPlatform.h"
 #include "main/MainManagementProcess.h"
 #include "Sock.h"

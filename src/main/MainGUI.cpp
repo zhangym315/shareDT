@@ -1,10 +1,10 @@
-#include "ShareDTWindow.h"
+#include "MainGUI.h"
 #include "Buffer.h"
 #include "WindowProcessor.h"
 #include "Path.h"
 #include "ExportAll.h"
 #include "Logger.h"
-#include "ShareDT.h"
+#include "main.h"
 #include "Sock.h"
 #include "service/RemoteGetter.h"
 
@@ -344,7 +344,7 @@ void GroupBox::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
-        _ui(new Ui::ShareDTWindow)
+        _ui(new Ui::MainGUI)
 {
 #ifndef __SHAREDT_IOS__
     // set program icon, ShareDT.png should be the same directory
@@ -373,13 +373,13 @@ void ShareDTWindow::setMenu()
 
     auto * localCapture = new QAction();
     localCapture->setObjectName(QString::fromUtf8("startCapture"));
-    localCapture->setText(QCoreApplication::translate("ShareDTWindow", "Start Local Capture Server", nullptr));
+    localCapture->setText(QCoreApplication::translate("MainGUI", "Start Local Capture Server", nullptr));
     menuEdit->addAction(localCapture);
     QObject::connect (localCapture, SIGNAL(triggered()), _ui, SLOT(startLocalCaptureServer()));
 
     auto * newConnect = new QAction();
     newConnect->setObjectName(QString::fromUtf8("new_connection"));
-    newConnect->setText(QCoreApplication::translate("ShareDTWindow", "New Connection", nullptr));
+    newConnect->setText(QCoreApplication::translate("MainGUI", "New Connection", nullptr));
     menuEdit->addAction(newConnect);
     QObject::connect (newConnect, SIGNAL(triggered()), _ui, SLOT(newGroupConnection()));
     /* Edit end*/
@@ -387,11 +387,11 @@ void ShareDTWindow::setMenu()
     /* Window */
     auto * menuWindow = new QMenu(menubar);
     menuWindow->setObjectName(QString::fromUtf8("menuWindow"));
-    menuWindow->setTitle(QCoreApplication::translate("ShareDTWindow", "Window", nullptr));
+    menuWindow->setTitle(QCoreApplication::translate("MainGUI", "Window", nullptr));
 
     auto * freshWin = new QAction();
     freshWin->setObjectName(QString::fromUtf8("fresh_items"));
-    freshWin->setText(QCoreApplication::translate("ShareDTWindow", "Refresh Items", nullptr));
+    freshWin->setText(QCoreApplication::translate("MainGUI", "Refresh Items", nullptr));
     menuWindow->addAction(freshWin);
     QObject::connect (freshWin, SIGNAL(triggered()), this, SLOT(actionFreshItems()));
     /* Window end */
@@ -399,11 +399,11 @@ void ShareDTWindow::setMenu()
     /* Help */
     auto *menuHelp = new QMenu(menubar);
     menuHelp->setObjectName(QString::fromUtf8("menuHelp"));
-    menuHelp->setTitle(QCoreApplication::translate("ShareDTWindow", "Help", nullptr));
+    menuHelp->setTitle(QCoreApplication::translate("MainGUI", "Help", nullptr));
 
     auto * aboutWin = new QAction();
     aboutWin->setObjectName(QString::fromUtf8("about_window"));
-    aboutWin->setText(QCoreApplication::translate("ShareDTWindow", "About", nullptr));
+    aboutWin->setText(QCoreApplication::translate("MainGUI", "About", nullptr));
     menuHelp->addAction(aboutWin);
     /* Help  end */
 
