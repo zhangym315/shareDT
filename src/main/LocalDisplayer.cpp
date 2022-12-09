@@ -9,7 +9,7 @@
 #include <QDesktopWidget>
 
 #include "LocalDisplayer.h"
-#include "main.h"
+#include "SubFunction.h"
 
 #ifdef __SHAREDT_WIN__
 #include <windows.h>

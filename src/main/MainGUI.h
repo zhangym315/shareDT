@@ -27,6 +27,8 @@
 
 QT_BEGIN_NAMESPACE
 
+extern int mainGUI(struct cmdConf * conf);
+
 /*
  *  GUI Layout:
  *  =======================================

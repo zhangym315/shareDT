@@ -3,7 +3,7 @@
 #include "ExportAll.h"
 #include "Logger.h"
 #include "Converter.h"
-#include "main/main.h"
+#include "SubFunction.h"
 
 #include <QImage>
 

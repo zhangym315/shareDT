@@ -1,7 +1,7 @@
 #include "CaptureServer.h"
 #include "Capture.h"
 #include "TypeDef.h"
-#include "main.h"
+#include "SubFunction.h"
 #include "MainService.h"
 #include "Logger.h"
 #include "Path.h"

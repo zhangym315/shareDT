@@ -4,7 +4,7 @@
 #include "Path.h"
 #include "ExportAll.h"
 #include "Logger.h"
-#include "main.h"
+#include "SubFunction.h"
 #include "Sock.h"
 #include "service/RemoteGetter.h"
 
@@ -27,6 +27,34 @@ extern "C" {
 #include <memory>
 
 const static int gpBoxFontSize = 15;
+
+int mainGUI(struct cmdConf * conf) {
+    ShareDTHome::instance()->set(conf->argv[0]);
+#ifdef __SHAREDT_WIN__
+    WCHAR * filepath;
+    if (!SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &filepath))) {
+    }
+    std::wstring ws(filepath);
+    std::string varRun = std::string(ws.begin(), ws.end()) + std::string(PATH_SEP_STR) +
+                    std::string(SHAREDT_KEYWORD) + std::string(PATH_SEP_STR) +  std::string(VAR_RUN);
+    if (!fs::exists(varRun)) fs::create_directories(varRun);
+    //set log file to var/run/ShareDT.log
+    Logger::instance().setLogFile((varRun+std::string(CAPTURE_LOG)).c_str());
+#else
+    std::string varrun = ShareDTHome::instance()->getHome() + std::string(VAR_RUN);
+    if (!fs::exists(varrun)) fs::create_directories(varrun);
+    //set log file to var/run/ShareDT.log
+    Logger::instance().setLogFile((ShareDTHome::instance()->getHome() +
+                                   std::string(VAR_RUN)+std::string(CAPTURE_LOG)).c_str());
+#endif
+
+    QApplication app(conf->argc, conf->argv);
+    LOGGER.info() << "Starting " << conf->argv[0] << " ...";
+
+    ShareDTWindow gui(conf->argc, conf->argv);
+    gui.show();
+    return QApplication::exec();
+}
 
 void UI_ShareDTWindow::newRemoteGroupBox(const std::string & host)
 {

@@ -5,26 +5,23 @@
 #include <QImage>
 #include <QDesktopWidget>
 
-#include "main.h"
 #include "MainGUI.h"
 #include "LocalDisplayer.h"
+#include "SubFunction.h"
+#include "ExportImages.h"
+
 
 #ifdef __SHAREDT_WIN__
 #include <tchar.h>
 #include <strsafe.h>
-#else
-#include "Daemon.h"
-#endif
-
-#include "main/SubFunction.h"
-#include "ExportImages.h"
-
-#ifdef __SHAREDT_WIN__
 #include <Shlobj.h>
 #include <windows.h>
 
 // Hide console for windows
 //#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+
+#else
+#include "Daemon.h"
 #endif
 
 /*
@@ -44,32 +41,6 @@ const char * SHAREDT_SERVER_COMMAND_DISPLAY    = "display";
 const char * SHAREDT_SERVER_COMMAND_CONNECTR   = "connect";
 const char * SHAREDT_SERVER_COMMAND_GET        = "get";
 const char * SHAREDT_SERVER_COMMAND_REMOTGET   = "remoteGet";
-
-/*
- * Init main GUI
- */
-static void initShareDT(const char * argv0)
-{
-    ShareDTHome::instance()->set(argv0);
-#ifdef __SHAREDT_WIN__
-    WCHAR * filepath;
-    if (!SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &filepath))) {
-    }
-    std::wstring ws(filepath);
-    std::string varRun = std::string(ws.begin(), ws.end()) + std::string(PATH_SEP_STR) +
-                    std::string(SHAREDT_KEYWORD) + std::string(PATH_SEP_STR) +  std::string(VAR_RUN);
-    if (!fs::exists(varRun)) fs::create_directories(varRun);
-    //set log file to var/run/ShareDT.log
-    Logger::instance().setLogFile((varRun+std::string(CAPTURE_LOG)).c_str());
-#else
-    std::string varrun = ShareDTHome::instance()->getHome() + std::string(VAR_RUN);
-    if (!fs::exists(varrun)) fs::create_directories(varrun);
-    //set log file to var/run/ShareDT.log
-    Logger::instance().setLogFile((ShareDTHome::instance()->getHome() +
-                                   std::string(VAR_RUN)+std::string(CAPTURE_LOG)).c_str());
-#endif
-}
-
 
 static const struct {
     const char *name;
@@ -106,20 +77,12 @@ static void Usage()
 
 int main(int argc, char** argv)
 {
-    // no parameter, start GUI
-    if (argc == 1) {
-        initShareDT(argv[0]);
-        QApplication app(argc, argv);
-        LOGGER.info() << "Starting " << argv[0] << " ...";
-
-        ShareDTWindow gui(argc, argv);
-        gui.show();
-        return QApplication::exec();
-    }
-
     struct cmdConf cconf{};
     cconf.argc = argc;
     cconf.argv = argv;
+
+    // no parameter, start GUI
+    if (argc == 1) return mainGUI(&cconf);
 
     for (const auto & cmdHandler : cmdHandlers) {
         if (chars_equal(cmdHandler.name, argv[1])) {
@@ -128,6 +91,7 @@ int main(int argc, char** argv)
             return ret;
         }
     }
+
     Usage();
     return -1;
 }

@@ -2,7 +2,7 @@
 #define _EXPORTIMAGES_H_
 
 #include <png.h>
-#include "main/main.h"
+#include "SubFunction.h"
 #include "Capture.h"
 
 extern int mainExport(struct cmdConf * conf);
