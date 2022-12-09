@@ -79,9 +79,7 @@ public:
     void write(const char * bytes) { sendString(bytes); }
     bool connect();
 
-#ifndef __SHAREDT_WIN__
     bool connectWait ();
-#endif
 
 private:
     struct timeval  _tv;

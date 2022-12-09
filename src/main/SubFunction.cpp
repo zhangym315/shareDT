@@ -102,7 +102,7 @@ int mainStart (struct cmdConf * conf)
         {
             LOGGER.error() << "Failed to open service";
             return RETURN_CODE_INTERNAL_ERROR;
-        } else if(!StartService(hSc, conf->argc, conf->argv))
+        } else if(!StartService(hSc, conf->argc, (const char **) conf->argv))
         {
             LOGGER.error() << "Failed to start server service";
             if (hSc != nullptr) CloseServiceHandle (hSc);
@@ -229,6 +229,7 @@ int mainCapture (struct cmdConf * conf)
 
     fprintf(stdout, "Starting Capture Server\n");
     connectServiceToAction(commandPath.c_str(), CaptureServer());
+    return RETURN_CODE_SUCCESS;
 #else
     return mainInform(" newCapture", conf, cap);
 #endif
@@ -333,7 +334,7 @@ int status (struct cmdConf * conf)
     fprintf(stdout, "Capture Server status:\n");
 
     connectServiceToAction(commandPath.c_str(), CaptureServer());
-
+    return RETURN_CODE_SUCCESS;
 #else
     fprintf(stdout, "Capture Server status:\n");
     return mainInform(" status", conf, CaptureServer());

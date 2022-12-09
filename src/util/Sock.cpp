@@ -277,8 +277,10 @@ bool SocketClient::connect() {
     return true;
 }
 
-#ifndef __SHAREDT_WIN__
 bool SocketClient::connectWait()     {
+#ifdef __SHAREDT_WIN__
+    return connect();
+#else
     int res, opt;
 
     if ((opt = fcntl (_s, F_GETFL, NULL)) < 0) {
@@ -327,5 +329,5 @@ bool SocketClient::connectWait()     {
     }
 
     return true;
-}
 #endif
+}

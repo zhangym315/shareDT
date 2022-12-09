@@ -26,6 +26,11 @@ extern "C" {
 #include <QDesktopWidget>
 #include <memory>
 
+#ifdef __SHAREDT_WIN__
+#include <Shlobj.h>
+#include <windows.h>
+#endif
+
 const static int gpBoxFontSize = 15;
 
 int mainGUI(struct cmdConf * conf) {
