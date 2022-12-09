@@ -4,7 +4,7 @@
 #include "Path.h"
 #include "Logger.h"
 #include "ThreadPool.h"
-#include "MainManagementProcess.h"
+#include "main/MainManagementProcess.h"
 
 #include <cstring>
 #include <unistd.h>
@@ -138,6 +138,11 @@ int MainWindowsServices() {
 
     /* Main service port */
     SocketServer ss(SHAREDT_INTERNAL_PORT_START, 10);
+    if (!ss.isInit()) {
+        LOGGER.error() << "Failed to start MainService";
+        return 1;
+    }
+
     LOGGER.info() << "MainService started on port=" << ss.getPort() ;
     std::string alive = ShareDTHome::instance()->getHome() + std::string(MAIN_SERVER_PATH) + std::string(PATH_ALIVE_FILE);
     {
@@ -150,7 +155,7 @@ int MainWindowsServices() {
     }
 
     while(true) {
-        Socket* s=ss.Accept();
+        Socket* s=ss.accept();
         if (s == nullptr) continue;
         std::string received = s->receiveStrings();
         LOGGER.info("ShareDTServer service DATA RECEIVED CMD=\"%s\", "

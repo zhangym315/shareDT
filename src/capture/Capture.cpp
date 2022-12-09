@@ -7,7 +7,7 @@
 #include "Daemon.h"
 #include "Logger.h"
 #include "Enum.h"
-#include "main/ShareDT.h"
+#include "SubFunction.h"
 #include "InputInterface.h"
 #include "CaptureInfo.h"
 
@@ -143,7 +143,9 @@ int Capture::parseArgs(const vector<std::string> & args)
     for (auto i = args.begin(); i != args.end(); ++i) {
 
         if (_ctype == C_NONE) {
-            if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
+            if (*i == SHAREDT_SERVER_COMMAND_CAPTURE) {
+                _ctype = C_CAPTURE;
+            } else if (*i == SHAREDT_SERVER_COMMAND_NEWCAPTURE) {
                 _ctype = C_NEWCAPTURE;
             } else if (*i == SHAREDT_SERVER_COMMAND_STOP) {
                 if((i+1) != args.end() && *(i+1) == "all")
@@ -163,6 +165,8 @@ int Capture::parseArgs(const vector<std::string> & args)
             } else if (*i == SHAREDT_SERVER_COMMAND_REMOTGET) {
                 _ctype = C_REMOTEGET;
             }
+
+            if (_ctype != C_NONE) continue;
         }
 
         if (*i == "--help") {
@@ -259,6 +263,16 @@ int Capture::parseArgs(const vector<std::string> & args)
             }
         }
         else {
+            /* parameter without options should be host(:port) */
+            std::string s = *i;
+            auto pos = s.find(':');
+            if (pos != std::string::npos ) {
+                _host = s.substr(0, pos);
+                toInt(s.substr(pos + 1, s.length()), _vncPort);
+            } else {
+                _host = s;
+            }
+
             _unrecognizedOptions.emplace_back(*i);
         }
     }

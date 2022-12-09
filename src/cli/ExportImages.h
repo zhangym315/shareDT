@@ -2,10 +2,10 @@
 #define _EXPORTIMAGES_H_
 
 #include <png.h>
-#include "main/ShareDT.h"
+#include "SubFunction.h"
 #include "Capture.h"
 
-extern int mainExport(const struct cmdConf * conf);
+extern int mainExport(struct cmdConf * conf);
 
 class ExportImages final : public Capture {
     enum Format { EXPORT_RGB, EXPORT_YUV, EXPORT_INVALID};

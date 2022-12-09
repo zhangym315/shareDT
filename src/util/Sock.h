@@ -6,6 +6,7 @@
 #include <Windows.h>
 typedef size_t ssize_t;
 #else
+#include <netinet/in.h>
 #define SOCKET int
 #define INVALID_SOCKET -1
 #endif
@@ -37,14 +38,12 @@ private:
 #else
     int _fd;
 #endif
-    bool _isServer;
 };
 
 class Socket {
 public:
     virtual ~Socket();
     Socket(const Socket&);
-    Socket& operator=(Socket&);
 
     std::string ReceiveLine() const;
     std::string receiveStrings() const;
@@ -67,7 +66,6 @@ protected:
     Socket();
 
     SOCKET _s;
-    int* _refCounter;
 
 private:
     static void Start();
@@ -79,28 +77,28 @@ class SocketClient : public Socket {
 public:
     SocketClient(const std::string& host, int port);
     void write(const char * bytes) { sendString(bytes); }
+    bool connect();
+
+    bool connectWait ();
 
 private:
-    struct timeval _tv;
+    struct timeval  _tv;
+    sockaddr_in     _skAddr;
+    bool            _isInited;
 };
 
 class SocketServer : public Socket {
   public:
     SocketServer(int port, int connections, TypeSocket type=BlockingSocket);
-    Socket* Accept();
+
+    /* caller should take ownership of return variable to release */
+    Socket* accept();
     int  getPort() const { return _port; }
+    bool isInit() const { return _isInit; }
 
   private:
-    int _port;
-};
-
-class SocketSelect {
-public:
-    explicit SocketSelect(Socket const * s1, Socket const * const s2=NULL, TypeSocket type=BlockingSocket);
-    bool Readable(Socket const * s);
-
-private:
-    fd_set fds_{};
+    bool _isInit;
+    int  _port;
 };
 
 #endif //_SOCK_H_

@@ -1,5 +1,5 @@
 #include "MainService.h"
-#include "ShareDT.h"
+#include "SubFunction.h"
 #include "TypeDef.h"
 #include "Logger.h"
 #include "Sock.h"
@@ -94,6 +94,11 @@ void ServiceMain(int argc, char** argv)
 
     /* Main service port */
     SocketServer ss(SHAREDT_INTERNAL_PORT_START, 10);
+    if (!ss.isInit()) {
+        LOGGER.error() << "Failed to start MainService";
+        return;
+    }
+
     LOGGER.info() << "MainService started on port=" << ss.getPort() ;
     std::string alive = ShareDTHome::instance()->getHome() + std::string(MAIN_SERVER_PATH) + std::string(PATH_ALIVE_FILE);
     {
@@ -107,7 +112,7 @@ void ServiceMain(int argc, char** argv)
 
     while (ServiceStatus.dwCurrentState == SERVICE_RUNNING)
     {
-        Socket* s=ss.Accept();
+        Socket* s=ss.accept();
         std::string received = s->receiveStrings();
         LOGGER.info("ShareDT Server service DATA RECEIVED CMD=\"%s\", clientSocket=%d", received.c_str(), ss.getSocket());
 

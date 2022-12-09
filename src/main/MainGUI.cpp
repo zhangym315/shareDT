@@ -1,12 +1,12 @@
-#include "ShareDTWindow.h"
+#include "MainGUI.h"
 #include "Buffer.h"
 #include "WindowProcessor.h"
 #include "Path.h"
 #include "ExportAll.h"
 #include "Logger.h"
-#include "ShareDT.h"
+#include "SubFunction.h"
 #include "Sock.h"
-#include "RemoteGetter.h"
+#include "service/RemoteGetter.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,16 +26,60 @@ extern "C" {
 #include <QDesktopWidget>
 #include <memory>
 
+#ifdef __SHAREDT_WIN__
+#include <Shlobj.h>
+#include <windows.h>
+#endif
+
 const static int gpBoxFontSize = 15;
+
+int mainGUI(struct cmdConf * conf) {
+    ShareDTHome::instance()->set(conf->argv[0]);
+#ifdef __SHAREDT_WIN__
+    WCHAR * filepath;
+    if (!SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &filepath))) {
+    }
+    std::wstring ws(filepath);
+    std::string varRun = std::string(ws.begin(), ws.end()) + std::string(PATH_SEP_STR) +
+                    std::string(SHAREDT_KEYWORD) + std::string(PATH_SEP_STR) +  std::string(VAR_RUN);
+    if (!fs::exists(varRun)) fs::create_directories(varRun);
+    //set log file to var/run/ShareDT.log
+    Logger::instance().setLogFile((varRun+std::string(CAPTURE_LOG)).c_str());
+#else
+    std::string varrun = ShareDTHome::instance()->getHome() + std::string(VAR_RUN);
+    if (!fs::exists(varrun)) fs::create_directories(varrun);
+    //set log file to var/run/ShareDT.log
+    Logger::instance().setLogFile((ShareDTHome::instance()->getHome() +
+                                   std::string(VAR_RUN)+std::string(CAPTURE_LOG)).c_str());
+#endif
+
+    QApplication app(conf->argc, conf->argv);
+    LOGGER.info() << "Starting " << conf->argv[0] << " ...";
+
+    ShareDTWindow gui(conf->argc, conf->argv);
+    gui.show();
+    return QApplication::exec();
+}
 
 void UI_ShareDTWindow::newRemoteGroupBox(const std::string & host)
 {
+    /* check if already connected */
     if (_remoteGroupBoxes.find(host) != _remoteGroupBoxes.end()) {
         QMessageBox msgBox;
         QString message("Host already connected: ");
         message.append(host.c_str());
         msgBox.setText(message); msgBox.exec();
         return;
+    }
+
+    /* connection */
+    SocketClient sc(host, SHAREDT_INTERNAL_PORT_START);
+    if (!sc.connectWait()) {
+        QMessageBox msgBox;
+        msgBox.setText(QString("Cannot connect to host: ") +
+                        QString::fromStdString(host));
+        msgBox.exec();
+        return ;
     }
 
     auto * gb= new GroupBox(host.c_str(), this);
@@ -51,50 +95,33 @@ void UI_ShareDTWindow::newRemoteGroupBox(const std::string & host)
     gb->setFont(QFont(QString("Arial"), gpBoxFontSize));
     _remoteGroupBoxes[host].reset(gb);
 
-    try {
-        SocketClient sc(host, 31400);
-        std::string cmd = "ShareDT";
-        cmd.append(" ");
-        cmd.append(SHAREDT_SERVER_COMMAND_REMOTGET);
-        sc.sendString(cmd);
+    std::string cmd = "ShareDT";
+    cmd.append(" ");
+    cmd.append(SHAREDT_SERVER_COMMAND_REMOTGET);
+    sc.sendString(cmd);
 
-        FrameBuffer fb;
-        while (true) {
-            RemoteGetterMsg msg{};
-            if (sc.receiveBytes((unsigned char *) &msg, sizeof(msg)) <= 0) break;
+    FrameBuffer fb;
+    while (true) {
+        RemoteGetterMsg msg{};
+        if (sc.receiveBytes((unsigned char *) &msg, sizeof(msg)) <= 0) break;
 
-            msg.convert();
+        msg.convert();
 
-            fb.reSet(msg.dataLen);
-            fb.setWidthHeight(msg.w, msg.h);
-            if (sc.receiveBytes(fb.getDataToWrite(), msg.dataLen) < 0 ) break;
+        fb.reSet(msg.dataLen);
+        fb.setWidthHeight(msg.w, msg.h);
+        if (sc.receiveBytes(fb.getDataToWrite(), msg.dataLen) < 0 ) break;
 
-            LOGGER.info() << "Received frame buffer size=" << msg.dataLen
-                          << " name=" << msg.name
-                          << " cmdArgs=" << msg.cmdArgs;
+        LOGGER.info() << "Received frame buffer size=" << msg.dataLen
+                      << " name=" << msg.name
+                      << " cmdArgs=" << msg.cmdArgs;
 
-            ItemInfo info;
-            info.name = msg.name;
-            info.argument << msg.cmdArgs;
-            gbFL->addWidget(newImageBox(fb.getWidth(),
-                                         fb.getHeight(),
-                                         fb.getData(),
-                                         info));
-        }
-    } catch (std::string & e) {
-        QMessageBox msgBox;
-        QString message = QString("Cannot connect to host: ") + QString::fromStdString(host) +
-                            QString(" error=") + QString::fromStdString(e);
-        msgBox.setText(message); msgBox.exec();
-        _mainLayout->removeWidget(gb);
-        _remoteGroupBoxes.erase(host);
-    } catch (...) {
-        QMessageBox msgBox;
-        QString message = QString("Cannot connect to host: ") + QString::fromStdString(host) +
-                          QString(" unknown error.");
-        msgBox.setText(message); msgBox.exec();
-        _mainLayout->removeWidget(gb);
-        _remoteGroupBoxes.erase(host);
+        ItemInfo info;
+        info.name = msg.name;
+        info.argument << msg.cmdArgs;
+        gbFL->addWidget(newImageBox(fb.getWidth(),
+                                     fb.getHeight(),
+                                     fb.getData(),
+                                     info));
     }
 }
 
@@ -350,7 +377,7 @@ void GroupBox::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
-        _ui(new Ui::ShareDTWindow)
+        _ui(new Ui::MainGUI)
 {
 #ifndef __SHAREDT_IOS__
     // set program icon, ShareDT.png should be the same directory
@@ -379,13 +406,13 @@ void ShareDTWindow::setMenu()
 
     auto * localCapture = new QAction();
     localCapture->setObjectName(QString::fromUtf8("startCapture"));
-    localCapture->setText(QCoreApplication::translate("ShareDTWindow", "Start Local Capture Server", nullptr));
+    localCapture->setText(QCoreApplication::translate("MainGUI", "Start Local Capture Server", nullptr));
     menuEdit->addAction(localCapture);
     QObject::connect (localCapture, SIGNAL(triggered()), _ui, SLOT(startLocalCaptureServer()));
 
     auto * newConnect = new QAction();
     newConnect->setObjectName(QString::fromUtf8("new_connection"));
-    newConnect->setText(QCoreApplication::translate("ShareDTWindow", "New Connection", nullptr));
+    newConnect->setText(QCoreApplication::translate("MainGUI", "New Connection", nullptr));
     menuEdit->addAction(newConnect);
     QObject::connect (newConnect, SIGNAL(triggered()), _ui, SLOT(newGroupConnection()));
     /* Edit end*/
@@ -393,11 +420,11 @@ void ShareDTWindow::setMenu()
     /* Window */
     auto * menuWindow = new QMenu(menubar);
     menuWindow->setObjectName(QString::fromUtf8("menuWindow"));
-    menuWindow->setTitle(QCoreApplication::translate("ShareDTWindow", "Window", nullptr));
+    menuWindow->setTitle(QCoreApplication::translate("MainGUI", "Window", nullptr));
 
     auto * freshWin = new QAction();
     freshWin->setObjectName(QString::fromUtf8("fresh_items"));
-    freshWin->setText(QCoreApplication::translate("ShareDTWindow", "Refresh Items", nullptr));
+    freshWin->setText(QCoreApplication::translate("MainGUI", "Refresh Items", nullptr));
     menuWindow->addAction(freshWin);
     QObject::connect (freshWin, SIGNAL(triggered()), this, SLOT(actionFreshItems()));
     /* Window end */
@@ -405,11 +432,11 @@ void ShareDTWindow::setMenu()
     /* Help */
     auto *menuHelp = new QMenu(menubar);
     menuHelp->setObjectName(QString::fromUtf8("menuHelp"));
-    menuHelp->setTitle(QCoreApplication::translate("ShareDTWindow", "Help", nullptr));
+    menuHelp->setTitle(QCoreApplication::translate("MainGUI", "Help", nullptr));
 
     auto * aboutWin = new QAction();
     aboutWin->setObjectName(QString::fromUtf8("about_window"));
-    aboutWin->setText(QCoreApplication::translate("ShareDTWindow", "About", nullptr));
+    aboutWin->setText(QCoreApplication::translate("MainGUI", "About", nullptr));
     menuHelp->addAction(aboutWin);
     /* Help  end */
 

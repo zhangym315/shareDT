@@ -1,11 +1,11 @@
 #include "MainService.h"
 #include "Path.h"
 #include "Logger.h"
-#include "ShareDT.h"
+#include "SubFunction.h"
 #include "CrossPlatform.h"
-#include "MainManagementProcess.h"
+#include "main/MainManagementProcess.h"
 #include "Sock.h"
-#include "RemoteGetter.h"
+#include "service/RemoteGetter.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -148,9 +148,7 @@ static void statusAllSC (
 
 static void getRemoteScreen(Socket * sk)
 {
-//    sk->send("Received remote get screen request!\n");
     LOGGER.info() << "Received getRmoeteScreen request";
-
     RemoteGetter rg(sk);
     rg.send();
 }
@@ -199,28 +197,23 @@ void HandleCommandSocket(Socket * s, char * buf)
     std::string user = hcl.getSC().getUserName();
     const std::string & capServerHome = hcl.getSC().getCapServerPath();
 
-    /* 0. check if status command */
-    if( commandType == Capture::C_STATUS )
-    {
-        return statusAllSC(sk.get(), hcl);
+    /*
+     * Handle simple command
+     */
+    switch (commandType) {
+        case Capture::C_STATUS:
+            return statusAllSC(sk.get(), hcl);
+        case Capture::C_STOP:
+            return stopSpecificCaptureServer(sk.get(), hcl);
+        case Capture::C_STOP_ALL_SC:
+            stopAllSC();
+            sk->send("All Capture Server are stopped.");
+            return;
+        case Capture::C_REMOTEGET:
+            return getRemoteScreen(sk.get());
+        default:
+            break;
     }
-
-    /* 1. first check stop specific wid */
-    if( commandType == Capture::C_STOP )
-    {
-        return stopSpecificCaptureServer(sk.get(), hcl);
-    }
-
-    if( commandType == Capture::C_STOP_ALL_SC)
-    {
-        stopAllSC();
-        sk->send("All Capture Server are stopped.");
-        return;
-    }
-
-    /* remoteget, return avaible screen */
-    if (commandType == Capture::C_REMOTEGET)
-        return getRemoteScreen(sk.get());
 
     if(!hcl.hasWid())   hcl.setWID();
     if(!hcl.isDaemon()) hcl.setDaemon();
@@ -259,12 +252,12 @@ void HandleCommandSocket(Socket * s, char * buf)
             sk->send(ret.c_str());
             return;
         }
+
 #ifndef __SHAREDT_WIN__
         char ** argv = hcl.getArgv();
         if((childPid=fork()) == 0) {
             execv(argv[0], argv);
         }
-
 #else
         /* create process as the user requested */
         LOGGER.info() << "Retrieving user session token for user=" << user;
@@ -473,7 +466,7 @@ bool setMainServiceFile()
         LOGGER.error() << "Cannot open pid file: " << pathPid;
         return false;
     }
-    fs<< curPid;
+    fs << curPid;
     fs.close();
 
     LOGGER.info() << "Starting server service process: " << curPid;
@@ -481,28 +474,4 @@ bool setMainServiceFile()
     // Linux/MacOS will set the pid file later after fork
 #endif
     return true;
-}
-
-/*
- * Command line to inform service to create child
- * process to run the server procedure
- */
-int infoServiceToAction(const char * execCmd)
-{
-    std::string alive = ShareDTHome::instance()->getHome() + std::string(MAIN_SERVER_PATH) + std::string(PATH_ALIVE_FILE);
-    Path aliveReader(alive, std::fstream::in);
-    int port;
-    try {
-        port = aliveReader.readLineAsInt();
-        SocketClient sc(LOCALHOST, port);
-        sc.sendString(execCmd);
-
-        std::string receive = sc.receiveStrings();
-        fprintf(stdout, ("%s\n"), receive.c_str() );
-    } catch (...) {
-        fprintf(stderr, "Failed to connect server process.");
-        return RETURN_CODE_INTERNAL_ERROR;
-    }
-
-    return RETURN_CODE_SUCCESS;
 }

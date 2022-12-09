@@ -2,8 +2,8 @@
 #define _FETCHINGDATA_H_
 
 #include <QObject>
-#include <rfb/rfbclient.h>
-#include "SDThread.h"
+#include "rfb/rfbclient.h"
+#include "main/client/SDThread.h"
 #include "Buffer.h"
 
 #define VNC_BITS_PER_SAMPLE 8

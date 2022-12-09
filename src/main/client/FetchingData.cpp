@@ -1,7 +1,7 @@
 #include "FetchingData.h"
 #include "Logger.h"
 
-#include <png.h>
+#include "png.h"
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -104,7 +104,7 @@ void FetchingDataFromServer::HandleRectFromServer(rfbClient* client, int x, int 
 {
     static int index = 0;
     char path[128] = { 0 };
-    sprintf(path, "File_before_sentHandleRect.%d.png", index++);
+    ::snprintf(path, 128, "File_before_sentHandleRect.%d.png", index++);
 
     auto * fetcher = (FetchingDataFromServer *) client->_fetcher;
 

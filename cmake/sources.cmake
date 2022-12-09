@@ -11,7 +11,7 @@ set(SHAREDT_SERVER_SRC_COMMON
 )
 
 set(SHAREDT_SERVER_SRC_COMMON
-        ${SHAREDT_SRC}/main/MainService.cpp
+        ${SHAREDT_SRC}/service/MainService.cpp
         ${SHAREDT_SRC}/main/MainManagementProcess.cpp
         ${SHAREDT_SRC}/capture/WindowsProvider.cpp
         ${SHAREDT_SRC}/util/StringTools.cpp
@@ -35,20 +35,22 @@ set(SHAREDT_SERVER_SRC
         ${SHAREDT_SRC}/ffmpeg/ReadWriteVideo.c
         ${SHAREDT_SRC}/ffmpeg/ReadWriteImages.c
         ${SHAREDT_SRC}/cli/ExportImages.cpp
-        ${SHAREDT_SRC}/main/MainConsoleSubFunction.cpp
+        ${SHAREDT_SRC}/main/SubFunction.cpp
         ${SHAREDT_SRC}/input/InputInterface.cpp
 )
 
 set(SHAREDT_SERVER_INCLUDE
         ${CMAKE_BINARY_DIR}/libvnc/
-        ${CMAKE_SOURCE_DIR}/src/
-        ${CMAKE_SOURCE_DIR}/src/capture/
-        ${CMAKE_SOURCE_DIR}/src/util/
-        ${CMAKE_SOURCE_DIR}/src/cli/
         ${CMAKE_SOURCE_DIR}/contrib/libwxWidgets/include/
         ${CMAKE_BINARY_DIR}/lib/
+        ${SHAREDT_SRC}/
+        ${SHAREDT_SRC}/capture/
+        ${SHAREDT_SRC}/util/
+        ${SHAREDT_SRC}/cli/
+        ${SHAREDT_SRC}/service/
         ${SHAREDT_SRC}/ffmpeg/
         ${SHAREDT_SRC}/input/
+        ${SHAREDT_SRC}/main/
         ${CMAKE_BINARY_DIR}/lib/wx/include/osx_cocoa-unicode-static-3.1/
 )
 
@@ -69,8 +71,8 @@ set(SERVERGUI_SOURCES
 )
 
 set(SHAREDT_CLIENT_GUI_SRC_FILES
-        ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.cpp
-        ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.ui
+        ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.cpp
+        ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.ui
 )
 
 ##### ShareDTClient
@@ -78,19 +80,16 @@ set(SHAREDT_CLIENT_SRC_FILES
         ${SHAREDT_SRC}/util/Pid.c
         ${SHAREDT_SRC}/util/Buffer.cpp
         ${SHAREDT_SRC}/util/TimeUtil.c
-        ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.cpp
-        ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.h
-        ${SHAREDT_SRC_CLIENT}/gui/ShareDTClientWin.ui
-        ${SHAREDT_SRC_CLIENT}/vnc/FetchingData.cpp
-        ${SHAREDT_SRC_CLIENT}/qt/SDThread.cpp
-        ${SHAREDT_SRC_CLIENT}/Main.cpp
+        ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.cpp
+        ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.h
+        ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.ui
+        ${SHAREDT_SRC_CLIENT}/FetchingData.cpp
+        ${SHAREDT_SRC_CLIENT}/SDThread.cpp
         ${SHAREDT_SRC}/util/Logger.cpp
 )
 
 set(SHAREDT_CLIENT_INCLUDE
-        ${SHAREDT_SRC_CLIENT}/gui/
-        ${SHAREDT_SRC_CLIENT}/vnc/
-        ${SHAREDT_SRC_CLIENT}/qt/
+        ${SHAREDT_SRC_CLIENT}/
 )
 
 set(KeyCode ${CMAKE_SOURCE_DIR}/src/input/KeyCode.txt)

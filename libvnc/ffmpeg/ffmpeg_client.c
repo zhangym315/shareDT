@@ -29,8 +29,8 @@ rfbDefaultLogError(const char *format, ...)
     va_end(args);
 }
 
-rfbLogProc rfbLog=rfbDefaultLogStd;
-rfbLogProc rfbErr=rfbDefaultLogError;
+rfbLogProc rfbLogInternal=rfbDefaultLogStd;
+rfbLogProc rfbErrInternal=rfbDefaultLogError;
 
 static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h, uint32_t encode)
 {
@@ -39,7 +39,7 @@ static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h, uint32_t encode)
 
     ret = (ffmpeg_client_ctx_t * ) malloc(sizeof(ffmpeg_client_ctx_t));
     if (ret == NULL) {
-        rfbErr("Cannot allocate for ffmpeg_client_ctx_t.\n");
+        rfbErrInternal("Cannot allocate for ffmpeg_client_ctx_t.\n");
         return NULL;
     }
     memset(ret, 0, sizeof(ffmpeg_client_ctx_t));
@@ -47,39 +47,39 @@ static ffmpeg_client_ctx_t * get_client_ctxs(int w, int h, uint32_t encode)
     ret->codec = (strcmp(ctx->codec_name, "libx264rgb") == 0) ? avcodec_find_decoder(AV_CODEC_ID_H264)
                                                               : avcodec_find_decoder_by_name(ctx->codec_name);
     if (ret->codec == NULL) {
-        rfbErr("Codec '%s' not found\n", ctx->decodec_name);
+        rfbErrInternal("Codec '%s' not found\n", ctx->decodec_name);
         goto failed;
     } else
-        rfbLog("Codec '%s' found\n", ctx->decodec_name);
+        rfbLogInternal("Codec '%s' found\n", ctx->decodec_name);
 
     if ((ret->parser = av_parser_init(ret->codec->id)) == NULL)
     {
-        rfbErr("parser not found\n");
+        rfbErrInternal("parser not found\n");
         goto failed;
     }
 
     if ((ret->av_packet=av_packet_alloc()) == NULL) {
-        rfbErr("Failed to allocate packet for decoding\n");
+        rfbErrInternal("Failed to allocate packet for decoding\n");
         goto failed;
     }
 
 
     if ((ret->codec_ctx = avcodec_alloc_context3(ret->codec)) == NULL) {
-        rfbErr("Could not allocate video codec context\n");
+        rfbErrInternal("Could not allocate video codec context\n");
         goto failed;
     }
 
     ret->codec_ctx->width = w;
     ret->codec_ctx->height = h;
     if (avcodec_open2(ret->codec_ctx, ret->codec, NULL) < 0) {
-        rfbErr("Could not open codec\n");
+        rfbErrInternal("Could not open codec\n");
         goto failed;
     }
 
     if ((ret->sws_ctx = sws_getContext(w, h, ctx->pix_format,
                                        w, h, AV_PIX_FMT_RGB32,
                                        SWS_BICUBIC, NULL,NULL,NULL)) == NULL ) {
-        rfbErr("Could get sws_getContext\n");
+        rfbErrInternal("Could get sws_getContext\n");
         goto failed;
     }
 
@@ -109,7 +109,7 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
     if (client->_ffmpeg_decoder == NULL) {
         client->_ffmpeg_decoder = get_client_ctxs(rect->r.w, rect->r.h, encode);
         if (client->_ffmpeg_decoder == NULL) {
-            rfbErr("Error to get client ffmpeg ctxs\n");
+            rfbErrInternal("Error to get client ffmpeg ctxs\n");
             return FALSE;
         }
     }
@@ -122,7 +122,7 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
         return FALSE;
     av_header.HEADER.ffmpeg_body_len = rfbClientSwap32IfLE(av_header.HEADER.ffmpeg_body_len);
 
-//    rfbLog("%s received data_size=%d\n", get_current_time_string(), av_header.HEADER.ffmpeg_body_len + sizeof(av_header));
+//    rfbLogInternal("%s received data_size=%d\n", get_current_time_string(), av_header.HEADER.ffmpeg_body_len + sizeof(av_header));
 
     /* No body data, just return */
     if (av_header.HEADER.ffmpeg_body_len == 0) {
@@ -132,13 +132,13 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
 
     /* make sure buffer is big enough */
     if (!realloc_total_packet_buf(cl_av_packet_buf, av_header.HEADER.ffmpeg_body_len)) {
-        rfbErr("Error to reallocate buffer, size=%d\n", av_header.HEADER.ffmpeg_body_len);
+        rfbErrInternal("Error to reallocate buffer, size=%d\n", av_header.HEADER.ffmpeg_body_len);
         return FALSE;
     }
 
     /* Read pakcet content */
     if (!ReadFromRFBServer(client, (char *) cl_av_packet_buf->_data, av_header.HEADER.ffmpeg_body_len)) {
-        rfbErr("Failed to read data for data_len=%d\n", av_header.HEADER.ffmpeg_body_len);
+        rfbErrInternal("Failed to read data for data_len=%d\n", av_header.HEADER.ffmpeg_body_len);
         return FALSE;
     }
     cl_av_packet_buf->_size = av_header.HEADER.ffmpeg_body_len;
@@ -196,7 +196,7 @@ rfbReceiveRectEncodingFFMPEG(rfbClient* client,
                                     (char * ) client->frameBuffer,
                                     client->width, client->height);
 /*
-            rfbLog("%s Recevied frame packet_size=%lu, frame_pts=%llu, decoder_ctx->total_received_bytes=%llu\n",
+            rfbLogInternal("%s Recevied frame packet_size=%lu, frame_pts=%llu, decoder_ctx->total_received_bytes=%llu\n",
                    get_current_time_string(),
                    decoder_ctx->av_packet->size,
                    decoder_ctx->av_frame->pts,

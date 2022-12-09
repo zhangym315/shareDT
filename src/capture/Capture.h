@@ -42,14 +42,15 @@ class Capture {
   public:
     Capture() : _pid(-1), _hdler(0), _show(S_NONE),
          _type(SP_NULL), _sp(nullptr), _monID(0), _daemon(false),
-         _ctype(C_NONE), _frequency(DEFAULT_SAMPLE_PROVIDER) { }
+         _ctype(C_NONE), _host{}, _vncPort{},
+         _frequency(DEFAULT_SAMPLE_PROVIDER) { }
     ~Capture();
 
     int initSrceenProvider();
     int initParsing(int argc, char * argv[]);
 
     enum SType { S_NONE, S_WIN_ALL, S_WIN_NAME, S_MONITOR , S_ALL};
-    enum CType { C_NEWCAPTURE, C_START, C_STOP, C_STOP_ALL_SC, C_RESTART, C_SHOW, C_STATUS, C_EXPORT, C_REMOTEGET, C_LOCALDISPLAYER, C_NONE };
+    enum CType { C_CAPTURE, C_NEWCAPTURE, C_START, C_STOP, C_STOP_ALL_SC, C_RESTART, C_SHOW, C_STATUS, C_EXPORT, C_REMOTEGET, C_LOCALDISPLAYER, C_NONE };
 
     bool setWorkingDirectory();
     void initDaemon();
@@ -64,13 +65,14 @@ class Capture {
     void setCType(CType c) { _ctype = c; }
     void  removeAlivePath() const;
 
-    [[nodiscard]] const std::string & getUserName() const { return _user; }
-    [[nodiscard]] const std::string & getCapServerPath() const { return _capturePath; }
+    const std::string & getUserName() const { return _user; }
+    const std::string & getCapServerPath() const { return _capturePath; }
 
-    [[nodiscard]] bool isDaemon() const { return _daemon; }
-    [[nodiscard]] int  getPort()  const { return _vncPort; }
-    [[nodiscard]] unsigned int  getFrenquency()  const { return _frequency; }
-    [[nodiscard]] SPType  getType()  const { return _type; }
+    bool isDaemon() const { return _daemon; }
+    int  getPort()  const { return _vncPort; }
+    std::string  getHost()  const { return _host; }
+    unsigned int  getFrenquency()  const { return _frequency; }
+    SPType  getType()  const { return _type; }
 
     ScreenProvider * getScreenProvide() { return _sp; }
     const std::string & getName() const { return _name; }
@@ -101,18 +103,19 @@ class Capture {
     } _cap;
 
     SPType           _type;
-    std::string           _name;   /* captured named  */
+    std::string      _name;   /* captured named  */
     pid_t            _pid;    /* for window capture, the process id we want to capture */
     size_t           _hdler;  /* for window capture, the handler id we want to capture */
-    SType            _show;
+    SType            _show;   /* Screen capture type, monitor, windows or bounds       */
     int              _monID;  /* for monitor capture, the id of monitor */
     bool             _daemon;
-    std::string           _wID;    /* unique id */
-    std::string           _user;
-    std::string           _capturePath;
-    std::string           _alivePath;
-    CType            _ctype;  /* command type, newcaptre, start, stop ... */
-    int              _vncPort{};
+    std::string      _wID;    /* unique id */
+    std::string      _user;
+    std::string      _capturePath;
+    std::string      _alivePath;
+    CType            _ctype;       /* command type, capture, newcapture, start, stop ... */
+    std::string      _host;
+    int              _vncPort;
 
     std::vector<std::string>  _unrecognizedOptions;
 };

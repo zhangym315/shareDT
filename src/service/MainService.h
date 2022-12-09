@@ -18,7 +18,6 @@
 #define MAIN_SERVICE_CONTINUING   "MAIN_CONTINUING"
 
 int MainWindowsServices();
-int infoServiceToAction(const char * execCmd);
 void stopAllSC();
 
 void HandleCommandSocket(Socket * sk, char * buf);

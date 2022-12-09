@@ -10,7 +10,7 @@ extern "C" {
 #include "libswscale/swscale.h"
 }
 
-int mainExport(const struct cmdConf * conf)
+int mainExport(struct cmdConf * conf)
 {
     ExportImages ei;
     char ** argv = const_cast<char **>(conf->argv);
