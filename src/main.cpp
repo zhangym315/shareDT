@@ -1,27 +1,17 @@
 /*
  * ShareDT main program
  */
-#include <QApplication>
-#include <QImage>
-#include <QDesktopWidget>
-
 #include "MainGUI.h"
 #include "LocalDisplayer.h"
 #include "SubFunction.h"
 #include "ExportImages.h"
 
-
 #ifdef __SHAREDT_WIN__
 #include <tchar.h>
 #include <strsafe.h>
-#include <Shlobj.h>
-#include <windows.h>
 
 // Hide console for windows
 //#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
-
-#else
-#include "Daemon.h"
 #endif
 
 /*
@@ -60,8 +50,8 @@ static const struct {
         { SHAREDT_SERVER_COMMAND_GET,        &getSc }            /* Get screen             */
 #ifdef  __SHAREDT_WIN__
         ,{ "install",    &installService },  /* install service       */
-        { "service",    &startService },    /* from scm service      */
-        { "uninstall",  &uninstallService } /* uninstall service     */
+        { "service",    &startService },     /* from scm service      */
+        { "uninstall",  &uninstallService }  /* uninstall service     */
 #endif
 };
 
