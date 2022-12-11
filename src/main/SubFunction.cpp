@@ -382,7 +382,6 @@ int connectRemote (struct cmdConf * conf) {
     if (!gui.isInited()) {
         std::cerr << "Failed to connect to server" << std::endl;
         std::cerr << std::endl;
-//        showUages(conf->argv);
         return -1;
     }
 

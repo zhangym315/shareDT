@@ -82,6 +82,7 @@ int main(int argc, char** argv)
         }
     }
 
+    fprintf(stdout, "Unknown command: %s\n", argv[1]);
     Usage();
     return -1;
 }

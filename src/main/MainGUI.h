@@ -24,6 +24,7 @@
 #include <QGroupBox>
 #include <QWidget>
 #include <QMainWindow>
+#include <QProcess>
 
 QT_BEGIN_NAMESPACE
 
@@ -79,6 +80,7 @@ public:
 
 private:
     ItemInfo _info;
+    std::unique_ptr<QProcess> _process;
 };
 
 typedef std::unordered_map<std::string, std::unique_ptr<QGroupBox>> RemoteToGroupBox;

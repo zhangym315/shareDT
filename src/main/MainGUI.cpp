@@ -6,7 +6,7 @@
 #include "Logger.h"
 #include "SubFunction.h"
 #include "Sock.h"
-#include "service/RemoteGetter.h"
+#include "RemoteGetter.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,6 +25,7 @@ extern "C" {
 #include <QInputDialog>
 #include <QDesktopWidget>
 #include <memory>
+#include <arpa/inet.h>
 
 #ifdef __SHAREDT_WIN__
 #include <Shlobj.h>
@@ -117,11 +118,11 @@ void UI_ShareDTWindow::newRemoteGroupBox(const std::string & host)
 
         ItemInfo info;
         info.name = msg.name;
-        info.argument << msg.cmdArgs;
+        info.argument = QString(msg.cmdArgs).split(" ") << ::inet_ntoa(sc.getAddr().sin_addr);
         gbFL->addWidget(newImageBox(fb.getWidth(),
-                                     fb.getHeight(),
-                                     fb.getData(),
-                                     info));
+                                       fb.getHeight(),
+                                       fb.getData(),
+                                       info));
     }
 }
 
@@ -143,8 +144,8 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
             << qPrintable(program) << " "
             << qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)) << "\"";
 
-        auto * newProcess = new QProcess();
-        newProcess->start(program, _info.argument);
+        _process = std::make_unique<QProcess>();
+        _process->start(program, _info.argument);
     }
     QWidget::mouseReleaseEvent(event);
 }

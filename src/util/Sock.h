@@ -81,6 +81,7 @@ public:
 
     bool connectWait ();
 
+    const sockaddr_in & getAddr() const { return _skAddr; }
 private:
     struct timeval  _tv;
     sockaddr_in     _skAddr;
