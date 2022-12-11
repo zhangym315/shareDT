@@ -76,6 +76,7 @@ private:
 class SocketClient : public Socket {
 public:
     SocketClient(const std::string& host, int port);
+    SocketClient(sockaddr_in s);
     void write(const char * bytes) { sendString(bytes); }
     bool connect();
 

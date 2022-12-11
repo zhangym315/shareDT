@@ -147,7 +147,7 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
             << qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)) << "\"";
 
         if (_info.isRemote) {
-            SocketClient sc(::inet_ntoa(_info.sadd.sin_addr), _info.sadd.sin_port);
+            SocketClient sc(_info.sadd);
             if (!sc.connect()) {
                 LOGGER.error() << "Failed to connect server process.";
                 return;
@@ -157,7 +157,7 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
                             +  _info.argument.join(QChar::SpecialCharacter::Space)));
 
             std::string receive = sc.receiveStrings();
-            LOGGER.info() << "Received info: " << receive.c_str();
+            LOGGER.info() << "Received info while starting capture server: " << receive.c_str();
         } else {
             _process = std::make_unique<QProcess>();
             _process->start(program, _info.argument);

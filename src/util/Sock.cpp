@@ -262,6 +262,13 @@ SocketClient::SocketClient(const std::string& host, int port) : Socket(),
     _isInited = true;
 }
 
+SocketClient::SocketClient(sockaddr_in s) :  Socket(),
+                                           _tv{ _tv.tv_sec = 10, _tv.tv_usec = 0},
+                                           _skAddr(s),
+                                           _isInited(true)
+{
+}
+
 bool SocketClient::connect() {
     if (!_isInited) return false;
 
@@ -334,3 +341,4 @@ bool SocketClient::connectWait()     {
     return true;
 #endif
 }
+
