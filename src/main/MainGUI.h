@@ -10,6 +10,7 @@
 #include <vector>
 #include <chrono>
 #include <unordered_map>
+#include <netinet/in.h>
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QAction>
@@ -67,12 +68,14 @@ typedef struct qgroup_item {
 typedef struct {
     std::string name;
     QStringList argument;
+    sockaddr_in sadd;
+    bool        isRemote;
 } ItemInfo;
 
 class ImageItem : public QWidget {
     Q_OBJECT
 public:
-    explicit ImageItem(ItemInfo info) : _info(std::move(info)), QWidget() { }
+    explicit ImageItem(ItemInfo info) : QWidget(), _info(std::move(info)) { }
 
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;

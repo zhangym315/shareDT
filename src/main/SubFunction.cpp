@@ -66,6 +66,7 @@ int mainInform(const char * command, const struct cmdConf * conf, const CaptureS
     std::string commandPath;
     commandPath.append(ShareDTHome::instance()->getHome());
     commandPath.append(MAIN_SERVER_EXEC);
+    commandPath.append(" ");
     commandPath.append(command);
 
     for (int i=2; i < conf->argc; i++) {
@@ -133,7 +134,7 @@ int mainStart (struct cmdConf * conf)
 #endif
     } else {
         fprintf(stdout, "Starting Capture Server\n");
-        return mainInform(" start", conf, CaptureServer());
+        return mainInform(SHAREDT_SERVER_COMMAND_START, conf, CaptureServer());
     }
 
 }
@@ -147,7 +148,7 @@ int mainStop (struct cmdConf * conf)
     if(conf->argc > 2)
     {
         fprintf(stdout, "Stopping Capture Server\n");
-        return mainInform(" stop", conf, CaptureServer());
+        return mainInform(SHAREDT_SERVER_COMMAND_STOP, conf, CaptureServer());
     }
 
 #ifdef __SHAREDT_WIN__
@@ -231,7 +232,7 @@ int mainCapture (struct cmdConf * conf)
     connectServiceToAction(commandPath.c_str(), CaptureServer());
     return RETURN_CODE_SUCCESS;
 #else
-    return mainInform(" newCapture", conf, cap);
+    return mainInform(SHAREDT_SERVER_COMMAND_NEWCAPTURE, conf, cap);
 #endif
 }
 
@@ -337,7 +338,7 @@ int status (struct cmdConf * conf)
     return RETURN_CODE_SUCCESS;
 #else
     fprintf(stdout, "Capture Server status:\n");
-    return mainInform(" status", conf, CaptureServer());
+    return mainInform(SHAREDT_SERVER_COMMAND_STATUS, conf, CaptureServer());
 #endif
 }
 

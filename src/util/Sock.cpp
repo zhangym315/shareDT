@@ -10,6 +10,8 @@
 #include <cerrno>
 #include <netdb.h>
 #include <sys/select.h>
+#include <arpa/inet.h>
+
 #endif
 
 using namespace std;
@@ -268,7 +270,8 @@ bool SocketClient::connect() {
 #ifdef __SHAREDT_WIN__
         error = strerror(WSAGetLastError());
 #else
-        error = "connect error";
+        error = "connect error to host=" + std::string(::inet_ntoa(_skAddr.sin_addr)) +
+                std::string(" port=") + std::to_string(_skAddr.sin_port);
 #endif
         LOGGER.error() << "Failed to connect, error=\"" << error << "\"";
         return false;

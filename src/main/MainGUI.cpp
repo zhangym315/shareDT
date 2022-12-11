@@ -5,7 +5,6 @@
 #include "ExportAll.h"
 #include "Logger.h"
 #include "SubFunction.h"
-#include "Sock.h"
 #include "RemoteGetter.h"
 
 #ifdef __cplusplus
@@ -26,6 +25,7 @@ extern "C" {
 #include <QDesktopWidget>
 #include <memory>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 #ifdef __SHAREDT_WIN__
 #include <Shlobj.h>
@@ -118,7 +118,9 @@ void UI_ShareDTWindow::newRemoteGroupBox(const std::string & host)
 
         ItemInfo info;
         info.name = msg.name;
+        info.isRemote = true;
         info.argument = QString(msg.cmdArgs).split(" ") << ::inet_ntoa(sc.getAddr().sin_addr);
+        info.sadd = sc.getAddr();
         gbFL->addWidget(newImageBox(fb.getWidth(),
                                        fb.getHeight(),
                                        fb.getData(),
@@ -144,8 +146,22 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
             << qPrintable(program) << " "
             << qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)) << "\"";
 
-        _process = std::make_unique<QProcess>();
-        _process->start(program, _info.argument);
+        if (_info.isRemote) {
+            SocketClient sc(::inet_ntoa(_info.sadd.sin_addr), _info.sadd.sin_port);
+            if (!sc.connect()) {
+                LOGGER.error() << "Failed to connect server process.";
+                return;
+            }
+
+            sc.sendString(qPrintable(program + QString(" ")
+                            +  _info.argument.join(QChar::SpecialCharacter::Space)));
+
+            std::string receive = sc.receiveStrings();
+            LOGGER.info() << "Received info: " << receive.c_str();
+        } else {
+            _process = std::make_unique<QProcess>();
+            _process->start(program, _info.argument);
+        }
     }
     QWidget::mouseReleaseEvent(event);
 }
@@ -155,7 +171,8 @@ void ImageItem::enterEvent(QEvent *event)
     QWidget::setCursor(QCursor(Qt::PointingHandCursor));
 }
 
-QWidget * UI_ShareDTWindow::newImageBox(int width, int height, unsigned char * data, const ItemInfo & info) const
+QWidget * UI_ShareDTWindow::newImageBox(int width, int height, unsigned char * data,
+                                        const ItemInfo & info) const
 {
     auto * w = new ImageItem(info);
 
@@ -255,6 +272,7 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
 
         info.name = m.getName();
         info.argument << SHAREDT_SERVER_COMMAND_DISPLAY << "-c" << "mon" <<  "-i" << std::to_string(m.getId()).c_str();
+        info.isRemote = false;
         _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(),
                                                      fb->getHeight(),
                                                      fb->getData(),
@@ -289,6 +307,7 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
 
         info.name = w.getName();
         info.argument << SHAREDT_SERVER_COMMAND_DISPLAY << "-c" <<  "win" <<  "-h" << std::to_string(w.getHandler()).c_str();
+        info.isRemote = false;
         _localGroupBox.layout->addWidget(newImageBox(fb->getWidth(),
                                                      fb->getHeight(),
                                                      fb->getData(),
