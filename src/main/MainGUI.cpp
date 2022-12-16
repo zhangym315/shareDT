@@ -162,7 +162,7 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
                                 << qPrintable(program) << " "
                                 << qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)) << "\"";
             } else {
-                LOGGER.info() << "Received info for starting capture server, status=" << msg.startedStatus << " capturePort=" << msg.capturePort;
+                LOGGER.info() << "Received info for started capture server, status=" << msg.startedStatus << " capturePort=" << msg.capturePort;
                 if (msg.startedStatus == 0) {
 
                 }
