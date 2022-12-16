@@ -263,7 +263,7 @@ int mainNewCapture (struct cmdConf * conf)
     }
 
     LOGGER.info() << "Write to MainManagementProcess: successfully created capture Server";
-    std::string result("Successfully created Capture Server on port: ");
+    std::string result = StartingCaptureServerMsg::SUCCESS_KEYWORD;
     result.append(std::to_string(cap.getPort()));
 
     alivePath.write(result);

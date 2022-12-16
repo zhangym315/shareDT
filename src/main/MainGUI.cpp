@@ -6,6 +6,7 @@
 #include "Logger.h"
 #include "SubFunction.h"
 #include "RemoteGetter.h"
+#include "MainService.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -153,11 +154,19 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
                 return;
             }
 
-            sc.sendString(qPrintable(program + QString(" ")
-                            +  _info.argument.join(QChar::SpecialCharacter::Space)));
+            sc.sendString(qPrintable(program + QString(" ") + _info.argument.join(QChar::SpecialCharacter::Space)));
 
-            std::string receive = sc.receiveStrings();
-            LOGGER.info() << "Received info while starting capture server: " << receive.c_str();
+            StartingCaptureServerMsg msg{};
+            if (sc.receiveBytes((unsigned char *) &msg, sizeof(msg)) < 0) {
+                LOGGER.error() << "Failed to start capture server for display, name=" << _info.name << "\" command=\""
+                                << qPrintable(program) << " "
+                                << qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)) << "\"";
+            } else {
+                LOGGER.info() << "Received info for starting capture server, status=" << msg.startedStatus << " capturePort=" << msg.capturePort;
+                if (msg.startedStatus == 0) {
+
+                }
+            }
         } else {
             _process = std::make_unique<QProcess>();
             _process->start(program, _info.argument);

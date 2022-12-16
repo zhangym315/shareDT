@@ -5,7 +5,8 @@
 #include "CrossPlatform.h"
 #include "main/MainManagementProcess.h"
 #include "Sock.h"
-#include "service/RemoteGetter.h"
+#include "RemoteGetter.h"
+#include "Converter.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -15,8 +16,6 @@
 #include <Windows.h>
 #include <process.h>
 #else
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <fstream>
 #endif
 
@@ -310,20 +309,31 @@ void HandleCommandSocket(Socket * s, char * buf)
         answer = alivePath.readAll();
 
         ret.append(answer);
-        sk->send(ret.c_str());
+
+        StartingCaptureServerMsg result{};
+        int success = false;
+        /* increase the dest port if successfully create Capture Server */
+        auto item = answer.find(StartingCaptureServerMsg::SUCCESS_KEYWORD);
+        if(item != std::string::npos)
+        {
+            success = true;
+            result.startedStatus = 0;
+            result.capturePort = std::stoi(answer.substr(item+StartingCaptureServerMsg::SUCCESS_KEYWORD.length(),
+                                               answer.length()-StartingCaptureServerMsg::SUCCESS_KEYWORD.length()));
+        } else {
+            result.startedStatus = 1;
+        }
+
+        LOGGER.info() << "Get capture server started status=" << result.startedStatus << " capturePort=" << result.capturePort;
+        ::strncpy(result.msg, ret.c_str(), sizeof(result.msg));
+        result.convert();
+        sk->sendBytes((const unsigned char *) &result, sizeof(result));
         LOGGER.info() << "Sent to sorcket: " << sk->getSocket() << " message: " << ret ;
 
         /*
          * increase the vnc server port even failed
          */
         _incrse++;
-
-        int success = false;
-        /* increase the dest port if successfully create Capture Server */
-        if(answer.find("Successfully created") != std::string::npos)
-        {
-            success = true;
-        }
 
         /* add it to global _WIDManager, skip the failed one */
         if(it == _WIDManager.end() && success) {
@@ -336,7 +346,7 @@ void HandleCommandSocket(Socket * s, char * buf)
             it->second.updateStatus(MainManagementProcess::STATUS::STARTED);
         }
     } else {
-        ret += "Already started";
+        ret += "Already started or unknown command type=" + std::to_string(commandType);
         sk->send(ret.c_str());
     }
 
@@ -474,4 +484,11 @@ bool setMainServiceFile()
     // Linux/MacOS will set the pid file later after fork
 #endif
     return true;
+}
+
+const std::string StartingCaptureServerMsg::SUCCESS_KEYWORD = "Successfully created Capture Server on port: ";
+
+void StartingCaptureServerMsg::convert() {
+    startedStatus = Converter::toLittleEndian(startedStatus);
+    capturePort = Converter::toLittleEndian(capturePort);
 }
