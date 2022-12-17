@@ -10,7 +10,6 @@
 #include <vector>
 #include <chrono>
 #include <unordered_map>
-#include <netinet/in.h>
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QAction>

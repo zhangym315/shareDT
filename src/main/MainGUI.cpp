@@ -16,21 +16,21 @@ extern "C" {
 }
 #endif
 
-#include <QObject>
 #include <QMessageBox>
 #include <QEvent>
 #include <QMouseEvent>
 #include <QProcess>
-#include <QChar>
 #include <QInputDialog>
 #include <QDesktopWidget>
 #include <memory>
-#include <arpa/inet.h>
-#include <netinet/in.h>
 
 #ifdef __SHAREDT_WIN__
 #include <Shlobj.h>
 #include <windows.h>
+#include <winsock2.h>
+#else
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #endif
 
 const static int gpBoxFontSize = 15;
