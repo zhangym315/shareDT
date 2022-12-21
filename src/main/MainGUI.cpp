@@ -137,6 +137,9 @@ void ImageItem::mousePressEvent(QMouseEvent *event)
     QWidget::mousePressEvent(event);
 }
 
+/*
+ * Image items click, needs to start up capture server, then do a remote connect
+ */
 void ImageItem::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::RightButton) {
@@ -164,7 +167,11 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
             } else {
                 LOGGER.info() << "Received info for started capture server, status=" << msg.startedStatus << " capturePort=" << msg.capturePort;
                 if (msg.startedStatus == 0) {
-
+                    _process = std::make_unique<QProcess>();
+                    QStringList arg;
+                    std::string addPort = std::string(::inet_ntoa(_info.sadd.sin_addr)) + std::string(":") + std::to_string(msg.capturePort-5900);
+                    arg << "connect" << "-encodings" << "raw" << QString::fromStdString(addPort);
+                    _process->start(program, arg);
                 }
             }
         } else {
