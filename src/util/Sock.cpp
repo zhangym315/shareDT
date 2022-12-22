@@ -10,6 +10,8 @@
 #include <cerrno>
 #include <netdb.h>
 #include <sys/select.h>
+#include <arpa/inet.h>
+
 #endif
 
 using namespace std;
@@ -260,6 +262,13 @@ SocketClient::SocketClient(const std::string& host, int port) : Socket(),
     _isInited = true;
 }
 
+SocketClient::SocketClient(sockaddr_in s) :  Socket(),
+                                           _tv{ _tv.tv_sec = 10, _tv.tv_usec = 0},
+                                           _skAddr(s),
+                                           _isInited(true)
+{
+}
+
 bool SocketClient::connect() {
     if (!_isInited) return false;
 
@@ -268,7 +277,8 @@ bool SocketClient::connect() {
 #ifdef __SHAREDT_WIN__
         error = strerror(WSAGetLastError());
 #else
-        error = "connect error";
+        error = "connect error to host=" + std::string(::inet_ntoa(_skAddr.sin_addr)) +
+                std::string(" port=") + std::to_string(_skAddr.sin_port);
 #endif
         LOGGER.error() << "Failed to connect, error=\"" << error << "\"";
         return false;
@@ -331,3 +341,4 @@ bool SocketClient::connectWait()     {
     return true;
 #endif
 }
+

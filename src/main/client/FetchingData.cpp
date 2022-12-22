@@ -61,7 +61,7 @@ FetchingDataFromServer::FetchingDataFromServer (int argc, char **argv) :
     _client->GotFrameBufferUpdate = HandleRectFromServer;
     rfbClientRegisterExtension(&backChannel);
 
-    if (!rfbInitClient(_client,&argc,argv))
+    if (!rfbInitClient(_client, &argc, argv))
         return;
 
     _isInited = true;

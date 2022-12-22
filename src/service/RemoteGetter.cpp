@@ -28,7 +28,7 @@ void RemoteGetter::send()
         msg.dataLen = im.sizeInBytes();
 
         ::strcpy(msg.name, m.getName().c_str());
-        ::strcpy(msg.cmdArgs, SHAREDT_SERVER_COMMAND_CAPTURE);
+        ::strcpy(msg.cmdArgs, SHAREDT_SERVER_COMMAND_NEWCAPTURE);
         ::strcat(msg.cmdArgs, " -c mon -i ");
         ::strcat(msg.cmdArgs, std::to_string(m.getId()).c_str());
 
@@ -72,7 +72,7 @@ void RemoteGetter::send()
         msg.dataLen = im.sizeInBytes();
 
         ::strcpy(msg.name, w.getName().c_str());
-        ::strcpy(msg.cmdArgs, SHAREDT_SERVER_COMMAND_DISPLAY);
+        ::strcpy(msg.cmdArgs, SHAREDT_SERVER_COMMAND_NEWCAPTURE);
         ::strcat(msg.cmdArgs, " -c win -h ");
         ::strcat(msg.cmdArgs, std::to_string(w.getHandler()).c_str());
 

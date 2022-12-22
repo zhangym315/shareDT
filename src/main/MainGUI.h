@@ -24,6 +24,7 @@
 #include <QGroupBox>
 #include <QWidget>
 #include <QMainWindow>
+#include <QProcess>
 
 QT_BEGIN_NAMESPACE
 
@@ -66,12 +67,14 @@ typedef struct qgroup_item {
 typedef struct {
     std::string name;
     QStringList argument;
+    sockaddr_in sadd;
+    bool        isRemote;
 } ItemInfo;
 
 class ImageItem : public QWidget {
     Q_OBJECT
 public:
-    explicit ImageItem(ItemInfo info) : _info(std::move(info)), QWidget() { }
+    explicit ImageItem(ItemInfo info) : QWidget(), _info(std::move(info)) { }
 
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
@@ -79,6 +82,7 @@ public:
 
 private:
     ItemInfo _info;
+    std::unique_ptr<QProcess> _process;
 };
 
 typedef std::unordered_map<std::string, std::unique_ptr<QGroupBox>> RemoteToGroupBox;

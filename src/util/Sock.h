@@ -76,11 +76,13 @@ private:
 class SocketClient : public Socket {
 public:
     SocketClient(const std::string& host, int port);
+    SocketClient(sockaddr_in s);
     void write(const char * bytes) { sendString(bytes); }
     bool connect();
 
     bool connectWait ();
 
+    const sockaddr_in & getAddr() const { return _skAddr; }
 private:
     struct timeval  _tv;
     sockaddr_in     _skAddr;

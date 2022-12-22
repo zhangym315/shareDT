@@ -96,6 +96,20 @@ class MainServiceClient
 };
 #endif
 
+/*
+ * results for starting capture server.
+ */
+struct StartingCaptureServerMsg {
+    StartingCaptureServerMsg()  = default;
+
+    void convert();
+    char msg[128];
+
+    uint16_t startedStatus;
+    uint16_t capturePort;
+    static const std::string SUCCESS_KEYWORD;
+};
+
 class HandleCommandLine
 {
 public:
