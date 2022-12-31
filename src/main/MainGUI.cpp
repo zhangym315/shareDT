@@ -416,10 +416,7 @@ ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
         _ui(new Ui::MainGUI)
 {
 #ifndef __SHAREDT_IOS__
-    // set program icon, ShareDT.png should be the same directory
-    std::string png = ShareDTHome::instance()->getHome() + std::string(PATH_SEP_STR) +
-                std::string("bin") + std::string(PATH_SEP_STR) + std::string("ShareDT.png");
-    setWindowIcon(QIcon(QPixmap(png.c_str())));
+    setIcon(this);
 #endif
 
     setMenu();
@@ -490,4 +487,11 @@ ShareDTWindow::~ShareDTWindow()
 void ShareDTWindow::actionFreshItems()
 {
     _ui->refreshLocalBoxGroup();
+}
+
+void ShareDTWindow::setIcon(QWidget * q) {
+    // set program icon, ShareDT.png should be the same directory
+    std::string png = ShareDTHome::instance()->getHome() + std::string(PATH_SEP_STR) +
+                      std::string("bin") + std::string(PATH_SEP_STR) + std::string("ShareDT.png");
+    q->setWindowIcon(QIcon(QPixmap(png.c_str())));
 }

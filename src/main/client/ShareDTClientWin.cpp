@@ -1,11 +1,12 @@
 #include <iostream>
+#include <chrono>
+
 #include <QObject>
 #include <QColorSpace>
 #include <qevent.h>
 #include <QMessageBox>
 
-#include <chrono>
-
+#include "MainGUI.h"
 #include "ShareDTClientWin.h"
 #include "ui_ShareDTClientWin.h"
 #include "InputInterface.h"
@@ -17,6 +18,10 @@ ShareDTClientWin::ShareDTClientWin (int argc, char ** argv,
      ui (new Ui::ShareDTClientWin),
      _mouseMoved(chrono::high_resolution_clock::now())
 {
+#ifndef __SHAREDT_IOS__
+    ShareDTWindow::setIcon(this);
+#endif
+
     ui->setupUi (this);
 
     ui->imageLabel->setText (QString("hello from ShareDTClientWin::ShareDTClientWin"));

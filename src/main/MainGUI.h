@@ -150,6 +150,8 @@ public:
     ~ShareDTWindow () override;
 
     void setMenu();
+
+    static void setIcon(QWidget * q);
 private:
     Ui::MainGUI   * _ui;
 
