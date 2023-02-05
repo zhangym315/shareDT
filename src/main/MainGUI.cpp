@@ -111,7 +111,7 @@ void UI_ShareDTWindow::newRemoteGroupBox(const std::string & host)
 
         fb.reSet(msg.dataLen);
         fb.setWidthHeight(msg.w, msg.h);
-        if (sc.receiveBytes(fb.getDataToWrite(), msg.dataLen) < 0 ) break;
+        if (sc.receiveBytes(fb.getDataToWrite(), msg.dataLen) < 0 || msg.dataLen==0) break;
 
         LOGGER.info() << "Received frame buffer size=" << msg.dataLen
                       << " name=" << msg.name
