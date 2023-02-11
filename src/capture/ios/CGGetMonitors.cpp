@@ -3,13 +3,17 @@
 
 void MonitorVectorProvider::CapGetMonitors ()
 {
-    std::vector<CGDirectDisplayID> displays;
-    CGDisplayCount count=0;
+//    CGDisplayCount count=0;
     //get count
-    CGGetActiveDisplayList(0, 0, &count);
-    displays.resize(count);
+//    CGGetActiveDisplayList(0, nullptr, &count);
+//    displays.resize(20);
+#define MAX_DISPLAYS 20
+    CGDirectDisplayID displays[MAX_DISPLAYS];
+    uint32_t count;
+//    uint32_t i;
 
-    CGGetActiveDisplayList(count, displays.data(), &count);
+    CGGetActiveDisplayList(MAX_DISPLAYS, displays, &count);
+
     for(auto  i = 0; i < count; i++) {
         //only include non-mirrored displays
         if(CGDisplayMirrorsDisplay(displays[i]) == kCGNullDirectDisplay){
