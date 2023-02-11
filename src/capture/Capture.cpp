@@ -403,10 +403,12 @@ int Capture::initParsing(int argc, char * argv[])
     if (_ctype == C_NONE) return RETURN_CODE_INVALID_ARG;
 
     /* set home path */
-    ShareDTHome::instance()->reSet(argv[0]);
-    if(!ShareDTHome::instance()->isValid()) {
-        LOGGER.error() << "Can't determine HOME PATH for daemon running";
-        return RETURN_CODE_INTERNAL_ERROR;
+    if (!ShareDTHome::instance()->isValid()) {
+        ShareDTHome::instance()->reSet(argv[0]);
+        if (!ShareDTHome::instance()->isValid()) {
+            LOGGER.error() << "Can't determine HOME PATH for daemon running";
+            return RETURN_CODE_INTERNAL_ERROR;
+        }
     }
 
     /* create working directory */

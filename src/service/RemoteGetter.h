@@ -13,7 +13,7 @@ struct RemoteGetterMsg {
     uint32_t dataLen;
 
     char name[64];
-    char cmdArgs[128];
+    char cmdArgs[1024];
 };
 
 class RemoteGetter {

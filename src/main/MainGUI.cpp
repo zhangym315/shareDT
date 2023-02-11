@@ -147,7 +147,6 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
         QString program = ShareDTHome::instance()->getArgv0().c_str();
 
         LOGGER.info() << "Starting display for name=\"" << _info.name << "\" command=\""
-            << qPrintable(program) << " "
             << qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)) << "\"";
 
         if (_info.isRemote) {
@@ -157,12 +156,11 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
                 return;
             }
 
-            sc.sendString(qPrintable(program + QString(" ") + _info.argument.join(QChar::SpecialCharacter::Space)));
+            sc.sendString(qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)));
 
             StartingCaptureServerMsg msg{};
             if (sc.receiveBytes((unsigned char *) &msg, sizeof(msg)) < 0) {
                 LOGGER.error() << "Failed to start capture server for display, name=" << _info.name << "\" command=\""
-                                << qPrintable(program) << " "
                                 << qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)) << "\"";
             } else {
                 LOGGER.info() << "Received info for started capture server, status=" << msg.startedStatus << " capturePort=" << msg.capturePort;

@@ -189,7 +189,11 @@ void HandleCommandSocket(Socket * s, char * buf)
     HandleCommandLine hcl(buf);
 
     /* parsing input argument */
-    hcl.initParsing();
+    if (hcl.initParsing() != RETURN_CODE_SUCCESS) {
+        sk->send("Failed to init received command line.");
+        return;
+    }
+
     wid = hcl.getSC().getWID();
     auto it = _WIDManager.find(wid);
     commandType = hcl.getSC().getCType();
@@ -255,10 +259,10 @@ void HandleCommandSocket(Socket * s, char * buf)
 #ifndef __SHAREDT_WIN__
         char ** argv = hcl.getArgv();
         if((childPid=fork()) == 0) {
-            execv(argv[0], argv);
+            execv(ShareDTHome::instance()->getArgv0().c_str(), argv);
         }
 #else
-        /* create process as the user requested */
+            /* create process as the user requested */
         LOGGER.info() << "Retrieving user session token for user=" << user;
 
         UserSession usrSession(user);
@@ -319,7 +323,7 @@ void HandleCommandSocket(Socket * s, char * buf)
             success = true;
             result.startedStatus = 0;
             result.capturePort = std::stoi(answer.substr(item+StartingCaptureServerMsg::SUCCESS_KEYWORD.length(),
-                                               answer.length()-StartingCaptureServerMsg::SUCCESS_KEYWORD.length()));
+                                                         answer.length()-StartingCaptureServerMsg::SUCCESS_KEYWORD.length()));
         } else {
             result.startedStatus = 1;
         }
@@ -339,8 +343,8 @@ void HandleCommandSocket(Socket * s, char * buf)
         if(it == _WIDManager.end() && success) {
             std::scoped_lock<std::mutex> guard(_WIDManagerMutex);
             _WIDManager.insert(std::pair<std::string, MainManagementProcess>
-                       (wid, MainManagementProcess(alive, capServerHome, capServerPort,
-                                                   MainManagementProcess::STATUS::STARTED)));
+                                       (wid, MainManagementProcess(alive, capServerHome, capServerPort,
+                                                                   MainManagementProcess::STATUS::STARTED)));
         } else if (success) {
             std::scoped_lock<std::mutex> guard(_WIDManagerMutex);
             it->second.updateStatus(MainManagementProcess::STATUS::STARTED);
@@ -357,6 +361,10 @@ HandleCommandLine::HandleCommandLine(char * buf) : _hasWid(false)
     char ** argv = (char **) malloc (sizeof(char * ) * MAX_ARG);
     char * token = strtok(buf, " ");
     int i = 0;
+
+    if (::strstr(token, SHAREDT_KEYWORD) == nullptr){
+        argv[i++] = ::strdup(ShareDTHome::instance()->getArgv0().c_str());
+    }
 
     // loop through the string to extract all other tokens
     while( token != nullptr ) {
