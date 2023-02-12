@@ -10,6 +10,7 @@
 
 #include "LocalDisplayer.h"
 #include "SubFunction.h"
+#include "MainGUI.h"
 
 #ifdef __SHAREDT_WIN__
 #include <windows.h>
@@ -72,10 +73,7 @@ LocalDisplayer::LocalDisplayer (int argc, char ** argv) :
     if (!_fetcher->isInited()) return;
 
 #ifndef __SHAREDT_IOS__
-    // set program icon, ShareDT.png should be the same directory
-    std::string png = ShareDTHome::instance()->getHome() + std::string(PATH_SEP_STR) +
-                 std::string("bin") + std::string(PATH_SEP_STR) + std::string("ShareDT.png");
-    setWindowIcon(QIcon(QPixmap(png.c_str())));
+    ShareDTWindow::setIcon(this);
 #endif
 
     setupMenu();

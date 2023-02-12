@@ -111,6 +111,7 @@ void CaptureServer::startCaptureServer()
 
         rfbMarkRectAsModified(_rfbserver, 0, 0,
                               _sp->getWidth(), _sp->getHeight());
+        fb->setUsed();
     }
 
     removeAlivePath();

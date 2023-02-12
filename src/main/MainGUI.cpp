@@ -111,7 +111,7 @@ void UI_ShareDTWindow::newRemoteGroupBox(const std::string & host)
 
         fb.reSet(msg.dataLen);
         fb.setWidthHeight(msg.w, msg.h);
-        if (sc.receiveBytes(fb.getDataToWrite(), msg.dataLen) < 0 ) break;
+        if (sc.receiveBytes(fb.getDataToWrite(), msg.dataLen) < 0 || msg.dataLen==0) break;
 
         LOGGER.info() << "Received frame buffer size=" << msg.dataLen
                       << " name=" << msg.name
@@ -147,7 +147,6 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
         QString program = ShareDTHome::instance()->getArgv0().c_str();
 
         LOGGER.info() << "Starting display for name=\"" << _info.name << "\" command=\""
-            << qPrintable(program) << " "
             << qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)) << "\"";
 
         if (_info.isRemote) {
@@ -157,12 +156,11 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
                 return;
             }
 
-            sc.sendString(qPrintable(program + QString(" ") + _info.argument.join(QChar::SpecialCharacter::Space)));
+            sc.sendString(qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)));
 
             StartingCaptureServerMsg msg{};
             if (sc.receiveBytes((unsigned char *) &msg, sizeof(msg)) < 0) {
                 LOGGER.error() << "Failed to start capture server for display, name=" << _info.name << "\" command=\""
-                                << qPrintable(program) << " "
                                 << qPrintable(_info.argument.join(QChar::SpecialCharacter::Space)) << "\"";
             } else {
                 LOGGER.info() << "Received info for started capture server, status=" << msg.startedStatus << " capturePort=" << msg.capturePort;
@@ -416,10 +414,7 @@ ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
         _ui(new Ui::MainGUI)
 {
 #ifndef __SHAREDT_IOS__
-    // set program icon, ShareDT.png should be the same directory
-    std::string png = ShareDTHome::instance()->getHome() + std::string(PATH_SEP_STR) +
-                std::string("bin") + std::string(PATH_SEP_STR) + std::string("ShareDT.png");
-    setWindowIcon(QIcon(QPixmap(png.c_str())));
+    setIcon(this);
 #endif
 
     setMenu();
@@ -490,4 +485,11 @@ ShareDTWindow::~ShareDTWindow()
 void ShareDTWindow::actionFreshItems()
 {
     _ui->refreshLocalBoxGroup();
+}
+
+void ShareDTWindow::setIcon(QWidget * q) {
+    // set program icon, ShareDT.png should be the same directory
+    std::string png = ShareDTHome::instance()->getHome() + std::string(PATH_SEP_STR) +
+                      std::string("bin") + std::string(PATH_SEP_STR) + std::string("ShareDT.png");
+    q->setWindowIcon(QIcon(QPixmap(png.c_str())));
 }

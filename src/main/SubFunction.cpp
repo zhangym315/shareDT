@@ -64,8 +64,7 @@ int mainInform(const char * command, const struct cmdConf * conf, const CaptureS
         return RETURN_CODE_INTERNAL_ERROR;
 
     std::string commandPath;
-    commandPath.append(ShareDTHome::instance()->getHome());
-    commandPath.append(MAIN_SERVER_EXEC);
+    commandPath.append(ShareDTHome::instance()->getArgv0());
     commandPath.append(" ");
     commandPath.append(command);
 

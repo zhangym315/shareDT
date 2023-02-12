@@ -1628,7 +1628,6 @@ SendClientCutText(rfbClient* client, char *str, int len)
 /*
  * HandleRFBServerMessage.
  */
-
 rfbBool
 HandleRFBServerMessage(rfbClient* client)
 {

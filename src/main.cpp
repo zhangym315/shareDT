@@ -28,7 +28,7 @@ const char * SHAREDT_SERVER_COMMAND_STATUS     = "status";
 const char * SHAREDT_SERVER_COMMAND_EXPORT     = "export";
 const char * SHAREDT_SERVER_COMMAND_NODAEMON   = "nodaemon";
 const char * SHAREDT_SERVER_COMMAND_DISPLAY    = "display";
-const char * SHAREDT_SERVER_COMMAND_CONNECTR   = "connect";
+const char * SHAREDT_SERVER_COMMAND_CONNECT    = "connect";
 const char * SHAREDT_SERVER_COMMAND_GET        = "get";
 const char * SHAREDT_SERVER_COMMAND_REMOTGET   = "remoteGet";
 
@@ -46,7 +46,7 @@ static const struct {
         { SHAREDT_SERVER_COMMAND_STATUS,     &status      },     /* status of current pro  */
         { SHAREDT_SERVER_COMMAND_EXPORT,     &mainExport  },     /* export images          */
         { SHAREDT_SERVER_COMMAND_DISPLAY,    &localDisplayer},   /* local display          */
-        { SHAREDT_SERVER_COMMAND_CONNECTR,   &connectRemote},    /* connect remote display */
+        { SHAREDT_SERVER_COMMAND_CONNECT,    &connectRemote},    /* connect remote display */
         { SHAREDT_SERVER_COMMAND_GET,        &getSc }            /* Get screen             */
 #ifdef  __SHAREDT_WIN__
         ,{ "install",    &installService },  /* install service       */
