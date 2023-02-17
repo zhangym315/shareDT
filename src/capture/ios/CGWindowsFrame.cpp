@@ -2,7 +2,7 @@
 #include <iostream>
 #include "SamplesProvider.h"
 
-bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler, SPImageType imgtype)
+bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler)
 {
     CGImageRef imageRef;
     imageRef = CGWindowListCreateImage (CGRectNull, kCGWindowListOptionIncludingWindow,
@@ -30,7 +30,7 @@ bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler, SP
     auto rawdatas = CGDataProviderCopyData(prov);
     auto buf = CFDataGetBytePtr(rawdatas);
 
-    fb->setDataPerRow((unsigned char *)buf, width, height, bytesperrow, imgtype);
+    fb->setDataPerRow((unsigned char *)buf, width, height, bytesperrow);
     CFRelease(rawdatas);
     CGImageRelease(imageRef);
     return true;
@@ -38,5 +38,5 @@ bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler, SP
 
 bool FrameGetter::exportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler)
 {
-    return FrameGetter::windowsFrame(fb, type, handler, SPImageType::SP_IMAGE_RGBA);
+    return FrameGetter::windowsFrame(fb, type, handler);
 }

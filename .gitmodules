@@ -10,3 +10,9 @@
 [submodule "contrib/qt660"]
 	path = contrib/qt660
 	url = https://github.com/qt/qtbase.git
+[submodule "contrib/vvenc"]
+	path = contrib/vvenc
+	url = https://github.com/fraunhoferhhi/vvenc.git
+[submodule "contrib/vvdec"]
+	path = contrib/vvdec
+	url = https://github.com/fraunhoferhhi/vvdec.git
