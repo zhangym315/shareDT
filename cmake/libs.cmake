@@ -33,6 +33,12 @@ find_package(lzma REQUIRED NO_MODULE)
 set(x264_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
 find_package(x264 REQUIRED NO_MODULE)
 
+set(vvdec_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
+find_package(vvdec REQUIRED NO_MODULE)
+
+set(vvenc_DIR ${CMAKE_SOURCE_CMAKE_CONTRIB})
+find_package(vvenc REQUIRED NO_MODULE)
+
 #### QT specific
 # QMake specific
 # Instruct CMake to run moc automatically when needed.

@@ -8,77 +8,79 @@ void FrameBuffer::reSet(const CapImageRect & bounds, const unsigned int bytespp)
     reSet(bounds.getHeight() * bounds.getWidth() * bytespp);
 }
 
-void FrameBuffer::setData(unsigned char * data, size_t w, size_t h, SPImageType type)
+void FrameBuffer::setData(unsigned char * data, size_t w, size_t h)
 {
     size_t total;
 
     _width = w;
     _height = h;
-    switch (type) {
-    case SPImageType::SP_IMAGE_YUV420:
-        total = w * h * 4;
-        reSet(total);
-        std::memcpy(_data, data, total);
-        ConvertBGRA2YCrCb420(_data, total);
-        break;
+    switch (_targetType) {
+        case SPImageType::SP_IMAGE_RGBA:
+            total = w * h * 4;
+            reSet(total);
+            std::memcpy(_data, data, total);
+            ConvertBGRA2RGBA(_data, total);
+            break;
 
-    case SPImageType::SP_IMAGE_RGBA:
-        total = w * h * 4;
-        reSet(total);
-        std::memcpy(_data, data, total);
-        ConvertBGRA2RGBA(_data, total);
-        break;
+        case SPImageType::SP_IMAGE_RGB:
+            total = w * h * 3;
+            reSet(total);
+            ConvertBGRA2RGB(_data, data, w * h * 4);
+            break;
 
-    case SPImageType::SP_IMAGE_RGB:
-        total = w * h * 3;
-        reSet(total);
-        ConcertBGRA2RGB(_data, data, w * h * 4);
-        break;
+        case SPImageType::SP_IMAGE_YUV420:
+            ConvertBGRA2YCbCr420(_data, w * h);
+            break;
 
-    default:
-        break;
+        case SPImageType::SP_IMAGE_YUV422:
+            ConvertBGRA2YCbCr422(data, w * h);
+            break;
 
+        default:
+            break;
     }
 
     _isUsed.store(false, std::memory_order_relaxed);
 }
 
-void FrameBuffer::setDataPerRow(unsigned char * data, int w, int h, int bytesrow, SPImageType type)
+void FrameBuffer::setDataPerRow(unsigned char * data, int w, int h, int bytesrow)
 {
     size_t total, perRow;
 
     setWidthHeight(w, h);
 
-    switch (type) {
-    case SPImageType::SP_IMAGE_RGBA:
-        total = w * h * 4;
-        perRow = w * 4;
-        reSet(total);
+    switch (_targetType) {
+        case SPImageType::SP_IMAGE_RGBA:
+            total = w * h * 4;
+            perRow = w * 4;
+            reSet(total);
 
-        for (int i=0; i<h; i++)
-        {
-            std::memcpy(_data + perRow * i, data+i*bytesrow, perRow);
-            ConvertBGRA2RGBA(_data + perRow * i, perRow);
-        }
-        break;
+            for (int i=0; i<h; i++)
+            {
+                std::memcpy(_data + perRow * i, data+i*bytesrow, perRow);
+                ConvertBGRA2RGBA(_data + perRow * i, perRow);
+            }
+            break;
 
-    case SPImageType::SP_IMAGE_YUV420:
-        total = w * h * 4;
-        reSet(total);  // problem ~~ TODO, there is no data copy, _data is not set!!!
-        ConvertBGRA2YCrCb420(_data, total);
-        break;
+        case SPImageType::SP_IMAGE_YUV420:
+            ConvertBGRA2YCbCr420(data, w * h);
+            break;
 
-    case SPImageType::SP_IMAGE_RGB:
-        reSet(w * h * 3);
-        for (int i=0; i<h; i++)
-        {
-            ConcertBGRA2RGB(_data + i*3*w, data + i*bytesrow, bytesrow);
-        }
+        case SPImageType::SP_IMAGE_YUV422:
+            ConvertBGRA2YCbCr422(data, w * h);
+            break;
 
-        break;
+        case SPImageType::SP_IMAGE_RGB:
+            reSet(w * h * 3);
+            for (int i=0; i<h; i++)
+            {
+                ConvertBGRA2RGB(_data + i*3*w, data + i*bytesrow, bytesrow);
+            }
 
-    default:
-        break;
+            break;
+
+        default:
+            break;
     }
 
     _isUsed.store(false, std::memory_order_relaxed);
@@ -147,7 +149,7 @@ void FrameBuffer::ConvertBGRA2RGBA(unsigned char * dst, size_t size)
     }
 }
 
-void FrameBuffer::ConcertBGRA2RGB(unsigned char * dst, unsigned char * src, size_t srcSize)
+void FrameBuffer::ConvertBGRA2RGB(unsigned char * dst, unsigned char * src, size_t srcSize)
 {
     struct ImageBGRA * data = (struct ImageBGRA * ) src;
     unsigned char tmp;
@@ -162,19 +164,22 @@ void FrameBuffer::ConcertBGRA2RGB(unsigned char * dst, unsigned char * src, size
     }
 }
 
-void FrameBuffer::ConvertBGRA2YCrCb420(unsigned char * dst, size_t size)
+void FrameBuffer::ConvertBGRA2YCbCr420(unsigned char * src, size_t size)
 {
-    struct ImageBGRA * data = (struct ImageBGRA * ) dst;
+    struct ImageBGRA * data = (struct ImageBGRA * ) src;
     unsigned char tmp;
 
-    resetSubData(size/4);
-    unsigned char * Y  = dst;
-    unsigned char * Cb = getSubData();
-    unsigned char * Cr = getSubData() + getSubCap()/2;
+    reSet(size);
+    resetSubData(size/2);
+    unsigned char * Y  = _data;
+    unsigned char * Cb = _subData;
+    unsigned char * Cr = _subData + getSubCap()/2;
     unsigned char * half = Cr;
     unsigned char * end = getSubData() + getSubCap();
 
-    for (int i=0; i<size/4 && Cb<half && Cr<end ; i++)
+    if (size%2 == 1) size -= 1; /* round size to even number */
+
+    for (int i=0; i<size && Cb<half && Cr<end ; i++)
     {
         *Y = CRGB2Y(data[i].R, data[i].G, data[i].B); Y++;
         if ((i & 1) == 0) {
@@ -185,6 +190,30 @@ void FrameBuffer::ConvertBGRA2YCrCb420(unsigned char * dst, size_t size)
     }
 }
 
+
+void FrameBuffer::ConvertBGRA2YCbCr422(unsigned char * src, size_t size)
+{
+    struct ImageBGRA * data = (struct ImageBGRA * ) src;
+    unsigned char tmp;
+
+    reSet(size);
+    resetSubData(size);
+    unsigned char * Y  = _data;
+    unsigned char * Cb = _subData;
+    unsigned char * Cr = _subData + getSubCap()/2;
+    unsigned char * half = Cr;
+    unsigned char * end = _subData + getSubCap();
+
+    if (size%2 == 1) size -= 1; /* round size to even number */
+
+    for (int i=0; i<size && Cb<half && Cr<end ; i+=2)
+    {
+        *Y = CRGB2Y(data[i].R, data[i].G, data[i].B); Y++;
+        *Y = CRGB2Y(data[i+1].R, data[i+1].G, data[i+1].B); Y++;
+        *Cb = CRGB2Cb(data[i].R, data[i].G, data[i].B); Cb++;
+        *Cr = CRGB2Cr(data[i].R, data[i].G, data[i].B); Cr++;
+    }
+}
 
 bool FrameBuffer::set (unsigned char *data, uint64_t size)
 {

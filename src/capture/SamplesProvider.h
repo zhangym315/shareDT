@@ -32,7 +32,7 @@ class FrameProcessorImpl;
 /* platform spedific */
 class FrameGetter {
 public:
-    static bool windowsFrame(FrameBuffer * fb, SPType type, size_t handler, SPImageType imgtype);
+    static bool windowsFrame(FrameBuffer * fb, SPType type, size_t handler);
     static bool exportAllFrameGetter(FrameBuffer * fb, SPType type, size_t handler);
 };
 
@@ -75,8 +75,7 @@ class FrameGetterSystem : public FrameGetterControl {
                       std::chrono::milliseconds sp) :
                       _fb(fb), _duration(sp), _fpi(nullptr),
                       _monitor(nullptr), _bounds(nullptr), _win(nullptr),
-                      _isReInited(false), _type(SPType::SP_NULL),
-                      _imgType(SP_IMAGE_RGBA) { }
+                      _isReInited(false), _type(SPType::SP_NULL)  { }
 
     FrameGetterSystem(CircleWRBuf<FrameBuffer> * fb,
                       CapMonitor * mon,
@@ -114,8 +113,6 @@ class FrameGetterSystem : public FrameGetterControl {
     CapImageRect * getBounds() { return _bounds; }
 
     void debug(char * array []);
-    void setImageTypeToRGB();
-    [[nodiscard]] SPImageType getImageType() const { return _imgType; }
 
     void pause()  override;
     void resume() override;
@@ -133,7 +130,6 @@ private:
     CapWindow                 * _win;
     bool                        _isReInited;  // used by export all monitors
     SPType                      _type;
-    SPImageType                 _imgType;
  };
 
 /*
@@ -156,8 +152,8 @@ class FrameGetterThread : public Thread, public FrameGetterControl {
     FrameGetterThread(CircleWRBuf<FrameBuffer> * fb,
                       std::chrono::milliseconds sp) : _fb(fb),
                       _duration(sp), _type(SPType::SP_NULL), _win(nullptr),
-                      _mon(nullptr), _bounds(nullptr),
-                      _mtx(), Thread(false), FrameGetterControl() { }
+                      _mon(nullptr), _bounds(nullptr), Thread(false),
+                      FrameGetterControl() { }
 
     FrameGetterThread(CircleWRBuf<FrameBuffer> *fb, unsigned int frequency) :
         FrameGetterThread(fb, std::chrono::milliseconds(MICROSECONDS_PER_SECOND/frequency)) { }
@@ -218,12 +214,13 @@ private:
     CapWindow           * _win;
     CapMonitor          * _mon;
     CapImageRect        * _bounds;
-    std::mutex            _mtx;
+//    std::mutex            _mtx;
 };
 
 class SamplesProvider  {
   public:
-    SamplesProvider(unsigned int frequency) : _buffer(5),
+    SamplesProvider(unsigned int frequency) : SamplesProvider( frequency, SPImageType::SP_IMAGE_RGBA) { }
+    SamplesProvider(unsigned int frequency, SPImageType type) : _buffer(5, type),
                         _start(std::chrono::system_clock::now()),
                         _duration(std::chrono::milliseconds(MICROSECONDS_PER_SECOND/frequency)) { }
 
@@ -258,6 +255,7 @@ class SamplesProvider  {
 
     /* read frame buffer */
     FrameBuffer * getFrameBuffer();
+    void setTargetImageType(SPImageType type) { _buffer.setImageType(type); }
 
     /* capture control */
     void start()    { _fgc->start(); }

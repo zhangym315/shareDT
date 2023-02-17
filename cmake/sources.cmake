@@ -25,6 +25,7 @@ set(SHAREDT_SERVER_SRC_COMMON
         ${SHAREDT_SRC}/util/Sock.cpp
         ${SHAREDT_SRC}/util/Pid.c
         ${SHAREDT_SRC}/util/Converter.cpp
+        ${SHAREDT_SRC}/util/RGByuv.cpp
         ${SHAREDT_SERVER_SRC_COMMON}
 )
 
@@ -59,6 +60,8 @@ set(SHAREDT_LIBS_INCLUDE
         ${PNG_INCLUDE_DIR}
         ${FFMPEG_INCLUDE_DIR}
         ${X264_INCLUDE_DIR}
+        ${VVDEC_INCLUDE_DIR}
+        ${VVENC_INCLUDE_DIR}
 )
 
 ##### ShareDTServer Gui source

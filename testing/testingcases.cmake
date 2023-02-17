@@ -12,6 +12,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/googletest/include
                     ${CMAKE_SOURCE_LIBVNC}/common
                     ${CMAKE_SOURCE_LIBVNC}/ffmpeg
                     ${LIBSOURCE_FFMPEG_DIR}
+                    ${VVDEC_INCLUDE_DIR}
+                    ${VVENC_INCLUDE_DIR}
                     )
 
 set(TESTINGCASE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -34,6 +36,21 @@ target_link_libraries(ffmpeg_encode_decode vncserver vncclient
 #                      ${X265_LIBRARIES}
                       )
 
-set(TESTING_CASES ffmpeg_encode_decode
+
+add_executable(vv_encode_decode
+        ${TESTINGCASE_SOURCE}/vvEncDecode.cpp
+        ${SHAREDT_SERVER_SRC_COMMON}
+        )
+target_link_libraries(vv_encode_decode
+        gtest gtest_main
+        ${shareDT_PLATFORM_LIBS}
+        ${VVENC_LIBRARY}
+        ${VVDEC_LIBRARY}
+        ${PNG_LIBRARIES}
+        ${BZIP2_LIBRARIES}
+        ${ZLIB_LIBRARY}
+        )
+
+set(TESTING_CASES ffmpeg_encode_decode vv_encode_decode
         )
 

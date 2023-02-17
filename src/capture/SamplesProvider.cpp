@@ -7,11 +7,6 @@
 
 using namespace std::chrono_literals;
 
-void FrameGetterSystem::setImageTypeToRGB ()
-{
-    _imgType = SPImageType::SP_IMAGE_RGB;
-}
-
 CapMonitor * FrameGetterSystem::getMonitor()
 {
     return _monitor;
@@ -37,7 +32,7 @@ void FrameGetterSystem::writeBuf(CapMonitor * mon, unsigned char * buf,
         if(bufferSize) {
             fb->reSet(bufferSize);
         }
-        fb->setData(buf, mon->getOrgWidth(), mon->getOrgHeight(), _imgType);
+        fb->setData(buf, mon->getOrgWidth(), mon->getOrgHeight());
     } else {
         pause();
     }
@@ -52,7 +47,7 @@ void FrameGetterSystem::writeBuf(CapImageRect * bd, unsigned char * buf,
             fb->reSet(bufferSize);
         }
 
-        fb->setDataPerRow(buf, bd->getWidth(), bd->getHeight(), bpr, getImageType());
+        fb->setDataPerRow(buf, bd->getWidth(), bd->getHeight(), bpr);
     } else {
         pause();
     }
@@ -72,7 +67,9 @@ void FrameGetterThread::mainImp()
         auto start = std::chrono::system_clock::now();
         fb = _fb->getToWrite();
         if(fb) {
-            if(!FrameGetter::windowsFrame(fb, _type, id, SPImageType::SP_IMAGE_RGBA)) { fb->setInvalid(); }
+            if(!FrameGetter::windowsFrame(fb, _type, id)) {
+                fb->setInvalid();
+            }
         } else {
             std::this_thread::sleep_for(5ms);
         }

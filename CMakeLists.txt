@@ -75,7 +75,7 @@ add_executable(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_SERVER_SRC_COMMON}
         ${SHAREDT_CLIENT_SRC_FILES}
         ${SHAREDT_CLIENT_GUI_SRC_FILES}
-        )
+        src/util/RGByuv.h src/util/RGByuv.cpp)
 
 target_link_libraries(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_CLIENT_QT_LIBS}
@@ -87,6 +87,8 @@ target_link_libraries(${SHAREDT_MAIN_WINDOW}
         ${X265_LIBRARIES}
         ${X264_LIBRARY}
         ${LZMA_LIBRARIES}
+        ${VVENC_LIBRARY}
+        ${VVDEC_LIBRARY}
         )
 
 if(APPLE)
