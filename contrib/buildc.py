@@ -47,7 +47,7 @@ def buildQT(k):
         print("NO specific platform")
 
     if ret != 0:
-       return 1
+        return 1
 
     if k.lower() == "windows":
         ret=os.system('nmake')
@@ -211,7 +211,7 @@ def buildAndInstall(kernel, component):
         if kernel == "windows" :
             ret=os.system('cmake -A x64 -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../')
         else:
-            ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../' )
+            ret=os.system('cmake -DCMAKE_INSTALL_PREFIX=' + pathINS + ' ../ ' + component[2])
 
         if ret != 0:
             return 1
@@ -284,19 +284,22 @@ else:
         return v.rstrip('\n')
     kernel = normalize_kernel(backtick("uname -s"))
 
-components = [["SDL2-2.0.12", "CMAKE"],
-              ["libjpeg-turbo-2.0.5", "CMAKE"],
-              ["zlib", "CMAKE"],\
-              ["libpng-1.6.37", "CMAKE"],
-              ["lzo-2.10", "CMAKE"],
-              [x265Dir, "CMAKE"],\
-              ["openssl", "Configure"],\
-              ["qt515", "configure"],\
-              ["x264", "configure --enable-static --disable-asm --disable-cli"],\
-              ["ffmpeg", "configure --disable-iconv --enable-libx265 --enable-gpl --disable-ffmpeg --disable-ffprobe  --enable-libx264 --extra-ldflags=-L" + x264Lib + " --extra-cflags=-I" + x264Include],\
-#              ["ffmpeg", "configure --disable-iconv --enable-libx265 --enable-gpl --disable-ffmpeg --disable-ffprobe  --enable-libx264 "],\
-              ["liblzma", "configure"],\
-              ["bzip2", "configure"]\
+# 1. components name 2. Build type 3. build options
+components = [["SDL2-2.0.12", "CMAKE", "-DHAVE_GCC_WDECLARATION_AFTER_STATEMENT=0"], \
+              ["libjpeg-turbo-2.0.5", "CMAKE", ""], \
+              ["zlib", "CMAKE", ""], \
+              ["libpng-1.6.37", "CMAKE", ""], \
+              ["lzo-2.10", "CMAKE", ""], \
+              ["vvdec", "CMAKE", ""], \
+              ["vvenc", "CMAKE", ""], \
+              [x265Dir, "CMAKE", ""], \
+              ["openssl", "Configure", ""], \
+              ["qt515", "configure", ""], \
+              ["x264", "configure --enable-static --disable-asm --disable-cli", ""], \
+              ["ffmpeg", "configure --disable-iconv --enable-libx265 --enable-gpl --disable-ffmpeg --disable-ffprobe  --enable-libx264 --extra-ldflags=-L" + x264Lib + " --extra-cflags=-I" + x264Include, ""], \
+              #              ["ffmpeg", "configure --disable-iconv --enable-libx265 --enable-gpl --disable-ffmpeg --disable-ffprobe  --enable-libx264 "],\
+              ["liblzma", "configure", ""], \
+              ["bzip2", "configure", ""] \
               ]
 
 for component in components :
