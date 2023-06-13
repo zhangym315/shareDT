@@ -290,8 +290,6 @@ components = [["SDL2-2.0.12", "CMAKE", "-DHAVE_GCC_WDECLARATION_AFTER_STATEMENT=
               ["zlib", "CMAKE", ""], \
               ["libpng-1.6.37", "CMAKE", ""], \
               ["lzo-2.10", "CMAKE", ""], \
-              ["vvdec", "CMAKE", ""], \
-              ["vvenc", "CMAKE", ""], \
               [x265Dir, "CMAKE", ""], \
               ["openssl", "Configure", ""], \
               ["qt515", "configure", ""], \
