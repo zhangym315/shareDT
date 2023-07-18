@@ -7,3 +7,6 @@
 [submodule "contrib/x264"]
 	path = contrib/x264
 	url = https://github.com/mirror/x264.git
+[submodule "contrib/qt660"]
+	path = contrib/qt660
+	url = https://github.com/qt/qtbase.git
