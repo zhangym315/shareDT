@@ -40,26 +40,20 @@ def buildQT(k):
     if k.lower() == "linux":
         ret=os.system('./configure -static -release -prefix ./static-build -xcb-xlib -xcb -recheck-all -nomake examples -nomake tests -skip qtwebengine -confirm-license -opensource')
     elif k.lower() == "darwin":
-        ret=os.system('./configure -static -release -prefix ./static-build -recheck-all -nomake examples -nomake tests -skip qtwebengine -confirm-license -opensource ')
+        ret=os.system('./configure -static -release -prefix ./static-build -nomake examples -nomake tests  -confirm-license -opensource ')
     elif k.lower() == "windows":
-        ret=os.system('configure -static -release -prefix ./static-build -recheck-all -nomake examples -nomake tests -skip qtwebengine -confirm-license -opensource')
+        ret=os.system('configure -static -release -prefix ./static-build -nomake examples -nomake tests  -confirm-license -opensource')
     else:
         print("NO specific platform")
 
     if ret != 0:
         return 1
 
-    if k.lower() == "windows":
-        ret=os.system('nmake')
-    else:
-        ret=os.system('make -j ' + cpuToBuild)
+    ret=os.system('cmake --build . --parallel')
     if ret != 0:
         return 1
 
-    if k.lower() == "windows":
-        ret=os.system('nmake install')
-    else:
-        ret=os.system('make install')
+    ret=os.system('cmake --install .')
     if ret != 0:
         return 1
     open(PWD + component[0] + DONE_FILE, 'w')
@@ -176,7 +170,7 @@ def buildAndInstall(kernel, component):
     print('Building ' + component[0] + ' at platform ' + kernel)
 
     ### build special component first
-    if component[0] == "qt515":
+    if component[0] == "qt660":
         return buildQT(kernel)
     if component[0] == "bzip2":
         return buildBZip2()
@@ -292,7 +286,7 @@ components = [["SDL2-2.0.12", "CMAKE", "-DHAVE_GCC_WDECLARATION_AFTER_STATEMENT=
               ["lzo-2.10", "CMAKE", ""], \
               [x265Dir, "CMAKE", ""], \
               ["openssl", "Configure", ""], \
-              ["qt515", "configure", ""], \
+              ["qt660", "configure", ""], \
               ["x264", "configure --enable-static --disable-asm --disable-cli", ""], \
               ["ffmpeg", "configure --disable-iconv --enable-libx265 --enable-gpl --disable-ffmpeg --disable-ffprobe  --enable-libx264 --extra-ldflags=-L" + x264Lib + " --extra-cflags=-I" + x264Include, ""], \
               #              ["ffmpeg", "configure --disable-iconv --enable-libx265 --enable-gpl --disable-ffmpeg --disable-ffprobe  --enable-libx264 "],\
