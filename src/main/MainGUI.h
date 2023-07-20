@@ -12,7 +12,7 @@
 #include <unordered_map>
 
 #include <QtCore/QVariant>
-#include <QtWidgets/QAction>
+#include <QtWidgets/qaction.h>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QLabel>
@@ -78,7 +78,7 @@ public:
 
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
-    void enterEvent(QEvent *event) override;
+    void enterEvent(QEnterEvent *event) override;
 
 private:
     ItemInfo _info;

@@ -255,7 +255,7 @@ bool ShareDTClientWin::event(QEvent * e)
     return QWidget::event(e);
 }
 
-void ShareDTClientWin::enterEvent(QEvent * e)
+void ShareDTClientWin::enterEvent(QEnterEvent * e)
 {
 }
 

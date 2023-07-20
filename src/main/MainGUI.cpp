@@ -21,7 +21,7 @@ extern "C" {
 #include <QMouseEvent>
 #include <QProcess>
 #include <QInputDialog>
-#include <QDesktopWidget>
+#include <QScreen>
 #include <memory>
 
 #ifdef __SHAREDT_WIN__
@@ -180,7 +180,7 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
     QWidget::mouseReleaseEvent(event);
 }
 
-void ImageItem::enterEvent(QEvent *event)
+void ImageItem::enterEvent(QEnterEvent *event)
 {
     QWidget::setCursor(QCursor(Qt::PointingHandCursor));
 }

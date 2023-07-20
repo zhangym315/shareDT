@@ -54,6 +54,7 @@ set(Qt6BundledLibpng_DIR        "${QT660BUILD_LIB_CMAKE}/Qt6BundledLibpng")
 set(Qt6BundledHarfbuzz_DIR      "${QT660BUILD_LIB_CMAKE}/Qt6BundledHarfbuzz")
 set(Qt6BundledFreetype_DIR      "${QT660BUILD_LIB_CMAKE}/Qt6BundledFreetype")
 set(Qt6BundledLibjpeg_DIR       "${QT660BUILD_LIB_CMAKE}/Qt6BundledLibjpeg")
+set(Qt6DBusTools_DIR            "${QT660BUILD_LIB_CMAKE}/Qt6DBusTools")
 
 set(Qt6_DIR "${QT660BUILD_LIB_CMAKE}/Qt6")
 message("qt6: ${QT660BUILD_LIB_CMAKE}")

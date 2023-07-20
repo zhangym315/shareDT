@@ -6,7 +6,7 @@
 #include <QAction>
 #include <QMenuBar>
 #include <QMenu>
-#include <QDesktopWidget>
+#include <QScreen>
 
 #include "LocalDisplayer.h"
 #include "SubFunction.h"
