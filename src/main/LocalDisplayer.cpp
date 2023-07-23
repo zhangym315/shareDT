@@ -112,7 +112,7 @@ void LocalDisplayer::setupMain()
     _imageLabel->setText(QCoreApplication::translate("LocalDisplayer", "ImageLabel", nullptr));
 
     setCentralWidget(_imageLabel);
-    resize(QDesktopWidget().availableGeometry(this).size() * 0.5);
+    resize(QGuiApplication::screenAt(QCursor::pos())->availableGeometry().size() * 0.5);
 }
 
 void LocalDisplayer::setupMenu()

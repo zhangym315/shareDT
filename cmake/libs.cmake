@@ -58,11 +58,11 @@ set(Qt6DBusTools_DIR            "${QT660BUILD_LIB_CMAKE}/Qt6DBusTools")
 
 set(Qt6_DIR "${QT660BUILD_LIB_CMAKE}/Qt6")
 message("qt6: ${QT660BUILD_LIB_CMAKE}")
-find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
+find_package(Qt6 COMPONENTS Widgets REQUIRED)
 
 
 set(SHAREDT_SERVER_QT_LIBS Qt6::Widgets)
-set(SHAREDT_CLIENT_QT_LIBS Qt6::Core Qt6::Gui Qt6::Widgets)
+set(SHAREDT_CLIENT_QT_LIBS Qt6::Gui Qt6::Widgets)
 
 ################ BEGIN Platform specific source and libs
 if(WIN32)

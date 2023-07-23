@@ -419,7 +419,7 @@ ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
 
     setMenu();
     setCentralWidget(parent);
-    resize(QDesktopWidget().availableGeometry(this).size() * 0.5);
+    resize(QGuiApplication::screenAt(QCursor::pos())->availableGeometry().size() * 0.5);
     _ui->setupUi (parent);
 }
 

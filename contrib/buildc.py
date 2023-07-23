@@ -42,7 +42,7 @@ def buildQT(k):
     elif k.lower() == "darwin":
         ret=os.system('./configure -static -release -prefix ./static-build -nomake examples -nomake tests  -confirm-license -opensource ')
     elif k.lower() == "windows":
-        ret=os.system('configure -static -release -prefix ./static-build -nomake examples -nomake tests  -confirm-license -opensource')
+        ret=os.system('configure -static -release -prefix ./static-build -nomake examples -nomake tests  -confirm-license -opensource -no-feature-openssl')
     else:
         print("NO specific platform")
 

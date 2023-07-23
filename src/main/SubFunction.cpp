@@ -97,12 +97,12 @@ int mainStart (struct cmdConf * conf)
         SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
         SC_HANDLE hSc;
 
-        hSc = OpenService(serviceControlManager, SHAREDT_SERVER_SVCNAME, SERVICE_ALL_ACCESS);
+        hSc = OpenService(serviceControlManager, reinterpret_cast<LPCWSTR>(SHAREDT_SERVER_SVCNAME), SERVICE_ALL_ACCESS);
         if (hSc == nullptr)
         {
             LOGGER.error() << "Failed to open service";
             return RETURN_CODE_INTERNAL_ERROR;
-        } else if(!StartService(hSc, conf->argc, (const char **) conf->argv))
+        } else if(!StartService(hSc, conf->argc, reinterpret_cast<LPCWSTR *>((const char **) conf->argv)))
         {
             LOGGER.error() << "Failed to start server service";
             if (hSc != nullptr) CloseServiceHandle (hSc);
@@ -157,7 +157,7 @@ int mainStop (struct cmdConf * conf)
     SC_HANDLE hSc;
     SERVICE_STATUS ServiceStatus;
 
-    hSc = OpenService(serviceControlManager, SHAREDT_SERVER_SVCNAME, SERVICE_STOP  );
+    hSc = OpenService(serviceControlManager, reinterpret_cast<LPCWSTR>(SHAREDT_SERVER_SVCNAME), SERVICE_STOP  );
     if (hSc == nullptr)
     {
         LOGGER.error() << "Can't stop service";
@@ -198,7 +198,7 @@ int mainCapture (struct cmdConf * conf)
 #ifdef __SHAREDT_WIN__
     std::string commandPath;
     TCHAR szPath[MAX_PATH];
-    if( !GetModuleFileNameA( nullptr, szPath, MAX_PATH ) )
+    if( !GetModuleFileNameA(nullptr, reinterpret_cast<LPSTR>(szPath), MAX_PATH ) )
     {
         fprintf(stderr, "Failed to get path of current running command\n");
         return RETURN_CODE_INTERNAL_ERROR;
@@ -210,7 +210,7 @@ int mainCapture (struct cmdConf * conf)
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
-    commandPath.append(szPath);
+    commandPath.append(reinterpret_cast<const char *const>(szPath));
     commandPath.append(" newCapture");
 
     for (int i=2; i < conf->argc; i++) {
@@ -222,7 +222,7 @@ int mainCapture (struct cmdConf * conf)
     char username[UNLEN+1];
     bzero(username, UNLEN+1);
     DWORD username_len = UNLEN;
-    GetUserName(username, &username_len);
+    GetUserName(reinterpret_cast<LPWSTR>(username), &username_len);
     commandPath.append(" --username \"");
     commandPath.append(username);
     commandPath.append("\"");
@@ -316,7 +316,7 @@ int status (struct cmdConf * conf)
     std::string commandPath;
     TCHAR szPath[MAX_PATH];
 
-    if( !GetModuleFileNameA( nullptr, szPath, MAX_PATH ) )
+    if( !GetModuleFileNameA(nullptr, reinterpret_cast<LPSTR>(szPath), MAX_PATH ) )
     {
         fprintf(stderr, "Failed to get path of current running command\n");
         return RETURN_CODE_INTERNAL_ERROR;
@@ -328,7 +328,7 @@ int status (struct cmdConf * conf)
         return RETURN_CODE_INTERNAL_ERROR;
     }
 
-    commandPath.append(szPath);
+    commandPath.append(reinterpret_cast<const char *const>(szPath));
     commandPath.append(" status");
 
     fprintf(stdout, "Capture Server status:\n");
@@ -398,7 +398,7 @@ int installService (struct cmdConf * conf)
     SC_HANDLE schService;
     TCHAR szPath[MAX_PATH];
 
-    if( !GetModuleFileNameA( nullptr, szPath, MAX_PATH ) )
+    if( !GetModuleFileNameA(nullptr, reinterpret_cast<LPSTR>(szPath), MAX_PATH ) )
     {
         fprintf(stderr, "Cannot install service (%d)\n", GetLastError());
         return RETURN_CODE_SERVICE_ERROR;
@@ -415,15 +415,17 @@ int installService (struct cmdConf * conf)
         return RETURN_CODE_SERVICE_ERROR;
     }
 
-    std::string runningServicePath(szPath);
+    std::string runningServicePath(reinterpret_cast<const char *const>(szPath));
     runningServicePath.insert(0, "\"");
     runningServicePath.insert(runningServicePath.length(), "\"");
     runningServicePath.append(" service");
 
-    schService = CreateService(schSCManager, SHAREDT_SERVER_SVCNAME,
-                SHAREDT_SERVER_SVCNAME, SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
-                SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, runningServicePath.c_str(),
-                nullptr, nullptr, nullptr, nullptr, nullptr);
+    schService = CreateService(schSCManager, reinterpret_cast<LPCWSTR>(SHAREDT_SERVER_SVCNAME),
+                               reinterpret_cast<LPCWSTR>(SHAREDT_SERVER_SVCNAME),
+                               SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
+                               SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
+                               reinterpret_cast<LPCWSTR>(runningServicePath.c_str()),
+                               nullptr, nullptr, nullptr, nullptr, nullptr);
     if (schService == nullptr)
     {
         fprintf(stderr, "CreateService failed (%d)\n", GetLastError());

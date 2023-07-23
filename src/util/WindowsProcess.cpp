@@ -47,7 +47,7 @@ bool UserSession::GetSessionUserName(DWORD sid, std::string & username)
         return false;
     }
 
-    username = pBuffer;
+    username = reinterpret_cast<const char *const>(pBuffer);
     WTSFreeMemory(pBuffer);
 
     return true;
@@ -66,7 +66,7 @@ bool UserSession::GetSessionDomain(std::string & domain)
         return false;
     }
 
-    domain = pBuffer;
+    domain = reinterpret_cast<const char *const>(pBuffer);
     WTSFreeMemory(pBuffer);
 
     return true;
