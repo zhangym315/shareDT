@@ -158,7 +158,7 @@ void ShareDTClientWin::serverConnectionClosed()
 /* Mouse events started */
 void ShareDTClientWin::mousePressEvent(QMouseEvent *event)
 {
-    const QPoint & locPoint = event->pos();
+    const QPoint & locPoint = event->position().toPoint();
     const QPoint & gloPoint = event->globalPos();
     int b = (int) event->button() | MouseButton::ButtonDown;
 
@@ -255,7 +255,7 @@ bool ShareDTClientWin::event(QEvent * e)
     return QWidget::event(e);
 }
 
-void ShareDTClientWin::enterEvent(QEvent * e)
+void ShareDTClientWin::enterEvent(QEnterEvent * e)
 {
 }
 
@@ -265,7 +265,7 @@ void ShareDTClientWin::leaveEvent(QEvent * e)
 
 void ShareDTClientWin::hoverEnter(QHoverEvent * event)
 {
-    const QPoint & locPoint = event->pos();
+    const QPoint & locPoint = event->position().toPoint();
 
     SendPointerEvent(_fetcher->getRfbClient(),
                      locPoint.x() * _winResize.ratioX / RATIO_PRECISION,
@@ -275,7 +275,7 @@ void ShareDTClientWin::hoverEnter(QHoverEvent * event)
 
 void ShareDTClientWin::hoverLeave(QHoverEvent * event)
 {
-    const QPoint & locPoint = event->pos();
+    const QPoint & locPoint = event->position().toPoint();
 
     SendPointerEvent(_fetcher->getRfbClient(),
                      locPoint.x() * _winResize.ratioX / RATIO_PRECISION,
@@ -286,7 +286,7 @@ void ShareDTClientWin::hoverLeave(QHoverEvent * event)
 void ShareDTClientWin::hoverMove(QHoverEvent * event)
 {
     if (!checkShouldSendMouseMove()) return;
-    const QPoint & locPoint = event->pos();
+    const QPoint & locPoint = event->position().toPoint();
 
     SendPointerEvent(_fetcher->getRfbClient(),
                      locPoint.x() * _winResize.ratioX / RATIO_PRECISION,

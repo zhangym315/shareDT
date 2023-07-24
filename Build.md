@@ -99,7 +99,7 @@ cmake --install . --prefix install
 
 ### Windows MSI generation
 * 0. Install rcedit from https://github.com/electron/rcedit
-* 1. Install wix and add executables to path
+* 1. Install wix-3.x(https://github.com/wixtoolset/wix3/releases) and add executables to path
 * 2. After build, install it to a path
 * 3. cd to the install path/MSI, run following two command. `ShareDT.msi` will be generated
 ```

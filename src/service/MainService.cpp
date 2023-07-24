@@ -280,14 +280,14 @@ void HandleCommandSocket(Socket * s, char * buf)
         ZeroMemory( &pi, sizeof(pi) );
         if(!CreateProcessAsUserA ( usrSession.getToken(),
                                 nullptr,    // module name (use command line)
-                               (LPTSTR)hcl.toString().c_str(),     // Command line
+                               (LPSTR)hcl.toString().c_str(),     // Command line
                                 nullptr,    // Process handle not inheritable
                                 nullptr,    // Thread handle not inheritable
                                 true,    // Set handle inheritance to FALSE
                                 CREATE_NO_WINDOW, // no console window
                                 nullptr,    // Use parent's environment block
                                 nullptr,    // Use parent's starting directory
-                                &si,     // Pointer to STARTUPINFO structure
+                                (LPSTARTUPINFOA)&si,     // Pointer to STARTUPINFO structure
                                 &pi )    // Pointer to PROCESS_INFORMATION structure
                             )
         {
@@ -296,7 +296,7 @@ void HandleCommandSocket(Socket * s, char * buf)
             return;
         }
         CloseHandle(pi.hThread);
-        childPid = (int) pi.hProcess;
+        childPid = (unsigned long long) (pi.hProcess);
 #endif
 
         LOGGER.info() << "Successuflly create child process for WID=" << wid <<
@@ -443,12 +443,12 @@ bool setMainProcessServiceHome(const struct cmdConf * conf)
     /* get the main service running */
 #ifdef __SHAREDT_WIN__
     TCHAR szPath[MAX_PATH];
-    if( !GetModuleFileNameA( nullptr, szPath, MAX_PATH ) )
+    if( !GetModuleFileNameW( nullptr, szPath, MAX_PATH ) )
     {
         fprintf(stderr, "Cannot get module file name\n");
         return false;
     }
-    ShareDTHome::instance()->set(szPath);
+    ShareDTHome::instance()->set((const char *)szPath);
 #else
     ShareDTHome::instance()->set(conf->argv[0]);
 #endif

@@ -5,6 +5,7 @@
 #include <chrono>
 #include "Path.h"
 #include "Logger.h"
+#include <string>
 
 #ifdef __SHAREDT_WIN__
 #include <direct.h>
@@ -122,10 +123,10 @@ void ShareDTHome::reSet(const char *argv)
 {
     _valid = false;
 #if defined(_WIN32)
-    TCHAR path[MAX_PATH];
-    GetModuleFileName(NULL, path, MAX_PATH);
+    LPSTR path;
+    GetModuleFileNameA(NULL, path, MAX_PATH);
 
-    _execPath = path;
+    _execPath = reinterpret_cast<const char *const>(path);
     _home = getParentDir(path, 2);
     _execDir = getParentDir(path, 1);
     _valid = true;

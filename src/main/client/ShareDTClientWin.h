@@ -59,7 +59,7 @@ class ShareDTClientWin : public QWidget{
     void wheelEvent(QWheelEvent *event) override;
     bool event(QEvent * e) override;
 
-    void enterEvent(QEvent * e) override;
+    void enterEvent(QEnterEvent * e) override;
     void leaveEvent(QEvent * e) override;
 
     void hoverEnter(QHoverEvent * event);

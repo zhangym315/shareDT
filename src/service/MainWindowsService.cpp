@@ -18,7 +18,7 @@ void ControlHandler(DWORD request);
 int MainWindowsServices()
 {
     SERVICE_TABLE_ENTRY ServiceTable[2];
-    ServiceTable[0].lpServiceName = (LPSTR)SHAREDT_SERVER_SVCNAME;
+    ServiceTable[0].lpServiceName = reinterpret_cast<LPWSTR>((LPSTR) SHAREDT_SERVER_SVCNAME);
     ServiceTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
 
     ServiceTable[1].lpServiceName = nullptr;
@@ -71,7 +71,7 @@ void ServiceMain(int argc, char** argv)
     ServiceStatus.dwCheckPoint = 0;
     ServiceStatus.dwWaitHint = 0;
 
-    hStatus = RegisterServiceCtrlHandler("ShareDT Server", (LPHANDLER_FUNCTION)ControlHandler);
+    hStatus = RegisterServiceCtrlHandler(reinterpret_cast<LPCWSTR>("ShareDT Server"), (LPHANDLER_FUNCTION)ControlHandler);
     if (hStatus == (SERVICE_STATUS_HANDLE)0)
     {
         fprintf(stderr, "Failed to registering Control Handler\n");

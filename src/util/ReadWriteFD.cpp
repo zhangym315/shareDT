@@ -15,7 +15,7 @@ ReadWriteFD::ReadWriteFD(const char * path, int oflag)
     OS_OPEN(path, oflag);
     _flag = oflag;
 #else
-    _fd = CreateNamedPipe(path, PIPE_ACCESS_DUPLEX,
+    _fd = CreateNamedPipeA(path, PIPE_ACCESS_DUPLEX,
                            PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
                            PIPE_UNLIMITED_INSTANCES, BUFSIZE, BUFSIZE, 0, NULL);
 #endif

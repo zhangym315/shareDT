@@ -39,11 +39,30 @@ find_package(x264 REQUIRED NO_MODULE)
 set(CMAKE_AUTOMOC ON)
 # Instruct CMake to run uic automatically when needed.
 set(CMAKE_AUTOUIC ON)
-# This will find the Qt5 files. You will need a QT5_DIR env variable
-set(Qt5Widgets_DIR "${CMAKE_SOURCE_DIR}/contrib/qt515/static-build/lib/cmake/Qt5Widgets")
-find_package(Qt5Widgets REQUIRED NO_MODULE)
-set(SHAREDT_SERVER_QT_LIBS Qt5::Widgets)
-set(SHAREDT_CLIENT_QT_LIBS Qt5::Core Qt5::Gui Qt5::Widgets)
+
+# This will find the Qt6 files. You will need a Qt6_DIR env variable
+set(QT660BUILD_LIB_CMAKE "${CMAKE_SOURCE_CONTRIB}/qt660/static-build/lib/cmake/")
+include_directories("${CMAKE_SOURCE_CONTRIB}/qt660/static-build/include")
+
+set(Qt6Widgets_DIR              "${QT660BUILD_LIB_CMAKE}/Qt6Widgets")
+set(Qt6WidgetsTools_DIR         "${QT660BUILD_LIB_CMAKE}/Qt6WidgetsTools")
+set(Qt6CoreTools_DIR            "${QT660BUILD_LIB_CMAKE}/Qt6CoreTools")
+set(Qt6GuiTools_DIR             "${QT660BUILD_LIB_CMAKE}/Qt6GuiTools")
+set(Qt6BundledZLIB_DIR          "${QT660BUILD_LIB_CMAKE}/Qt6BundledZLIB")
+set(Qt6BundledPcre2_DIR         "${QT660BUILD_LIB_CMAKE}/Qt6BundledPcre2")
+set(Qt6BundledLibpng_DIR        "${QT660BUILD_LIB_CMAKE}/Qt6BundledLibpng")
+set(Qt6BundledHarfbuzz_DIR      "${QT660BUILD_LIB_CMAKE}/Qt6BundledHarfbuzz")
+set(Qt6BundledFreetype_DIR      "${QT660BUILD_LIB_CMAKE}/Qt6BundledFreetype")
+set(Qt6BundledLibjpeg_DIR       "${QT660BUILD_LIB_CMAKE}/Qt6BundledLibjpeg")
+set(Qt6DBusTools_DIR            "${QT660BUILD_LIB_CMAKE}/Qt6DBusTools")
+
+set(Qt6_DIR "${QT660BUILD_LIB_CMAKE}/Qt6")
+message("qt6: ${QT660BUILD_LIB_CMAKE}")
+find_package(Qt6 COMPONENTS Widgets REQUIRED)
+
+
+set(SHAREDT_SERVER_QT_LIBS Qt6::Widgets)
+set(SHAREDT_CLIENT_QT_LIBS Qt6::Gui Qt6::Widgets)
 
 ################ BEGIN Platform specific source and libs
 if(WIN32)

@@ -21,7 +21,7 @@ extern "C" {
 #include <QMouseEvent>
 #include <QProcess>
 #include <QInputDialog>
-#include <QDesktopWidget>
+#include <QScreen>
 #include <memory>
 
 #ifdef __SHAREDT_WIN__
@@ -180,7 +180,7 @@ void ImageItem::mouseReleaseEvent(QMouseEvent *event)
     QWidget::mouseReleaseEvent(event);
 }
 
-void ImageItem::enterEvent(QEvent *event)
+void ImageItem::enterEvent(QEnterEvent *event)
 {
     QWidget::setCursor(QCursor(Qt::PointingHandCursor));
 }
@@ -419,7 +419,7 @@ ShareDTWindow::ShareDTWindow (int argc, char ** argv, QWidget *parent) :
 
     setMenu();
     setCentralWidget(parent);
-    resize(QDesktopWidget().availableGeometry(this).size() * 0.5);
+    resize(QGuiApplication::screenAt(QCursor::pos())->availableGeometry().size() * 0.5);
     _ui->setupUi (parent);
 }
 
