@@ -93,7 +93,7 @@ QSize FlowLayout::sizeHint() const
 QSize FlowLayout::minimumSize() const
 {
     QSize size;
-    for (const QLayoutItem *item : qAsConst(_items))
+    for (const QLayoutItem *item : std::as_const(_items))
         size = size.expandedTo(item->minimumSize());
 
     const QMargins margins = contentsMargins();
@@ -109,7 +109,7 @@ int FlowLayout::doLayout(const QRect &rect, bool testOnly) const
     int x = effectiveRect.x();
     int y = effectiveRect.y();
     int lineHeight = 0;
-    for (QLayoutItem *item : qAsConst(_items)) {
+    for (QLayoutItem *item : std::as_const(_items)) {
         const QWidget *wid = item->widget();
         int spaceX = horizontalSpacing();
         if (spaceX == -1)
