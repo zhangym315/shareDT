@@ -33,6 +33,11 @@ def buildQT(k):
         os.makedirs(pathBLD)
     os.chdir(pathBLD)
 
+    gitPatchDir=PWD + "/patch/" + component[0] + "/QT660RenameBlakeConflict.patch"
+    print("Applying git patch: " + gitPatchDir)
+    gitPatchCmd="git apply " + gitPatchDir
+    os.system(gitPatchCmd)
+
     if not os.path.exists('.git'):
         os.mkdir('.git')
 
