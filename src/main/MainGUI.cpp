@@ -400,7 +400,7 @@ void GroupBox::mousePressEvent(QMouseEvent *event) {
         QAction actionRefresh("Refresh Window", this);
         connect(&actionRefresh, SIGNAL(triggered()), _ui, SLOT(refreshSlot()));
         contextMenu.addAction(&actionRefresh);
-        contextMenu.exec(event->globalPos());
+        contextMenu.exec(event->globalPosition().toPoint());
     }
 
     QGroupBox::mousePressEvent(event);
