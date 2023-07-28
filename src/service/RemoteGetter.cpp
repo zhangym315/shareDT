@@ -35,7 +35,7 @@ void RemoteGetter::send()
         msg.convert();
         _sk->sendBytes((const unsigned char *)&msg, sizeof(msg));
 
-        String head;
+        std::string head;
         head << "w=" << fb->getWidth() << ",h=" << fb->getHeight();
         LOGGER.info() << "Sent for monitors capture number of bytes=" << im.sizeInBytes() <<
                     " sent=" << _sk->sendBytes(im.bits(), im.sizeInBytes());
