@@ -159,7 +159,7 @@ void ShareDTClientWin::serverConnectionClosed()
 void ShareDTClientWin::mousePressEvent(QMouseEvent *event)
 {
     const QPoint & locPoint = event->position().toPoint();
-    const QPoint & gloPoint = event->globalPos();
+    const QPoint & gloPoint = event->globalPosition().toPoint();
     int b = (int) event->button() | MouseButton::ButtonDown;
 
     SendPointerEvent(_fetcher->getRfbClient(),
@@ -171,9 +171,9 @@ void ShareDTClientWin::mousePressEvent(QMouseEvent *event)
 
 void ShareDTClientWin::mouseReleaseEvent(QMouseEvent *event)
 {
-    const QPointF & locPoint = event->localPos();
-    const QPointF & winPoint = event->windowPos();
-    const QPointF & gloPoint = event->globalPos();
+    const QPointF & locPoint = event->position().toPoint();
+    const QPointF & winPoint = event->scenePosition().toPoint();
+    const QPointF & gloPoint = event->globalPosition().toPoint();
     int b = (int) event->button() | MouseButton::ButtonUp;
 
     SendPointerEvent(_fetcher->getRfbClient(),
@@ -212,9 +212,9 @@ bool ShareDTClientWin::checkShouldSendMouseMove()
 void ShareDTClientWin::mouseMoveEvent(QMouseEvent *event)
 {
     if (!checkShouldSendMouseMove()) return;
-    const QPointF & locPoint = event->localPos();
-    const QPointF & winPoint = event->windowPos();
-    const QPointF & gloPoint = event->globalPos();
+    const QPointF & locPoint = event->position().toPoint();
+    const QPointF & winPoint = event->scenePosition().toPoint();
+    const QPointF & gloPoint = event->globalPosition().toPoint();
 
     SendPointerEvent(_fetcher->getRfbClient(),
                      locPoint.x() * _winResize.ratioX / RATIO_PRECISION,

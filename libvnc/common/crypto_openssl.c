@@ -39,25 +39,55 @@ static unsigned char reverseByte(unsigned char b) {
 
 int hash_md5(void *out, const void *in, const size_t in_len)
 {
-    MD5_CTX md5;
-    if(!MD5_Init(&md5))
-	return 0;
-    if(!MD5_Update(&md5, in, in_len))
-	return 0;
-    if(!MD5_Final(out, &md5))
-	return 0;
+    EVP_MD_CTX *mdctx;
+    unsigned int md5_digest_len = MD5_HASH_SIZE;
+
+    mdctx = EVP_MD_CTX_new();
+    if (mdctx == NULL) return 0;
+    if (!EVP_DigestInit_ex(mdctx, EVP_md5(), NULL)) {
+        EVP_MD_CTX_free(mdctx);
+        return 0;
+    }
+
+    if (!EVP_DigestUpdate(mdctx, in, in_len)) {
+        EVP_MD_CTX_free(mdctx);
+        return 0;
+    }
+
+    if (!EVP_DigestFinal_ex(mdctx, out, &md5_digest_len)) {
+        EVP_MD_CTX_free(mdctx);
+        return 0;
+    }
+
+    EVP_MD_CTX_free(mdctx);
+
     return 1;
 }
 
 int hash_sha1(void *out, const void *in, const size_t in_len)
 {
-    SHA_CTX sha1;
-    if(!SHA1_Init(&sha1))
-	return 0;
-    if(!SHA1_Update(&sha1, in, in_len))
-	return 0;
-    if(!SHA1_Final(out, &sha1))
-	return 0;
+    EVP_MD_CTX *mdctx;
+    unsigned int digest_len = SHA1_HASH_SIZE;
+
+    mdctx = EVP_MD_CTX_new();
+    if (mdctx == NULL) return 0;
+    if (!EVP_DigestInit_ex(mdctx, EVP_sha1(), NULL)) {
+        EVP_MD_CTX_free(mdctx);
+        return 0;
+    }
+
+    if (!EVP_DigestUpdate(mdctx, in, in_len)) {
+        EVP_MD_CTX_free(mdctx);
+        return 0;
+    }
+
+    if (!EVP_DigestFinal_ex(mdctx, out, &digest_len)) {
+        EVP_MD_CTX_free(mdctx);
+        return 0;
+    }
+
+    EVP_MD_CTX_free(mdctx);
+
     return 1;
 }
 
