@@ -123,12 +123,12 @@ void ShareDTHome::reSet(const char *argv)
 {
     _valid = false;
 #if defined(_WIN32)
-    LPSTR path;
-    GetModuleFileNameA(NULL, path, MAX_PATH);
+    char path[MAX_PATH];
+    GetModuleFileNameA(NULL, reinterpret_cast<LPSTR>(path), MAX_PATH);
 
     _execPath = reinterpret_cast<const char *const>(path);
-    _home = getParentDir(path, 2);
-    _execDir = getParentDir(path, 1);
+    _home = getParentDir(reinterpret_cast<const char *const>(path), 2);
+    _execDir = getParentDir(reinterpret_cast<const char *const>(path), 1);
     _valid = true;
 #else
     std::string path(argv);

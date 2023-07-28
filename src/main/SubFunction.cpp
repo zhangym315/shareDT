@@ -197,7 +197,7 @@ int mainCapture (struct cmdConf * conf)
 
 #ifdef __SHAREDT_WIN__
     std::string commandPath;
-    TCHAR szPath[MAX_PATH];
+    char szPath[MAX_PATH];
     if( !GetModuleFileNameA(nullptr, reinterpret_cast<LPSTR>(szPath), MAX_PATH ) )
     {
         fprintf(stderr, "Failed to get path of current running command\n");
@@ -314,7 +314,7 @@ int status (struct cmdConf * conf)
 {
 #ifdef __SHAREDT_WIN__
     std::string commandPath;
-    TCHAR szPath[MAX_PATH];
+    char szPath[MAX_PATH];
 
     if( !GetModuleFileNameA(nullptr, reinterpret_cast<LPSTR>(szPath), MAX_PATH ) )
     {
@@ -396,7 +396,7 @@ int installService (struct cmdConf * conf)
 {
     SC_HANDLE schSCManager;
     SC_HANDLE schService;
-    TCHAR szPath[MAX_PATH];
+    char szPath[MAX_PATH];
 
     if( !GetModuleFileNameA(nullptr, reinterpret_cast<LPSTR>(szPath), MAX_PATH ) )
     {
