@@ -1,7 +1,5 @@
 #include "ScreenProvider.h"
-#include "SamplesProvider.h"
 #include "CaptureInfo.h"
-#include "Enum.h"
 #include "Path.h"
 
 #include <ctime>
