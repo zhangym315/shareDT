@@ -20,7 +20,6 @@ set(TESTINGCASE_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_executable(ffmpeg_encode_decode
                 ${TESTINGCASE_SOURCE}/FfmpegEncodeDecode.cpp
-                ${SHAREDT_SRC}/ffmpeg/FfmpegUtil.cpp
                )
 
 target_link_libraries(ffmpeg_encode_decode vncserver vncclient

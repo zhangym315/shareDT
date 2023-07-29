@@ -48,7 +48,7 @@ void ReadWriteFD::write(const char * buf)
 #ifdef __SHAREDT_WIN__
     WriteFile( _fd, buf, strlen(buf)+1, NULL, NULL);
 #else
-    ::open(O_WRONLY);
+    open(O_WRONLY);
     ::write(_fd, buf, strlen(buf)+1);
     close();
 #endif
