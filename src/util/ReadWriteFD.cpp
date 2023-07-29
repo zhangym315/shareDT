@@ -4,16 +4,11 @@
 
 #define BUFSIZE 5120
 
-ReadWriteFD::ReadWriteFD(const char * path)
-{
-    ReadWriteFD(path, 0666);
-}
-
-ReadWriteFD::ReadWriteFD(const char * path, int oflag)
+ReadWriteFD::ReadWriteFD(const char * path) : ReadWriteFD(path, 0666) { }
+ReadWriteFD::ReadWriteFD(const char * path, int oflag) : _buf{}, _fd{}, _path{}
 {
 #ifndef __SHAREDT_WIN__
     ::open(path, oflag);
-    _flag = oflag;
 #else
     _fd = CreateNamedPipeA(path, PIPE_ACCESS_DUPLEX,
                            PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
@@ -24,6 +19,7 @@ ReadWriteFD::ReadWriteFD(const char * path, int oflag)
 
 char * ReadWriteFD::read()
 {
+    memset(_buf, 0, BUFSIZE);
 #ifdef __SHAREDT_WIN__
     while(true) {
         Sleep(1000);
@@ -34,45 +30,17 @@ char * ReadWriteFD::read()
     }
     ReadFile(_fd, _buf, BUFSIZE, NULL, NULL);
 #else
-    open(O_RDONLY);
-    bzero(_buf, BUFSIZE);
     ::read(_fd, _buf, BUFSIZE);
-
-    close();
 #endif
     return _buf;
 }
 
-void ReadWriteFD::write(const char * buf)
+void ReadWriteFD::write(const char * buf) const
 {
 #ifdef __SHAREDT_WIN__
     WriteFile( _fd, buf, strlen(buf)+1, NULL, NULL);
 #else
-    open(O_WRONLY);
     ::write(_fd, buf, strlen(buf)+1);
-    close();
 #endif
 }
 
-void ReadWriteFD::open()
-{
-    open(_flag);
-}
-
-void ReadWriteFD::open(int flag)
-{
-#ifdef __SHAREDT_WIN__
-#else
-    _fd = ::open(_path, flag);
-#endif
-    _flag = flag;
-}
-
-void ReadWriteFD::close()
-{
-#ifdef __SHAREDT_WIN__
-    CloseHandle(_fd);
-#else
-    ::close(_fd);
-#endif
-}

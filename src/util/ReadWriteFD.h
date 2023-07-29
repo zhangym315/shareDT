@@ -18,12 +18,12 @@
  */
 class ReadWriteFD
 {
-  public:
+public:
 #ifdef __SHAREDT_WIN__
     ReadWriteFD(HANDLE h) : _fd(h) { }
 #endif
-    ReadWriteFD(const char * path);
-    ReadWriteFD(const char * path, int oflag);
+    explicit ReadWriteFD(const char * path);
+    explicit ReadWriteFD(const char * path, int oflag);
     ~ReadWriteFD()
     {
 #ifdef __SHAREDT_WIN__
@@ -34,22 +34,17 @@ class ReadWriteFD
     }
 
     char * read();
-    void   write(const char * buf);
+    void   write(const char * buf) const;
 
-    void open();
-    void open(int flag);
-    void close();
+private:
+    ReadWriteFD() = default;
 
-  private:
-    ReadWriteFD();
 #ifdef __SHAREDT_WIN__
     HANDLE _fd;
 #else
     int  _fd;
 #endif
-    int  _flag;
     char _buf[BUFSIZE];
-  protected:
     char _path[MAX_PATH];
 };
 
