@@ -4,7 +4,7 @@
 #include "Logger.h"
 #include "Path.h"
 #include "TypeDef.h"
-
+#include <unistd.h>
 #ifdef __SHAREDT_WIN__
 #include <windows.h>
 #endif
