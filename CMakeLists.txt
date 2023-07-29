@@ -67,7 +67,6 @@ include_directories (
 set(SHAREDT_MAIN_WINDOW ShareDT)
 add_executable(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_SERVER_SRC}
-        ${SHAREDT_SRC}/util/TimeUtil.c
         ${SHAREDT_SRC}/main/Layout.cpp
         ${SHAREDT_SRC}/main.cpp
         ${SHAREDT_SRC}/main/MainGUI.cpp

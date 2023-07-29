@@ -3,7 +3,6 @@
 
 #include "Logger.h"
 #include "Path.h"
-#include "CrossPlatform.h"
 #include "TypeDef.h"
 
 #ifdef __SHAREDT_WIN__
@@ -27,7 +26,11 @@ class ReadWriteFD
     ReadWriteFD(const char * path, int oflag);
     ~ReadWriteFD()
     {
-        OS_CLOSE(_fd);
+#ifdef __SHAREDT_WIN__
+        CloseHandle(_fd);
+#else
+        ::close(_fd);
+#endif
     }
 
     char * read();

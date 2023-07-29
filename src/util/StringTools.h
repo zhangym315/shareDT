@@ -14,12 +14,14 @@
 #include <string>
 #include <algorithm>
 
-bool isNumber(const std::string & s);
-std::string getString(char * x);
-bool   toInt(const std::string & in, int &out);
+class StringTools {
+public:
+    static bool isAllNumberString(const std::string & s);
+    static bool toInt(const std::string & in, int &out);
+};
 
-std::string& operator<<(std::string & lhs, const std::string & rhs);
-std::string& operator<<(std::string & lhs, const char * rhs);
+std::string & operator<<(std::string & lhs, const std::string & rhs);
+std::string & operator<<(std::string & lhs, const char * rhs);
 std::string & operator<<(std::string & lhs,  int rhs);
 
 #ifdef __SHAREDT_WIN__

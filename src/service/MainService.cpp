@@ -2,7 +2,6 @@
 #include "Path.h"
 #include "Logger.h"
 #include "SubFunction.h"
-#include "CrossPlatform.h"
 #include "main/MainManagementProcess.h"
 #include "Sock.h"
 #include "RemoteGetter.h"

@@ -22,7 +22,7 @@ class SocketFD
 {
 public:
 #ifdef __SHAREDT_WIN__
-    SocketFD(HANDLE fd) : _fd(fd) { }
+    explicit SocketFD(HANDLE fd) : _fd(fd) { }
 #else
     SocketFD(int fd) : _fd (fd) { }
 #endif
@@ -32,7 +32,7 @@ public:
     int recv(char * buf, size_t size) const;
 
 private:
-    SocketFD() { }
+    SocketFD() = default;
 #ifdef __SHAREDT_WIN__
     HANDLE _fd;
 #else
@@ -62,7 +62,7 @@ protected:
     friend class SocketServer;
     friend class SocketSelect;
 
-    Socket(SOCKET s);
+    explicit Socket(SOCKET s);
     Socket();
 
     SOCKET _s;
@@ -76,7 +76,7 @@ private:
 class SocketClient : public Socket {
 public:
     SocketClient(const std::string& host, int port);
-    SocketClient(sockaddr_in s);
+    explicit SocketClient(sockaddr_in s);
     void write(const char * bytes) { sendString(bytes); }
     bool connect();
 

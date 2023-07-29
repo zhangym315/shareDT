@@ -1,21 +1,13 @@
 #include "StringTools.h"
-#include <type_traits>
-#include <cstring>
 
-bool isNumber(const std::string & s)
+bool StringTools::isAllNumberString(const std::string & s)
 {
     return !s.empty() && std::find_if(s.begin(),
         s.end(), [](unsigned char c) { return !::isdigit(c); }) == s.end();
 }
 
-std::string getString(char * x)
-{
-    std::string s(x);
-    return s;
-}
-
 /* Return false if failed */
-bool toInt(const std::string &input, int &out)
+bool StringTools::toInt(const std::string &input, int &out)
 {
     /* convert to int */
     try

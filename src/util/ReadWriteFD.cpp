@@ -12,7 +12,7 @@ ReadWriteFD::ReadWriteFD(const char * path)
 ReadWriteFD::ReadWriteFD(const char * path, int oflag)
 {
 #ifndef __SHAREDT_WIN__
-    OS_OPEN(path, oflag);
+    ::open(path, oflag);
     _flag = oflag;
 #else
     _fd = CreateNamedPipeA(path, PIPE_ACCESS_DUPLEX,
@@ -36,7 +36,7 @@ char * ReadWriteFD::read()
 #else
     open(O_RDONLY);
     bzero(_buf, BUFSIZE);
-    OS_READ(_fd, _buf, BUFSIZE);
+    ::read(_fd, _buf, BUFSIZE);
 
     close();
 #endif
@@ -48,8 +48,8 @@ void ReadWriteFD::write(const char * buf)
 #ifdef __SHAREDT_WIN__
     WriteFile( _fd, buf, strlen(buf)+1, NULL, NULL);
 #else
-    open(O_WRONLY);
-    OS_WRITE(_fd, buf, strlen(buf)+1);
+    ::open(O_WRONLY);
+    ::write(_fd, buf, strlen(buf)+1);
     close();
 #endif
 }
@@ -63,12 +63,16 @@ void ReadWriteFD::open(int flag)
 {
 #ifdef __SHAREDT_WIN__
 #else
-    _fd = OS_OPEN(_path, flag);
+    _fd = ::open(_path, flag);
 #endif
     _flag = flag;
 }
 
 void ReadWriteFD::close()
 {
-    OS_CLOSE(_fd);
+#ifdef __SHAREDT_WIN__
+    CloseHandle(_fd);
+#else
+    ::close(_fd);
+#endif
 }
