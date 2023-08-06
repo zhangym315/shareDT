@@ -2,7 +2,6 @@
 #define _THREAD_LOCAL_H_
 
 #include <thread>
-#include "Compiler.h"
 #include "TypeDef.h"
 #include "Pid.h"
 

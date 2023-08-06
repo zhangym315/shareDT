@@ -220,7 +220,7 @@ int mainCapture (struct cmdConf * conf)
 
     // append user name
     char username[UNLEN+1];
-    bzero(username, UNLEN+1);
+    memset(username, '\0', UNLEN+1);
     DWORD username_len = UNLEN;
     GetUserName(reinterpret_cast<LPWSTR>(username), &username_len);
     commandPath.append(" --username \"");

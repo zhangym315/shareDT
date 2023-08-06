@@ -18,8 +18,9 @@ struct ImageBGRA {
 
 class FrameBuffer {
   public:
-    FrameBuffer(size_t size) : _size(size), _capacity(size),
-                            _subCapacity(0), _subData(nullptr)
+    explicit FrameBuffer(size_t size) : _size(size), _capacity(size),
+                            _subCapacity(0), _subData(nullptr),
+                            _width(0), _height(0)
     {
         _isUsed.store(true, std::memory_order_relaxed);
         if(size == 0)
@@ -28,7 +29,7 @@ class FrameBuffer {
             _data = (unsigned char *) malloc (size);
         _isValid = false;
     }
-    FrameBuffer(const CapImageRect & bounds, unsigned int bytespp) ;
+    explicit FrameBuffer(const CapImageRect & bounds, unsigned int bytespp) { }
     FrameBuffer() : FrameBuffer(0) { }
     ~FrameBuffer() { reSet(0); resetSubData(0); }
 

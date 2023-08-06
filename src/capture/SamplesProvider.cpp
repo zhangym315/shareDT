@@ -5,10 +5,6 @@
 
 #include "SamplesProvider.h"
 
-extern "C" {
-#include "TimeUtil.h"
-}
-
 using namespace std::chrono_literals;
 
 void FrameGetterSystem::setImageTypeToRGB ()
@@ -82,7 +78,6 @@ void FrameGetterThread::mainImp()
         }
         std::chrono::duration<double> diff = std::chrono::system_clock::now() - start;
         if(_duration > diff) {
-//            std::cout << get_current_time_string() << " FrameGetterThread sleeped " << _duration.count() << std::endl;
             std::this_thread::sleep_for(_duration - diff);
         }
     }

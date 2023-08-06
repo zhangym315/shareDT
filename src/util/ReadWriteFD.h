@@ -3,11 +3,11 @@
 
 #include "Logger.h"
 #include "Path.h"
-#include "CrossPlatform.h"
 #include "TypeDef.h"
-
 #ifdef __SHAREDT_WIN__
 #include <windows.h>
+#else
+#include <unistd.h>
 #endif
 
 /*
@@ -19,34 +19,33 @@
  */
 class ReadWriteFD
 {
-  public:
+public:
 #ifdef __SHAREDT_WIN__
     ReadWriteFD(HANDLE h) : _fd(h) { }
 #endif
-    ReadWriteFD(const char * path);
-    ReadWriteFD(const char * path, int oflag);
+    explicit ReadWriteFD(const char * path);
+    explicit ReadWriteFD(const char * path, int oflag);
     ~ReadWriteFD()
     {
-        OS_CLOSE(_fd);
+#ifdef __SHAREDT_WIN__
+        CloseHandle(_fd);
+#else
+        ::close(_fd);
+#endif
     }
 
     char * read();
-    void   write(const char * buf);
+    void   write(const char * buf) const;
 
-    void open();
-    void open(int flag);
-    void close();
+private:
+    ReadWriteFD() = default;
 
-  private:
-    ReadWriteFD();
 #ifdef __SHAREDT_WIN__
     HANDLE _fd;
 #else
     int  _fd;
 #endif
-    int  _flag;
     char _buf[BUFSIZE];
-  protected:
     char _path[MAX_PATH];
 };
 

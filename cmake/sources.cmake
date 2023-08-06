@@ -24,7 +24,6 @@ set(SHAREDT_SERVER_SRC_COMMON
         ${SHAREDT_SRC}/util/ReadWriteFD.cpp
         ${SHAREDT_SRC}/util/Sock.cpp
         ${SHAREDT_SRC}/util/Pid.c
-        ${SHAREDT_SRC}/util/TimeUtil.c
         ${SHAREDT_SRC}/util/Converter.cpp
         ${SHAREDT_SERVER_SRC_COMMON}
 )
@@ -79,7 +78,6 @@ set(SHAREDT_CLIENT_GUI_SRC_FILES
 set(SHAREDT_CLIENT_SRC_FILES
         ${SHAREDT_SRC}/util/Pid.c
         ${SHAREDT_SRC}/util/Buffer.cpp
-        ${SHAREDT_SRC}/util/TimeUtil.c
         ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.cpp
         ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.h
         ${SHAREDT_SRC_CLIENT}/ShareDTClientWin.ui

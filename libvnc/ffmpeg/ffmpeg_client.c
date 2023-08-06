@@ -5,7 +5,6 @@
 #include "ffmpeg_interface.h"
 #include "ffmpeg_client_interface.h"
 
-#include "TimeUtil.h"
 static writer_counter = 0;
 static void
 rfbDefaultLogStd(const char *format, ...)

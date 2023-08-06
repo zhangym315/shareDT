@@ -11,7 +11,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "TimeUtil.h"
 #ifdef __cplusplus
 }
 #endif

@@ -192,7 +192,7 @@ int Capture::parseArgs(const vector<std::string> & args)
         }
         /* get the name of the captured instance */
         else if (*i == "-h" || *i == "--handler") {
-            if((i+1) != args.end() && isNumber(*(++i)))
+            if((i+1) != args.end() && StringTools::isAllNumberString(*(++i)))
                 _hdler = stoi(*i);
             else {
                 cerr << "Invalid number found for -h/--handler: " << *i << endl;
@@ -219,7 +219,7 @@ int Capture::parseArgs(const vector<std::string> & args)
         }
         /* get the process id that we can check */
         else if (*i == "--process" || *i == "-p") {
-            if((i+1) != args.end() && isNumber(*(++i)))
+            if((i+1) != args.end() && StringTools::isAllNumberString(*(++i)))
                 _pid = stoi(*i);
             else {
                 cerr << "Invalid number found for -p/-process: " << *i << endl;
@@ -232,7 +232,7 @@ int Capture::parseArgs(const vector<std::string> & args)
         }
         /* monitor id */
         else if (*i == "-i" || *i == "--id") {
-            if((i+1) != args.end() && isNumber(*(++i)))
+            if((i+1) != args.end() && StringTools::isAllNumberString(*(++i)))
                 _monID = stoi(*i);
             else {
                 cerr << "Invalid number found for -i/--id: " << *i << endl;
@@ -268,7 +268,7 @@ int Capture::parseArgs(const vector<std::string> & args)
             auto pos = s.find(':');
             if (pos != std::string::npos ) {
                 _host = s.substr(0, pos);
-                toInt(s.substr(pos + 1, s.length()), _vncPort);
+                StringTools::toInt(s.substr(pos + 1, s.length()), _vncPort);
             } else {
                 _host = s;
             }
@@ -508,7 +508,7 @@ bool Capture::parseBounds()
 
     while( std::getline( iss, token, ',' ) )
     {
-        if(isNumber(token))
+        if(StringTools::isAllNumberString(token))
             b[i] = stoi(token);
         else return false;
 
@@ -536,7 +536,7 @@ bool Capture::parseWindows ()
     /* if process id is valid, set the windows list */
     if (_pid != -1)
     {
-    } else if (!toInt(_name, handler))
+    } else if (!StringTools::toInt(_name, handler))
         return false;
     else _hdler = handler;
 
