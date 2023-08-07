@@ -28,6 +28,29 @@ bool StringTools::toInt(const std::string &input, int &out)
     return true;
 }
 
+#ifdef __SHAREDT_WIN__
+#include <vector>
+
+LPCWSTR StringTools::stdString2LPCWSTR(const std::string & input) {
+    std::wstring ws = std::wstring(input.begin(), input.end());
+    LPCWSTR ret = ws.c_str();
+    return ret;
+}
+
+LPWSTR StringTools::stdString2LPWSTR(const std::string & input) {
+    int wstrLen = MultiByteToWideChar(CP_UTF8, 0, input.c_str(), -1, NULL, 0);
+    if (wstrLen == 0)
+        return nullptr;
+
+    std::vector<wchar_t> buffer(wstrLen);
+    MultiByteToWideChar(CP_UTF8, 0, input.c_str(), -1, buffer.data(), wstrLen);
+
+    LPWSTR lpwstr = buffer.data();
+    return lpwstr;
+}
+
+#endif
+
 std::string& operator<<(std::string & lhs, const std::string & rhs) {
     return lhs += rhs;
 }

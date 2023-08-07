@@ -1,4 +1,3 @@
-#include "StringTools.h"
 #include "TypeDef.h"
 #include "WindowProcessor.h"
 #include "ImageRect.h"
@@ -10,6 +9,7 @@
 #include "SubFunction.h"
 #include "InputInterface.h"
 #include "CaptureInfo.h"
+#include "StringTools.h"
 
 #include <iomanip>
 #include <iostream>

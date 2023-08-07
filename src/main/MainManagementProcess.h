@@ -1,8 +1,8 @@
 #ifndef _MAINMANAGEMENTPROCESS_H_
 #define _MAINMANAGEMENTPROCESS_H_
 
-#include "StringTools.h"
 #include "ReadWriteFD.h"
+#include "StringTools.h"
 
 #include <map>
 

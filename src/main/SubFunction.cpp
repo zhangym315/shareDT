@@ -97,12 +97,13 @@ int mainStart (struct cmdConf * conf)
         SC_HANDLE serviceControlManager = OpenSCManager( 0, 0, SC_MANAGER_CONNECT );
         SC_HANDLE hSc;
 
-        hSc = OpenService(serviceControlManager, reinterpret_cast<LPCWSTR>(SHAREDT_SERVER_SVCNAME), SERVICE_ALL_ACCESS);
+        hSc = OpenService(serviceControlManager, StringTools::stdString2LPCWSTR(SHAREDT_SERVER_SVCNAME), SERVICE_ALL_ACCESS);
+        auto svptr = StringTools::stdString2LPCWSTR(conf->argv[0]);
         if (hSc == nullptr)
         {
             LOGGER.error() << "Failed to open service";
             return RETURN_CODE_INTERNAL_ERROR;
-        } else if(!StartService(hSc, conf->argc, reinterpret_cast<LPCWSTR *>((const char **) conf->argv)))
+        } else if(!StartService(hSc, conf->argc, &svptr))
         {
             LOGGER.error() << "Failed to start server service";
             if (hSc != nullptr) CloseServiceHandle (hSc);
@@ -157,7 +158,7 @@ int mainStop (struct cmdConf * conf)
     SC_HANDLE hSc;
     SERVICE_STATUS ServiceStatus;
 
-    hSc = OpenService(serviceControlManager, reinterpret_cast<LPCWSTR>(SHAREDT_SERVER_SVCNAME), SERVICE_STOP  );
+    hSc = OpenService(serviceControlManager, StringTools::stdString2LPCWSTR(SHAREDT_SERVER_SVCNAME), SERVICE_STOP  );
     if (hSc == nullptr)
     {
         LOGGER.error() << "Can't stop service";
@@ -405,10 +406,9 @@ int installService (struct cmdConf * conf)
     }
 
     // Get a handle to the SCM database.
-    schSCManager = OpenSCManager(
-            nullptr,                    // local computer
-            nullptr,                    // ServicesActive database
-            SC_MANAGER_ALL_ACCESS);  // full access rights
+    schSCManager = OpenSCManager( nullptr,                    // local computer
+                                  nullptr,                    // ServicesActive database
+                                  SC_MANAGER_ALL_ACCESS);  // full access rights
     if (nullptr == schSCManager)
     {
         fprintf(stderr, "OpenSCManager failed (%d)\n", GetLastError());
@@ -420,11 +420,13 @@ int installService (struct cmdConf * conf)
     runningServicePath.insert(runningServicePath.length(), "\"");
     runningServicePath.append(" service");
 
-    schService = CreateService(schSCManager, reinterpret_cast<LPCWSTR>(SHAREDT_SERVER_SVCNAME),
-                               reinterpret_cast<LPCWSTR>(SHAREDT_SERVER_SVCNAME),
+    std::wstring ws = std::wstring(runningServicePath.begin(), runningServicePath.end());
+    LPCWSTR ret = ws.c_str();
+    auto serviceName = StringTools::stdString2LPCWSTR(std::string(SHAREDT_SERVER_SVCNAME));
+    schService = CreateService(schSCManager, serviceName, serviceName,
                                SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
                                SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
-                               reinterpret_cast<LPCWSTR>(runningServicePath.c_str()),
+                               ret,
                                nullptr, nullptr, nullptr, nullptr, nullptr);
     if (schService == nullptr)
     {
@@ -433,7 +435,15 @@ int installService (struct cmdConf * conf)
         return RETURN_CODE_SERVICE_ERROR;
     }
     else fprintf(stdout, "Service installed successfully\n");
-
+    TCHAR szDesc[] = TEXT("Provide the service of sharing desktop.");
+    SERVICE_DESCRIPTION sd; sd.lpDescription = szDesc;
+    if( !ChangeServiceConfig2(
+            schService,                 // handle to service
+            SERVICE_CONFIG_DESCRIPTION, // change: description
+            &sd) )                      // new description
+    {
+        fprintf(stderr, "Failed to updater serivce descrption.\n");
+    }
     CloseServiceHandle(schService);
     CloseServiceHandle(schSCManager);
 

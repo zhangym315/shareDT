@@ -17,7 +17,7 @@
 /*
  * All sub command, without sub command(argc==1), it will start the main GUI.
  */
-const char * SHAREDT_SERVER_SVCNAME            = "shareDTServer";
+const char * SHAREDT_SERVER_SVCNAME            = "ShareDTServer";
 const char * SHAREDT_SERVER_COMMAND_START      = "start";
 const char * SHAREDT_SERVER_COMMAND_STOP       = "stop";
 const char * SHAREDT_SERVER_COMMAND_RESTART    = "restart";
