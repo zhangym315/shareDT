@@ -10,6 +10,7 @@
 #include "SubFunction.h"
 #include "InputInterface.h"
 #include "CaptureInfo.h"
+#include "win/DirectX3DWindow.h"
 
 #include <iomanip>
 #include <iostream>
@@ -451,6 +452,16 @@ int Capture::initSrceenProvider()
         _sp = new ScreenProviderPartial(_cap._bounds, _frequency);
     }
     else if (_type == SP_WINDOW) {
+//        Direct3DCapture * t = new Direct3DCapture((HWND)_hdler, nullptr);
+//        t->StartCapture();
+/*        auto g_windows = EnumerateWindows();
+        for (auto w:g_windows) {
+            if (w.Hwnd() > 0)
+            std::wcout << "w.name=" << w.Title() << std::endl;
+        }
+
+*/
+
         if(_pid == -1)
             _sp = new ScreenProviderWindow(_hdler, _frequency);
         else

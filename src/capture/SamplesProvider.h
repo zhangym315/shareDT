@@ -239,7 +239,11 @@ class SamplesProvider  {
 
     SamplesProvider(CapWindow  & win, unsigned int frequency) : SamplesProvider(frequency)
      {
+#ifdef __SHAREDT_WIN__
+         _fgc = std::make_unique<FrameGetterSystem>(&_buffer, &win, frequency);
+#else
          _fgc = std::make_unique<FrameGetterThread>(&_buffer, &win, frequency);
+#endif
      }
 
     SamplesProvider(CapImageRect & bd, CapMonitor & mon, unsigned int frequency) : SamplesProvider(frequency)
