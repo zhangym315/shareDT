@@ -43,7 +43,7 @@ def buildQT(k):
 
     ret=-1
     if k.lower() == "linux":
-        ret=os.system('./configure -static -release -prefix ./static-build -xcb-xlib -xcb -recheck-all -nomake examples -nomake tests -skip qtwebengine -confirm-license -opensource')
+        ret=os.system('./configure -static -release -prefix ./static-build -xcb-xlib -xcb -nomake examples -nomake tests -skip qtwebengine -confirm-license -opensource')
     elif k.lower() == "darwin":
         ret=os.system('./configure -static -release -prefix ./static-build -nomake examples -nomake tests  -confirm-license -opensource ')
     elif k.lower() == "windows":
