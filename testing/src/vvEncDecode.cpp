@@ -38,7 +38,7 @@ TEST(vv_encode_decode, vv_encode) {
 
     /**************** for testing     */
     vvenc_config vvenccfg;
-    vvenccfg.m_internChromaFormat = VVENC_CHROMA_422;
+    vvenccfg.m_internChromaFormat = VVENC_CHROMA_420;
     vvenc_init_default( &vvenccfg, fb->getWidth(), fb->getHeight(), 10,
                         VVENC_RC_OFF, VVENC_AUTO_QP,
                         vvencPresetMode::VVENC_MEDIUM );
@@ -72,18 +72,19 @@ TEST(vv_encode_decode, vv_encode) {
     size_t seq = 0;
     bool bEncodeDone = false;
 
+    if ((fb = fg.getFrame()) == nullptr) {
+//        this_thread::sleep_for(50ms);i--;
+//        continue;
+    }
+
+//    fb->setUsed();
+
     for (int i=0; i < 100; i++) {
-/*        if ((fb = fg.getFrame()) == nullptr) {
-            fb->setUsed();
-            continue;
-        }
-*/
         RGByuv::rgb32Toyuv420(fb->getWidth(), fb->getHeight(),
                               (const uint8_t *)fb->getData(), fb->getWidth()*4,
                               (uint8_t *) cYUVInputBuffer.planes[0].ptr, (uint8_t *) cYUVInputBuffer.planes[1].ptr, (uint8_t *) cYUVInputBuffer.planes[2].ptr,
                               cYUVInputBuffer.planes[0].stride, cYUVInputBuffer.planes[1].stride,
                               YCbCrType::YCBCR_JPEG);
-//        fb->setUsed();
         cYUVInputBuffer.sequenceNumber  = seq++;
         cYUVInputBuffer.cts             =  (int64_t)vvenccfg.m_FrameRate;
         cYUVInputBuffer.ctsValid        = true;
@@ -132,7 +133,7 @@ VVFrameGetter::VVFrameGetter() : valid_(false), _c(nullptr) {
     }
     _c->getScreenProvide()->sampleResume();
 
-    _c->getScreenProvide()->setTargetImageType(SPImageType::SP_IMAGE_YUV420);
+    _c->getScreenProvide()->setTargetImageType(SPImageType::SP_IMAGE_RGBA);
     valid_ = true;
 }
 
