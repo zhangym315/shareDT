@@ -44,6 +44,10 @@ class Capture {
          _type(SP_NULL), _sp(nullptr), _monID(0), _daemon(false),
          _ctype(C_NONE), _host{}, _vncPort{},
          _frequency(DEFAULT_SAMPLE_PROVIDER) { }
+    Capture(SPType t, int id, std::string n) : _pid(-1), _hdler(id), _show(S_NONE),
+                                               _type(t), _sp(nullptr), _monID(id), _daemon(false),
+                                               _ctype(C_NONE), _host{}, _vncPort{},
+                                               _frequency(DEFAULT_SAMPLE_PROVIDER) { }
     ~Capture();
 
     int initSrceenProvider();

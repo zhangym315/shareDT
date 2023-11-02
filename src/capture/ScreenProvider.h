@@ -56,6 +56,7 @@ class ScreenProvider {
     void sampleResume()   ;
     bool isSamplePaused() ;
 
+    void setTargetImageType(SPImageType type) { _samp->setTargetImageType(type); }
   protected:
     unsigned int       _bytespixel;
     CapImageRect       _bounds;

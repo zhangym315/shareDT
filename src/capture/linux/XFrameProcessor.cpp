@@ -88,7 +88,7 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb, SPImageType imgtype)
             return false;
         }
         fb->setDataPerRow((unsigned char*)XImage_->data, _mon->getWidth(),
-                          _mon->getHeight(), XImage_->bytes_per_line, imgtype);
+                          _mon->getHeight(), XImage_->bytes_per_line);
     } else if(_type == SP_PARTIAL) {
         if(!XShmGetImage(SelectedDisplay,
                        RootWindow(SelectedDisplay, _mon->getId ()),
@@ -99,7 +99,7 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb, SPImageType imgtype)
             return false;
         }
         fb->setDataPerRow((unsigned char*)XImage_->data,_bounds->getWidth(),
-                          _bounds->getHeight(), XImage_->bytes_per_line, imgtype);
+                          _bounds->getHeight(), XImage_->bytes_per_line);
     } else if ( _type == SP_WINDOW ) {
         XWindowAttributes wndattr;
 
@@ -121,7 +121,7 @@ bool X11FrameProcessor::ProcessFrame(FrameBuffer * fb, SPImageType imgtype)
         }
         fb->setDataPerRow((unsigned char*)XImage_->data,
                           _win->getWidth(), _win->getHeight(),
-                          XImage_->bytes_per_line, imgtype);
+                          XImage_->bytes_per_line);
     }
 
     return true;
@@ -137,8 +137,9 @@ void FrameGetterThread::init() {
     }
 }
 
-bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler, SPImageType imgtype) {
+bool FrameGetter::windowsFrame(FrameBuffer * fb, SPType type, size_t handler) {
     (void) type; (void) handler;
+    SPImageType imgtype;
     if(x11FP)
         return x11FP->ProcessFrame(fb, imgtype);
     else {

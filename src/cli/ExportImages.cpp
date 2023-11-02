@@ -96,11 +96,10 @@ int ExportImages::parseExportImagesOptions(int argc, char ** argv)
             if (i >= argc) return RETURN_CODE_INVALID_ARG;
 
             std::string val = argv[++i];
-            if (val.find_first_not_of("0123456789") == string::npos)
+            if (val.find_first_not_of("0123456789") != string::npos)
                 return RETURN_CODE_INVALID_ARG;
             _total = std::stoi(val.c_str());
         } else if ( cur == "--mp4" ) {
-//            FrameGetterSystem::instance()->setImageTypeToRGB();
             _action = EXPORT_MP4;
         }
     }
@@ -143,6 +142,7 @@ int ExportImages::startExportImages()
                    (std::chrono::system_clock::now()-start).count()/1000 << "ms" << std::endl;
 
         i++;
+        _fb->setUsed();
     }
 
     std::cout << "Images are exported to " << getCapServerPath() << std::endl;

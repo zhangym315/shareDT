@@ -9,7 +9,7 @@
 #include <thread>
 #include <atomic>
 
-enum SPImageType { SP_IMAGE_BGRA, SP_IMAGE_RGBA, SP_IMAGE_RGB, SP_IMAGE_YUV420};  // default RGBA
+enum SPImageType { SP_IMAGE_BGRA, SP_IMAGE_RGBA, SP_IMAGE_RGB, SP_IMAGE_YUV420, SP_IMAGE_YUV422};  // default RGBA
 
 class CapImageRect;
 struct ImageBGRA {
@@ -18,9 +18,9 @@ struct ImageBGRA {
 
 class FrameBuffer {
   public:
-    explicit FrameBuffer(size_t size) : _size(size), _capacity(size),
-                            _subCapacity(0), _subData(nullptr),
-                            _width(0), _height(0)
+    explicit FrameBuffer(size_t size, SPImageType type) : _size(size), _capacity(size),
+                                                 _subCapacity(0), _subData(nullptr),
+                                                 _targetType(type)
     {
         _isUsed.store(true, std::memory_order_relaxed);
         if(size == 0)
@@ -29,7 +29,9 @@ class FrameBuffer {
             _data = (unsigned char *) malloc (size);
         _isValid = false;
     }
-    explicit FrameBuffer(const CapImageRect & bounds, unsigned int bytespp) { }
+
+    explicit FrameBuffer(size_t size) : FrameBuffer(size, SPImageType::SP_IMAGE_RGBA) {  }
+    FrameBuffer(const CapImageRect & bounds, unsigned int bytespp) ;
     FrameBuffer() : FrameBuffer(0) { }
     ~FrameBuffer() { reSet(0); resetSubData(0); }
 
@@ -38,19 +40,24 @@ class FrameBuffer {
     unsigned char * getData() const { return _data; }
     unsigned char * getDataToWrite() { return _data; }
 
-    void setData(unsigned char * data, size_t w, size_t h, SPImageType type=SPImageType::SP_IMAGE_RGBA);
-    void setDataPerRow(unsigned char * data, int w, int h,
-                       int bytesrow, SPImageType type=SPImageType::SP_IMAGE_RGBA);
+    void setData(unsigned char * data, size_t w, size_t h);
+    void setDataPerRow(unsigned char * data, int w, int h, int bytesrow);
 
     /*
-     * convert
-     * received order is B, G, R, A
-     * Convert to R, G, B, A
+     * Conversion of image format
+     * Received order is B, G, R, A
+     * Converting to RGBA or YUV420 YUV422...
      */
     void ConvertBGRA2RGBA(unsigned char * dst, size_t size);
     void ConvertBGRA2RGBA() { return ConvertBGRA2RGBA(_data, _size); }
-    void ConvertBGRA2YCrCb420(unsigned char * dst, size_t size);
-    void ConcertBGRA2RGB(unsigned char * dst, unsigned char * src, size_t srcSize);
+    void ConvertBGRA2YCbCr420(unsigned char * src, size_t size);
+    /*
+     * @param
+     *    src:  input BGRA format pointer
+     *    size: number of pixel, total size of src buffer is size*4
+     */
+    void ConvertBGRA2YCbCr422(unsigned char * src, size_t size);
+    void ConvertBGRA2RGB(unsigned char * dst, unsigned char * src, size_t srcSize);
 
     bool reSet(size_t size);
     void reSet(const CapImageRect & bounds, unsigned int bytespp);
@@ -74,6 +81,8 @@ class FrameBuffer {
     [[nodiscard]] size_t getWidth() const { return _width; }
     [[nodiscard]] size_t getHeight() const { return _height; }
 
+    void setType(SPImageType type) { _targetType = type; }
+
   private:
     size_t   _size;
     size_t   _capacity;
@@ -84,6 +93,7 @@ class FrameBuffer {
     std::atomic<bool>     _isUsed;
     size_t   _width;
     size_t   _height;
+    SPImageType _targetType;
 };
 
 /*
@@ -95,6 +105,7 @@ template<typename T>
 class CircleWRBuf {
   public:
     explicit CircleWRBuf(int);
+    explicit CircleWRBuf(int, SPImageType);
     ~CircleWRBuf();
     CircleWRBuf() : CircleWRBuf (4) { }
 
@@ -110,6 +121,13 @@ class CircleWRBuf {
         std::scoped_lock<std::mutex> guard_w(_mtx);
         read = write;
         for (int i=0; i<size; i++) data[i].setUsed();
+    }
+
+    void setImageType(SPImageType type) {
+        std::scoped_lock<std::mutex> guard_w(_mtx);
+        for (int i = 0; i < size; i++) {
+            data[i].setType(type);
+        }
     }
 
     T * getToWrite();
@@ -130,6 +148,15 @@ class CircleWRBuf {
 template<typename T> CircleWRBuf<T>::CircleWRBuf(int sz) : size(sz), write(0), read(0) {
     if (sz==0) throw std::invalid_argument("size cannot be zero");
     data = new T[sz];
+}
+
+template<typename T> CircleWRBuf<T>::CircleWRBuf(int sz, SPImageType type) :
+            size(sz), write(0), read(0) {
+    if (sz==0) throw std::invalid_argument("size cannot be zero");
+    data = new T[sz];
+    for (int i = 0; i < sz; i++) {
+        data[i].setType(type);
+    }
 }
 
 template<typename T> CircleWRBuf<T>::~CircleWRBuf() {
