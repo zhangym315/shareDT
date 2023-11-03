@@ -54,7 +54,7 @@ def buildQT(k):
     if ret != 0:
         return 1
 
-    ret=os.system('cmake --build . --parallel')
+    ret=os.system('cmake --build . -j ' + cpuToBuild)
     if ret != 0:
         return 1
 
