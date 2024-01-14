@@ -20,8 +20,9 @@ cpuCount = multiprocessing.cpu_count()
 cpuToBuild = str(cpuCount-1 if (cpuCount > 2) else cpuCount)
 
 
-x265Dir = "x265_3.3/source/";
-os.environ["PKG_CONFIG_PATH"] = PWD + x265Dir + INS + "/lib/pkgconfig/"
+x265Dir = "x265_3.3/source/"
+x265Lib=PWD + x265Dir + INS + "/lib/"
+os.environ["PKG_CONFIG_PATH"] = x265Lib + "/pkgconfig"
 x264Include=PWD + "x264" + INS + "/include/"
 x264Lib=PWD + "x264" + INS + "/lib/"
 os.environ["PKG_CONFIG_PATH"] += ":" + x264Lib + "/pkgconfig"
@@ -182,6 +183,10 @@ def buildAndInstall(kernel, component):
     if component[0] == "ffmpeg":
         shutil.copyfile(PWD+"./x265_3.3/source/build/install/include/x265.h", PWD+"./ffmpeg/x265.h")
         shutil.copyfile(PWD+"./x265_3.3/source/build/install/include/x265_config.h", PWD+"./ffmpeg/x265_config.h")
+
+        # copy libx265.lib to x265.lib as configure checks links on x265.lib, not sure the reason...
+        shutil.copyfile(x265Lib + "/libx265.lib", x265Lib + "/x265.lib")
+
 
     ## windows build component
     if kernel == "windows" or kernel.startswith("cygwin") or kernel.startswith("msys"):
