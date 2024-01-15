@@ -110,6 +110,9 @@ def buildOnWinMSYS(component):
     os.chdir(pathBLD)
 
     if component[0] == "ffmpeg":
+        # copy libx265.lib to x265.lib as configure checks links on x265.lib, not sure the reason...
+        shutil.copyfile(x265Lib + "/libx265.lib", x265Lib + "/x265.lib")
+
         cmd = 'unset CL && ./' + component[1] +' --toolchain=msvc --enable-swscale --enable-asm --enable-yasm --target-os=win64 --arch=x86_64 --disable-shared  --disable-avdevice  --disable-doc  --disable-ffplay  --disable-ffprobe  --disable-ffmpeg  --enable-w32threads --disable-amf --disable-ffnvcodec --disable-mediafoundation --prefix="' + pathINS +'"'
         print('Running ffmpeg configure, this may take several mins, please wait...')
         print(cmd)
@@ -183,9 +186,6 @@ def buildAndInstall(kernel, component):
     if component[0] == "ffmpeg":
         shutil.copyfile(PWD+"./x265_3.3/source/build/install/include/x265.h", PWD+"./ffmpeg/x265.h")
         shutil.copyfile(PWD+"./x265_3.3/source/build/install/include/x265_config.h", PWD+"./ffmpeg/x265_config.h")
-
-        # copy libx265.lib to x265.lib as configure checks links on x265.lib, not sure the reason...
-        shutil.copyfile(x265Lib + "/libx265.lib", x265Lib + "/x265.lib")
 
 
     ## windows build component
