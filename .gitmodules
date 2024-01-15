@@ -10,3 +10,6 @@
 [submodule "contrib/qt660"]
 	path = contrib/qt660
 	url = https://github.com/qt/qtbase.git
+[submodule "contrib/ffmpeg"]
+	path = contrib/ffmpeg
+	url = https://github.com/FFmpeg/FFmpeg.git

@@ -80,13 +80,13 @@ add_executable(${SHAREDT_MAIN_WINDOW}
 target_link_libraries(${SHAREDT_MAIN_WINDOW}
         ${SHAREDT_CLIENT_QT_LIBS}
         ${${PROJECT_NAME}_PLATFORM_LIBS}
-        ${BZIP2_LIBRARIES}
         ${FFMPEG_REQUIRED_LIBS}
         vncserver
         vncclient
         ${X265_LIBRARIES}
         ${X264_LIBRARY}
         ${LZMA_LIBRARIES}
+        ${BZIP2_LIBRARIES}
         )
 
 if(APPLE)
