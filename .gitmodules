@@ -17,3 +17,7 @@
 	path = contrib/openssl
 	url = https://github.com/openssl/openssl.git
 	branch = openssl-3.2
+[submodule "contrib/SDL"]
+	path = contrib/SDL
+	url = https://github.com/libsdl-org/SDL.git
+	branch = release-2.28.x
