@@ -21,3 +21,7 @@
 	path = contrib/SDL
 	url = https://github.com/libsdl-org/SDL.git
 	branch = release-2.28.x
+[submodule "contrib/libjpeg-turbo"]
+	path = contrib/libjpeg-turbo
+	url = https://github.com/libjpeg-turbo/libjpeg-turbo.git
+	branch = 2.1.x
