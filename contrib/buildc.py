@@ -290,7 +290,7 @@ else:
 
 # 1. components name 2. Build type 3. build options
 components = [["SDL", "CMAKE", "-DHAVE_GCC_WDECLARATION_AFTER_STATEMENT=0"], \
-              ["libjpeg-turbo-2.0.5", "CMAKE", ""], \
+              ["libjpeg-turbo", "CMAKE", ""], \
               ["zlib", "CMAKE", ""], \
               ["libpng-1.6.37", "CMAKE", ""], \
               ["lzo-2.10", "CMAKE", ""], \
