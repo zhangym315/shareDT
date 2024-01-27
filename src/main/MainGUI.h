@@ -1,10 +1,10 @@
 #ifndef SHAREDT_WINDOW_H
 #define SHAREDT_WINDOW_H
 
-#include "StringTools.h"
 #include "Layout.h"
 #include "main/client/SDThread.h"
 #include "LocalDisplayer.h"
+#include "StringTools.h"
 
 #include <utility>
 #include <vector>

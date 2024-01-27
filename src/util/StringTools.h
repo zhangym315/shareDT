@@ -1,23 +1,23 @@
-/*********************************************************
- * StringTools.h                                         *
- *                                                       *
- * std::string related function                               *
- *                                                       *
- *********************************************************/
-
-
 #ifndef _STRINGTOOLS_H_
 #define _STRINGTOOLS_H_
 
-#include "TypeDef.h"
+#ifdef __SHAREDT_WIN__
+#include <Windows.h>
+#endif
+
+#include <algorithm>
+//#include "TypeDef.h"
 #include <iostream>
 #include <string>
-#include <algorithm>
 
 class StringTools {
 public:
     static bool isAllNumberString(const std::string & s);
     static bool toInt(const std::string & in, int &out);
+#ifdef __SHAREDT_WIN__
+    static LPCWSTR stdString2LPCWSTR(const std::string & input);
+    static LPWSTR stdString2LPWSTR(const std::string & input);
+#endif
 };
 
 std::string & operator<<(std::string & lhs, const std::string & rhs);

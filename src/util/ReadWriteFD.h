@@ -1,14 +1,15 @@
 #ifndef _READWRITEFD_H_
 #define _READWRITEFD_H_
 
-#include "Logger.h"
-#include "Path.h"
-#include "TypeDef.h"
 #ifdef __SHAREDT_WIN__
 #include <windows.h>
 #else
 #include <unistd.h>
 #endif
+
+#include "Logger.h"
+#include "Path.h"
+#include "TypeDef.h"
 
 /*
  * This is class supposed to read and write to pipe between

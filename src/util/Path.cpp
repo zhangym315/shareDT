@@ -9,7 +9,7 @@
 
 #ifdef __SHAREDT_WIN__
 #include <direct.h>
-#include <windows.h>
+#include "StringTools.h"
 #else
 #include <unistd.h>
 #endif
@@ -122,7 +122,7 @@ void ShareDTHome::set(const char * argv)
 void ShareDTHome::reSet(const char *argv)
 {
     _valid = false;
-#if defined(_WIN32)
+#if defined(__SHAREDT_WIN__)
     char path[MAX_PATH];
     GetModuleFileNameA(NULL, reinterpret_cast<LPSTR>(path), MAX_PATH);
 
