@@ -3,9 +3,9 @@
 * Build essential package
 ```
 sudo apt-get install build-essential
-sudo apt-get install libgtk2.0-dev
 sudo apt-get install libgtk-3-dev
 sudo apt-get install cmake python
+sudo apt-get install libdrm-dev libgles2-mesa-dev   # for QT build
 ```
 * libx11 related package
 ```
