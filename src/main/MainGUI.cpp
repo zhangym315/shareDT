@@ -253,7 +253,7 @@ void UI_ShareDTWindow::refreshLocalBoxGroup()
 {
     LOGGER.info() << "Local fresh slot triggered";
 
-    removeGroupBox(_localGroupBox.item);
+    removeLayoutBox(_localGroupBox.layout);
     _localGroupBox.layout->activate();
 
     refreshLocalBoxGroupInternal();
@@ -333,6 +333,18 @@ void UI_ShareDTWindow::removeGroupBox(QGroupBox * g)
         delete child->widget();
         delete child;
         g->layout()->activate();
+    }
+}
+
+void UI_ShareDTWindow::removeLayoutBox(QLayout * l)
+{
+    QLayoutItem * child;
+    while ((child = l->itemAt(0)) != nullptr) {
+        l->removeItem(child);
+        removeImageBox(child->widget());
+        delete child->widget();
+        delete child;
+        l->activate();
     }
 }
 
