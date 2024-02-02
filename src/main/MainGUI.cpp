@@ -331,6 +331,63 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
     }
 }
 
+void UI_ShareDTWindow::refreshRemoteBoxGroup()
+{
+    for (const auto & g : _remoteGroupBoxes) {
+        LOGGER.info() << "Refreshing remote group=" << g.first ;
+        /* connection */
+        SocketClient sc(g.first, SHAREDT_INTERNAL_PORT_START);
+        if (!sc.connectWait()) {
+            QMessageBox msgBox;
+            msgBox.setText(QString("Cannot connect to host: ") +
+                           QString::fromStdString(g.first));
+            msgBox.exec();
+            return ;
+        }
+
+        QLayoutItem * child;
+        while ((child = g.second->layout()->itemAt(0)) != nullptr) {
+            g.second->layout()->removeItem(child);
+            removeImageBox(child->widget());  // remove single image box(image widget and label)
+            delete child->widget();
+            delete child;
+            g.second->layout()->activate();
+        }
+
+        std::string cmd = "ShareDT";
+        cmd.append(" ");
+        cmd.append(SHAREDT_SERVER_COMMAND_REMOTGET);
+        sc.sendString(cmd);
+
+        FrameBuffer fb;
+        while (true) {
+            RemoteGetterMsg msg{};
+            if (sc.receiveBytes((unsigned char *) &msg, sizeof(msg)) <= 0) break;
+
+            msg.convert();
+
+            fb.reSet(msg.dataLen);
+            fb.setWidthHeight(msg.w, msg.h);
+            if (sc.receiveBytes(fb.getDataToWrite(), msg.dataLen) < 0 || msg.dataLen==0) break;
+
+            LOGGER.info() << "Refreshing remote group, received frame buffer size=" << msg.dataLen
+                          << " name=" << msg.name
+                          << " cmdArgs=" << msg.cmdArgs;
+
+            ItemInfo info;
+            info.name = msg.name;
+            info.isRemote = true;
+            info.argument = QString(msg.cmdArgs).split(" ") << ::inet_ntoa(sc.getAddr().sin_addr);
+            info.sadd = sc.getAddr();
+            g.second->layout()->addWidget(newImageBox(fb.getWidth(),
+                                        fb.getHeight(),
+                                        fb.getData(),
+                                        info));
+        }
+    }
+
+}
+
 /* corresponding to newImageBox() to remove box */
 void UI_ShareDTWindow::removeImageBox(QWidget *w) {
     if (w == nullptr) return;
