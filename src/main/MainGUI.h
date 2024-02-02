@@ -119,6 +119,7 @@ public:
 private:
     void refreshLocalBoxGroupInternal() const;
     static void removeImageBox(QWidget * w);
+    static void removeGroupBox(QGroupBox * g);
 
     int _w_unit;
     int _h_unit;

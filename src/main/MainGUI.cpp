@@ -251,16 +251,9 @@ void UI_ShareDTWindow::setupUi(QWidget *w)
 
 void UI_ShareDTWindow::refreshLocalBoxGroup()
 {
-    LOGGER.info() << "Fresh slot triggered";
-    QLayoutItem * child;
-    while ((child = _localGroupBox.layout->itemAt(0)) != nullptr) {
-        _localGroupBox.layout->removeItem(child);
-        removeImageBox(child->widget());  // remove single image box(image widget and label)
-        delete child->widget();
-        delete child;
-        _localGroupBox.layout->activate();
-    }
+    LOGGER.info() << "Local fresh slot triggered";
 
+    removeGroupBox(_localGroupBox.item);
     _localGroupBox.layout->activate();
 
     refreshLocalBoxGroupInternal();
@@ -331,6 +324,18 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
     }
 }
 
+void UI_ShareDTWindow::removeGroupBox(QGroupBox * g)
+{
+    QLayoutItem * child;
+    while ((child = g->layout()->itemAt(0)) != nullptr) {
+        g->layout()->removeItem(child);
+        removeImageBox(child->widget());
+        delete child->widget();
+        delete child;
+        g->layout()->activate();
+    }
+}
+
 void UI_ShareDTWindow::refreshRemoteBoxGroup()
 {
     for (const auto & g : _remoteGroupBoxes) {
@@ -342,17 +347,11 @@ void UI_ShareDTWindow::refreshRemoteBoxGroup()
             msgBox.setText(QString("Cannot connect to host: ") +
                            QString::fromStdString(g.first));
             msgBox.exec();
+            removeGroupBox(g.second.get());
             return ;
         }
 
-        QLayoutItem * child;
-        while ((child = g.second->layout()->itemAt(0)) != nullptr) {
-            g.second->layout()->removeItem(child);
-            removeImageBox(child->widget());  // remove single image box(image widget and label)
-            delete child->widget();
-            delete child;
-            g.second->layout()->activate();
-        }
+        removeGroupBox(g.second.get());
 
         std::string cmd = "ShareDT";
         cmd.append(" ");
