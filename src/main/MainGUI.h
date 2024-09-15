@@ -114,10 +114,13 @@ public:
     void setLocalWindows(QWidget * w);
 
     void refreshLocalBoxGroup();
+    void refreshRemoteBoxGroup();
 
 private:
     void refreshLocalBoxGroupInternal() const;
     static void removeImageBox(QWidget * w);
+    static void removeGroupBox(QGroupBox * g);
+    static void removeLayoutBox(QLayout * l);
 
     int _w_unit;
     int _h_unit;
@@ -132,7 +135,7 @@ signals:
     void refreshSignal();
 
 public slots:
-    void refreshSlot() { refreshLocalBoxGroup(); }
+    void refreshSlot() { refreshLocalBoxGroup(); refreshRemoteBoxGroup();}
     void newGroupConnection();
     void startLocalCaptureServer();
 };

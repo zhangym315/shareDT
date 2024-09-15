@@ -251,16 +251,9 @@ void UI_ShareDTWindow::setupUi(QWidget *w)
 
 void UI_ShareDTWindow::refreshLocalBoxGroup()
 {
-    LOGGER.info() << "Fresh slot triggered";
-    QLayoutItem * child;
-    while ((child = _localGroupBox.layout->itemAt(0)) != nullptr) {
-        _localGroupBox.layout->removeItem(child);
-        removeImageBox(child->widget());  // remove single image box(image widget and label)
-        delete child->widget();
-        delete child;
-        _localGroupBox.layout->activate();
-    }
+    LOGGER.info() << "Local fresh slot triggered";
 
+    removeLayoutBox(_localGroupBox.layout);
     _localGroupBox.layout->activate();
 
     refreshLocalBoxGroupInternal();
@@ -329,6 +322,81 @@ void UI_ShareDTWindow::refreshLocalBoxGroupInternal() const
 //        LOGGER.info() << "Refreshed window_id=" << w.getHandler() << " name=\"" << info.name
 //                      << "\" argument=\"" << info.argument.join(" ").toStdString() << "\"";
     }
+}
+
+void UI_ShareDTWindow::removeGroupBox(QGroupBox * g)
+{
+    QLayoutItem * child;
+    while ((child = g->layout()->itemAt(0)) != nullptr) {
+        g->layout()->removeItem(child);
+        removeImageBox(child->widget());
+        delete child->widget();
+        delete child;
+        g->layout()->activate();
+    }
+}
+
+void UI_ShareDTWindow::removeLayoutBox(QLayout * l)
+{
+    QLayoutItem * child;
+    while ((child = l->itemAt(0)) != nullptr) {
+        l->removeItem(child);
+        removeImageBox(child->widget());
+        delete child->widget();
+        delete child;
+        l->activate();
+    }
+}
+
+void UI_ShareDTWindow::refreshRemoteBoxGroup()
+{
+    for (const auto & g : _remoteGroupBoxes) {
+        LOGGER.info() << "Refreshing remote group=" << g.first ;
+        /* connection */
+        SocketClient sc(g.first, SHAREDT_INTERNAL_PORT_START);
+        if (!sc.connectWait()) {
+            QMessageBox msgBox;
+            msgBox.setText(QString("Cannot connect to host: ") +
+                           QString::fromStdString(g.first));
+            msgBox.exec();
+            removeGroupBox(g.second.get());
+            return ;
+        }
+
+        removeGroupBox(g.second.get());
+
+        std::string cmd = "ShareDT";
+        cmd.append(" ");
+        cmd.append(SHAREDT_SERVER_COMMAND_REMOTGET);
+        sc.sendString(cmd);
+
+        FrameBuffer fb;
+        while (true) {
+            RemoteGetterMsg msg{};
+            if (sc.receiveBytes((unsigned char *) &msg, sizeof(msg)) <= 0) break;
+
+            msg.convert();
+
+            fb.reSet(msg.dataLen);
+            fb.setWidthHeight(msg.w, msg.h);
+            if (sc.receiveBytes(fb.getDataToWrite(), msg.dataLen) < 0 || msg.dataLen==0) break;
+
+            LOGGER.info() << "Refreshing remote group, received frame buffer size=" << msg.dataLen
+                          << " name=" << msg.name
+                          << " cmdArgs=" << msg.cmdArgs;
+
+            ItemInfo info;
+            info.name = msg.name;
+            info.isRemote = true;
+            info.argument = QString(msg.cmdArgs).split(" ") << ::inet_ntoa(sc.getAddr().sin_addr);
+            info.sadd = sc.getAddr();
+            g.second->layout()->addWidget(newImageBox(fb.getWidth(),
+                                        fb.getHeight(),
+                                        fb.getData(),
+                                        info));
+        }
+    }
+
 }
 
 /* corresponding to newImageBox() to remove box */
